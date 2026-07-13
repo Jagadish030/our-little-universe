@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our Little Universe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --paper: #FBF3EA;
+    --paper-deep: #F4E9DC;
+    --rose: #E8B4B8;
+    --rose-deep: #D98A93;
+    --ink: #6B5344;
+    --ink-soft: #9C8776;
+    --sage: #A8B89C;
+    --gold: #D4A574;
+    --white: #FFFDF9;
+    --shadow: rgba(107,83,68,0.18);
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0;
+    padding:0;
+    background: var(--paper);
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(232,180,184,0.15), transparent 40%),
+      radial-gradient(circle at 85% 60%, rgba(168,184,156,0.15), transparent 45%);
+    color: var(--ink);
+    font-family: 'Quicksand', sans-serif;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* ---------- ambient floating hearts ---------- */
+  .ambient{
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .ambient span{
+    position: absolute;
+    bottom: -10%;
+    font-size: 1.1rem;
+    opacity: 0.35;
+    color: var(--rose-deep);
+  }
+  @media (prefers-reduced-motion: no-preference){
+    .ambient span{ animation: drift linear infinite; }
+  }
+  @keyframes drift{
+    0%{ transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+    10%{ opacity: 0.35; }
+    90%{ opacity: 0.35; }
+    100%{ transform: translateY(-115vh) translateX(20px) rotate(25deg); opacity: 0; }
+  }
+
+  /* ---------- hero ---------- */
+  .hero{
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 4.5rem 1.5rem 2.5rem;
+  }
+  .hero .eyebrow{
+    font-size: 0.8rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 0.6rem;
+  }
+  .hero h1{
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: clamp(2.8rem, 8vw, 4.6rem);
+    margin: 0;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .hero p.subtitle{
+    font-family: 'Caveat', cursive;
+    font-size: 1.4rem;
+    color: var(--rose-deep);
+    margin: 0.4rem 0 1.8rem;
+  }
+
+  .add-btn{
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--white);
+    background: var(--rose-deep);
+    border: none;
+    border-radius: 999px;
+    padding: 0.85rem 1.7rem;
+    cursor: pointer;
+    box-shadow: 0 6px 16px var(--shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+  .add-btn:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px var(--shadow);
+    background: #C97781;
+  }
+  .add-btn:focus-visible, button:focus-visible, .polaroid:focus-visible{
+    outline: 3px solid var(--sage);
+    outline-offset: 3px;
+  }
+
+  .count-note{
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin-top: 0.7rem;
+  }
+
+  /* ---------- garland ---------- */
+  main{
+    position: relative;
+    z-index: 1;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 1.5rem 5rem;
+  }
+
+  .row{
+    position: relative;
+    padding-top: 2.6rem;
+    margin-bottom: 1rem;
+  }
+  .row::before{
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -2%;
+    right: -2%;
+    height: 2px;
+    background: repeating-linear-gradient(90deg, var(--gold) 0 10px, transparent 10px 16px);
+    opacity: 0.7;
+  }
+
+  .row-items{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.6rem 1.8rem;
+  }
+
+  /* ---------- polaroid card ---------- */
+  .polaroid-wrap{
+    position: relative;
+    width: 190px;
+    perspective: 1200px;
+  }
+  .pin{
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff, var(--sage) 60%, #7f8f74 100%);
+    box-shadow: 0 2px 4px var(--shadow);
+    z-index: 3;
+  }
+
+  .polaroid{
+    position: relative;
+    width: 100%;
+    height: 230px;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.55s cubic-bezier(.2,.8,.2,1);
+  }
+  @media (prefers-reduced-motion: no-preference){
+    .polaroid-wrap{ animation: sway 6s ease-in-out infinite; }
+    .polaroid-wrap:nth-child(3n){ animation-duration: 7s; }
+    .polaroid-wrap:nth-child(3n+1){ animation-duration: 5.2s; }
+  }
+  @keyframes sway{
+    0%, 100%{ transform: rotate(var(--tilt, -2deg)); }
+    50%{ transform: rotate(calc(var(--tilt, -2deg) * -1)); }
+  }
+  .polaroid-wrap:hover, .polaroid-wrap:focus-within{
+    animation-play-state: paused;
+    transform: rotate(0deg) translateY(-4px);
+  }
+  .polaroid.flipped{ transform: rotateY(180deg); }
+
+  .face{
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    background: var(--white);
+    border-radius: 4px;
+    box-shadow: 0 10px 20px var(--shadow);
+    padding: 10px 10px 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .face.front img{
+    width: 100%;
+    height: 165px;
+    object-fit: cover;
+    border-radius: 2px;
+    background: var(--paper-deep);
+  }
+  .face.front .cap-preview{
+    font-family: 'Caveat', cursive;
+    font-size: 1.15rem;
+    color: var(--ink);
+    text-align: center;
+    padding: 6px 2px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .face.back{
+    transform: rotateY(180deg);
+    background: var(--paper-deep);
+    justify-content: space-between;
+    padding: 14px 12px 10px;
+  }
+  .face.back textarea{
+    font-family: 'Caveat', cursive;
+    font-size: 1.25rem;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    resize: none;
+    width: 100%;
+    height: 120px;
+    line-height: 1.3;
+  }
+  .face.back textarea:focus{ outline: none; }
+  .back-footer{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+  }
+  .unpin{
+    background: none;
+    border: 1px solid var(--rose-deep);
+    color: var(--rose-deep);
+    border-radius: 999px;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .unpin:hover{ background: var(--rose-deep); color: var(--white); }
+
+  /* add-tile */
+  .add-tile{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    border: 2px dashed var(--gold);
+    border-radius: 4px;
+    color: var(--gold);
+    font-size: 2.4rem;
+    font-family: 'Caveat', cursive;
+    background: rgba(212,165,116,0.08);
+  }
+
+  /* empty state */
+  .empty-note{
+    text-align: center;
+    font-family: 'Caveat', cursive;
+    font-size: 1.3rem;
+    color: var(--ink-soft);
+    margin-top: 0.4rem;
+  }
+
+  footer{
+    text-align: center;
+    font-family: 'Caveat', cursive;
+    font-size: 1.1rem;
+    color: var(--ink-soft);
+    padding-bottom: 2.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  @media (max-width: 480px){
+    .polaroid-wrap{ width: 42vw; max-width: 190px; }
+    .polaroid{ height: 200px; }
+    .face.front img{ height: 140px; }
+  }
+
+  .setup-banner{
+    max-width: 620px;
+    margin: 0 auto 1rem;
+    padding: 0.9rem 1.2rem;
+    background: #FCEFCB;
+    border: 1px solid var(--gold);
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: var(--ink);
+    text-align: center;
+    display: none;
+  }
+  .setup-banner.show{ display: block; }
+  .setup-banner code{
+    background: rgba(107,83,68,0.08);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient" id="ambient" aria-hidden="true"></div>
+
+<header class="hero">
+  <div class="eyebrow">a scrapbook for us</div>
+  <h1>Our Little Universe</h1>
+  <p class="subtitle">every memory, pinned up to keep</p>
+  <button class="add-btn" id="heroAddBtn">+ Pin a new memory</button>
+  <div class="count-note" id="countNote"></div>
+</header>
+
+<div class="setup-banner" id="setupBanner">
+  This gallery isn't connected to storage yet — add your Supabase URL and key near the top of the <code>&lt;script&gt;</code> section to bring it to life.
+</div>
+
+<main>
+  <div id="garland"></div>
+  <p class="empty-note" id="emptyNote">no memories pinned yet — tap the polaroid below to add your first one</p>
+</main>
+
+<footer>made with love, for the two of us 🤍</footer>
+
+<input type="file" id="fileInput" accept="image/*" multiple hidden>
+
+<script>
+(function(){
+  let photos = []; // {id, src, caption, date}
+
+  const garlandEl = document.getElementById('garland');
+  const emptyNote = document.getElementById('emptyNote');
+  const countNote = document.getElementById('countNote');
+  const fileInput = document.getElementById('fileInput');
+  const heroAddBtn = document.getElementById('heroAddBtn');
+  const setupBanner = document.getElementById('setupBanner');
+
+  /* ================================================================
+     CLOUD STORAGE SETUP — fill these in with your own Supabase project
+     1. Create a free project at https://supabase.com
+     2. Go to Project Settings → API and copy the "Project URL" and
+        the "anon public" key into the two lines below.
+     3. Run the SQL setup script (given separately) in the Supabase
+        SQL editor to create the table, bucket, and access policies.
+     ================================================================ */
+const SUPABASE_URL = 'https://cctlzqlchijwrxrxnmmm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjdGx6cWxjaGlqd3J4cnhubW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MDg1NTksImV4cCI6MjA5OTQ4NDU1OX0.5cEM69NsRjiN2d1XqzFcqVmSp8Db0AqxRr6wLJmm5Yc';
+  const BUCKET = 'photos';
+  const TABLE = 'memories';
+
+  const isConfigured = SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY.length > 20;
+  const supabase = isConfigured
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+
+  if (!isConfigured){
+    setupBanner.classList.add('show');
+  }
+
+  async function loadPhotos(){
+    if (!supabase){ render(); return; }
+    try{
+      const { data, error } = await supabase
+        .from(TABLE)
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      photos = data.map(row => ({
+        id: row.id,
+        src: row.image_url,
+        caption: row.caption,
+        date: row.date_label,
+        path: row.image_path
+      }));
+    }catch(err){
+      console.error('Could not load memories from the cloud:', err);
+      photos = [];
+    }
+    render();
+  }
+
+  async function uploadAndSave(file){
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${crypto.randomUUID()}.${ext}`;
+
+    const { error: uploadError } = await supabase
+      .storage.from(BUCKET)
+      .upload(path, file, { cacheControl: '3600', upsert: false });
+    if (uploadError) throw uploadError;
+
+    const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
+
+    const record = {
+      image_path: path,
+      image_url: urlData.publicUrl,
+      caption: 'a moment worth keeping ✨',
+      date_label: formatToday()
+    };
+
+    const { data: inserted, error: insertError } = await supabase
+      .from(TABLE)
+      .insert(record)
+      .select()
+      .single();
+    if (insertError) throw insertError;
+
+    return {
+      id: inserted.id,
+      src: inserted.image_url,
+      caption: inserted.caption,
+      date: inserted.date_label,
+      path: inserted.image_path
+    };
+  }
+
+  async function saveCaption(photo){
+    if (!supabase) return;
+    const { error } = await supabase
+      .from(TABLE)
+      .update({ caption: photo.caption })
+      .eq('id', photo.id);
+    if (error) console.error('Could not save this note:', error);
+  }
+
+  async function removePhoto(photo){
+    if (!supabase) return;
+    try{
+      await supabase.storage.from(BUCKET).remove([photo.path]);
+      await supabase.from(TABLE).delete().eq('id', photo.id);
+    }catch(err){
+      console.error('Could not remove this memory:', err);
+    }
+  }
+
+  heroAddBtn.addEventListener('click', () => {
+    if (!supabase){
+      setupBanner.classList.add('show');
+      setupBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length || !supabase) return;
+
+    for (const file of files){
+      try{
+        const record = await uploadAndSave(file);
+        photos.push(record);
+        render();
+      }catch(err){
+        console.error('Could not save this memory:', err);
+      }
+    }
+    fileInput.value = '';
+  });
+
+  function formatToday(){
+    const d = new Date();
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+
+  function randomTilt(){
+    const deg = (Math.random() * 8 - 4).toFixed(1);
+    return deg + 'deg';
+  }
+
+  function render(){
+    garlandEl.innerHTML = '';
+    countNote.textContent = photos.length
+      ? `${photos.length} memor${photos.length === 1 ? 'y' : 'ies'} pinned so far`
+      : '';
+    emptyNote.style.display = photos.length ? 'none' : 'block';
+
+    const perRow = 4;
+    const items = photos.length ? photos : [];
+    const rowsNeeded = Math.max(1, Math.ceil((items.length + 1) / perRow));
+
+    let cursor = 0;
+    for (let r = 0; r < rowsNeeded; r++){
+      const row = document.createElement('div');
+      row.className = 'row';
+      const rowItems = document.createElement('div');
+      rowItems.className = 'row-items';
+      row.appendChild(rowItems);
+
+      for (let c = 0; c < perRow && cursor < items.length; c++, cursor++){
+        rowItems.appendChild(buildPolaroid(items[cursor]));
+      }
+
+      if (r === rowsNeeded - 1){
+        rowItems.appendChild(buildAddTile());
+      }
+
+      garlandEl.appendChild(row);
+    }
+  }
+
+  function buildAddTile(){
+    const wrap = document.createElement('div');
+    wrap.className = 'polaroid-wrap';
+    wrap.style.setProperty('--tilt', randomTilt());
+    wrap.innerHTML = `
+      <div class="pin"></div>
+      <div class="polaroid" tabindex="0" role="button" aria-label="Pin a new memory">
+        <div class="face front">
+          <div class="add-tile">+</div>
+        </div>
+      </div>
+    `;
+    const trigger = () => {
+      if (!supabase){
+        setupBanner.classList.add('show');
+        setupBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      fileInput.click();
+    };
+    wrap.querySelector('.polaroid').addEventListener('click', trigger);
+    wrap.querySelector('.polaroid').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); trigger(); }
+    });
+    return wrap;
+  }
+
+  function buildPolaroid(photo){
+    const wrap = document.createElement('div');
+    wrap.className = 'polaroid-wrap';
+    wrap.style.setProperty('--tilt', randomTilt());
+
+    wrap.innerHTML = `
+      <div class="pin"></div>
+      <div class="polaroid" tabindex="0" role="button" aria-label="Flip photo to see the note">
+        <div class="face front">
+          <img src="${photo.src}" alt="A memory">
+          <div class="cap-preview">${escapeHtml(photo.caption)}</div>
+        </div>
+        <div class="face back">
+          <textarea maxlength="120" aria-label="Write a note for this memory">${escapeHtml(photo.caption)}</textarea>
+          <div class="back-footer">
+            <span>${photo.date}</span>
+            <button class="unpin" type="button">unpin</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const card = wrap.querySelector('.polaroid');
+    const textarea = wrap.querySelector('textarea');
+    const unpinBtn = wrap.querySelector('.unpin');
+
+    function flip(e){
+      if (e.target === textarea || e.target === unpinBtn) return;
+      card.classList.toggle('flipped');
+    }
+    card.addEventListener('click', flip);
+    card.addEventListener('keydown', (e) => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target === card){
+        e.preventDefault();
+        card.classList.toggle('flipped');
+      }
+    });
+
+    textarea.addEventListener('click', (e) => e.stopPropagation());
+    let saveTimer = null;
+    textarea.addEventListener('input', () => {
+      photo.caption = textarea.value || 'a moment worth keeping ✨';
+      const preview = wrap.querySelector('.cap-preview');
+      preview.textContent = photo.caption;
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => saveCaption(photo), 400);
+    });
+
+    unpinBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const idx = photos.findIndex(p => p.id === photo.id);
+      if (idx > -1) photos.splice(idx, 1);
+      render();
+      await removePhoto(photo);
+    });
+
+    return wrap;
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function buildAmbientHearts(){
+    const el = document.getElementById('ambient');
+    const symbols = ['♥', '✿', '♡'];
+    for (let i = 0; i < 10; i++){
+      const s = document.createElement('span');
+      s.textContent = symbols[i % symbols.length];
+      s.style.left = (Math.random() * 100) + 'vw';
+      s.style.animationDuration = (14 + Math.random() * 10) + 's';
+      s.style.animationDelay = (Math.random() * 12) + 's';
+      s.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
+      el.appendChild(s);
+    }
+  }
+
+  buildAmbientHearts();
+  loadPhotos();
+})();
+</script>
+</body>
+</html>
