@@ -213,14 +213,27 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    position: relative;
+  }
+  .photo-frame .bg-fill{
+    position: absolute;
+    inset: -12px;
+    width: calc(100% + 24px);
+    height: calc(100% + 24px);
+    object-fit: cover;
+    filter: blur(16px) brightness(0.82) saturate(1.15);
+    transform: scale(1.05);
   }
   .face.front img{
+    position: relative;
+    z-index: 1;
     max-width: 100%;
     max-height: 100%;
     width: auto;
     height: auto;
     object-fit: contain;
     display: block;
+    border-radius: 1px;
   }
   .face.front .cap-preview{
     font-family: 'Caveat', cursive;
@@ -568,7 +581,8 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
       <div class="pin"></div>
       <div class="polaroid" tabindex="0" role="button" aria-label="Flip photo to see the note">
         <div class="face front">
-          <div class="photo-frame">
+         <div class="photo-frame">
+            <img class="bg-fill" src="${photo.src}" alt="" aria-hidden="true">
             <img src="${photo.src}" alt="A memory">
           </div>
           <div class="cap-preview">${escapeHtml(photo.caption)}</div>
