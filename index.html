@@ -336,6 +336,15 @@
     color: var(--ink);
     outline: none;
   }
+  .sort-select{
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 2.2rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236B5344'%3E%3Cpath d='M5.5 7.5l4.5 4.5 4.5-4.5' stroke='%236B5344' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+    background-size: 14px;
+  }
   .search-input{ width: 200px; max-width: 60vw; }
   .search-input:focus, .sort-select:focus{ border-color: var(--rose-deep); }
 
@@ -924,7 +933,7 @@
 <div class="pass-gate" id="passGate">
   <form class="pass-card" id="passForm">
     <h2>Our Little Universe</h2>
-    <p>this space is just for the two of you 🤍</p>
+    <p>this space is just for the two of us 🤍</p>
     <input type="password" id="passInput" placeholder="Enter the password" autocomplete="off">
     <button type="submit">Unlock</button>
     <div class="pass-error" id="passError"></div>
@@ -965,7 +974,7 @@
       <option value="newest">Newest first</option>
       <option value="shuffle">Shuffle</option>
     </select>
-    <button class="fav-filter-btn" id="notesToggleBtn" type="button">💌 Love notes</button>
+    <button class="fav-filter-btn" id="notesToggleBtn" type="button">Love notes 💌</button>
   </div>
   <div class="count-note" id="countNote"></div>
 
