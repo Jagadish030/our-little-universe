@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Our Little Universe</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#D98A93">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Our Universe">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -19,6 +26,38 @@
     --gold: #D4A574;
     --white: #FFFDF9;
     --shadow: rgba(107,83,68,0.18);
+  }
+
+  body.dark-mode{
+    --paper: #221C29;
+    --paper-deep: #2C2434;
+    --rose: #D9A3B1;
+    --rose-deep: #E3919F;
+    --ink: #F0E6EA;
+    --ink-soft: #C6B4C2;
+    --sage: #9FBFA9;
+    --gold: #DDBD8E;
+    --white: #302739;
+    --shadow: rgba(0,0,0,0.45);
+  }
+  body.dark-mode .ambient span{ opacity: 0.22; }
+  body.dark-mode .setup-banner{ background: #4A3F2E; color: var(--ink); }
+  body.dark-mode .note-card{ background: #3A3044; }
+  body.dark-mode .lightbox{ background: rgba(10,8,14,0.94); }
+
+  .theme-btn{
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--gold);
+    background: var(--white);
+    color: var(--gold);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, color 0.2s ease;
   }
 
   *{ box-sizing: border-box; }
@@ -233,6 +272,248 @@
     background: var(--sage);
     color: var(--white);
   }
+
+  /* ---------- editable title ---------- */
+  .title-block{
+    position: relative;
+    display: inline-block;
+  }
+  .edit-title-btn{
+    position: absolute;
+    top: 4px;
+    right: -30px;
+    background: none;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    opacity: 0.6;
+  }
+  .edit-title-btn:hover{ opacity: 1; }
+  .title-edit-form{
+    max-width: 320px;
+    margin: 0.5rem auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .title-edit-form.hidden{ display: none; }
+  .title-edit-form input{
+    padding: 0.6rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid #E3D3C2;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.9rem;
+    text-align: center;
+    outline: none;
+  }
+  .title-edit-form input:focus{ border-color: var(--rose-deep); }
+  .title-edit-actions{
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+  .save-title-btn, .cancel-title-btn{
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-radius: 999px;
+    padding: 0.5rem 1.1rem;
+    cursor: pointer;
+    border: none;
+  }
+  .save-title-btn{ background: var(--rose-deep); color: var(--white); }
+  .cancel-title-btn{ background: var(--paper-deep); color: var(--ink); }
+
+  /* ---------- search / sort row ---------- */
+  .secondary-row{ margin-top: 0.6rem; }
+  .search-input, .sort-select{
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.85rem;
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    border: 1px solid #E3D3C2;
+    background: var(--white);
+    color: var(--ink);
+    outline: none;
+  }
+  .search-input{ width: 200px; max-width: 60vw; }
+  .search-input:focus, .sort-select:focus{ border-color: var(--rose-deep); }
+
+  /* ---------- love notes wall ---------- */
+  .notes-wall{
+    max-width: 700px;
+    margin: 0 auto 3rem;
+    padding: 0 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+  .notes-wall.hidden{ display: none; }
+  .notes-wall h2{
+    font-family: 'Caveat', cursive;
+    font-size: 2rem;
+    text-align: center;
+    color: var(--ink);
+    margin-bottom: 0.8rem;
+  }
+  .note-form{
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    max-width: 420px;
+    margin: 0 auto 1.6rem;
+  }
+  .note-form textarea{
+    font-family: 'Caveat', cursive;
+    font-size: 1.2rem;
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    border: 1px solid #E3D3C2;
+    resize: none;
+    height: 70px;
+    outline: none;
+  }
+  .note-form textarea:focus{ border-color: var(--rose-deep); }
+  .note-form button{
+    align-self: center;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--white);
+    background: var(--rose-deep);
+    border: none;
+    border-radius: 999px;
+    padding: 0.65rem 1.4rem;
+    cursor: pointer;
+  }
+  .notes-grid{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+  }
+  .note-card{
+    background: #FFF9E8;
+    border-radius: 4px;
+    box-shadow: 0 6px 14px var(--shadow);
+    padding: 1rem;
+    width: 160px;
+    min-height: 120px;
+    font-family: 'Caveat', cursive;
+    font-size: 1.1rem;
+    color: var(--ink);
+    position: relative;
+    transform: rotate(var(--nt, -2deg));
+  }
+  .note-card .note-date{
+    display: block;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.65rem;
+    color: var(--ink-soft);
+    margin-top: 0.6rem;
+  }
+  .note-remove{
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    background: none;
+    border: none;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+
+  /* ---------- milestone banner ---------- */
+  .milestone-banner{
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 900;
+    background: var(--white);
+    border-radius: 14px;
+    box-shadow: 0 14px 30px var(--shadow);
+    padding: 1.1rem 1.6rem;
+    text-align: center;
+    max-width: 300px;
+  }
+  .milestone-banner.hidden{ display: none; }
+  .milestone-banner h3{
+    font-family: 'Caveat', cursive;
+    font-size: 1.6rem;
+    margin: 0 0 0.2rem;
+    color: var(--rose-deep);
+  }
+  .milestone-banner p{
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    margin: 0 0 0.7rem;
+  }
+  .milestone-banner button{
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: var(--rose-deep);
+    color: var(--white);
+    border: none;
+    border-radius: 999px;
+    padding: 0.4rem 1rem;
+    cursor: pointer;
+  }
+
+  /* ---------- upload style choice modal ---------- */
+  .style-modal{
+    position: fixed;
+    inset: 0;
+    z-index: 950;
+    background: rgba(40,30,24,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+  .style-modal.hidden{ display: none; }
+  .style-card{
+    background: var(--white);
+    border-radius: 14px;
+    padding: 1.6rem;
+    text-align: center;
+    max-width: 340px;
+    width: 100%;
+  }
+  .style-card h3{
+    font-family: 'Caveat', cursive;
+    font-size: 1.6rem;
+    margin: 0 0 1rem;
+    color: var(--ink);
+  }
+  .style-previews{
+    display: flex;
+    gap: 0.8rem;
+    justify-content: center;
+    margin-bottom: 1.1rem;
+  }
+  .style-option{
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 4px;
+    cursor: pointer;
+    background: none;
+  }
+  .style-option img{
+    width: 110px;
+    height: 110px;
+    object-fit: cover;
+    border-radius: 6px;
+    display: block;
+  }
+  .style-option span{
+    display: block;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    margin-top: 4px;
+  }
+  .style-option:hover{ border-color: var(--rose-deep); }
 
   .on-this-day{
     position: relative;
@@ -509,6 +790,19 @@
     transition: background 0.2s ease, color 0.2s ease;
   }
   .unpin:hover{ background: var(--rose-deep); color: var(--white); }
+  .card-download{
+    background: none;
+    border: 1px solid var(--sage);
+    color: var(--sage);
+    border-radius: 999px;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .card-download:hover{ background: var(--sage); color: var(--white); }
 
   /* add-tile */
   .add-tile{
@@ -630,7 +924,7 @@
 <div class="pass-gate" id="passGate">
   <form class="pass-card" id="passForm">
     <h2>Our Little Universe</h2>
-    <p>this space is just for the two of us 🤍</p>
+    <p>this space is just for the two of you 🤍</p>
     <input type="password" id="passInput" placeholder="Enter the password" autocomplete="off">
     <button type="submit">Unlock</button>
     <div class="pass-error" id="passError"></div>
@@ -642,14 +936,36 @@
 <div class="ambient" id="ambient" aria-hidden="true"></div>
 
 <header class="hero">
-  <div class="eyebrow">a scrapbook for us</div>
-  <h1>Our Little Universe</h1>
-  <p class="subtitle">every memory, pinned up to keep</p>
+  <div class="eyebrow">a scrapbook for two of us</div>
+  <div class="title-block" id="titleBlock">
+    <h1 id="siteTitle">Our Little Universe</h1>
+    <p class="subtitle" id="siteSubtitle">every memory, pinned up to keep</p>
+    <button class="edit-title-btn" id="editTitleBtn" type="button" aria-label="Edit title">✏️</button>
+  </div>
+  <form class="title-edit-form hidden" id="titleEditForm">
+    <input type="text" id="titleInput" placeholder="Title" maxlength="60">
+    <input type="text" id="subtitleInput" placeholder="Subtitle" maxlength="80">
+    <div class="title-edit-actions">
+      <button type="submit" class="save-title-btn">Save</button>
+      <button type="button" class="cancel-title-btn" id="cancelTitleBtn">Cancel</button>
+    </div>
+  </form>
   <p class="days-together" id="daysTogether"></p>
   <div class="hero-actions">
     <button class="add-btn" id="heroAddBtn">+ Pin a new memory</button>
     <button class="fav-filter-btn" id="favFilterBtn" type="button">♡ Favorites only</button>
+    <button class="fav-filter-btn" id="surpriseBtn" type="button">🎲 Surprise me</button>
     <button class="music-btn" id="musicBtn" type="button" aria-label="Turn on music">🎵</button>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">🌙</button>
+  </div>
+  <div class="hero-actions secondary-row">
+    <input type="text" id="searchInput" class="search-input" placeholder="🔍 search captions...">
+    <select id="sortSelect" class="sort-select" aria-label="Sort order">
+      <option value="oldest">Oldest first</option>
+      <option value="newest">Newest first</option>
+      <option value="shuffle">Shuffle</option>
+    </select>
+    <button class="fav-filter-btn" id="notesToggleBtn" type="button">💌 Love notes</button>
   </div>
   <div class="count-note" id="countNote"></div>
 
@@ -663,7 +979,17 @@
   </div>
 </header>
 
+<section class="notes-wall hidden" id="notesWall">
+  <h2>Love Notes</h2>
+  <form class="note-form" id="noteForm">
+    <textarea id="noteInput" maxlength="200" placeholder="Leave a little note for them..."></textarea>
+    <button type="submit">Leave a note</button>
+  </form>
+  <div class="notes-grid" id="notesGrid"></div>
+</section>
+
 <div class="setup-banner" id="setupBanner">
+
   This gallery isn't connected to storage yet — add your Supabase URL and key near the top of the <code>&lt;script&gt;</code> section to bring it to life.
 </div>
 
@@ -686,13 +1012,43 @@
   <button class="lightbox-nav next" id="lightboxNext" aria-label="Next photo">›</button>
 </div>
 
+<div class="milestone-banner hidden" id="milestoneBanner">
+  <h3 id="milestoneTitle"></h3>
+  <p id="milestoneText"></p>
+  <button type="button" id="milestoneClose">Yay! 🎉</button>
+</div>
+
+<div class="style-modal hidden" id="styleModal">
+  <div class="style-card">
+    <h3>How should this photo look?</h3>
+    <div class="style-previews">
+      <button type="button" class="style-option" id="styleOriginal">
+        <img id="styleOriginalImg" src="" alt="Original preview">
+        <span>As it is</span>
+      </button>
+      <button type="button" class="style-option" id="styleVintage">
+        <img id="styleVintageImg" src="" alt="Vintage preview">
+        <span>Vintage tint</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 </div>
 
 <script>
 (function(){
+  /* ---------- theme (light/dark), applied immediately ---------- */
+  const THEME_KEY = 'ourLittleUniverseTheme';
+  if (localStorage.getItem(THEME_KEY) === 'dark'){
+    document.body.classList.add('dark-mode');
+  }
+
   let photos = []; // {id, src, caption, date, path, favorite}
   let currentList = [];
   let showFavoritesOnly = false;
+  let searchQuery = '';
+  let sortMode = 'oldest';
   let lightboxIndex = 0;
 
   const garlandEl = document.getElementById('garland');
@@ -706,6 +1062,36 @@
   const otdImg = document.getElementById('otdImg');
   const otdCaption = document.getElementById('otdCaption');
   const otdDismiss = document.getElementById('otdDismiss');
+
+  const siteTitle = document.getElementById('siteTitle');
+  const siteSubtitle = document.getElementById('siteSubtitle');
+  const editTitleBtn = document.getElementById('editTitleBtn');
+  const titleEditForm = document.getElementById('titleEditForm');
+  const titleInput = document.getElementById('titleInput');
+  const subtitleInput = document.getElementById('subtitleInput');
+  const cancelTitleBtn = document.getElementById('cancelTitleBtn');
+
+  const searchInput = document.getElementById('searchInput');
+  const sortSelect = document.getElementById('sortSelect');
+  const surpriseBtn = document.getElementById('surpriseBtn');
+
+  const notesToggleBtn = document.getElementById('notesToggleBtn');
+  const notesWall = document.getElementById('notesWall');
+  const noteForm = document.getElementById('noteForm');
+  const noteInput = document.getElementById('noteInput');
+  const notesGrid = document.getElementById('notesGrid');
+
+  const milestoneBanner = document.getElementById('milestoneBanner');
+  const milestoneTitle = document.getElementById('milestoneTitle');
+  const milestoneText = document.getElementById('milestoneText');
+  const milestoneClose = document.getElementById('milestoneClose');
+
+  const styleModal = document.getElementById('styleModal');
+  const styleOriginal = document.getElementById('styleOriginal');
+  const styleVintage = document.getElementById('styleVintage');
+  const styleOriginalImg = document.getElementById('styleOriginalImg');
+  const styleVintageImg = document.getElementById('styleVintageImg');
+  const themeBtn = document.getElementById('themeBtn');
   const setupBanner = document.getElementById('setupBanner');
   const daysTogetherEl = document.getElementById('daysTogether');
 
@@ -808,6 +1194,35 @@
     }
   }
 
+  /* ---------- soft pin chime ----------
+     A short two-note bell sound, generated the same way as the
+     background music (no audio file needed). Plays independently
+     of whether background music is on. */
+  function playPinChime(){
+    try{
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const now = audioCtx.currentTime;
+      const notes = [880, 1318.5];
+      notes.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const g = audioCtx.createGain();
+        g.gain.value = 0;
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+        const start = now + i * 0.12;
+        g.gain.linearRampToValueAtTime(0.09, start + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + 0.5);
+        osc.start(start);
+        osc.stop(start + 0.55);
+      });
+    }catch(err){
+      console.error('Could not play pin chime:', err);
+    }
+  }
+
   /* ---------- data layer ---------- */
   async function loadPhotos(){
     if (!supabase){ render(); return; }
@@ -897,6 +1312,175 @@
     }
   }
 
+  /* ---------- love notes wall ---------- */
+  const NOTES_TABLE = 'love_notes';
+  let notesLoaded = false;
+
+  async function loadNotes(){
+    if (!supabase) return;
+    try{
+      const { data, error } = await supabase
+        .from(NOTES_TABLE)
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      renderNotes(data || []);
+    }catch(err){
+      console.error('Could not load love notes:', err);
+    }
+  }
+
+  function renderNotes(notes){
+    notesGrid.innerHTML = '';
+    notes.forEach(note => {
+      const card = document.createElement('div');
+      card.className = 'note-card';
+      card.style.setProperty('--nt', (Math.random() * 6 - 3).toFixed(1) + 'deg');
+      const dateLabel = note.created_at
+        ? new Date(note.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        : '';
+      card.innerHTML = `
+        <button class="note-remove" type="button" aria-label="Remove note">✕</button>
+        <div>${escapeHtml(note.message)}</div>
+        <span class="note-date">${dateLabel}</span>
+      `;
+      card.querySelector('.note-remove').addEventListener('click', async () => {
+        card.remove();
+        try{ await supabase.from(NOTES_TABLE).delete().eq('id', note.id); }
+        catch(err){ console.error('Could not remove note:', err); }
+      });
+      notesGrid.appendChild(card);
+    });
+  }
+
+  notesToggleBtn.addEventListener('click', () => {
+    const nowHidden = notesWall.classList.toggle('hidden');
+    if (!nowHidden && !notesLoaded){
+      notesLoaded = true;
+      loadNotes();
+    }
+  });
+
+  noteForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const message = noteInput.value.trim();
+    if (!message || !supabase) return;
+    try{
+      await supabase.from(NOTES_TABLE).insert({ message });
+      noteInput.value = '';
+      loadNotes();
+    }catch(err){
+      console.error('Could not save note:', err);
+    }
+  });
+
+  /* ---------- editable title & subtitle ---------- */
+  const SETTINGS_TABLE = 'site_settings';
+
+  async function loadSiteSettings(){
+    if (!supabase) return;
+    try{
+      const { data, error } = await supabase
+        .from(SETTINGS_TABLE)
+        .select('*')
+        .eq('id', 1)
+        .maybeSingle();
+      if (error) throw error;
+      if (data){
+        if (data.title) siteTitle.textContent = data.title;
+        if (data.subtitle) siteSubtitle.textContent = data.subtitle;
+      }
+    }catch(err){
+      console.error('Could not load site settings:', err);
+    }
+  }
+
+  editTitleBtn.addEventListener('click', () => {
+    titleInput.value = siteTitle.textContent;
+    subtitleInput.value = siteSubtitle.textContent;
+    titleEditForm.classList.remove('hidden');
+    titleInput.focus();
+  });
+  cancelTitleBtn.addEventListener('click', () => {
+    titleEditForm.classList.add('hidden');
+  });
+  titleEditForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newTitle = titleInput.value.trim() || 'Our Little Universe';
+    const newSubtitle = subtitleInput.value.trim() || 'every memory, pinned up to keep';
+    siteTitle.textContent = newTitle;
+    siteSubtitle.textContent = newSubtitle;
+    titleEditForm.classList.add('hidden');
+    if (supabase){
+      try{
+        await supabase.from(SETTINGS_TABLE).upsert({ id: 1, title: newTitle, subtitle: newSubtitle });
+      }catch(err){
+        console.error('Could not save title:', err);
+      }
+    }
+  });
+
+  /* ---------- downloadable memory card ---------- */
+  async function downloadMemoryCard(photo){
+    try{
+      await document.fonts.load('32px Caveat');
+      await document.fonts.load('16px Quicksand');
+    }catch(e){ /* fonts may already be loaded; safe to continue either way */ }
+
+    const { img } = await fileToImage(await (await fetch(photo.src)).blob());
+    const W = 600, H = 750, pad = 36, photoH = 560;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#FFFDF9';
+    ctx.fillRect(0, 0, W, H);
+
+    const scale = Math.min((W - pad * 2) / img.naturalWidth, photoH / img.naturalHeight);
+    const dw = img.naturalWidth * scale, dh = img.naturalHeight * scale;
+    const dx = (W - dw) / 2, dy = pad;
+    ctx.fillStyle = '#F4E9DC';
+    ctx.fillRect(pad, pad, W - pad * 2, photoH);
+    ctx.drawImage(img, dx, dy, dw, dh);
+
+    ctx.fillStyle = '#6B5344';
+    ctx.font = '32px Caveat, cursive';
+    ctx.textAlign = 'center';
+    wrapText(ctx, photo.caption, W / 2, photoH + pad + 50, W - pad * 3, 38);
+
+    ctx.font = '16px Quicksand, sans-serif';
+    ctx.fillStyle = '#9C8776';
+    ctx.fillText(photo.date, W / 2, H - 26);
+
+    canvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'our-little-universe-memory.jpg';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }, 'image/jpeg', 0.92);
+  }
+
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+    const words = text.split(' ');
+    let line = '';
+    const lines = [];
+    words.forEach(word => {
+      const test = line + word + ' ';
+      if (ctx.measureText(test).width > maxWidth && line){
+        lines.push(line);
+        line = word + ' ';
+      }else{
+        line = test;
+      }
+    });
+    lines.push(line);
+    const startY = y - ((lines.length - 1) * lineHeight) / 2;
+    lines.forEach((l, i) => ctx.fillText(l.trim(), x, startY + i * lineHeight));
+  }
+
+
   /* ---------- soft ambient background music ----------
      Generated entirely in the browser (no audio file needed) —
      a few soft sustained tones with a slow filter sweep. */
@@ -964,6 +1548,18 @@
     if (musicOn) startMusic(); else stopMusic();
   });
 
+  function updateThemeBtn(){
+    const isDark = document.body.classList.contains('dark-mode');
+    themeBtn.textContent = isDark ? '☀️' : '🌙';
+    themeBtn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+  }
+  updateThemeBtn();
+  themeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem(THEME_KEY, document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    updateThemeBtn();
+  });
+
   /* ---------- on this day ---------- */
   function maybeShowOnThisDay(){
     if (photos.length < 2) return;
@@ -1001,16 +1597,147 @@
     render();
   });
 
+  let searchTimer = null;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      searchQuery = searchInput.value;
+      render();
+    }, 250);
+  });
+
+  sortSelect.addEventListener('change', () => {
+    sortMode = sortSelect.value;
+    render();
+  });
+
+  surpriseBtn.addEventListener('click', () => {
+    if (!currentList.length) return;
+    const idx = Math.floor(Math.random() * currentList.length);
+    openLightbox(idx);
+  });
+
+  /* ---------- vintage filter (opt-in per upload) ---------- */
+  function fileToImage(file){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => resolve({ img, url });
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  function sepiaTint(imageData){
+    const d = imageData.data;
+    for (let i = 0; i < d.length; i += 4){
+      const r = d[i], g = d[i + 1], b = d[i + 2];
+      d[i]     = Math.min(255, 0.393 * r + 0.769 * g + 0.189 * b);
+      d[i + 1] = Math.min(255, 0.349 * r + 0.686 * g + 0.168 * b);
+      d[i + 2] = Math.min(255, 0.272 * r + 0.534 * g + 0.131 * b);
+    }
+  }
+
+  async function applyVintageTint(file){
+    const { img, url } = await fileToImage(file);
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    sepiaTint(imageData);
+    ctx.putImageData(imageData, 0, 0);
+    const grad = ctx.createRadialGradient(
+      canvas.width / 2, canvas.height / 2, canvas.width * 0.3,
+      canvas.width / 2, canvas.height / 2, canvas.width * 0.7
+    );
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, 'rgba(60,40,20,0.18)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+    return new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/jpeg', 0.9));
+  }
+
+  async function makePreview(file, tint){
+    const { img, url } = await fileToImage(file);
+    const size = 110;
+    const canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const scale = Math.max(size / img.naturalWidth, size / img.naturalHeight);
+    const dw = img.naturalWidth * scale, dh = img.naturalHeight * scale;
+    ctx.drawImage(img, (size - dw) / 2, (size - dh) / 2, dw, dh);
+    if (tint){
+      const imageData = ctx.getImageData(0, 0, size, size);
+      sepiaTint(imageData);
+      ctx.putImageData(imageData, 0, 0);
+    }
+    URL.revokeObjectURL(url);
+    return canvas.toDataURL('image/jpeg', 0.85);
+  }
+
+  function askPhotoStyle(file){
+    return new Promise(async (resolve) => {
+      try{
+        const [origPreview, vintagePreview] = await Promise.all([
+          makePreview(file, false),
+          makePreview(file, true)
+        ]);
+        styleOriginalImg.src = origPreview;
+        styleVintageImg.src = vintagePreview;
+      }catch(err){
+        console.error('Could not build style preview:', err);
+      }
+      styleModal.classList.remove('hidden');
+
+      function cleanup(choice){
+        styleModal.classList.add('hidden');
+        styleOriginal.removeEventListener('click', onOriginal);
+        styleVintage.removeEventListener('click', onVintage);
+        resolve(choice);
+      }
+      function onOriginal(){ cleanup('original'); }
+      function onVintage(){ cleanup('vintage'); }
+      styleOriginal.addEventListener('click', onOriginal);
+      styleVintage.addEventListener('click', onVintage);
+    });
+  }
+
+  /* ---------- milestone celebration ---------- */
+  const MILESTONES = [10, 50, 100, 250, 500, 1000];
+  function checkMilestone(count){
+    if (!MILESTONES.includes(count)) return;
+    milestoneTitle.textContent = `🎉 ${count} memories pinned!`;
+    milestoneText.textContent = 'a little universe, growing one moment at a time';
+    milestoneBanner.classList.remove('hidden');
+    for (let i = 0; i < 3; i++){
+      setTimeout(() => burstHearts(milestoneBanner), i * 200);
+    }
+  }
+  milestoneClose.addEventListener('click', () => milestoneBanner.classList.add('hidden'));
+
   fileInput.addEventListener('change', async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length || !supabase) return;
 
+    const choice = await askPhotoStyle(files[0]);
+
     for (const file of files){
       try{
-        const record = await uploadAndSave(file);
+        let uploadFile = file;
+        if (choice === 'vintage'){
+          const blob = await applyVintageTint(file);
+          const baseName = (file.name || 'photo').replace(/\.[^.]+$/, '');
+          uploadFile = new File([blob], baseName + '.jpg', { type: 'image/jpeg' });
+        }
+        const record = await uploadAndSave(uploadFile);
         photos.push(record);
         render();
         burstHearts(heroAddBtn);
+        playPinChime();
+        checkMilestone(photos.length);
       }catch(err){
         console.error('Could not save this memory:', err);
       }
@@ -1035,17 +1762,36 @@
     garlandEl.innerHTML = '';
     const animate = !hasRenderedOnce;
 
-    const items = showFavoritesOnly ? photos.filter(p => p.favorite) : photos;
+    let items = showFavoritesOnly ? photos.filter(p => p.favorite) : photos.slice();
+
+    if (searchQuery.trim()){
+      const q = searchQuery.trim().toLowerCase();
+      items = items.filter(p => (p.caption || '').toLowerCase().includes(q));
+    }
+
+    if (sortMode === 'newest'){
+      items = items.slice().reverse();
+    }else if (sortMode === 'shuffle'){
+      items = items.slice();
+      for (let i = items.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+      }
+    }
+
+    const isFiltered = showFavoritesOnly || !!searchQuery.trim();
     currentList = items;
 
     countNote.textContent = photos.length
       ? `${photos.length} memor${photos.length === 1 ? 'y' : 'ies'} pinned so far`
       : '';
 
-    if (showFavoritesOnly && items.length === 0){
-      emptyNote.textContent = 'no favorites yet — tap the heart on a photo to save it here';
+    if (isFiltered && items.length === 0){
+      emptyNote.textContent = showFavoritesOnly
+        ? 'no favorites yet — tap the heart on a photo to save it here'
+        : 'no memories match that search';
       emptyNote.style.display = 'block';
-    }else if (!showFavoritesOnly && photos.length === 0){
+    }else if (!isFiltered && photos.length === 0){
       emptyNote.textContent = 'no memories pinned yet — tap the polaroid below to add your first one';
       emptyNote.style.display = 'block';
     }else{
@@ -1053,7 +1799,7 @@
     }
 
     const perRow = 4;
-    const rowsNeeded = Math.max(1, Math.ceil((items.length + (showFavoritesOnly ? 0 : 1)) / perRow));
+    const rowsNeeded = Math.max(1, Math.ceil((items.length + (isFiltered ? 0 : 1)) / perRow));
 
     let cursor = 0;
     for (let r = 0; r < rowsNeeded; r++){
@@ -1067,7 +1813,7 @@
         rowItems.appendChild(buildPolaroid(items[cursor], cursor, animate));
       }
 
-      if (r === rowsNeeded - 1 && !showFavoritesOnly){
+      if (r === rowsNeeded - 1 && !isFiltered){
         rowItems.appendChild(buildAddTile(animate));
       }
 
@@ -1128,7 +1874,10 @@
           <textarea maxlength="120" aria-label="Write a note for this memory">${escapeHtml(photo.caption)}</textarea>
           <div class="back-footer">
             <span>${photo.date}</span>
-            <button class="unpin" type="button">unpin</button>
+            <div style="display:flex; gap:6px;">
+              <button class="card-download" type="button">⬇ save</button>
+              <button class="unpin" type="button">unpin</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1147,9 +1896,10 @@
     const unpinBtn = wrap.querySelector('.unpin');
     const favBtn = wrap.querySelector('.fav-heart');
     const expandBtn = wrap.querySelector('.expand-btn');
+    const downloadBtn = wrap.querySelector('.card-download');
 
     function flip(e){
-      if ([textarea, unpinBtn, favBtn, expandBtn].includes(e.target)) return;
+      if ([textarea, unpinBtn, favBtn, expandBtn, downloadBtn].includes(e.target)) return;
       card.classList.toggle('flipped');
     }
     card.addEventListener('click', flip);
@@ -1168,6 +1918,17 @@
       preview.textContent = photo.caption;
       clearTimeout(saveTimer);
       saveTimer = setTimeout(() => saveCaption(photo), 400);
+    });
+
+    downloadBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      downloadBtn.textContent = '...';
+      try{
+        await downloadMemoryCard(photo);
+      }catch(err){
+        console.error('Could not create downloadable card:', err);
+      }
+      downloadBtn.textContent = '⬇ save';
     });
 
     unpinBtn.addEventListener('click', async (e) => {
@@ -1251,9 +2012,18 @@
     initialized = true;
     renderDaysTogether();
     buildAmbientHearts();
+    loadSiteSettings();
     loadPhotos();
   }
 })();
+
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch((err) => {
+      console.error('Service worker registration failed:', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
