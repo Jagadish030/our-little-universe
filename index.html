@@ -36,6 +36,70 @@
     min-height: 100vh;
   }
 
+  /* ---------- password gate ---------- */
+  .pass-gate{
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+  .pass-gate.hidden{ display: none; }
+  .pass-card{
+    background: var(--white);
+    border-radius: 14px;
+    box-shadow: 0 14px 34px var(--shadow);
+    padding: 2.2rem 2rem;
+    text-align: center;
+    max-width: 320px;
+    width: 100%;
+  }
+  .pass-card h2{
+    font-family: 'Caveat', cursive;
+    font-size: 2rem;
+    margin: 0 0 0.3rem;
+    color: var(--ink);
+  }
+  .pass-card p{
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin: 0 0 1.2rem;
+  }
+  .pass-card input{
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid #E3D3C2;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.95rem;
+    text-align: center;
+    margin-bottom: 0.9rem;
+    outline: none;
+  }
+  .pass-card input:focus{ border-color: var(--rose-deep); }
+  .pass-card button{
+    width: 100%;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--white);
+    background: var(--rose-deep);
+    border: none;
+    border-radius: 999px;
+    padding: 0.75rem;
+    cursor: pointer;
+  }
+  .pass-error{
+    color: var(--rose-deep);
+    font-size: 0.8rem;
+    margin-top: 0.7rem;
+    min-height: 1.1em;
+  }
+  #siteContent.hidden{ display: none; }
+
   /* ---------- ambient floating hearts ---------- */
   .ambient{
     position: fixed;
@@ -59,6 +123,20 @@
     10%{ opacity: 0.35; }
     90%{ opacity: 0.35; }
     100%{ transform: translateY(-115vh) translateX(20px) rotate(25deg); opacity: 0; }
+  }
+
+  /* ---------- burst hearts (on pin) ---------- */
+  .burst-heart{
+    position: fixed;
+    z-index: 500;
+    pointer-events: none;
+    font-size: 1.2rem;
+    color: var(--rose-deep);
+    animation: burstUp 0.9s ease-out forwards;
+  }
+  @keyframes burstUp{
+    0%{ transform: translate(0,0) scale(0.6); opacity: 1; }
+    100%{ transform: translate(var(--dx,0px), -70px) scale(1.1); opacity: 0; }
   }
 
   /* ---------- hero ---------- */
@@ -87,7 +165,20 @@
     font-family: 'Caveat', cursive;
     font-size: 1.4rem;
     color: var(--rose-deep);
-    margin: 0.4rem 0 1.8rem;
+    margin: 0.4rem 0 0.3rem;
+  }
+  .days-together{
+    font-family: 'Caveat', cursive;
+    font-size: 1.15rem;
+    color: var(--sage);
+    margin: 0 0 1.6rem;
+  }
+
+  .hero-actions{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    justify-content: center;
   }
 
   .add-btn{
@@ -107,6 +198,97 @@
     transform: translateY(-2px);
     box-shadow: 0 10px 22px var(--shadow);
     background: #C97781;
+  }
+  .fav-filter-btn{
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--rose-deep);
+    background: var(--white);
+    border: 1px solid var(--rose-deep);
+    border-radius: 999px;
+    padding: 0.8rem 1.4rem;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .fav-filter-btn.active{
+    background: var(--rose-deep);
+    color: var(--white);
+  }
+  .music-btn{
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--sage);
+    background: var(--white);
+    color: var(--sage);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .music-btn.playing{
+    background: var(--sage);
+    color: var(--white);
+  }
+
+  .on-this-day{
+    position: relative;
+    max-width: 340px;
+    margin: 1.4rem auto 0;
+    background: var(--white);
+    border-radius: 14px;
+    box-shadow: 0 8px 22px var(--shadow);
+    padding: 0.7rem 2rem 0.7rem 0.7rem;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    text-align: left;
+    animation: fadeRise 0.6s ease-out;
+  }
+  .on-this-day.hidden{ display: none; }
+  .on-this-day img{
+    width: 54px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .otd-text{ min-width: 0; }
+  .otd-label{
+    display: block;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sage);
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 600;
+  }
+  .otd-text p{
+    margin: 2px 0 0;
+    font-family: 'Caveat', cursive;
+    font-size: 1.15rem;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .otd-dismiss{
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 4px;
+  }
+  @keyframes fadeRise{
+    from{ opacity: 0; transform: translateY(10px); }
+    to{ opacity: 1; transform: translateY(0); }
   }
   .add-btn:focus-visible, button:focus-visible, .polaroid:focus-visible{
     outline: 3px solid var(--sage);
@@ -182,6 +364,20 @@
     .polaroid-wrap{ animation: sway 6s ease-in-out infinite; }
     .polaroid-wrap:nth-child(3n){ animation-duration: 7s; }
     .polaroid-wrap:nth-child(3n+1){ animation-duration: 5.2s; }
+    .polaroid-wrap.card-enter{
+      animation: cardFadeIn 0.5s ease-out backwards, sway 6s ease-in-out infinite;
+    }
+    .pin.pin-enter{
+      animation: pinDrop 0.45s ease-out backwards;
+    }
+  }
+  @keyframes cardFadeIn{
+    from{ opacity: 0; }
+    to{ opacity: 1; }
+  }
+  @keyframes pinDrop{
+    from{ opacity: 0; transform: translateX(-50%) translateY(-10px); }
+    to{ opacity: 1; transform: translateX(-50%) translateY(0); }
   }
   @keyframes sway{
     0%, 100%{ transform: rotate(var(--tilt, -2deg)); }
@@ -212,6 +408,7 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    position: relative;
   }
   .face.front img{
     width: 100%;
@@ -230,6 +427,46 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .fav-heart{
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 2;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,253,249,0.85);
+    box-shadow: 0 2px 6px var(--shadow);
+    font-size: 1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--rose-deep);
+  }
+  .fav-heart.active{ color: var(--rose-deep); }
+
+  .expand-btn{
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    z-index: 2;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,253,249,0.85);
+    box-shadow: 0 2px 6px var(--shadow);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--ink);
   }
 
   .face.back{
@@ -330,9 +567,77 @@
     padding: 1px 5px;
     border-radius: 4px;
   }
+
+  /* ---------- lightbox ---------- */
+  .lightbox{
+    position: fixed;
+    inset: 0;
+    z-index: 800;
+    background: rgba(40,30,24,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  .lightbox.hidden{ display: none; }
+  .lightbox img{
+    max-width: 88vw;
+    max-height: 76vh;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  }
+  .lightbox-caption{
+    font-family: 'Caveat', cursive;
+    font-size: 1.4rem;
+    color: var(--white);
+    text-align: center;
+    margin-top: 0.8rem;
+    max-width: 80vw;
+  }
+  .lightbox-close, .lightbox-nav{
+    position: fixed;
+    background: rgba(255,255,255,0.12);
+    border: none;
+    color: var(--white);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lightbox-close{
+    top: 1.2rem;
+    right: 1.2rem;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+  .lightbox-nav{
+    top: 50%;
+    transform: translateY(-50%);
+    width: 46px;
+    height: 46px;
+    font-size: 1.6rem;
+  }
+  .lightbox-nav.prev{ left: 1.2rem; }
+  .lightbox-nav.next{ right: 1.2rem; }
+  .lightbox-nav:hover, .lightbox-close:hover{ background: rgba(255,255,255,0.22); }
 </style>
 </head>
 <body>
+
+<div class="pass-gate" id="passGate">
+  <form class="pass-card" id="passForm">
+    <h2>Our Little Universe</h2>
+    <p>this space is just for the two of you 🤍</p>
+    <input type="password" id="passInput" placeholder="Enter the password" autocomplete="off">
+    <button type="submit">Unlock</button>
+    <div class="pass-error" id="passError"></div>
+  </form>
+</div>
+
+<div id="siteContent" class="hidden">
 
 <div class="ambient" id="ambient" aria-hidden="true"></div>
 
@@ -340,8 +645,22 @@
   <div class="eyebrow">a scrapbook for two</div>
   <h1>Our Little Universe</h1>
   <p class="subtitle">every memory, pinned up to keep</p>
-  <button class="add-btn" id="heroAddBtn">+ Pin a new memory</button>
+  <p class="days-together" id="daysTogether"></p>
+  <div class="hero-actions">
+    <button class="add-btn" id="heroAddBtn">+ Pin a new memory</button>
+    <button class="fav-filter-btn" id="favFilterBtn" type="button">♡ Favorites only</button>
+    <button class="music-btn" id="musicBtn" type="button" aria-label="Turn on music">🎵</button>
+  </div>
   <div class="count-note" id="countNote"></div>
+
+  <div class="on-this-day hidden" id="onThisDay">
+    <button class="otd-dismiss" id="otdDismiss" type="button" aria-label="Dismiss">✕</button>
+    <img id="otdImg" src="" alt="A memory">
+    <div class="otd-text">
+      <span class="otd-label">a memory to remember</span>
+      <p id="otdCaption"></p>
+    </div>
+  </div>
 </header>
 
 <div class="setup-banner" id="setupBanner">
@@ -357,24 +676,67 @@
 
 <input type="file" id="fileInput" accept="image/*" multiple hidden>
 
+<div class="lightbox hidden" id="lightbox">
+  <button class="lightbox-close" id="lightboxClose" aria-label="Close">✕</button>
+  <button class="lightbox-nav prev" id="lightboxPrev" aria-label="Previous photo">‹</button>
+  <div>
+    <img id="lightboxImg" src="" alt="">
+    <p class="lightbox-caption" id="lightboxCaption"></p>
+  </div>
+  <button class="lightbox-nav next" id="lightboxNext" aria-label="Next photo">›</button>
+</div>
+
+</div>
+
 <script>
 (function(){
-  let photos = []; // {id, src, caption, date}
+  let photos = []; // {id, src, caption, date, path, favorite}
+  let currentList = [];
+  let showFavoritesOnly = false;
+  let lightboxIndex = 0;
 
   const garlandEl = document.getElementById('garland');
   const emptyNote = document.getElementById('emptyNote');
   const countNote = document.getElementById('countNote');
   const fileInput = document.getElementById('fileInput');
   const heroAddBtn = document.getElementById('heroAddBtn');
+  const favFilterBtn = document.getElementById('favFilterBtn');
+  const musicBtn = document.getElementById('musicBtn');
+  const onThisDay = document.getElementById('onThisDay');
+  const otdImg = document.getElementById('otdImg');
+  const otdCaption = document.getElementById('otdCaption');
+  const otdDismiss = document.getElementById('otdDismiss');
   const setupBanner = document.getElementById('setupBanner');
+  const daysTogetherEl = document.getElementById('daysTogether');
+
+  const passGate = document.getElementById('passGate');
+  const passForm = document.getElementById('passForm');
+  const passInput = document.getElementById('passInput');
+  const passError = document.getElementById('passError');
+  const siteContent = document.getElementById('siteContent');
+
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxCaption = document.getElementById('lightboxCaption');
+  const lightboxClose = document.getElementById('lightboxClose');
+  const lightboxPrev = document.getElementById('lightboxPrev');
+  const lightboxNext = document.getElementById('lightboxNext');
+
+  /* ================================================================
+     SITE SETTINGS — edit these to make the page yours
+     ================================================================ */
+
+  // A soft access gate for just the two of you. This is NOT strong
+  // security (anyone who views the page source can find it) — it just
+  // keeps random link visitors out. Change it to whatever you like.
+  const PASSWORD = 'ourlove';
+
+  // Set this to the date you want the "days together" counter to count
+  // from, in YYYY-MM-DD format. Leave as-is to hide the counter.
+  const ANNIVERSARY_DATE = 'YYYY-MM-DD';
 
   /* ================================================================
      CLOUD STORAGE SETUP — fill these in with your own Supabase project
-     1. Create a free project at https://supabase.com
-     2. Go to Project Settings → API and copy the "Project URL" and
-        the "anon public" key into the two lines below.
-     3. Run the SQL setup script (given separately) in the Supabase
-        SQL editor to create the table, bucket, and access policies.
      ================================================================ */
   const SUPABASE_URL = 'https://cctlzqlchijwrxrxnmmm.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjdGx6cWxjaGlqd3J4cnhubW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MDg1NTksImV4cCI6MjA5OTQ4NDU1OX0.5cEM69NsRjiN2d1XqzFcqVmSp8Db0AqxRr6wLJmm5Yc';
@@ -390,6 +752,63 @@
     setupBanner.classList.add('show');
   }
 
+  /* ---------- password gate ----------
+     Asks every time the page loads or reloads — nothing is remembered
+     in the browser, so it's not a one-time-per-session unlock anymore. */
+  function unlockSite(){
+    passGate.classList.add('hidden');
+    siteContent.classList.remove('hidden');
+    init();
+  }
+
+  passForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (passInput.value.trim().toLowerCase() === PASSWORD.toLowerCase()){
+      passError.textContent = '';
+      unlockSite();
+    }else{
+      passError.textContent = 'that\'s not quite it — try again';
+      passInput.value = '';
+      passInput.focus();
+    }
+  });
+
+  /* ---------- days together ---------- */
+  function renderDaysTogether(){
+    if (!ANNIVERSARY_DATE || ANNIVERSARY_DATE === 'YYYY-MM-DD'){
+      daysTogetherEl.style.display = 'none';
+      return;
+    }
+    const start = new Date(ANNIVERSARY_DATE + 'T00:00:00');
+    if (isNaN(start.getTime())){
+      daysTogetherEl.style.display = 'none';
+      return;
+    }
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const days = Math.max(0, Math.round((today - start) / 86400000));
+    daysTogetherEl.textContent = `${days.toLocaleString()} days together ✨`;
+  }
+
+  /* ---------- burst hearts ---------- */
+  function burstHearts(originEl){
+    const rect = originEl.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    for (let i = 0; i < 6; i++){
+      const h = document.createElement('span');
+      h.className = 'burst-heart';
+      h.textContent = '♥';
+      h.style.left = cx + 'px';
+      h.style.top = cy + 'px';
+      h.style.setProperty('--dx', (Math.random() * 100 - 50) + 'px');
+      h.style.animationDelay = (Math.random() * 0.15) + 's';
+      document.body.appendChild(h);
+      setTimeout(() => h.remove(), 1100);
+    }
+  }
+
+  /* ---------- data layer ---------- */
   async function loadPhotos(){
     if (!supabase){ render(); return; }
     try{
@@ -403,13 +822,15 @@
         src: row.image_url,
         caption: row.caption,
         date: row.date_label,
-        path: row.image_path
+        path: row.image_path,
+        favorite: !!row.is_favorite
       }));
     }catch(err){
       console.error('Could not load memories from the cloud:', err);
       photos = [];
     }
     render();
+    maybeShowOnThisDay();
   }
 
   async function uploadAndSave(file){
@@ -427,7 +848,8 @@
       image_path: path,
       image_url: urlData.publicUrl,
       caption: 'a moment worth keeping ✨',
-      date_label: formatToday()
+      date_label: formatToday(),
+      is_favorite: false
     };
 
     const { data: inserted, error: insertError } = await supabase
@@ -442,7 +864,8 @@
       src: inserted.image_url,
       caption: inserted.caption,
       date: inserted.date_label,
-      path: inserted.image_path
+      path: inserted.image_path,
+      favorite: !!inserted.is_favorite
     };
   }
 
@@ -455,6 +878,15 @@
     if (error) console.error('Could not save this note:', error);
   }
 
+  async function saveFavorite(photo){
+    if (!supabase) return;
+    const { error } = await supabase
+      .from(TABLE)
+      .update({ is_favorite: photo.favorite })
+      .eq('id', photo.id);
+    if (error) console.error('Could not save favorite:', error);
+  }
+
   async function removePhoto(photo){
     if (!supabase) return;
     try{
@@ -465,6 +897,94 @@
     }
   }
 
+  /* ---------- soft ambient background music ----------
+     Generated entirely in the browser (no audio file needed) —
+     a few soft sustained tones with a slow filter sweep. */
+  let audioCtx = null;
+  let musicNodes = null;
+  let musicOn = false;
+
+  function startMusic(){
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const master = audioCtx.createGain();
+    master.gain.value = 0;
+    master.connect(audioCtx.destination);
+    master.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 2);
+
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 900;
+    filter.connect(master);
+
+    const freqs = [130.81, 164.81, 196.00, 130.81 * 1.003];
+    const oscs = freqs.map(f => {
+      const o = audioCtx.createOscillator();
+      o.type = 'sine';
+      o.frequency.value = f;
+      const g = audioCtx.createGain();
+      g.gain.value = 0.22;
+      o.connect(g);
+      g.connect(filter);
+      o.start();
+      return o;
+    });
+
+    const lfo = audioCtx.createOscillator();
+    lfo.frequency.value = 0.045;
+    const lfoGain = audioCtx.createGain();
+    lfoGain.gain.value = 260;
+    lfo.connect(lfoGain);
+    lfoGain.connect(filter.frequency);
+    lfo.start();
+
+    musicNodes = { master, oscs, lfo };
+  }
+
+  function stopMusic(){
+    if (!musicNodes || !audioCtx) return;
+    const { master, oscs, lfo } = musicNodes;
+    const now = audioCtx.currentTime;
+    master.gain.cancelScheduledValues(now);
+    master.gain.setValueAtTime(master.gain.value, now);
+    master.gain.linearRampToValueAtTime(0, now + 1);
+    setTimeout(() => {
+      oscs.forEach(o => { try{ o.stop(); }catch(e){} });
+      try{ lfo.stop(); }catch(e){}
+      musicNodes = null;
+    }, 1100);
+  }
+
+  musicBtn.addEventListener('click', () => {
+    musicOn = !musicOn;
+    musicBtn.classList.toggle('playing', musicOn);
+    musicBtn.textContent = musicOn ? '🔊' : '🎵';
+    musicBtn.setAttribute('aria-label', musicOn ? 'Turn off music' : 'Turn on music');
+    if (musicOn) startMusic(); else stopMusic();
+  });
+
+  /* ---------- on this day ---------- */
+  function maybeShowOnThisDay(){
+    if (photos.length < 2) return;
+    if (Math.random() > 0.65) return;
+    const pick = photos[Math.floor(Math.random() * photos.length)];
+    otdImg.src = pick.src;
+    otdCaption.textContent = pick.caption;
+    onThisDay.dataset.photoId = String(pick.id);
+    onThisDay.classList.remove('hidden');
+  }
+
+  onThisDay.addEventListener('click', (e) => {
+    if (e.target === otdDismiss) return;
+    const idx = currentList.findIndex(p => String(p.id) === onThisDay.dataset.photoId);
+    if (idx > -1) openLightbox(idx);
+  });
+  otdDismiss.addEventListener('click', (e) => {
+    e.stopPropagation();
+    onThisDay.classList.add('hidden');
+  });
+
   heroAddBtn.addEventListener('click', () => {
     if (!supabase){
       setupBanner.classList.add('show');
@@ -472,6 +992,13 @@
       return;
     }
     fileInput.click();
+  });
+
+  favFilterBtn.addEventListener('click', () => {
+    showFavoritesOnly = !showFavoritesOnly;
+    favFilterBtn.classList.toggle('active', showFavoritesOnly);
+    favFilterBtn.textContent = showFavoritesOnly ? '♥ Showing favorites' : '♡ Favorites only';
+    render();
   });
 
   fileInput.addEventListener('change', async (e) => {
@@ -483,6 +1010,7 @@
         const record = await uploadAndSave(file);
         photos.push(record);
         render();
+        burstHearts(heroAddBtn);
       }catch(err){
         console.error('Could not save this memory:', err);
       }
@@ -500,16 +1028,32 @@
     return deg + 'deg';
   }
 
+  /* ---------- render ---------- */
+  let hasRenderedOnce = false;
+
   function render(){
     garlandEl.innerHTML = '';
+    const animate = !hasRenderedOnce;
+
+    const items = showFavoritesOnly ? photos.filter(p => p.favorite) : photos;
+    currentList = items;
+
     countNote.textContent = photos.length
       ? `${photos.length} memor${photos.length === 1 ? 'y' : 'ies'} pinned so far`
       : '';
-    emptyNote.style.display = photos.length ? 'none' : 'block';
+
+    if (showFavoritesOnly && items.length === 0){
+      emptyNote.textContent = 'no favorites yet — tap the heart on a photo to save it here';
+      emptyNote.style.display = 'block';
+    }else if (!showFavoritesOnly && photos.length === 0){
+      emptyNote.textContent = 'no memories pinned yet — tap the polaroid below to add your first one';
+      emptyNote.style.display = 'block';
+    }else{
+      emptyNote.style.display = 'none';
+    }
 
     const perRow = 4;
-    const items = photos.length ? photos : [];
-    const rowsNeeded = Math.max(1, Math.ceil((items.length + 1) / perRow));
+    const rowsNeeded = Math.max(1, Math.ceil((items.length + (showFavoritesOnly ? 0 : 1)) / perRow));
 
     let cursor = 0;
     for (let r = 0; r < rowsNeeded; r++){
@@ -520,18 +1064,20 @@
       row.appendChild(rowItems);
 
       for (let c = 0; c < perRow && cursor < items.length; c++, cursor++){
-        rowItems.appendChild(buildPolaroid(items[cursor]));
+        rowItems.appendChild(buildPolaroid(items[cursor], cursor, animate));
       }
 
-      if (r === rowsNeeded - 1){
-        rowItems.appendChild(buildAddTile());
+      if (r === rowsNeeded - 1 && !showFavoritesOnly){
+        rowItems.appendChild(buildAddTile(animate));
       }
 
       garlandEl.appendChild(row);
     }
+
+    hasRenderedOnce = true;
   }
 
-  function buildAddTile(){
+  function buildAddTile(animate){
     const wrap = document.createElement('div');
     wrap.className = 'polaroid-wrap';
     wrap.style.setProperty('--tilt', randomTilt());
@@ -543,6 +1089,10 @@
         </div>
       </div>
     `;
+    if (animate){
+      wrap.classList.add('card-enter');
+      wrap.querySelector('.pin').classList.add('pin-enter');
+    }
     const trigger = () => {
       if (!supabase){
         setupBanner.classList.add('show');
@@ -558,7 +1108,7 @@
     return wrap;
   }
 
-  function buildPolaroid(photo){
+  function buildPolaroid(photo, index, animate){
     const wrap = document.createElement('div');
     wrap.className = 'polaroid-wrap';
     wrap.style.setProperty('--tilt', randomTilt());
@@ -567,8 +1117,10 @@
       <div class="pin"></div>
       <div class="polaroid" tabindex="0" role="button" aria-label="Flip photo to see the note">
         <div class="face front">
+          <button class="fav-heart" type="button" aria-label="Toggle favorite">${photo.favorite ? '♥' : '♡'}</button>
           <div class="photo-frame">
             <img src="${photo.src}" alt="A memory">
+            <button class="expand-btn" type="button" aria-label="View full size">⤢</button>
           </div>
           <div class="cap-preview">${escapeHtml(photo.caption)}</div>
         </div>
@@ -582,12 +1134,22 @@
       </div>
     `;
 
+    if (animate){
+      wrap.classList.add('card-enter');
+      wrap.querySelector('.pin').classList.add('pin-enter');
+      const delay = Math.min(index * 0.05, 0.5) + 's';
+      wrap.style.animationDelay = delay;
+      wrap.querySelector('.pin').style.animationDelay = delay;
+    }
+
     const card = wrap.querySelector('.polaroid');
     const textarea = wrap.querySelector('textarea');
     const unpinBtn = wrap.querySelector('.unpin');
+    const favBtn = wrap.querySelector('.fav-heart');
+    const expandBtn = wrap.querySelector('.expand-btn');
 
     function flip(e){
-      if (e.target === textarea || e.target === unpinBtn) return;
+      if ([textarea, unpinBtn, favBtn, expandBtn].includes(e.target)) return;
       card.classList.toggle('flipped');
     }
     card.addEventListener('click', flip);
@@ -616,6 +1178,20 @@
       await removePhoto(photo);
     });
 
+    favBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      photo.favorite = !photo.favorite;
+      favBtn.textContent = photo.favorite ? '♥' : '♡';
+      favBtn.classList.toggle('active', photo.favorite);
+      await saveFavorite(photo);
+      if (showFavoritesOnly) render();
+    });
+
+    expandBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openLightbox(index);
+    });
+
     return wrap;
   }
 
@@ -625,6 +1201,36 @@
     return div.innerHTML;
   }
 
+  /* ---------- lightbox ---------- */
+  function openLightbox(index){
+    lightboxIndex = index;
+    showLightboxPhoto();
+    lightbox.classList.remove('hidden');
+    document.addEventListener('keydown', handleLightboxKeys);
+  }
+  function closeLightbox(){
+    lightbox.classList.add('hidden');
+    document.removeEventListener('keydown', handleLightboxKeys);
+  }
+  function showLightboxPhoto(){
+    if (!currentList.length) return;
+    lightboxIndex = (lightboxIndex + currentList.length) % currentList.length;
+    const p = currentList[lightboxIndex];
+    lightboxImg.src = p.src;
+    lightboxImg.alt = 'A memory';
+    lightboxCaption.textContent = p.caption;
+  }
+  function handleLightboxKeys(e){
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft'){ lightboxIndex--; showLightboxPhoto(); }
+    if (e.key === 'ArrowRight'){ lightboxIndex++; showLightboxPhoto(); }
+  }
+  lightboxClose.addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+  lightboxPrev.addEventListener('click', () => { lightboxIndex--; showLightboxPhoto(); });
+  lightboxNext.addEventListener('click', () => { lightboxIndex++; showLightboxPhoto(); });
+
+  /* ---------- ambient hearts ---------- */
   function buildAmbientHearts(){
     const el = document.getElementById('ambient');
     const symbols = ['♥', '✿', '♡'];
@@ -639,8 +1245,14 @@
     }
   }
 
-  buildAmbientHearts();
-  loadPhotos();
+  let initialized = false;
+  function init(){
+    if (initialized) return;
+    initialized = true;
+    renderDaysTogether();
+    buildAmbientHearts();
+    loadPhotos();
+  }
 })();
 </script>
 </body>
