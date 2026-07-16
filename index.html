@@ -14,6 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   :root{
     --paper: #FBF3EA;
@@ -740,6 +741,49 @@
   }
   .fav-heart.active{ color: var(--rose-deep); }
 
+  .mood-badge{
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    z-index: 2;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255,253,249,0.85);
+    box-shadow: 0 2px 6px var(--shadow);
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mood-picker{
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .mood-picker button{
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.55;
+    transition: opacity 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  }
+  .mood-picker button:hover{ opacity: 0.85; transform: scale(1.1); }
+  .mood-picker button.active{
+    opacity: 1;
+    border-color: var(--rose-deep);
+    background: rgba(217,138,147,0.12);
+  }
+
   .expand-btn{
     position: absolute;
     bottom: 6px;
@@ -847,7 +891,14 @@
   }
 
   @media (max-width: 480px){
-    .polaroid-wrap{ width: 42vw; max-width: 190px; }
+    .row-items{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      justify-content: initial;
+      align-items: start;
+      gap: 1.4rem 1rem;
+    }
+    .polaroid-wrap{ width: 100%; max-width: none; }
     .face.front img{ max-height: 200px; }
     .add-tile{ height: 140px; }
   }
@@ -933,7 +984,7 @@
 <div class="pass-gate" id="passGate">
   <form class="pass-card" id="passForm">
     <h2>Our Little Universe</h2>
-    <p>this space is just for the two of us 🤍</p>
+    <p>this space is just for the two of you 🤍</p>
     <input type="password" id="passInput" placeholder="Enter the password" autocomplete="off">
     <button type="submit">Unlock</button>
     <div class="pass-error" id="passError"></div>
@@ -945,7 +996,7 @@
 <div class="ambient" id="ambient" aria-hidden="true"></div>
 
 <header class="hero">
-  <div class="eyebrow">a scrapbook for two of us</div>
+  <div class="eyebrow">a scrapbook for us</div>
   <div class="title-block" id="titleBlock">
     <h1 id="siteTitle">Our Little Universe</h1>
     <p class="subtitle" id="siteSubtitle">every memory, pinned up to keep</p>
@@ -974,7 +1025,8 @@
       <option value="newest">Newest first</option>
       <option value="shuffle">Shuffle</option>
     </select>
-    <button class="fav-filter-btn" id="notesToggleBtn" type="button">Love notes 💌</button>
+    <button class="fav-filter-btn" id="notesToggleBtn" type="button">💌 Love notes</button>
+    <button class="fav-filter-btn" id="backupBtn" type="button">⬇ Backup everything</button>
   </div>
   <div class="count-note" id="countNote"></div>
 
@@ -1053,7 +1105,8 @@
     document.body.classList.add('dark-mode');
   }
 
-  let photos = []; // {id, src, caption, date, path, favorite}
+  let photos = []; // {id, src, caption, date, path, favorite, mood}
+  const MOODS = ['😂', '💕', '😙', '🎉', '😢'];
   let currentList = [];
   let showFavoritesOnly = false;
   let searchQuery = '';
@@ -1089,6 +1142,7 @@
   const noteForm = document.getElementById('noteForm');
   const noteInput = document.getElementById('noteInput');
   const notesGrid = document.getElementById('notesGrid');
+  const backupBtn = document.getElementById('backupBtn');
 
   const milestoneBanner = document.getElementById('milestoneBanner');
   const milestoneTitle = document.getElementById('milestoneTitle');
@@ -1160,6 +1214,7 @@
     e.preventDefault();
     if (passInput.value.trim().toLowerCase() === PASSWORD.toLowerCase()){
       passError.textContent = '';
+      burstHearts(passForm.querySelector('button[type="submit"]'));
       unlockSite();
     }else{
       passError.textContent = 'that\'s not quite it — try again';
@@ -1247,7 +1302,8 @@
         caption: row.caption,
         date: row.date_label,
         path: row.image_path,
-        favorite: !!row.is_favorite
+        favorite: !!row.is_favorite,
+        mood: row.mood || null
       }));
     }catch(err){
       console.error('Could not load memories from the cloud:', err);
@@ -1289,7 +1345,8 @@
       caption: inserted.caption,
       date: inserted.date_label,
       path: inserted.image_path,
-      favorite: !!inserted.is_favorite
+      favorite: !!inserted.is_favorite,
+      mood: inserted.mood || null
     };
   }
 
@@ -1309,6 +1366,15 @@
       .update({ is_favorite: photo.favorite })
       .eq('id', photo.id);
     if (error) console.error('Could not save favorite:', error);
+  }
+
+  async function saveMood(photo){
+    if (!supabase) return;
+    const { error } = await supabase
+      .from(TABLE)
+      .update({ mood: photo.mood })
+      .eq('id', photo.id);
+    if (error) console.error('Could not save mood:', error);
   }
 
   async function removePhoto(photo){
@@ -1428,6 +1494,64 @@
       }
     }
   });
+
+  /* ---------- full backup export ---------- */
+  async function downloadBackup(){
+    if (!photos.length){
+      alert('No memories to back up yet.');
+      return;
+    }
+    if (typeof JSZip === 'undefined'){
+      alert('The backup tool did not load — check your connection and try again.');
+      return;
+    }
+
+    const originalLabel = backupBtn.textContent;
+    backupBtn.textContent = 'Preparing backup...';
+    backupBtn.disabled = true;
+
+    try{
+      const zip = new JSZip();
+      const folder = zip.folder('photos');
+      let notesText = 'Our Little Universe — memory backup\n';
+      notesText += `Exported ${new Date().toLocaleDateString()}\n\n`;
+
+      for (let i = 0; i < photos.length; i++){
+        const p = photos[i];
+        try{
+          const resp = await fetch(p.src);
+          const blob = await resp.blob();
+          const ext = (p.path && p.path.split('.').pop()) || 'jpg';
+          const safeDate = (p.date || 'undated').replace(/[^a-z0-9]/gi, '_');
+          const filename = `${String(i + 1).padStart(3, '0')}-${safeDate}.${ext}`;
+          folder.file(filename, blob);
+          notesText += `${filename}\nDate: ${p.date}\nCaption: ${p.caption}\n`;
+          if (p.mood) notesText += `Mood: ${p.mood}\n`;
+          if (p.favorite) notesText += `Favorited: yes\n`;
+          notesText += '\n';
+        }catch(err){
+          console.error('Could not include a photo in the backup:', err);
+        }
+      }
+
+      zip.file('captions-and-dates.txt', notesText);
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'our-little-universe-backup.zip';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+    }catch(err){
+      console.error('Backup failed:', err);
+      alert('Something went wrong preparing the backup — please try again.');
+    }
+
+    backupBtn.textContent = originalLabel;
+    backupBtn.disabled = false;
+  }
+
+  backupBtn.addEventListener('click', downloadBackup);
 
   /* ---------- downloadable memory card ---------- */
   async function downloadMemoryCard(photo){
@@ -1647,26 +1771,41 @@
     }
   }
 
-  async function applyVintageTint(file){
+  /* ---------- resize + compress every upload, with optional vintage tint ----------
+     Caps the longer side at 1920px and saves as JPEG at 85% quality.
+     This is invisible on screen but meaningfully shrinks file size and
+     storage use. If "vintage" is chosen, the sepia tint + vignette is
+     applied in this same pass. */
+  const MAX_DIMENSION = 1920;
+  const JPEG_QUALITY = 0.85;
+
+  async function processPhoto(file, tint){
     const { img, url } = await fileToImage(file);
+    let w = img.naturalWidth, h = img.naturalHeight;
+    if (Math.max(w, h) > MAX_DIMENSION){
+      const scale = MAX_DIMENSION / Math.max(w, h);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+    }
     const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
+    canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    sepiaTint(imageData);
-    ctx.putImageData(imageData, 0, 0);
-    const grad = ctx.createRadialGradient(
-      canvas.width / 2, canvas.height / 2, canvas.width * 0.3,
-      canvas.width / 2, canvas.height / 2, canvas.width * 0.7
-    );
-    grad.addColorStop(0, 'rgba(0,0,0,0)');
-    grad.addColorStop(1, 'rgba(60,40,20,0.18)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, w, h);
+    if (tint){
+      const imageData = ctx.getImageData(0, 0, w, h);
+      sepiaTint(imageData);
+      ctx.putImageData(imageData, 0, 0);
+      const grad = ctx.createRadialGradient(
+        w / 2, h / 2, Math.min(w, h) * 0.3,
+        w / 2, h / 2, Math.max(w, h) * 0.7
+      );
+      grad.addColorStop(0, 'rgba(0,0,0,0)');
+      grad.addColorStop(1, 'rgba(60,40,20,0.18)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+    }
     URL.revokeObjectURL(url);
-    return new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/jpeg', 0.9));
+    return new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/jpeg', JPEG_QUALITY));
   }
 
   async function makePreview(file, tint){
@@ -1735,12 +1874,9 @@
 
     for (const file of files){
       try{
-        let uploadFile = file;
-        if (choice === 'vintage'){
-          const blob = await applyVintageTint(file);
-          const baseName = (file.name || 'photo').replace(/\.[^.]+$/, '');
-          uploadFile = new File([blob], baseName + '.jpg', { type: 'image/jpeg' });
-        }
+        const blob = await processPhoto(file, choice === 'vintage');
+        const baseName = (file.name || 'photo').replace(/\.[^.]+$/, '');
+        const uploadFile = new File([blob], baseName + '.jpg', { type: 'image/jpeg' });
         const record = await uploadAndSave(uploadFile);
         photos.push(record);
         render();
@@ -1807,7 +1943,7 @@
       emptyNote.style.display = 'none';
     }
 
-    const perRow = 4;
+    const perRow = window.innerWidth <= 480 ? 2 : 4;
     const rowsNeeded = Math.max(1, Math.ceil((items.length + (isFiltered ? 0 : 1)) / perRow));
 
     let cursor = 0;
@@ -1876,11 +2012,15 @@
           <div class="photo-frame">
             <img src="${photo.src}" alt="A memory">
             <button class="expand-btn" type="button" aria-label="View full size">⤢</button>
+            ${photo.mood ? `<span class="mood-badge">${photo.mood}</span>` : ''}
           </div>
           <div class="cap-preview">${escapeHtml(photo.caption)}</div>
         </div>
         <div class="face back">
           <textarea maxlength="120" aria-label="Write a note for this memory">${escapeHtml(photo.caption)}</textarea>
+          <div class="mood-picker">
+            ${MOODS.map(m => `<button type="button" data-mood="${m}" class="${photo.mood === m ? 'active' : ''}" aria-label="Tag mood ${m}">${m}</button>`).join('')}
+          </div>
           <div class="back-footer">
             <span>${photo.date}</span>
             <div style="display:flex; gap:6px;">
@@ -1906,9 +2046,11 @@
     const favBtn = wrap.querySelector('.fav-heart');
     const expandBtn = wrap.querySelector('.expand-btn');
     const downloadBtn = wrap.querySelector('.card-download');
+    const moodBtns = wrap.querySelectorAll('.mood-picker button');
 
     function flip(e){
       if ([textarea, unpinBtn, favBtn, expandBtn, downloadBtn].includes(e.target)) return;
+      if (e.target.closest && e.target.closest('.mood-picker')) return;
       card.classList.toggle('flipped');
     }
     card.addEventListener('click', flip);
@@ -1955,6 +2097,28 @@
       favBtn.classList.toggle('active', photo.favorite);
       await saveFavorite(photo);
       if (showFavoritesOnly) render();
+    });
+
+    moodBtns.forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const m = btn.dataset.mood;
+        photo.mood = (photo.mood === m) ? null : m;
+        moodBtns.forEach(b => b.classList.toggle('active', b.dataset.mood === photo.mood));
+        const frame = wrap.querySelector('.photo-frame');
+        let badge = frame.querySelector('.mood-badge');
+        if (photo.mood){
+          if (!badge){
+            badge = document.createElement('span');
+            badge.className = 'mood-badge';
+            frame.appendChild(badge);
+          }
+          badge.textContent = photo.mood;
+        }else if (badge){
+          badge.remove();
+        }
+        await saveMood(photo);
+      });
     });
 
     expandBtn.addEventListener('click', (e) => {
@@ -2024,6 +2188,19 @@
     loadSiteSettings();
     loadPhotos();
   }
+
+  let lastIsMobile = window.innerWidth <= 480;
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      const nowIsMobile = window.innerWidth <= 480;
+      if (nowIsMobile !== lastIsMobile){
+        lastIsMobile = nowIsMobile;
+        if (initialized) render();
+      }
+    }, 200);
+  });
 })();
 
 if ('serviceWorker' in navigator){
