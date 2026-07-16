@@ -433,6 +433,79 @@
   }
 
   /* ---------- milestone banner ---------- */
+  .toast-container{
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+    padding: 0 1rem;
+    pointer-events: none;
+  }
+  .toast{
+    pointer-events: auto;
+    background: var(--ink);
+    color: var(--white);
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.85rem;
+    padding: 0.7rem 1.1rem;
+    border-radius: 999px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    max-width: 90vw;
+    animation: toastIn 0.25s ease-out;
+  }
+  .toast.error{ background: #B5555F; }
+  .toast button{
+    background: rgba(255,255,255,0.18);
+    border: none;
+    color: inherit;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    border-radius: 999px;
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .toast button:hover{ background: rgba(255,255,255,0.3); }
+  @keyframes toastIn{
+    from{ opacity: 0; transform: translateY(10px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+  .toast.leaving{
+    animation: toastOut 0.25s ease-in forwards;
+  }
+  @keyframes toastOut{
+    to{ opacity: 0; transform: translateY(10px); }
+  }
+
+  .loading-state{
+    text-align: center;
+    padding: 2rem 0;
+    color: var(--ink-soft);
+    font-family: 'Caveat', cursive;
+    font-size: 1.3rem;
+  }
+  .spinner{
+    display: inline-block;
+    width: 26px;
+    height: 26px;
+    border: 3px solid var(--paper-deep);
+    border-top-color: var(--rose-deep);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 0.5rem;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
   .milestone-banner{
     position: fixed;
     top: 20px;
@@ -1077,8 +1150,12 @@
 </div>
 
 <main>
+  <div class="loading-state" id="loadingState">
+    <span class="spinner"></span><br>
+    gathering your memories...
+  </div>
   <div id="garland"></div>
-  <p class="empty-note" id="emptyNote">no memories pinned yet — tap the polaroid below to add your first one</p>
+  <p class="empty-note" id="emptyNote" style="display:none;">no memories pinned yet — tap the polaroid below to add your first one</p>
 </main>
 
 <footer>made with love, for the two of us 🤍</footer>
@@ -1112,6 +1189,8 @@
   </div>
 </div>
 
+<div class="toast-container" id="toastContainer"></div>
+
 </div>
 
 <script>
@@ -1122,8 +1201,44 @@
     document.body.classList.add('dark-mode');
   }
 
+  /* ---------- toast notifications ----------
+     showToast(message) — simple info/error message, auto-dismisses.
+     showToast(message, { type:'error', actionLabel:'Undo', onAction:fn,
+       duration:5000 }) — with an action button, for things like undo. */
+  function showToast(message, options){
+    options = options || {};
+    const toast = document.createElement('div');
+    toast.className = 'toast' + (options.type === 'error' ? ' error' : '');
+    const text = document.createElement('span');
+    text.textContent = message;
+    toast.appendChild(text);
+
+    let dismissed = false;
+    function remove(){
+      if (dismissed) return;
+      dismissed = true;
+      toast.classList.add('leaving');
+      setTimeout(() => toast.remove(), 250);
+    }
+
+    if (options.actionLabel && options.onAction){
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = options.actionLabel;
+      btn.addEventListener('click', () => {
+        options.onAction();
+        remove();
+      });
+      toast.appendChild(btn);
+    }
+
+    toastContainer.appendChild(toast);
+    setTimeout(remove, options.duration || 4000);
+    return remove;
+  }
+
   let photos = []; // {id, src, caption, date, path, favorite, mood}
-  const MOODS = ['😊', '🥰', '😢', '🎉', '😴'];
+  const MOODS = ['😂', '💕', '😙', '🎉', '😢'];
   let currentList = [];
   let showFavoritesOnly = false;
   let searchQuery = '';
@@ -1169,6 +1284,8 @@
   const styleModal = document.getElementById('styleModal');
   const stylePreviews = document.getElementById('stylePreviews');
   const qualityToggle = document.getElementById('qualityToggle');
+  const toastContainer = document.getElementById('toastContainer');
+  const loadingState = document.getElementById('loadingState');
   const themeBtn = document.getElementById('themeBtn');
   const setupBanner = document.getElementById('setupBanner');
   const daysTogetherEl = document.getElementById('daysTogether');
@@ -1322,6 +1439,7 @@
       }));
     }catch(err){
       console.error('Could not load memories from the cloud:', err);
+      showToast('Could not load your memories — check your connection.', { type: 'error' });
       photos = [];
     }
     render();
@@ -1371,7 +1489,10 @@
       .from(TABLE)
       .update({ caption: photo.caption })
       .eq('id', photo.id);
-    if (error) console.error('Could not save this note:', error);
+    if (error){
+      console.error('Could not save this note:', error);
+      showToast('Could not save that note.', { type: 'error' });
+    }
   }
 
   async function saveFavorite(photo){
@@ -1380,7 +1501,10 @@
       .from(TABLE)
       .update({ is_favorite: photo.favorite })
       .eq('id', photo.id);
-    if (error) console.error('Could not save favorite:', error);
+    if (error){
+      console.error('Could not save favorite:', error);
+      showToast('Could not save that favorite.', { type: 'error' });
+    }
   }
 
   async function saveMood(photo){
@@ -1389,7 +1513,10 @@
       .from(TABLE)
       .update({ mood: photo.mood })
       .eq('id', photo.id);
-    if (error) console.error('Could not save mood:', error);
+    if (error){
+      console.error('Could not save mood:', error);
+      showToast('Could not save that mood tag.', { type: 'error' });
+    }
   }
 
   async function removePhoto(photo){
@@ -1399,6 +1526,7 @@
       await supabase.from(TABLE).delete().eq('id', photo.id);
     }catch(err){
       console.error('Could not remove this memory:', err);
+      showToast('Could not fully remove that memory — it may reappear.', { type: 'error' });
     }
   }
 
@@ -1437,7 +1565,10 @@
       card.querySelector('.note-remove').addEventListener('click', async () => {
         card.remove();
         try{ await supabase.from(NOTES_TABLE).delete().eq('id', note.id); }
-        catch(err){ console.error('Could not remove note:', err); }
+        catch(err){
+          console.error('Could not remove note:', err);
+          showToast('Could not remove that note.', { type: 'error' });
+        }
       });
       notesGrid.appendChild(card);
     });
@@ -1461,6 +1592,7 @@
       loadNotes();
     }catch(err){
       console.error('Could not save note:', err);
+      showToast('Could not save that note.', { type: 'error' });
     }
   });
 
@@ -1506,6 +1638,7 @@
         await supabase.from(SETTINGS_TABLE).upsert({ id: 1, title: newTitle, subtitle: newSubtitle });
       }catch(err){
         console.error('Could not save title:', err);
+        showToast('Could not save the new title.', { type: 'error' });
       }
     }
   });
@@ -1513,11 +1646,11 @@
   /* ---------- full backup export ---------- */
   async function downloadBackup(){
     if (!photos.length){
-      alert('No memories to back up yet.');
+      showToast('No memories to back up yet.');
       return;
     }
     if (typeof JSZip === 'undefined'){
-      alert('The backup tool did not load — check your connection and try again.');
+      showToast('The backup tool did not load — check your connection and try again.', { type: 'error' });
       return;
     }
 
@@ -1531,6 +1664,7 @@
       let notesText = 'Our Little Universe — memory backup\n';
       notesText += `Exported ${new Date().toLocaleDateString()}\n\n`;
 
+      let missing = 0;
       for (let i = 0; i < photos.length; i++){
         const p = photos[i];
         try{
@@ -1546,6 +1680,7 @@
           notesText += '\n';
         }catch(err){
           console.error('Could not include a photo in the backup:', err);
+          missing++;
         }
       }
 
@@ -1557,9 +1692,13 @@
       a.download = 'our-little-universe-backup.zip';
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 3000);
+
+      showToast(missing
+        ? `Backup ready — ${missing} photo${missing === 1 ? '' : 's'} couldn't be included.`
+        : 'Backup ready and downloading.');
     }catch(err){
       console.error('Backup failed:', err);
-      alert('Something went wrong preparing the backup — please try again.');
+      showToast('Something went wrong preparing the backup — please try again.', { type: 'error' });
     }
 
     backupBtn.textContent = originalLabel;
@@ -1924,6 +2063,7 @@
         checkMilestone(photos.length);
       }catch(err){
         console.error('Could not save this memory:', err);
+        showToast('Could not upload that photo — check your connection.', { type: 'error' });
       }
     }
     fileInput.value = '';
@@ -1943,6 +2083,7 @@
   let hasRenderedOnce = false;
 
   function render(){
+    loadingState.style.display = 'none';
     garlandEl.innerHTML = '';
     const animate = !hasRenderedOnce;
 
@@ -2117,16 +2258,35 @@
         await downloadMemoryCard(photo);
       }catch(err){
         console.error('Could not create downloadable card:', err);
+        showToast('Could not create that download.', { type: 'error' });
       }
       downloadBtn.textContent = '⬇ save';
     });
 
-    unpinBtn.addEventListener('click', async (e) => {
+    unpinBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const idx = photos.findIndex(p => p.id === photo.id);
-      if (idx > -1) photos.splice(idx, 1);
+      if (idx === -1) return;
+      photos.splice(idx, 1);
       render();
-      await removePhoto(photo);
+
+      const UNDO_WINDOW = 5000;
+      let undone = false;
+      const timer = setTimeout(async () => {
+        if (undone) return;
+        await removePhoto(photo);
+      }, UNDO_WINDOW);
+
+      showToast('Memory removed.', {
+        actionLabel: 'Undo',
+        duration: UNDO_WINDOW,
+        onAction: () => {
+          undone = true;
+          clearTimeout(timer);
+          photos.splice(idx, 0, photo);
+          render();
+        }
+      });
     });
 
     favBtn.addEventListener('click', async (e) => {
