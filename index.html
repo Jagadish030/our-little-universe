@@ -525,6 +525,23 @@
   }
   .style-option:hover{ border-color: var(--rose-deep); }
 
+  .quality-toggle{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .quality-toggle input{
+    width: 16px;
+    height: 16px;
+    accent-color: var(--rose-deep);
+    cursor: pointer;
+  }
+
   .on-this-day{
     position: relative;
     max-width: 340px;
@@ -984,7 +1001,7 @@
 <div class="pass-gate" id="passGate">
   <form class="pass-card" id="passForm">
     <h2>Our Little Universe</h2>
-    <p>this space is just for the two of you 🤍</p>
+    <p>this space is just for the two of us 🤍</p>
     <input type="password" id="passInput" placeholder="Enter the password" autocomplete="off">
     <button type="submit">Unlock</button>
     <div class="pass-error" id="passError"></div>
@@ -1092,6 +1109,10 @@
         <span>Vintage tint</span>
       </button>
     </div>
+    <label class="quality-toggle">
+      <input type="checkbox" id="qualityToggle">
+      Keep full original quality (larger file size)
+    </label>
   </div>
 </div>
 
@@ -1106,7 +1127,7 @@
   }
 
   let photos = []; // {id, src, caption, date, path, favorite, mood}
-  const MOODS = ['😂', '💕', '😙', '🎉', '😢'];
+  const MOODS = ['😊', '🥰', '😢', '🎉', '😴'];
   let currentList = [];
   let showFavoritesOnly = false;
   let searchQuery = '';
@@ -1154,6 +1175,7 @@
   const styleVintage = document.getElementById('styleVintage');
   const styleOriginalImg = document.getElementById('styleOriginalImg');
   const styleVintageImg = document.getElementById('styleVintageImg');
+  const qualityToggle = document.getElementById('qualityToggle');
   const themeBtn = document.getElementById('themeBtn');
   const setupBanner = document.getElementById('setupBanner');
   const daysTogetherEl = document.getElementById('daysTogether');
@@ -1772,17 +1794,20 @@
   }
 
   /* ---------- resize + compress every upload, with optional vintage tint ----------
-     Caps the longer side at 1920px and saves as JPEG at 85% quality.
-     This is invisible on screen but meaningfully shrinks file size and
-     storage use. If "vintage" is chosen, the sepia tint + vignette is
-     applied in this same pass. */
+     By default, caps the longer side at 1920px and saves as JPEG at 85%
+     quality — invisible on screen but shrinks file size meaningfully.
+     If "keep original quality" is chosen, the resize cap is skipped and
+     a much higher quality setting is used instead (full pixel-for-pixel
+     originals are only possible when no tint is applied, since tinting
+     always requires re-encoding through canvas). */
   const MAX_DIMENSION = 1920;
   const JPEG_QUALITY = 0.85;
+  const JPEG_QUALITY_HIGH = 0.97;
 
-  async function processPhoto(file, tint){
+  async function processPhoto(file, tint, keepOriginal){
     const { img, url } = await fileToImage(file);
     let w = img.naturalWidth, h = img.naturalHeight;
-    if (Math.max(w, h) > MAX_DIMENSION){
+    if (!keepOriginal && Math.max(w, h) > MAX_DIMENSION){
       const scale = MAX_DIMENSION / Math.max(w, h);
       w = Math.round(w * scale);
       h = Math.round(h * scale);
@@ -1805,7 +1830,8 @@
       ctx.fillRect(0, 0, w, h);
     }
     URL.revokeObjectURL(url);
-    return new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/jpeg', JPEG_QUALITY));
+    const quality = keepOriginal ? JPEG_QUALITY_HIGH : JPEG_QUALITY;
+    return new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/jpeg', quality));
   }
 
   async function makePreview(file, tint){
@@ -1871,12 +1897,19 @@
     if (!files.length || !supabase) return;
 
     const choice = await askPhotoStyle(files[0]);
+    const keepOriginal = qualityToggle.checked;
 
     for (const file of files){
       try{
-        const blob = await processPhoto(file, choice === 'vintage');
-        const baseName = (file.name || 'photo').replace(/\.[^.]+$/, '');
-        const uploadFile = new File([blob], baseName + '.jpg', { type: 'image/jpeg' });
+        let uploadFile;
+        if (keepOriginal && choice === 'original'){
+          // true pixel-for-pixel original, no re-encoding at all
+          uploadFile = file;
+        }else{
+          const blob = await processPhoto(file, choice === 'vintage', keepOriginal);
+          const baseName = (file.name || 'photo').replace(/\.[^.]+$/, '');
+          uploadFile = new File([blob], baseName + '.jpg', { type: 'image/jpeg' });
+        }
         const record = await uploadAndSave(uploadFile);
         photos.push(record);
         render();
