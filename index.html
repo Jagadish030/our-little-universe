@@ -988,13 +988,13 @@
   @media (max-width: 480px){
     .row-items{
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       justify-content: initial;
       align-items: start;
       gap: 1.4rem 1rem;
     }
-    .polaroid-wrap{ width: 100%; max-width: none; }
-    .face.front img{ max-height: 200px; }
+    .polaroid-wrap{ width: 100%; max-width: none; min-width: 0; }
+    .face.front img{ max-height: 200px; max-width: 100%; }
     .add-tile{ height: 140px; }
   }
 
