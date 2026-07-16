@@ -487,8 +487,10 @@
     border-radius: 14px;
     padding: 1.6rem;
     text-align: center;
-    max-width: 340px;
+    max-width: 460px;
     width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
   }
   .style-card h3{
     font-family: 'Caveat', cursive;
@@ -498,7 +500,8 @@
   }
   .style-previews{
     display: flex;
-    gap: 0.8rem;
+    flex-wrap: wrap;
+    gap: 0.7rem;
     justify-content: center;
     margin-bottom: 1.1rem;
   }
@@ -508,10 +511,11 @@
     padding: 4px;
     cursor: pointer;
     background: none;
+    width: 88px;
   }
   .style-option img{
-    width: 110px;
-    height: 110px;
+    width: 80px;
+    height: 80px;
     object-fit: cover;
     border-radius: 6px;
     display: block;
@@ -519,9 +523,10 @@
   .style-option span{
     display: block;
     font-family: 'Quicksand', sans-serif;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: var(--ink-soft);
     margin-top: 4px;
+    line-height: 1.2;
   }
   .style-option:hover{ border-color: var(--rose-deep); }
 
@@ -1031,7 +1036,7 @@
   <div class="hero-actions">
     <button class="add-btn" id="heroAddBtn">+ Pin a new memory</button>
     <button class="fav-filter-btn" id="favFilterBtn" type="button">♡ Favorites only</button>
-    <button class="fav-filter-btn" id="surpriseBtn" type="button">🎲 Surprise me</button>
+    <button class="fav-filter-btn" id="surpriseBtn" type="button">Surprise me 🎲</button>
     <button class="music-btn" id="musicBtn" type="button" aria-label="Turn on music">🎵</button>
     <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">🌙</button>
   </div>
@@ -1042,7 +1047,7 @@
       <option value="newest">Newest first</option>
       <option value="shuffle">Shuffle</option>
     </select>
-    <button class="fav-filter-btn" id="notesToggleBtn" type="button">💌 Love notes</button>
+    <button class="fav-filter-btn" id="notesToggleBtn" type="button">Love notes 💌</button>
     <button class="fav-filter-btn" id="backupBtn" type="button">⬇ Backup everything</button>
   </div>
   <div class="count-note" id="countNote"></div>
@@ -1099,16 +1104,7 @@
 <div class="style-modal hidden" id="styleModal">
   <div class="style-card">
     <h3>How should this photo look?</h3>
-    <div class="style-previews">
-      <button type="button" class="style-option" id="styleOriginal">
-        <img id="styleOriginalImg" src="" alt="Original preview">
-        <span>As it is</span>
-      </button>
-      <button type="button" class="style-option" id="styleVintage">
-        <img id="styleVintageImg" src="" alt="Vintage preview">
-        <span>Vintage tint</span>
-      </button>
-    </div>
+    <div class="style-previews" id="stylePreviews"></div>
     <label class="quality-toggle">
       <input type="checkbox" id="qualityToggle">
       Keep full original quality (larger file size)
@@ -1171,10 +1167,7 @@
   const milestoneClose = document.getElementById('milestoneClose');
 
   const styleModal = document.getElementById('styleModal');
-  const styleOriginal = document.getElementById('styleOriginal');
-  const styleVintage = document.getElementById('styleVintage');
-  const styleOriginalImg = document.getElementById('styleOriginalImg');
-  const styleVintageImg = document.getElementById('styleVintageImg');
+  const stylePreviews = document.getElementById('stylePreviews');
   const qualityToggle = document.getElementById('qualityToggle');
   const themeBtn = document.getElementById('themeBtn');
   const setupBanner = document.getElementById('setupBanner');
@@ -1772,7 +1765,11 @@
     openLightbox(idx);
   });
 
-  /* ---------- vintage filter (opt-in per upload) ---------- */
+  /* ---------- upload filters (opt-in per upload) ----------
+     Each filter is just a CSS filter string applied via the canvas's
+     built-in filter engine — the same syntax as CSS `filter:`, so
+     adding more filters later is just adding another entry here.
+     "vignette" adds the soft dark-edge overlay used by Vintage. */
   function fileToImage(file){
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -1783,28 +1780,48 @@
     });
   }
 
-  function sepiaTint(imageData){
-    const d = imageData.data;
-    for (let i = 0; i < d.length; i += 4){
-      const r = d[i], g = d[i + 1], b = d[i + 2];
-      d[i]     = Math.min(255, 0.393 * r + 0.769 * g + 0.189 * b);
-      d[i + 1] = Math.min(255, 0.349 * r + 0.686 * g + 0.168 * b);
-      d[i + 2] = Math.min(255, 0.272 * r + 0.534 * g + 0.131 * b);
+  const FILTERS = [
+    { key: 'original', label: 'As it is', css: 'none' },
+    { key: 'vintage',  label: 'Vintage tint', css: 'sepia(0.5) contrast(1.05) brightness(0.96) saturate(1.15)', vignette: true },
+    { key: 'bw',       label: 'Black & White', css: 'grayscale(1) contrast(1.12)' },
+    { key: 'cool',     label: 'Cool tone', css: 'saturate(1.05) hue-rotate(-6deg) brightness(1.03) contrast(1.03)' },
+    { key: 'bright',   label: 'Bright & Airy', css: 'brightness(1.14) saturate(0.88) contrast(0.94)' },
+    { key: 'dramatic', label: 'Dramatic', css: 'contrast(1.32) saturate(1.18) brightness(0.9)' },
+    { key: 'faded',    label: 'Faded', css: 'contrast(0.82) brightness(1.1) saturate(0.7)' }
+  ];
+
+  function getFilter(key){
+    return FILTERS.find(f => f.key === key) || FILTERS[0];
+  }
+
+  function drawWithFilter(ctx, img, w, h, filterCss, withVignette){
+    ctx.filter = filterCss || 'none';
+    ctx.drawImage(img, 0, 0, w, h);
+    ctx.filter = 'none';
+    if (withVignette){
+      const grad = ctx.createRadialGradient(
+        w / 2, h / 2, Math.min(w, h) * 0.3,
+        w / 2, h / 2, Math.max(w, h) * 0.7
+      );
+      grad.addColorStop(0, 'rgba(0,0,0,0)');
+      grad.addColorStop(1, 'rgba(60,40,20,0.18)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
     }
   }
 
-  /* ---------- resize + compress every upload, with optional vintage tint ----------
+  /* ---------- resize + compress every upload ----------
      By default, caps the longer side at 1920px and saves as JPEG at 85%
      quality — invisible on screen but shrinks file size meaningfully.
      If "keep original quality" is chosen, the resize cap is skipped and
-     a much higher quality setting is used instead (full pixel-for-pixel
-     originals are only possible when no tint is applied, since tinting
-     always requires re-encoding through canvas). */
+     a much higher quality setting is used instead (a full pixel-for-pixel
+     original is only possible with the "As it is" filter, since any
+     other filter always requires re-encoding through canvas). */
   const MAX_DIMENSION = 1920;
   const JPEG_QUALITY = 0.85;
   const JPEG_QUALITY_HIGH = 0.97;
 
-  async function processPhoto(file, tint, keepOriginal){
+  async function processPhoto(file, filterKey, keepOriginal){
     const { img, url } = await fileToImage(file);
     let w = img.naturalWidth, h = img.naturalHeight;
     if (!keepOriginal && Math.max(w, h) > MAX_DIMENSION){
@@ -1815,67 +1832,56 @@
     const canvas = document.createElement('canvas');
     canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, w, h);
-    if (tint){
-      const imageData = ctx.getImageData(0, 0, w, h);
-      sepiaTint(imageData);
-      ctx.putImageData(imageData, 0, 0);
-      const grad = ctx.createRadialGradient(
-        w / 2, h / 2, Math.min(w, h) * 0.3,
-        w / 2, h / 2, Math.max(w, h) * 0.7
-      );
-      grad.addColorStop(0, 'rgba(0,0,0,0)');
-      grad.addColorStop(1, 'rgba(60,40,20,0.18)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, w, h);
-    }
+    const filter = getFilter(filterKey);
+    drawWithFilter(ctx, img, w, h, filter.css, filter.vignette);
     URL.revokeObjectURL(url);
     const quality = keepOriginal ? JPEG_QUALITY_HIGH : JPEG_QUALITY;
     return new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/jpeg', quality));
   }
 
-  async function makePreview(file, tint){
+  async function makePreview(file, filterKey){
     const { img, url } = await fileToImage(file);
-    const size = 110;
+    const size = 88;
     const canvas = document.createElement('canvas');
     canvas.width = size; canvas.height = size;
     const ctx = canvas.getContext('2d');
     const scale = Math.max(size / img.naturalWidth, size / img.naturalHeight);
     const dw = img.naturalWidth * scale, dh = img.naturalHeight * scale;
-    ctx.drawImage(img, (size - dw) / 2, (size - dh) / 2, dw, dh);
-    if (tint){
-      const imageData = ctx.getImageData(0, 0, size, size);
-      sepiaTint(imageData);
-      ctx.putImageData(imageData, 0, 0);
-    }
+    ctx.translate((size - dw) / 2, (size - dh) / 2);
+    const filter = getFilter(filterKey);
+    ctx.filter = filter.css || 'none';
+    ctx.drawImage(img, 0, 0, dw, dh);
+    ctx.filter = 'none';
     URL.revokeObjectURL(url);
     return canvas.toDataURL('image/jpeg', 0.85);
   }
 
   function askPhotoStyle(file){
     return new Promise(async (resolve) => {
-      try{
-        const [origPreview, vintagePreview] = await Promise.all([
-          makePreview(file, false),
-          makePreview(file, true)
-        ]);
-        styleOriginalImg.src = origPreview;
-        styleVintageImg.src = vintagePreview;
-      }catch(err){
-        console.error('Could not build style preview:', err);
+      stylePreviews.innerHTML = '';
+      const buttons = [];
+
+      for (const filter of FILTERS){
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'style-option';
+        btn.innerHTML = `<img alt="${filter.label} preview"><span>${filter.label}</span>`;
+        stylePreviews.appendChild(btn);
+        buttons.push(btn);
+        makePreview(file, filter.key)
+          .then(dataUrl => { btn.querySelector('img').src = dataUrl; })
+          .catch(err => console.error('Could not build style preview:', err));
       }
+
       styleModal.classList.remove('hidden');
 
       function cleanup(choice){
         styleModal.classList.add('hidden');
-        styleOriginal.removeEventListener('click', onOriginal);
-        styleVintage.removeEventListener('click', onVintage);
+        buttons.forEach((btn, i) => btn.removeEventListener('click', handlers[i]));
         resolve(choice);
       }
-      function onOriginal(){ cleanup('original'); }
-      function onVintage(){ cleanup('vintage'); }
-      styleOriginal.addEventListener('click', onOriginal);
-      styleVintage.addEventListener('click', onVintage);
+      const handlers = FILTERS.map((filter, i) => () => cleanup(filter.key));
+      buttons.forEach((btn, i) => btn.addEventListener('click', handlers[i]));
     });
   }
 
@@ -1906,7 +1912,7 @@
           // true pixel-for-pixel original, no re-encoding at all
           uploadFile = file;
         }else{
-          const blob = await processPhoto(file, choice === 'vintage', keepOriginal);
+          const blob = await processPhoto(file, choice, keepOriginal);
           const baseName = (file.name || 'photo').replace(/\.[^.]+$/, '');
           uploadFile = new File([blob], baseName + '.jpg', { type: 'image/jpeg' });
         }
