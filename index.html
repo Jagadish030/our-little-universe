@@ -1312,6 +1312,14 @@
   // keeps random link visitors out. Change it to whatever you like.
   const PASSWORD_HASH = 'f7b38af3b7540ce6d1a89a6c47cdd85f5d884718b9d162818a22bb56443e117e';
 
+async function sha256Hex(text){
+  const data = new TextEncoder().encode(text.trim().toLowerCase());
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
   // Set this to the date you want the "days together" counter to count
   // from, in YYYY-MM-DD format. Leave as-is to hide the counter.
   const ANNIVERSARY_DATE = 'YYYY-MM-DD';
@@ -1342,9 +1350,10 @@
     init();
   }
 
-  passForm.addEventListener('submit', (e) => {
+  passForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (passInput.value.trim().toLowerCase() === PASSWORD.toLowerCase()){
+    const enteredHash = await sha256Hex(passInput.value);
+    if (enteredHash === PASSWORD_HASH){
       passError.textContent = '';
       burstHearts(passForm.querySelector('button[type="submit"]'));
       unlockSite();
