@@ -852,6 +852,22 @@
     justify-content: center;
   }
 
+  .flip-back-btn{
+    display: block;
+    margin: 4px auto 0;
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    padding: 6px 10px;
+    opacity: 0.8;
+  }
+  .flip-back-btn:hover{ opacity: 1; color: var(--rose-deep); }
+
   .mood-picker{
     display: flex;
     justify-content: center;
@@ -884,18 +900,23 @@
     bottom: 6px;
     right: 6px;
     z-index: 2;
-    width: 26px;
-    height: 26px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     border: none;
-    background: rgba(255,253,249,0.85);
+    background: rgba(255,253,249,0.55);
     box-shadow: 0 2px 6px var(--shadow);
-    font-size: 0.85rem;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     color: #6B5344;
+    opacity: 0.75;
+  }
+  .expand-btn svg{
+    width: 12px;
+    height: 12px;
+    display: block;
   }
 
   .face.back{
@@ -1046,9 +1067,9 @@
   }
   .lightbox-close, .lightbox-nav{
     position: fixed;
-    background: rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.15);
     border: none;
-    color: var(--white);
+    color: #FFFDF9;
     border-radius: 50%;
     cursor: pointer;
     display: flex;
@@ -2200,13 +2221,14 @@ async function sha256Hex(text){
           <button class="fav-heart" type="button" aria-label="Toggle favorite">${photo.favorite ? '♥' : '♡'}</button>
           <div class="photo-frame">
             <img src="${photo.src}" alt="A memory">
-            <button class="expand-btn" type="button" aria-label="View full size">⤢</button>
+            <button class="expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>
             ${photo.mood ? `<span class="mood-badge">${photo.mood}</span>` : ''}
           </div>
           <div class="cap-preview">${escapeHtml(photo.caption)}</div>
         </div>
         <div class="face back">
           <textarea maxlength="120" aria-label="Write a note for this memory">${escapeHtml(photo.caption)}</textarea>
+          <button class="flip-back-btn" type="button" aria-label="Flip back to photo">‹ back to photo</button>
           <div class="mood-picker">
             ${MOODS.map(m => `<button type="button" data-mood="${m}" class="${photo.mood === m ? 'active' : ''}" aria-label="Tag mood ${m}">${m}</button>`).join('')}
           </div>
@@ -2235,10 +2257,11 @@ async function sha256Hex(text){
     const favBtn = wrap.querySelector('.fav-heart');
     const expandBtn = wrap.querySelector('.expand-btn');
     const downloadBtn = wrap.querySelector('.card-download');
+    const flipBackBtn = wrap.querySelector('.flip-back-btn');
     const moodBtns = wrap.querySelectorAll('.mood-picker button');
 
     function flip(e){
-      if ([textarea, unpinBtn, favBtn, expandBtn, downloadBtn].includes(e.target)) return;
+      if ([textarea, unpinBtn, favBtn, expandBtn, downloadBtn, flipBackBtn].includes(e.target)) return;
       if (e.target.closest && e.target.closest('.mood-picker')) return;
       card.classList.toggle('flipped');
     }
@@ -2248,6 +2271,11 @@ async function sha256Hex(text){
         e.preventDefault();
         card.classList.toggle('flipped');
       }
+    });
+
+    flipBackBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      card.classList.remove('flipped');
     });
 
     textarea.addEventListener('click', (e) => e.stopPropagation());
