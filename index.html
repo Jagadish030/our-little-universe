@@ -373,13 +373,35 @@
     z-index: 1;
   }
   .notes-wall.hidden{ display: none; }
+  .notes-header{
+    position: relative;
+    text-align: center;
+    margin-bottom: 0.8rem;
+  }
   .notes-wall h2{
     font-family: 'Caveat', cursive;
     font-size: 2rem;
     text-align: center;
     color: var(--ink);
-    margin-bottom: 0.8rem;
+    margin: 0;
   }
+  .notes-close-btn{
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: rgba(255,253,249,0.55);
+    border: none;
+    color: #6B5344;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .notes-close-btn:hover{ background: var(--rose-deep); color: var(--white); }
   .note-form{
     display: flex;
     flex-direction: column;
@@ -442,10 +464,12 @@
   }
   .note-flip.flipped{ transform: rotateY(180deg); }
 
+  /* Same hidden-face tap fix as the polaroid cards. */
   .note-front{ pointer-events: auto; }
   .note-back{ pointer-events: none; }
   .note-flip.flipped .note-front{ pointer-events: none; }
   .note-flip.flipped .note-back{ pointer-events: auto; }
+
   .note-face{
     backface-visibility: hidden;
     border-radius: 4px;
@@ -464,6 +488,7 @@
     font-size: 1.1rem;
     color: var(--ink);
     flex: 1;
+    margin-top: 16px;
   }
   .note-date{
     display: block;
@@ -487,6 +512,17 @@
     border: none;
     font-size: 0.75rem;
     color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .note-fav{
+    position: absolute;
+    top: 4px;
+    left: 6px;
+    z-index: 2;
+    background: none;
+    border: none;
+    font-size: 0.9rem;
+    color: var(--rose-deep);
     cursor: pointer;
   }
   .note-back{
@@ -889,6 +925,10 @@
   }
   .polaroid.flipped{ transform: rotateY(180deg); }
 
+  /* Prevent the hidden (rotated-away) face from catching taps meant for
+     the visible face — a known quirk on some Android browsers where
+     backface-visibility:hidden doesn't fully exclude an element from
+     hit-testing. */
   .face.front{ pointer-events: auto; }
   .face.back{ pointer-events: none; }
   .polaroid.flipped .face.front{ pointer-events: none; }
@@ -1287,7 +1327,10 @@
 </header>
 
 <section class="notes-wall hidden" id="notesWall">
-  <h2>Love Notes</h2>
+  <div class="notes-header">
+    <h2>Love Notes</h2>
+    <button class="notes-close-btn" id="notesCloseBtn" type="button" aria-label="Close love notes">✕</button>
+  </div>
   <form class="note-form" id="noteForm">
     <textarea id="noteInput" maxlength="200" placeholder="Leave a little note for them..."></textarea>
     <button type="submit">Leave a note</button>
@@ -1299,6 +1342,7 @@
       <option value="oldest">Oldest first</option>
       <option value="shuffle">Shuffle</option>
     </select>
+    <button class="fav-filter-btn" id="notesFavFilterBtn" type="button">♡ Favorites only</button>
   </div>
   <div class="notes-grid" id="notesGrid"></div>
 </section>
@@ -1435,6 +1479,8 @@
   const notesGrid = document.getElementById('notesGrid');
   const notesSearchInput = document.getElementById('notesSearchInput');
   const notesSortSelect = document.getElementById('notesSortSelect');
+  const notesFavFilterBtn = document.getElementById('notesFavFilterBtn');
+  const notesCloseBtn = document.getElementById('notesCloseBtn');
   const backupBtn = document.getElementById('backupBtn');
 
   const milestoneBanner = document.getElementById('milestoneBanner');
@@ -1707,6 +1753,7 @@ async function sha256Hex(text){
   let allNotes = [];
   let notesSearchQuery = '';
   let notesSortMode = 'newest';
+  let notesShowFavoritesOnly = false;
 
   async function loadNotes(){
     if (!supabase) return;
@@ -1716,7 +1763,7 @@ async function sha256Hex(text){
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      allNotes = data || [];
+      allNotes = (data || []).map(n => ({ ...n, favorite: !!n.is_favorite }));
       renderNotesFiltered();
     }catch(err){
       console.error('Could not load love notes:', err);
@@ -1725,7 +1772,7 @@ async function sha256Hex(text){
   }
 
   function renderNotesFiltered(){
-    let items = allNotes.slice();
+    let items = notesShowFavoritesOnly ? allNotes.filter(n => n.favorite) : allNotes.slice();
 
     if (notesSearchQuery.trim()){
       const q = notesSearchQuery.trim().toLowerCase();
@@ -1746,6 +1793,18 @@ async function sha256Hex(text){
     }
 
     renderNotes(items);
+  }
+
+  async function saveNoteFavorite(note){
+    if (!supabase) return;
+    const { error } = await supabase
+      .from(NOTES_TABLE)
+      .update({ is_favorite: note.favorite })
+      .eq('id', note.id);
+    if (error){
+      console.error('Could not save note favorite:', error);
+      showToast('Could not save that favorite.', { type: 'error' });
+    }
   }
 
   async function saveNoteReply(note){
@@ -1796,6 +1855,7 @@ async function sha256Hex(text){
       wrap.innerHTML = `
         <div class="note-flip" tabindex="0" role="button" aria-label="Flip note to reply">
           <div class="note-face note-front">
+            <button class="note-fav" type="button" aria-label="Toggle favorite">${note.favorite ? '♥' : '♡'}</button>
             <button class="note-remove" type="button" aria-label="Remove note">✕</button>
             <div class="note-message">${escapeHtml(note.message)}</div>
             ${note.reaction ? `<span class="note-reaction-badge">${note.reaction}</span>` : ''}
@@ -1812,13 +1872,14 @@ async function sha256Hex(text){
       `;
 
       const flipEl = wrap.querySelector('.note-flip');
+      const favBtn = wrap.querySelector('.note-fav');
       const removeBtn = wrap.querySelector('.note-remove');
       const replyInput = wrap.querySelector('.note-reply-input');
       const reactionBtns = wrap.querySelectorAll('.note-reaction-picker button');
       const flipBackBtn = wrap.querySelector('.note-flip-back-btn');
 
       function flip(e){
-        if ([removeBtn, replyInput, flipBackBtn].includes(e.target)) return;
+        if ([removeBtn, favBtn, replyInput, flipBackBtn].includes(e.target)) return;
         if (e.target.closest && e.target.closest('.note-reaction-picker')) return;
         flipEl.classList.toggle('flipped');
       }
@@ -1835,15 +1896,43 @@ async function sha256Hex(text){
         flipEl.classList.remove('flipped');
       });
 
-      removeBtn.addEventListener('click', async (e) => {
+      favBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        wrap.remove();
-        allNotes = allNotes.filter(n => n.id !== note.id);
-        try{ await supabase.from(NOTES_TABLE).delete().eq('id', note.id); }
-        catch(err){
-          console.error('Could not remove note:', err);
-          showToast('Could not remove that note.', { type: 'error' });
-        }
+        note.favorite = !note.favorite;
+        favBtn.textContent = note.favorite ? '♥' : '♡';
+        await saveNoteFavorite(note);
+        if (notesShowFavoritesOnly) renderNotesFiltered();
+      });
+
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = allNotes.findIndex(n => n.id === note.id);
+        if (idx === -1) return;
+        allNotes.splice(idx, 1);
+        renderNotesFiltered();
+
+        const UNDO_WINDOW = 5000;
+        let undone = false;
+        const timer = setTimeout(async () => {
+          if (undone) return;
+          try{
+            await supabase.from(NOTES_TABLE).delete().eq('id', note.id);
+          }catch(err){
+            console.error('Could not remove note:', err);
+            showToast('Could not fully remove that note — it may reappear.', { type: 'error' });
+          }
+        }, UNDO_WINDOW);
+
+        showToast('Note removed.', {
+          actionLabel: 'Undo',
+          duration: UNDO_WINDOW,
+          onAction: () => {
+            undone = true;
+            clearTimeout(timer);
+            allNotes.splice(idx, 0, note);
+            renderNotesFiltered();
+          }
+        });
       });
 
       replyInput.addEventListener('click', (e) => e.stopPropagation());
@@ -1885,6 +1974,17 @@ async function sha256Hex(text){
       notesLoaded = true;
       loadNotes();
     }
+  });
+
+  notesCloseBtn.addEventListener('click', () => {
+    notesWall.classList.add('hidden');
+  });
+
+  notesFavFilterBtn.addEventListener('click', () => {
+    notesShowFavoritesOnly = !notesShowFavoritesOnly;
+    notesFavFilterBtn.classList.toggle('active', notesShowFavoritesOnly);
+    notesFavFilterBtn.textContent = notesShowFavoritesOnly ? '♥ Showing favorites' : '♡ Favorites only';
+    renderNotesFiltered();
   });
 
   let notesSearchTimer = null;
