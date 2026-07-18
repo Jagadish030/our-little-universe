@@ -43,7 +43,8 @@
   }
   body.dark-mode .ambient span{ opacity: 0.22; }
   body.dark-mode .setup-banner{ background: #4A3F2E; color: var(--ink); }
-  body.dark-mode .note-card{ background: #3A3044; }
+  body.dark-mode .note-front{ background: #3A3044; }
+  body.dark-mode .note-back{ background: #332C40; }
   body.dark-mode .lightbox{ background: rgba(10,8,14,0.94); }
 
   .theme-btn{
@@ -62,6 +63,12 @@
   }
 
   *{ box-sizing: border-box; }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root){
+    animation-duration: 0.35s;
+    animation-timing-function: ease;
+  }
 
   html, body{
     margin:0;
@@ -147,6 +154,7 @@
     pointer-events: none;
     z-index: 0;
     overflow: hidden;
+    transform: translateZ(0);
   }
   .ambient span{
     position: absolute;
@@ -154,9 +162,16 @@
     font-size: 1.1rem;
     opacity: 0.35;
     color: var(--rose-deep);
+    will-change: transform, opacity;
   }
   @media (prefers-reduced-motion: no-preference){
     .ambient span{ animation: drift linear infinite; }
+  }
+  .ambient.scroll-pause span{
+    animation-play-state: paused !important;
+  }
+  @media (max-width: 480px){
+    .ambient span:nth-child(n+6){ display: none; }
   }
   @keyframes drift{
     0%{ transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
@@ -395,42 +410,136 @@
     padding: 0.65rem 1.4rem;
     cursor: pointer;
   }
+  .notes-controls{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    justify-content: center;
+    margin-bottom: 1.3rem;
+  }
+
   .notes-grid{
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 1.4rem 1.1rem;
     justify-content: center;
   }
-  .note-card{
-    background: #FFF9E8;
+  .note-wrap{
+    position: relative;
+    width: 170px;
+    perspective: 1000px;
+    transform: rotate(var(--nt, -2deg));
+    content-visibility: auto;
+    contain-intrinsic-size: 170px 190px;
+  }
+  .note-flip{
+    position: relative;
+    width: 100%;
+    min-height: 160px;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(.2,.8,.2,1);
+  }
+  .note-flip.flipped{ transform: rotateY(180deg); }
+  .note-face{
+    backface-visibility: hidden;
     border-radius: 4px;
-    box-shadow: 0 6px 14px var(--shadow);
-    padding: 1rem;
-    width: 160px;
-    min-height: 120px;
+    box-shadow: 0 3px 8px var(--shadow);
+    padding: 0.9rem;
+    display: flex;
+    flex-direction: column;
+  }
+  .note-front{
+    background: #FFF9E8;
+    position: relative;
+    min-height: 160px;
+  }
+  .note-message{
     font-family: 'Caveat', cursive;
     font-size: 1.1rem;
     color: var(--ink);
-    position: relative;
-    transform: rotate(var(--nt, -2deg));
+    flex: 1;
   }
-  .note-card .note-date{
+  .note-date{
     display: block;
     font-family: 'Quicksand', sans-serif;
     font-size: 0.65rem;
     color: var(--ink-soft);
-    margin-top: 0.6rem;
+    margin-top: 0.5rem;
+  }
+  .note-reaction-badge{
+    position: absolute;
+    bottom: 8px;
+    right: 10px;
+    font-size: 1.15rem;
   }
   .note-remove{
     position: absolute;
     top: 4px;
     right: 6px;
+    z-index: 2;
     background: none;
     border: none;
     font-size: 0.75rem;
     color: var(--ink-soft);
     cursor: pointer;
   }
+  .note-back{
+    position: absolute;
+    inset: 0;
+    background: #FFF3D6;
+    transform: rotateY(180deg);
+    justify-content: space-between;
+  }
+  .note-reply-input{
+    font-family: 'Caveat', cursive;
+    font-size: 1rem;
+    background: transparent;
+    border: none;
+    resize: none;
+    flex: 1;
+    outline: none;
+    color: var(--ink);
+  }
+  .note-reaction-picker{
+    display: flex;
+    justify-content: center;
+    gap: 3px;
+    margin: 4px 0;
+  }
+  .note-reaction-picker button{
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    opacity: 0.55;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  }
+  .note-reaction-picker button:hover{ opacity: 0.85; transform: scale(1.1); }
+  .note-reaction-picker button.active{
+    opacity: 1;
+    border-color: var(--rose-deep);
+  }
+  .note-flip-back-btn{
+    display: block;
+    margin: 2px auto 0;
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    cursor: pointer;
+    opacity: 0.8;
+    padding: 4px;
+  }
+  .note-flip-back-btn:hover{ opacity: 1; color: var(--rose-deep); }
 
   /* ---------- milestone banner ---------- */
   .toast-container{
@@ -803,7 +912,10 @@
     object-fit: contain;
     display: block;
     border-radius: 1px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
   }
+  .face.front img.loaded{ opacity: 1; }
   .face.front .cap-preview{
     font-family: 'Caveat', cursive;
     font-size: 1.15rem;
@@ -1017,6 +1129,14 @@
     .polaroid-wrap{ width: 100%; max-width: none; min-width: 0; }
     .face.front img{ max-height: 200px; max-width: 100%; }
     .add-tile{ height: 140px; }
+
+    .notes-grid{
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      justify-content: initial;
+      gap: 1.2rem 0.8rem;
+    }
+    .note-wrap{ width: 100%; min-width: 0; }
   }
 
   .setup-banner{
@@ -1162,6 +1282,14 @@
     <textarea id="noteInput" maxlength="200" placeholder="Leave a little note for them..."></textarea>
     <button type="submit">Leave a note</button>
   </form>
+  <div class="notes-controls">
+    <input type="text" id="notesSearchInput" class="search-input" placeholder="🔍 search notes...">
+    <select id="notesSortSelect" class="sort-select" aria-label="Sort notes">
+      <option value="newest">Newest first</option>
+      <option value="oldest">Oldest first</option>
+      <option value="shuffle">Shuffle</option>
+    </select>
+  </div>
   <div class="notes-grid" id="notesGrid"></div>
 </section>
 
@@ -1295,6 +1423,8 @@
   const noteForm = document.getElementById('noteForm');
   const noteInput = document.getElementById('noteInput');
   const notesGrid = document.getElementById('notesGrid');
+  const notesSearchInput = document.getElementById('notesSearchInput');
+  const notesSortSelect = document.getElementById('notesSortSelect');
   const backupBtn = document.getElementById('backupBtn');
 
   const milestoneBanner = document.getElementById('milestoneBanner');
@@ -1562,7 +1692,11 @@ async function sha256Hex(text){
 
   /* ---------- love notes wall ---------- */
   const NOTES_TABLE = 'love_notes';
+  const NOTE_REACTIONS = ['😂', '💕', '😙', '🎉', '😢'];
   let notesLoaded = false;
+  let allNotes = [];
+  let notesSearchQuery = '';
+  let notesSortMode = 'newest';
 
   async function loadNotes(){
     if (!supabase) return;
@@ -1572,35 +1706,166 @@ async function sha256Hex(text){
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      renderNotes(data || []);
+      allNotes = data || [];
+      renderNotesFiltered();
     }catch(err){
       console.error('Could not load love notes:', err);
+      showToast('Could not load love notes.', { type: 'error' });
+    }
+  }
+
+  function renderNotesFiltered(){
+    let items = allNotes.slice();
+
+    if (notesSearchQuery.trim()){
+      const q = notesSearchQuery.trim().toLowerCase();
+      items = items.filter(n =>
+        (n.message || '').toLowerCase().includes(q) ||
+        (n.reply || '').toLowerCase().includes(q)
+      );
+    }
+
+    if (notesSortMode === 'oldest'){
+      items = items.slice().reverse();
+    }else if (notesSortMode === 'shuffle'){
+      items = items.slice();
+      for (let i = items.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+      }
+    }
+
+    renderNotes(items);
+  }
+
+  async function saveNoteReply(note){
+    if (!supabase) return;
+    const { error } = await supabase
+      .from(NOTES_TABLE)
+      .update({ reply: note.reply })
+      .eq('id', note.id);
+    if (error){
+      console.error('Could not save reply:', error);
+      showToast('Could not save that reply.', { type: 'error' });
+    }
+  }
+
+  async function saveNoteReaction(note){
+    if (!supabase) return;
+    const { error } = await supabase
+      .from(NOTES_TABLE)
+      .update({ reaction: note.reaction })
+      .eq('id', note.id);
+    if (error){
+      console.error('Could not save reaction:', error);
+      showToast('Could not save that reaction.', { type: 'error' });
     }
   }
 
   function renderNotes(notes){
     notesGrid.innerHTML = '';
+    if (!notes.length){
+      const empty = document.createElement('p');
+      empty.className = 'empty-note';
+      empty.style.display = 'block';
+      empty.textContent = notesSearchQuery.trim()
+        ? 'no notes match that search'
+        : 'no notes yet — leave the first one above';
+      notesGrid.appendChild(empty);
+      return;
+    }
+
     notes.forEach(note => {
-      const card = document.createElement('div');
-      card.className = 'note-card';
-      card.style.setProperty('--nt', (Math.random() * 6 - 3).toFixed(1) + 'deg');
+      const wrap = document.createElement('div');
+      wrap.className = 'note-wrap';
+      wrap.style.setProperty('--nt', (Math.random() * 6 - 3).toFixed(1) + 'deg');
       const dateLabel = note.created_at
         ? new Date(note.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
         : '';
-      card.innerHTML = `
-        <button class="note-remove" type="button" aria-label="Remove note">✕</button>
-        <div>${escapeHtml(note.message)}</div>
-        <span class="note-date">${dateLabel}</span>
+
+      wrap.innerHTML = `
+        <div class="note-flip" tabindex="0" role="button" aria-label="Flip note to reply">
+          <div class="note-face note-front">
+            <button class="note-remove" type="button" aria-label="Remove note">✕</button>
+            <div class="note-message">${escapeHtml(note.message)}</div>
+            ${note.reaction ? `<span class="note-reaction-badge">${note.reaction}</span>` : ''}
+            <span class="note-date">${dateLabel}</span>
+          </div>
+          <div class="note-face note-back">
+            <textarea class="note-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(note.reply || '')}</textarea>
+            <div class="note-reaction-picker">
+              ${NOTE_REACTIONS.map(r => `<button type="button" data-reaction="${r}" class="${note.reaction === r ? 'active' : ''}" aria-label="React ${r}">${r}</button>`).join('')}
+            </div>
+            <button class="note-flip-back-btn" type="button">‹ back</button>
+          </div>
+        </div>
       `;
-      card.querySelector('.note-remove').addEventListener('click', async () => {
-        card.remove();
+
+      const flipEl = wrap.querySelector('.note-flip');
+      const removeBtn = wrap.querySelector('.note-remove');
+      const replyInput = wrap.querySelector('.note-reply-input');
+      const reactionBtns = wrap.querySelectorAll('.note-reaction-picker button');
+      const flipBackBtn = wrap.querySelector('.note-flip-back-btn');
+
+      function flip(e){
+        if ([removeBtn, replyInput, flipBackBtn].includes(e.target)) return;
+        if (e.target.closest && e.target.closest('.note-reaction-picker')) return;
+        flipEl.classList.toggle('flipped');
+      }
+      flipEl.addEventListener('click', flip);
+      flipEl.addEventListener('keydown', (e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target === flipEl){
+          e.preventDefault();
+          flipEl.classList.toggle('flipped');
+        }
+      });
+
+      flipBackBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        flipEl.classList.remove('flipped');
+      });
+
+      removeBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        wrap.remove();
+        allNotes = allNotes.filter(n => n.id !== note.id);
         try{ await supabase.from(NOTES_TABLE).delete().eq('id', note.id); }
         catch(err){
           console.error('Could not remove note:', err);
           showToast('Could not remove that note.', { type: 'error' });
         }
       });
-      notesGrid.appendChild(card);
+
+      replyInput.addEventListener('click', (e) => e.stopPropagation());
+      let replyTimer = null;
+      replyInput.addEventListener('input', () => {
+        note.reply = replyInput.value;
+        clearTimeout(replyTimer);
+        replyTimer = setTimeout(() => saveNoteReply(note), 400);
+      });
+
+      reactionBtns.forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const r = btn.dataset.reaction;
+          note.reaction = (note.reaction === r) ? null : r;
+          reactionBtns.forEach(b => b.classList.toggle('active', b.dataset.reaction === note.reaction));
+          let badge = wrap.querySelector('.note-reaction-badge');
+          if (note.reaction){
+            if (!badge){
+              badge = document.createElement('span');
+              badge.className = 'note-reaction-badge';
+              wrap.querySelector('.note-front').appendChild(badge);
+            }
+            badge.textContent = note.reaction;
+          }else if (badge){
+            badge.remove();
+          }
+          await saveNoteReaction(note);
+        });
+      });
+
+      notesGrid.appendChild(wrap);
     });
   }
 
@@ -1610,6 +1875,20 @@ async function sha256Hex(text){
       notesLoaded = true;
       loadNotes();
     }
+  });
+
+  let notesSearchTimer = null;
+  notesSearchInput.addEventListener('input', () => {
+    clearTimeout(notesSearchTimer);
+    notesSearchTimer = setTimeout(() => {
+      notesSearchQuery = notesSearchInput.value;
+      renderNotesFiltered();
+    }, 250);
+  });
+
+  notesSortSelect.addEventListener('change', () => {
+    notesSortMode = notesSortSelect.value;
+    renderNotesFiltered();
   });
 
   noteForm.addEventListener('submit', async (e) => {
@@ -1907,11 +2186,23 @@ async function sha256Hex(text){
     fileInput.click();
   });
 
+  /* ---------- smooth crossfade for sort/filter/search changes ----------
+     Uses the browser's View Transitions API where supported (Chrome/Edge)
+     for a soft crossfade instead of an instant re-render. Falls back to
+     a normal instant render on browsers that don't support it (Safari). */
+  function transitionRender(){
+    if (document.startViewTransition){
+      document.startViewTransition(() => render());
+    }else{
+      render();
+    }
+  }
+
   favFilterBtn.addEventListener('click', () => {
     showFavoritesOnly = !showFavoritesOnly;
     favFilterBtn.classList.toggle('active', showFavoritesOnly);
     favFilterBtn.textContent = showFavoritesOnly ? '♥ Showing favorites' : '♡ Favorites only';
-    render();
+    transitionRender();
   });
 
   let searchTimer = null;
@@ -1919,13 +2210,13 @@ async function sha256Hex(text){
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => {
       searchQuery = searchInput.value;
-      render();
+      transitionRender();
     }, 250);
   });
 
   sortSelect.addEventListener('change', () => {
     sortMode = sortSelect.value;
-    render();
+    transitionRender();
   });
 
   surpriseBtn.addEventListener('click', () => {
@@ -2073,8 +2364,14 @@ async function sha256Hex(text){
 
     const choice = await askPhotoStyle(files[0]);
     const keepOriginal = qualityToggle.checked;
+    const originalBtnLabel = heroAddBtn.textContent;
+    const multi = files.length > 1;
 
+    let uploaded = 0;
     for (const file of files){
+      if (multi){
+        heroAddBtn.textContent = `Uploading ${uploaded + 1} of ${files.length}...`;
+      }
       try{
         let uploadFile;
         if (keepOriginal && choice === 'original'){
@@ -2091,11 +2388,13 @@ async function sha256Hex(text){
         burstHearts(heroAddBtn);
         playPinChime();
         checkMilestone(photos.length);
+        uploaded++;
       }catch(err){
         console.error('Could not save this memory:', err);
         showToast('Could not upload that photo — check your connection.', { type: 'error' });
       }
     }
+    heroAddBtn.textContent = originalBtnLabel;
     fileInput.value = '';
   });
 
@@ -2220,7 +2519,7 @@ async function sha256Hex(text){
         <div class="face front">
           <button class="fav-heart" type="button" aria-label="Toggle favorite">${photo.favorite ? '♥' : '♡'}</button>
           <div class="photo-frame">
-            <img src="${photo.src}" alt="A memory">
+            <img src="${photo.src}" alt="A memory" loading="lazy">
             <button class="expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>
             ${photo.mood ? `<span class="mood-badge">${photo.mood}</span>` : ''}
           </div>
@@ -2259,6 +2558,15 @@ async function sha256Hex(text){
     const downloadBtn = wrap.querySelector('.card-download');
     const flipBackBtn = wrap.querySelector('.flip-back-btn');
     const moodBtns = wrap.querySelectorAll('.mood-picker button');
+
+    const photoImg = wrap.querySelector('.photo-frame img');
+    if (photoImg){
+      if (photoImg.complete){
+        photoImg.classList.add('loaded');
+      }else{
+        photoImg.addEventListener('load', () => photoImg.classList.add('loaded'));
+      }
+    }
 
     function flip(e){
       if ([textarea, unpinBtn, favBtn, expandBtn, downloadBtn, flipBackBtn].includes(e.target)) return;
@@ -2413,6 +2721,19 @@ async function sha256Hex(text){
       s.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
       el.appendChild(s);
     }
+
+    // Pausing this animation while the page is actively being scrolled
+    // avoids the stutter some mobile browsers show when repainting an
+    // animated fixed-position layer during a scroll gesture. It resumes
+    // smoothly once scrolling settles. Only applied on mobile widths —
+    // desktop scrolling was already smooth without it.
+    let scrollPauseTimer = null;
+    window.addEventListener('scroll', () => {
+      if (window.innerWidth > 480) return;
+      el.classList.add('scroll-pause');
+      clearTimeout(scrollPauseTimer);
+      scrollPauseTimer = setTimeout(() => el.classList.remove('scroll-pause'), 150);
+    }, { passive: true });
   }
 
   let initialized = false;
