@@ -27,6 +27,8 @@
     --gold: #D4A574;
     --white: #FFFDF9;
     --shadow: rgba(107,83,68,0.18);
+    --glass-bg: rgba(255,253,249,0.6);
+    --glass-border: rgba(255,255,255,0.55);
   }
 
   body.dark-mode{
@@ -40,6 +42,8 @@
     --gold: #DDBD8E;
     --white: #302739;
     --shadow: rgba(0,0,0,0.45);
+    --glass-bg: rgba(48,39,57,0.55);
+    --glass-border: rgba(255,255,255,0.14);
   }
   body.dark-mode .ambient span{ opacity: 0.22; }
   body.dark-mode .setup-banner{ background: #4A3F2E; color: var(--ink); }
@@ -89,6 +93,9 @@
     inset: 0;
     z-index: 999;
     background: var(--paper);
+    background-image:
+      radial-gradient(circle at 20% 15%, rgba(232,180,184,0.25), transparent 45%),
+      radial-gradient(circle at 85% 75%, rgba(168,184,156,0.22), transparent 45%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -96,7 +103,10 @@
   }
   .pass-gate.hidden{ display: none; }
   .pass-card{
-    background: var(--white);
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
     border-radius: 14px;
     box-shadow: 0 14px 34px var(--shadow);
     padding: 2.2rem 2rem;
@@ -662,7 +672,10 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 900;
-    background: var(--white);
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
     border-radius: 14px;
     box-shadow: 0 14px 30px var(--shadow);
     padding: 1.1rem 1.6rem;
@@ -868,6 +881,7 @@
     justify-content: center;
     align-items: flex-start;
     gap: 1.6rem 1.8rem;
+    perspective: 800px;
   }
 
   /* ---------- polaroid card ---------- */
@@ -948,12 +962,27 @@
   }
   .photo-frame{
     width: 100%;
+    min-height: 140px;
     border-radius: 2px;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
     position: relative;
+    background: linear-gradient(100deg, var(--paper-deep) 25%, var(--paper) 45%, var(--paper-deep) 65%);
+    background-size: 250% 100%;
+  }
+  @media (prefers-reduced-motion: no-preference){
+    .photo-frame{ animation: shimmer 1.8s ease-in-out infinite; }
+  }
+  .photo-frame.loaded{
+    min-height: 0;
+    background: none;
+    animation: none;
+  }
+  @keyframes shimmer{
+    0%{ background-position: 200% 0; }
+    100%{ background-position: -200% 0; }
   }
   .face.front img{
     width: 100%;
@@ -964,6 +993,8 @@
     border-radius: 1px;
     opacity: 0;
     transition: opacity 0.4s ease;
+    position: relative;
+    z-index: 1;
   }
   .face.front img.loaded{ opacity: 1; }
   .face.front .cap-preview{
@@ -1238,7 +1269,9 @@
   .lightbox-close, .lightbox-nav{
     position: fixed;
     background: rgba(255,255,255,0.15);
-    border: none;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.25);
     color: #FFFDF9;
     border-radius: 50%;
     cursor: pointer;
@@ -1403,6 +1436,11 @@
   if (localStorage.getItem(THEME_KEY) === 'dark'){
     document.body.classList.add('dark-mode');
   }
+
+  // Only enable the 3D cursor-tracking tilt on devices with a real mouse
+  // and hover capability — this deliberately never runs on touch/mobile,
+  // which has already been carefully tuned for scroll performance.
+  const supportsHoverTilt = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   /* ---------- toast notifications ----------
      showToast(message) — simple info/error message, auto-dismisses.
@@ -2623,6 +2661,23 @@ async function sha256Hex(text){
     wrap.className = 'polaroid-wrap';
     wrap.style.setProperty('--tilt', randomTilt());
 
+    if (supportsHoverTilt){
+      wrap.addEventListener('mousemove', (e) => {
+        const rect = wrap.getBoundingClientRect();
+        const px = (e.clientX - rect.left) / rect.width;
+        const py = (e.clientY - rect.top) / rect.height;
+        const maxTilt = 7;
+        const rotateY = (px - 0.5) * maxTilt * 2;
+        const rotateX = (0.5 - py) * maxTilt * 2;
+        wrap.style.transition = 'transform 0.1s ease-out';
+        wrap.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+      });
+      wrap.addEventListener('mouseleave', () => {
+        wrap.style.transition = 'transform 0.4s ease-out';
+        wrap.style.transform = '';
+      });
+    }
+
     wrap.innerHTML = `
       <div class="pin"></div>
       <div class="polaroid" tabindex="0" role="button" aria-label="Flip photo to see the note">
@@ -2670,11 +2725,16 @@ async function sha256Hex(text){
     const moodBtns = wrap.querySelectorAll('.mood-picker button');
 
     const photoImg = wrap.querySelector('.photo-frame img');
+    const photoFrame = wrap.querySelector('.photo-frame');
     if (photoImg){
-      if (photoImg.complete){
+      const markLoaded = () => {
         photoImg.classList.add('loaded');
+        if (photoFrame) photoFrame.classList.add('loaded');
+      };
+      if (photoImg.complete){
+        markLoaded();
       }else{
-        photoImg.addEventListener('load', () => photoImg.classList.add('loaded'));
+        photoImg.addEventListener('load', markLoaded);
       }
     }
 
