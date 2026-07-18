@@ -441,6 +441,11 @@
     transition: transform 0.5s cubic-bezier(.2,.8,.2,1);
   }
   .note-flip.flipped{ transform: rotateY(180deg); }
+
+  .note-front{ pointer-events: auto; }
+  .note-back{ pointer-events: none; }
+  .note-flip.flipped .note-front{ pointer-events: none; }
+  .note-flip.flipped .note-back{ pointer-events: auto; }
   .note-face{
     backface-visibility: hidden;
     border-radius: 4px;
@@ -883,6 +888,11 @@
     transform: rotate(0deg) translateY(-4px);
   }
   .polaroid.flipped{ transform: rotateY(180deg); }
+
+  .face.front{ pointer-events: auto; }
+  .face.back{ pointer-events: none; }
+  .polaroid.flipped .face.front{ pointer-events: none; }
+  .polaroid.flipped .face.back{ pointer-events: auto; }
 
   .face{
     backface-visibility: hidden;
