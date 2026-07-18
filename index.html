@@ -2629,7 +2629,7 @@ async function sha256Hex(text){
         <div class="face front">
           <button class="fav-heart" type="button" aria-label="Toggle favorite">${photo.favorite ? '♥' : '♡'}</button>
           <div class="photo-frame">
-            <img src="${photo.src}" alt="A memory" loading="lazy">
+            <img src="${photo.src}" alt="A memory">
             <button class="expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>
             ${photo.mood ? `<span class="mood-badge">${photo.mood}</span>` : ''}
           </div>
