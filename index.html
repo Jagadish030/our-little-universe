@@ -28,6 +28,7 @@
     --white: #FFFDF9;
     --shadow: rgba(107,83,68,0.18);
     --glass-bg: rgba(255,253,249,0.6);
+    --glass-bg-strong: rgba(255,253,249,0.72);
     --glass-border: rgba(255,255,255,0.55);
   }
 
@@ -43,6 +44,7 @@
     --white: #302739;
     --shadow: rgba(0,0,0,0.45);
     --glass-bg: rgba(48,39,57,0.55);
+    --glass-bg-strong: rgba(48,39,57,0.7);
     --glass-border: rgba(255,255,255,0.14);
   }
   body.dark-mode .ambient span{ opacity: 0.22; }
@@ -104,8 +106,8 @@
   .pass-gate.hidden{ display: none; }
   .pass-card{
     background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
     border: 1px solid var(--glass-border);
     border-radius: 14px;
     box-shadow: 0 14px 34px var(--shadow);
@@ -202,6 +204,33 @@
   @keyframes burstUp{
     0%{ transform: translate(0,0) scale(0.6); opacity: 1; }
     100%{ transform: translate(var(--dx,0px), -70px) scale(1.1); opacity: 0; }
+  }
+
+  .cursor-trail-heart{
+    position: fixed;
+    z-index: 500;
+    pointer-events: none;
+    font-size: 0.75rem;
+    color: var(--rose-deep);
+    transform: translate(-50%, -50%);
+    animation: trailFade 0.9s ease-out forwards;
+  }
+  @keyframes trailFade{
+    0%{ opacity: 0.75; transform: translate(-50%, -50%) scale(1); }
+    100%{ opacity: 0; transform: translate(-50%, -85%) scale(0.4); }
+  }
+
+  .click-heart{
+    position: fixed;
+    z-index: 500;
+    pointer-events: none;
+    font-size: 0.9rem;
+    color: var(--rose-deep);
+    animation: clickBurst 0.6s ease-out forwards;
+  }
+  @keyframes clickBurst{
+    0%{ transform: translate(-50%,-50%) scale(0.5); opacity: 1; }
+    100%{ transform: translate(calc(-50% + var(--cdx,0px)), calc(-50% - 34px)) scale(1); opacity: 0; }
   }
 
   /* ---------- hero ---------- */
@@ -430,8 +459,13 @@
     outline: none;
   }
   .note-form textarea:focus{ border-color: var(--rose-deep); }
-  .note-form button{
-    align-self: center;
+  .note-form-row{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+  }
+  .note-form button[type="submit"]{
     font-family: 'Quicksand', sans-serif;
     font-weight: 600;
     font-size: 0.9rem;
@@ -442,6 +476,194 @@
     padding: 0.65rem 1.4rem;
     cursor: pointer;
   }
+  .voice-record-btn{
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--rose-deep);
+    background: var(--white);
+    color: var(--rose-deep);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .voice-record-btn svg{
+    width: 18px;
+    height: 18px;
+    display: block;
+  }
+  .voice-record-btn.recording{
+    background: #D64545;
+    border-color: #D64545;
+    color: var(--white);
+    animation: micPulse 1.2s ease-in-out infinite;
+  }
+  @keyframes micPulse{
+    0%, 100%{ box-shadow: 0 0 0 0 rgba(214,69,69,0.4); }
+    50%{ box-shadow: 0 0 0 8px rgba(214,69,69,0); }
+  }
+  .voice-status{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+  .voice-status.hidden{ display: none; }
+  .voice-dot{
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #D64545;
+    animation: micPulse 1.2s ease-in-out infinite;
+  }
+  .note-voice{
+    margin-top: 6px;
+  }
+  .note-voice audio{
+    width: 100%;
+    height: 32px;
+  }
+
+  /* ---------- recording countdown ---------- */
+  .countdown-overlay{
+    position: fixed;
+    inset: 0;
+    z-index: 970;
+    background: rgba(40,30,24,0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .countdown-overlay.hidden{ display: none; }
+  .countdown-card{
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: var(--glass-bg-strong);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 14px 34px var(--shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #countdownNumber{
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    font-size: 4rem;
+    line-height: 1;
+    color: var(--rose-deep);
+    display: inline-block;
+  }
+  @keyframes countdownPulse{
+    0%{ transform: scale(0.4); opacity: 0; }
+    30%{ transform: scale(1.25); opacity: 1; }
+    55%{ transform: scale(1); opacity: 1; }
+    100%{ transform: scale(1); opacity: 0; }
+  }
+  .countdown-pulse{ animation: countdownPulse 1s ease-out; }
+  @media (prefers-reduced-motion: reduce){
+    .countdown-pulse{ animation: none; opacity: 1; }
+  }
+
+  /* ---------- note author picker ---------- */
+  .note-author-toggle{
+    display: block;
+    margin: 0 auto;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .toggle-track{
+    position: relative;
+    width: 76px;
+    height: 34px;
+    border-radius: 999px;
+    background: var(--glass-bg-strong);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.12);
+    display: flex;
+    padding: 3px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  .toggle-glow{
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 35px;
+    height: 28px;
+    border-radius: 14px;
+    background: radial-gradient(circle, var(--rose-deep) 0%, transparent 72%);
+    filter: blur(3px);
+    opacity: 0.85;
+    transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), background 0.35s ease;
+  }
+  .note-author-toggle[data-author="2"] .toggle-glow{
+    transform: translateX(35px);
+    background: radial-gradient(circle, var(--sage) 0%, transparent 72%);
+  }
+  .toggle-letter{
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    line-height: 1;
+    color: var(--ink-soft);
+    opacity: 0.4;
+    transition: opacity 0.35s ease, color 0.35s ease, text-shadow 0.35s ease;
+  }
+  .note-author-toggle[data-author="1"] .toggle-letter[data-letter="1"]{
+    opacity: 1;
+    color: var(--white);
+    text-shadow: 0 0 8px var(--rose-deep), 0 0 3px var(--rose-deep);
+  }
+  .note-author-toggle[data-author="2"] .toggle-letter[data-letter="2"]{
+    opacity: 1;
+    color: var(--white);
+    text-shadow: 0 0 8px var(--sage), 0 0 3px var(--sage);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .toggle-glow{ transition: background 0.2s ease; }
+    .toggle-letter{ transition: opacity 0.2s ease, color 0.2s ease; }
+  }
+  .note-author-badge{
+    position: absolute;
+    bottom: 6px;
+    left: 8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    font-size: 0.68rem;
+    line-height: 1;
+    color: var(--white);
+  }
+  .note-author-badge.author-1{ background: var(--rose-deep); }
+  .note-author-badge.author-2{ background: var(--sage); }
   .notes-controls{
     display: flex;
     flex-wrap: wrap;
@@ -492,6 +714,7 @@
     background: #FFF9E8;
     position: relative;
     min-height: 160px;
+    padding-bottom: 34px;
   }
   .note-message{
     font-family: 'Caveat', cursive;
@@ -501,17 +724,21 @@
     margin-top: 16px;
   }
   .note-date{
-    display: block;
+    position: absolute;
+    bottom: 10px;
+    right: 12px;
     font-family: 'Quicksand', sans-serif;
     font-size: 0.65rem;
     color: var(--ink-soft);
-    margin-top: 0.5rem;
   }
   .note-reaction-badge{
     position: absolute;
-    bottom: 8px;
-    right: 10px;
-    font-size: 1.15rem;
+    top: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.05rem;
+    line-height: 1;
+    z-index: 1;
   }
   .note-remove{
     position: absolute;
@@ -673,8 +900,8 @@
     transform: translateX(-50%);
     z-index: 900;
     background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
     border: 1px solid var(--glass-border);
     border-radius: 14px;
     box-shadow: 0 14px 30px var(--shadow);
@@ -719,7 +946,10 @@
   }
   .style-modal.hidden{ display: none; }
   .style-card{
-    background: var(--white);
+    background: var(--glass-bg-strong);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
     border-radius: 14px;
     padding: 1.6rem;
     text-align: center;
@@ -787,7 +1017,10 @@
     position: relative;
     max-width: 340px;
     margin: 1.4rem auto 0;
-    background: var(--white);
+    background: var(--glass-bg);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid var(--glass-border);
     border-radius: 14px;
     box-shadow: 0 8px 22px var(--shadow);
     padding: 0.7rem 2rem 0.7rem 0.7rem;
@@ -850,6 +1083,40 @@
     margin-top: 0.7rem;
   }
 
+  .presence-indicator{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+  }
+  .presence-dot{
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ink-soft);
+    opacity: 0.35;
+    transition: background 0.4s ease, opacity 0.4s ease, box-shadow 0.4s ease;
+  }
+  .presence-indicator.together{
+    color: var(--sage);
+  }
+  .presence-indicator.together .presence-dot{
+    background: var(--sage);
+    opacity: 1;
+    box-shadow: 0 0 6px var(--sage);
+    animation: presencePulse 1.8s ease-in-out infinite;
+  }
+  @keyframes presencePulse{
+    0%, 100%{ box-shadow: 0 0 4px var(--sage); transform: scale(1); }
+    50%{ box-shadow: 0 0 10px var(--sage); transform: scale(1.15); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .presence-indicator.together .presence-dot{ animation: none; }
+  }
+
   /* ---------- garland ---------- */
   main{
     position: relative;
@@ -881,7 +1148,6 @@
     justify-content: center;
     align-items: flex-start;
     gap: 1.6rem 1.8rem;
-    perspective: 800px;
   }
 
   /* ---------- polaroid card ---------- */
@@ -969,20 +1235,11 @@
     justify-content: center;
     overflow: hidden;
     position: relative;
-    background: linear-gradient(100deg, var(--paper-deep) 25%, var(--paper) 45%, var(--paper-deep) 65%);
-    background-size: 250% 100%;
-  }
-  @media (prefers-reduced-motion: no-preference){
-    .photo-frame{ animation: shimmer 1.8s ease-in-out infinite; }
+    background: var(--paper-deep);
   }
   .photo-frame.loaded{
     min-height: 0;
     background: none;
-    animation: none;
-  }
-  @keyframes shimmer{
-    0%{ background-position: 200% 0; }
-    100%{ background-position: -200% 0; }
   }
   .face.front img{
     width: 100%;
@@ -992,11 +1249,55 @@
     display: block;
     border-radius: 1px;
     opacity: 0;
-    transition: opacity 0.4s ease;
+    filter: blur(18px);
+    transform: scale(1.08);
+    transition:
+      opacity 0.55s ease,
+      filter 0.7s ease,
+      transform 0.7s ease;
     position: relative;
     z-index: 1;
   }
-  .face.front img.loaded{ opacity: 1; }
+
+  .scratch-layer{
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    touch-action: none;
+    cursor: pointer;
+    transition: opacity 0.5s ease;
+  }
+  .scratch-hint{
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 2px;
+    color: #FFFDF9;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    font-size: 0.7rem;
+    text-align: center;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.45);
+    pointer-events: none;
+    padding: 0 8px;
+  }
+  .scratch-hint .scratch-hint-emoji{ font-size: 1.4rem; }
+  .face.front img.loaded{
+    opacity: 1;
+    filter: none;
+    transform: scale(1);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .face.front img{
+      filter: none;
+      transform: none;
+      transition: opacity 0.3s ease;
+    }
+  }
   .face.front .cap-preview{
     font-family: 'Caveat', cursive;
     font-size: 1.15rem;
@@ -1244,7 +1545,9 @@
     position: fixed;
     inset: 0;
     z-index: 800;
-    background: rgba(40,30,24,0.9);
+    background: rgba(40,30,24,0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1257,14 +1560,36 @@
     object-fit: contain;
     border-radius: 6px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    opacity: 0;
+    filter: blur(14px);
+    transform: scale(1.04);
+    transition: opacity 0.4s ease, filter 0.5s ease, transform 0.5s ease;
+  }
+  .lightbox img.loaded{
+    opacity: 1;
+    filter: none;
+    transform: scale(1);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .lightbox img{
+      filter: none;
+      transform: none;
+      transition: opacity 0.3s ease;
+    }
   }
   .lightbox-caption{
     font-family: 'Caveat', cursive;
     font-size: 1.4rem;
-    color: var(--white);
+    color: #FFFDF9;
     text-align: center;
-    margin-top: 0.8rem;
     max-width: 80vw;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 999px;
+    padding: 0.4rem 1.1rem;
+    display: table;
+    margin: 0.8rem auto 0;
   }
   .lightbox-close, .lightbox-nav{
     position: fixed;
@@ -1348,6 +1673,10 @@
     <button class="fav-filter-btn" id="backupBtn" type="button">⬇ Backup everything</button>
   </div>
   <div class="count-note" id="countNote"></div>
+  <div class="presence-indicator" id="presenceIndicator" title="">
+    <span class="presence-dot" id="presenceDot"></span>
+    <span id="presenceText">just you right now</span>
+  </div>
 
   <div class="on-this-day hidden" id="onThisDay">
     <button class="otd-dismiss" id="otdDismiss" type="button" aria-label="Dismiss">✕</button>
@@ -1365,8 +1694,23 @@
     <button class="notes-close-btn" id="notesCloseBtn" type="button" aria-label="Close love notes">✕</button>
   </div>
   <form class="note-form" id="noteForm">
+    <button type="button" class="note-author-toggle" data-author="1" id="noteAuthorToggle" aria-label="Toggle who wrote this note">
+      <span class="toggle-track">
+        <span class="toggle-glow"></span>
+        <span class="toggle-letter" data-letter="1" id="toggleLetter1">J</span>
+        <span class="toggle-letter" data-letter="2" id="toggleLetter2">M</span>
+      </span>
+    </button>
     <textarea id="noteInput" maxlength="200" placeholder="Leave a little note for them..."></textarea>
-    <button type="submit">Leave a note</button>
+    <div class="note-form-row">
+      <button type="submit">Leave a note</button>
+      <button type="button" id="voiceRecordBtn" class="voice-record-btn" aria-label="Record a voice note"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V20H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-2v-2.08A7 7 0 0 0 19 11z"/></svg></button>
+    </div>
+    <div class="voice-status hidden" id="voiceStatus">
+      <span class="voice-dot"></span>
+      <span id="voiceTimer">0:00</span>
+      <span>recording... tap 🎤 again to stop</span>
+    </div>
   </form>
   <div class="notes-controls">
     <input type="text" id="notesSearchInput" class="search-input" placeholder="🔍 search notes...">
@@ -1422,10 +1766,20 @@
       <input type="checkbox" id="qualityToggle">
       Keep full original quality (larger file size)
     </label>
+    <label class="quality-toggle">
+      <input type="checkbox" id="surpriseToggle">
+      🎁 Make it a surprise (scratch to reveal)
+    </label>
   </div>
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
+
+<div class="countdown-overlay hidden" id="countdownOverlay">
+  <div class="countdown-card">
+    <span id="countdownNumber">3</span>
+  </div>
+</div>
 
 </div>
 
@@ -1436,11 +1790,6 @@
   if (localStorage.getItem(THEME_KEY) === 'dark'){
     document.body.classList.add('dark-mode');
   }
-
-  // Only enable the 3D cursor-tracking tilt on devices with a real mouse
-  // and hover capability — this deliberately never runs on touch/mobile,
-  // which has already been carefully tuned for scroll performance.
-  const supportsHoverTilt = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   /* ---------- toast notifications ----------
      showToast(message) — simple info/error message, auto-dismisses.
@@ -1489,6 +1838,9 @@
   const garlandEl = document.getElementById('garland');
   const emptyNote = document.getElementById('emptyNote');
   const countNote = document.getElementById('countNote');
+  const presenceIndicator = document.getElementById('presenceIndicator');
+  const presenceDot = document.getElementById('presenceDot');
+  const presenceText = document.getElementById('presenceText');
   const fileInput = document.getElementById('fileInput');
   const heroAddBtn = document.getElementById('heroAddBtn');
   const favFilterBtn = document.getElementById('favFilterBtn');
@@ -1514,6 +1866,14 @@
   const notesWall = document.getElementById('notesWall');
   const noteForm = document.getElementById('noteForm');
   const noteInput = document.getElementById('noteInput');
+  const voiceRecordBtn = document.getElementById('voiceRecordBtn');
+  const voiceStatus = document.getElementById('voiceStatus');
+  const voiceTimer = document.getElementById('voiceTimer');
+  const countdownOverlay = document.getElementById('countdownOverlay');
+  const countdownNumber = document.getElementById('countdownNumber');
+  const noteAuthorToggle = document.getElementById('noteAuthorToggle');
+  const toggleLetter1 = document.getElementById('toggleLetter1');
+  const toggleLetter2 = document.getElementById('toggleLetter2');
   const notesGrid = document.getElementById('notesGrid');
   const notesSearchInput = document.getElementById('notesSearchInput');
   const notesSortSelect = document.getElementById('notesSortSelect');
@@ -1529,6 +1889,7 @@
   const styleModal = document.getElementById('styleModal');
   const stylePreviews = document.getElementById('stylePreviews');
   const qualityToggle = document.getElementById('qualityToggle');
+  const surpriseToggle = document.getElementById('surpriseToggle');
   const toastContainer = document.getElementById('toastContainer');
   const loadingState = document.getElementById('loadingState');
   const themeBtn = document.getElementById('themeBtn');
@@ -1568,6 +1929,16 @@ async function sha256Hex(text){
   // Set this to the date you want the "days together" counter to count
   // from, in YYYY-MM-DD format. Leave as-is to hide the counter.
   const ANNIVERSARY_DATE = 'YYYY-MM-DD';
+
+  // Names shown on the love notes author picker — edit these to your
+  // own names. Each note is tagged with whichever one was selected
+  // when it was posted, shown as a small color-coded accent on the card.
+  const NOTE_AUTHOR_1 = 'Me';
+  const NOTE_AUTHOR_2 = 'Partner';
+
+  // Single-letter initials shown on the toggle and each note's badge.
+  const NOTE_AUTHOR_1_LETTER = 'J';
+  const NOTE_AUTHOR_2_LETTER = 'M';
 
   /* ================================================================
      CLOUD STORAGE SETUP — fill these in with your own Supabase project
@@ -1644,6 +2015,48 @@ async function sha256Hex(text){
     }
   }
 
+  /* ---------- cursor trail of hearts (desktop only) ---------- */
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const supportsHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  if (supportsHover && !prefersReducedMotion){
+    let lastTrailAt = 0;
+    document.addEventListener('mousemove', (e) => {
+      const now = Date.now();
+      if (now - lastTrailAt < 90) return;
+      lastTrailAt = now;
+      const h = document.createElement('span');
+      h.className = 'cursor-trail-heart';
+      h.textContent = Math.random() > 0.5 ? '♥' : '✿';
+      h.style.left = e.clientX + 'px';
+      h.style.top = e.clientY + 'px';
+      document.body.appendChild(h);
+      setTimeout(() => h.remove(), 900);
+    });
+  }
+
+  /* ---------- small heart burst on any interactive tap ---------- */
+  function miniClickBurst(x, y){
+    if (prefersReducedMotion) return;
+    const count = 2 + Math.floor(Math.random() * 2); // 2 or 3
+    for (let i = 0; i < count; i++){
+      const h = document.createElement('span');
+      h.className = 'click-heart';
+      h.textContent = '♥';
+      h.style.left = x + 'px';
+      h.style.top = y + 'px';
+      h.style.setProperty('--cdx', (Math.random() * 40 - 20) + 'px');
+      h.style.animationDelay = (i * 0.05) + 's';
+      document.body.appendChild(h);
+      setTimeout(() => h.remove(), 700);
+    }
+  }
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('button, .polaroid, .note-flip');
+    if (!target) return;
+    miniClickBurst(e.clientX, e.clientY);
+  }, true);
+
   /* ---------- soft pin chime ----------
      A short two-note bell sound, generated the same way as the
      background music (no audio file needed). Plays independently
@@ -1689,7 +2102,9 @@ async function sha256Hex(text){
         date: row.date_label,
         path: row.image_path,
         favorite: !!row.is_favorite,
-        mood: row.mood || null
+        mood: row.mood || null,
+        surprise: !!row.is_surprise,
+        revealed: row.is_revealed === undefined ? true : !!row.is_revealed
       }));
     }catch(err){
       console.error('Could not load memories from the cloud:', err);
@@ -1700,7 +2115,7 @@ async function sha256Hex(text){
     maybeShowOnThisDay();
   }
 
-  async function uploadAndSave(file){
+  async function uploadAndSave(file, isSurprise){
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
     const path = `${crypto.randomUUID()}.${ext}`;
 
@@ -1716,7 +2131,9 @@ async function sha256Hex(text){
       image_url: urlData.publicUrl,
       caption: 'a moment worth keeping ✨',
       date_label: formatToday(),
-      is_favorite: false
+      is_favorite: false,
+      is_surprise: !!isSurprise,
+      is_revealed: !isSurprise
     };
 
     const { data: inserted, error: insertError } = await supabase
@@ -1733,7 +2150,9 @@ async function sha256Hex(text){
       date: inserted.date_label,
       path: inserted.image_path,
       favorite: !!inserted.is_favorite,
-      mood: inserted.mood || null
+      mood: inserted.mood || null,
+      surprise: !!inserted.is_surprise,
+      revealed: !!inserted.is_revealed
     };
   }
 
@@ -1773,6 +2192,132 @@ async function sha256Hex(text){
     }
   }
 
+  async function saveSurpriseRevealed(photo){
+    if (!supabase) return;
+    const { error } = await supabase
+      .from(TABLE)
+      .update({ is_revealed: true })
+      .eq('id', photo.id);
+    if (error){
+      console.error('Could not save reveal state:', error);
+      showToast('Could not save that it was revealed — it may ask to be scratched again.', { type: 'error' });
+    }
+  }
+
+  /* ---------- scratch-off surprise cards ----------
+     A canvas sits over the photo like a frosted layer. Scratching it
+     (mouse-drag or touch-drag) erases the parts you pass over via
+     destination-out compositing, revealing the real photo underneath.
+     Once enough of it is cleared, the whole layer fades away and the
+     reveal is saved permanently, so it never needs scratching again. */
+  function initScratchCard(wrap, photo){
+    const canvas = wrap.querySelector('.scratch-layer');
+    const hint = wrap.querySelector('.scratch-hint');
+    const frame = wrap.querySelector('.photo-frame');
+    if (!canvas || !frame) return;
+
+    const dpr = window.devicePixelRatio || 1;
+
+    function setupCanvas(){
+      const w = frame.clientWidth;
+      const h = frame.clientHeight;
+      if (!w || !h) return;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0, '#D4A574');
+      grad.addColorStop(0.55, '#D98A93');
+      grad.addColorStop(1, '#A8B89C');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      for (let i = 0; i < 18; i++){
+        ctx.beginPath();
+        ctx.arc(Math.random() * w, Math.random() * h, Math.random() * 2 + 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    setupCanvas();
+
+    let scratching = false;
+    let lastPoint = null;
+
+    function scratchAt(clientX, clientY){
+      const rect = canvas.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      const ctx = canvas.getContext('2d');
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.lineWidth = 32;
+      ctx.beginPath();
+      if (lastPoint){
+        ctx.moveTo(lastPoint.x, lastPoint.y);
+        ctx.lineTo(x, y);
+      }else{
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + 0.1, y + 0.1);
+      }
+      ctx.stroke();
+      lastPoint = { x, y };
+    }
+
+    function checkProgress(){
+      try{
+        const ctx = canvas.getContext('2d');
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        const sampleStep = 6;
+        let transparent = 0, total = 0;
+        for (let i = 3; i < data.length; i += 4 * sampleStep){
+          total++;
+          if (data[i] < 80) transparent++;
+        }
+        if (total > 0 && (transparent / total) >= 0.45){
+          revealSurprise();
+        }
+      }catch(err){
+        console.error('Could not read scratch progress:', err);
+      }
+    }
+
+    function revealSurprise(){
+      if (photo.revealed) return;
+      photo.revealed = true;
+      canvas.style.opacity = '0';
+      if (hint) hint.style.opacity = '0';
+      setTimeout(() => {
+        canvas.remove();
+        if (hint) hint.remove();
+      }, 500);
+      burstHearts(frame);
+      playPinChime();
+      saveSurpriseRevealed(photo);
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      scratching = true;
+      lastPoint = null;
+      try{ canvas.setPointerCapture(e.pointerId); }catch(err){}
+      scratchAt(e.clientX, e.clientY);
+      if (hint) hint.style.opacity = '0';
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (!scratching) return;
+      scratchAt(e.clientX, e.clientY);
+    });
+    const stopScratch = () => {
+      if (!scratching) return;
+      scratching = false;
+      lastPoint = null;
+      checkProgress();
+    };
+    canvas.addEventListener('pointerup', stopScratch);
+    canvas.addEventListener('pointercancel', stopScratch);
+  }
+
   async function removePhoto(photo){
     if (!supabase) return;
     try{
@@ -1786,12 +2331,37 @@ async function sha256Hex(text){
 
   /* ---------- love notes wall ---------- */
   const NOTES_TABLE = 'love_notes';
+  const VOICE_BUCKET = 'voice-notes';
   const NOTE_REACTIONS = ['😂', '💕', '😙', '🎉', '😢'];
   let notesLoaded = false;
   let allNotes = [];
   let notesSearchQuery = '';
   let notesSortMode = 'newest';
   let notesShowFavoritesOnly = false;
+
+  /* ---------- note author picker ---------- */
+  const AUTHOR_KEY = 'ourLittleUniverseNoteAuthor';
+  let currentNoteAuthor = localStorage.getItem(AUTHOR_KEY) === '2' ? '2' : '1';
+
+  function authorLabel(key){
+    return key === '2' ? NOTE_AUTHOR_2 : NOTE_AUTHOR_1;
+  }
+
+  function setNoteAuthor(key){
+    currentNoteAuthor = key;
+    localStorage.setItem(AUTHOR_KEY, key);
+    noteAuthorToggle.setAttribute('data-author', key);
+    noteAuthorToggle.setAttribute('aria-label', `Currently posting as ${authorLabel(key)} — tap to switch`);
+  }
+
+  toggleLetter1.textContent = NOTE_AUTHOR_1_LETTER;
+  toggleLetter2.textContent = NOTE_AUTHOR_2_LETTER;
+  setNoteAuthor(currentNoteAuthor);
+
+  noteAuthorToggle.addEventListener('click', () => {
+    setNoteAuthor(currentNoteAuthor === '1' ? '2' : '1');
+  });
+
 
   async function loadNotes(){
     if (!supabase) return;
@@ -1890,13 +2460,17 @@ async function sha256Hex(text){
         ? new Date(note.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
         : '';
 
+      const effectiveAuthor = note.author || '1';
+
       wrap.innerHTML = `
         <div class="note-flip" tabindex="0" role="button" aria-label="Flip note to reply">
           <div class="note-face note-front">
             <button class="note-fav" type="button" aria-label="Toggle favorite">${note.favorite ? '♥' : '♡'}</button>
             <button class="note-remove" type="button" aria-label="Remove note">✕</button>
             <div class="note-message">${escapeHtml(note.message)}</div>
+            ${note.audio_url ? `<div class="note-voice"><audio controls preload="none" src="${note.audio_url}"></audio></div>` : ''}
             ${note.reaction ? `<span class="note-reaction-badge">${note.reaction}</span>` : ''}
+            <span class="note-author-badge author-${effectiveAuthor}" title="${escapeHtml(authorLabel(effectiveAuthor))}" aria-label="${escapeHtml(authorLabel(effectiveAuthor))}">${effectiveAuthor === '2' ? NOTE_AUTHOR_2_LETTER : NOTE_AUTHOR_1_LETTER}</span>
             <span class="note-date">${dateLabel}</span>
           </div>
           <div class="note-face note-back">
@@ -1912,6 +2486,7 @@ async function sha256Hex(text){
       const flipEl = wrap.querySelector('.note-flip');
       const favBtn = wrap.querySelector('.note-fav');
       const removeBtn = wrap.querySelector('.note-remove');
+      const audioEl = wrap.querySelector('.note-voice audio');
       const replyInput = wrap.querySelector('.note-reply-input');
       const reactionBtns = wrap.querySelectorAll('.note-reaction-picker button');
       const flipBackBtn = wrap.querySelector('.note-flip-back-btn');
@@ -1919,6 +2494,7 @@ async function sha256Hex(text){
       function flip(e){
         if ([removeBtn, favBtn, replyInput, flipBackBtn].includes(e.target)) return;
         if (e.target.closest && e.target.closest('.note-reaction-picker')) return;
+        if (e.target.closest && e.target.closest('.note-voice')) return;
         flipEl.classList.toggle('flipped');
       }
       flipEl.addEventListener('click', flip);
@@ -1942,6 +2518,15 @@ async function sha256Hex(text){
         if (notesShowFavoritesOnly) renderNotesFiltered();
       });
 
+      if (audioEl){
+        audioEl.addEventListener('click', (e) => e.stopPropagation());
+        audioEl.addEventListener('play', () => {
+          document.querySelectorAll('.note-voice audio').forEach(a => {
+            if (a !== audioEl) a.pause();
+          });
+        });
+      }
+
       removeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         const idx = allNotes.findIndex(n => n.id === note.id);
@@ -1954,6 +2539,9 @@ async function sha256Hex(text){
         const timer = setTimeout(async () => {
           if (undone) return;
           try{
+            if (note.audio_path){
+              await supabase.storage.from(VOICE_BUCKET).remove([note.audio_path]);
+            }
             await supabase.from(NOTES_TABLE).delete().eq('id', note.id);
           }catch(err){
             console.error('Could not remove note:', err);
@@ -2044,12 +2632,186 @@ async function sha256Hex(text){
     const message = noteInput.value.trim();
     if (!message || !supabase) return;
     try{
-      await supabase.from(NOTES_TABLE).insert({ message });
+      await supabase.from(NOTES_TABLE).insert({ message, author: currentNoteAuthor });
       noteInput.value = '';
       loadNotes();
     }catch(err){
       console.error('Could not save note:', err);
       showToast('Could not save that note.', { type: 'error' });
+    }
+  });
+
+  /* ---------- voice notes recording ---------- */
+  const MAX_RECORDING_SECONDS = 120;
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let recordingStream = null;
+  let recordingTimerInterval = null;
+  let recordingStartedAt = 0;
+  let isRecording = false;
+
+  function pickAudioMimeType(){
+    const candidates = ['audio/webm', 'audio/mp4', 'audio/ogg'];
+    for (const type of candidates){
+      if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)){
+        return type;
+      }
+    }
+    return '';
+  }
+
+  function updateRecordingTimer(){
+    const elapsed = Math.floor((Date.now() - recordingStartedAt) / 1000);
+    const m = Math.floor(elapsed / 60);
+    const s = elapsed % 60;
+    voiceTimer.textContent = `${m}:${String(s).padStart(2, '0')}`;
+    if (elapsed >= MAX_RECORDING_SECONDS) stopRecording();
+  }
+
+  const MIC_ICON_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V20H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-2v-2.08A7 7 0 0 0 19 11z"/></svg>';
+  const STOP_ICON_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+
+  function resetRecordButtonUI(){
+    voiceRecordBtn.classList.remove('recording');
+    voiceRecordBtn.innerHTML = MIC_ICON_SVG;
+  }
+
+  async function startRecording(){
+    if (!window.MediaRecorder || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      showToast('Voice recording isn\'t supported in this browser.', { type: 'error' });
+      resetRecordButtonUI();
+      return;
+    }
+    if (!supabase){
+      setupBanner.classList.add('show');
+      resetRecordButtonUI();
+      return;
+    }
+    try{
+      recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    }catch(err){
+      console.error('Microphone access denied:', err);
+      showToast('Microphone access is needed to record a voice note.', { type: 'error' });
+      resetRecordButtonUI();
+      return;
+    }
+
+    const mimeType = pickAudioMimeType();
+    audioChunks = [];
+    mediaRecorder = mimeType
+      ? new MediaRecorder(recordingStream, { mimeType })
+      : new MediaRecorder(recordingStream);
+
+    mediaRecorder.addEventListener('dataavailable', (e) => {
+      if (e.data && e.data.size > 0) audioChunks.push(e.data);
+    });
+    mediaRecorder.addEventListener('stop', onRecordingStopped);
+
+    mediaRecorder.start();
+    isRecording = true;
+    recordingStartedAt = Date.now();
+    voiceRecordBtn.classList.add('recording');
+    voiceRecordBtn.innerHTML = STOP_ICON_SVG;
+    voiceStatus.classList.remove('hidden');
+    voiceTimer.textContent = '0:00';
+    recordingTimerInterval = setInterval(updateRecordingTimer, 500);
+  }
+
+  function stopRecording(){
+    if (!isRecording || !mediaRecorder) return;
+    mediaRecorder.stop();
+    isRecording = false;
+    clearInterval(recordingTimerInterval);
+    resetRecordButtonUI();
+    voiceStatus.classList.add('hidden');
+    if (recordingStream){
+      recordingStream.getTracks().forEach(t => t.stop());
+      recordingStream = null;
+    }
+  }
+
+  async function onRecordingStopped(){
+    if (!audioChunks.length) return;
+    const mimeType = mediaRecorder.mimeType || 'audio/webm';
+    const blob = new Blob(audioChunks, { type: mimeType });
+    audioChunks = [];
+
+    if (blob.size < 500){
+      showToast('That recording was too short to save.', { type: 'error' });
+      return;
+    }
+
+    const ext = mimeType.includes('mp4') ? 'm4a' : (mimeType.includes('ogg') ? 'ogg' : 'webm');
+    const path = `${crypto.randomUUID()}.${ext}`;
+
+    try{
+      const { error: uploadError } = await supabase
+        .storage.from(VOICE_BUCKET)
+        .upload(path, blob, { contentType: mimeType });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from(VOICE_BUCKET).getPublicUrl(path);
+
+      await supabase.from(NOTES_TABLE).insert({
+        message: '🎤 Voice note',
+        audio_url: urlData.publicUrl,
+        audio_path: path,
+        author: currentNoteAuthor
+      });
+
+      showToast('Voice note saved!');
+      loadNotes();
+    }catch(err){
+      console.error('Could not save voice note:', err);
+      showToast('Could not save that voice note.', { type: 'error' });
+    }
+  }
+
+  /* ---------- 3-2-1 recording countdown ---------- */
+  let countdownInProgress = false;
+  let countdownCancelled = false;
+
+  function delay(ms){
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function showCountdownNumber(n){
+    countdownNumber.textContent = n;
+    countdownNumber.classList.remove('countdown-pulse');
+    void countdownNumber.offsetWidth; // restart the animation each tick
+    countdownNumber.classList.add('countdown-pulse');
+  }
+
+  async function startRecordingWithCountdown(){
+    countdownCancelled = false;
+    countdownOverlay.classList.remove('hidden');
+    voiceRecordBtn.classList.add('recording');
+    voiceRecordBtn.innerHTML = STOP_ICON_SVG;
+
+    for (const n of [3, 2, 1]){
+      if (countdownCancelled) break;
+      showCountdownNumber(n);
+      await delay(1000);
+    }
+
+    countdownOverlay.classList.add('hidden');
+
+    if (countdownCancelled){
+      resetRecordButtonUI();
+      return;
+    }
+
+    await startRecording();
+  }
+
+  voiceRecordBtn.addEventListener('click', () => {
+    if (isRecording){
+      stopRecording();
+    }else if (countdownInProgress){
+      countdownCancelled = true;
+    }else{
+      countdownInProgress = true;
+      startRecordingWithCountdown().finally(() => { countdownInProgress = false; });
     }
   });
 
@@ -2306,9 +3068,10 @@ async function sha256Hex(text){
 
   /* ---------- on this day ---------- */
   function maybeShowOnThisDay(){
-    if (photos.length < 2) return;
+    const eligible = photos.filter(p => !(p.surprise && !p.revealed));
+    if (eligible.length < 2) return;
     if (Math.random() > 0.65) return;
-    const pick = photos[Math.floor(Math.random() * photos.length)];
+    const pick = eligible[Math.floor(Math.random() * eligible.length)];
     otdImg.src = pick.src;
     otdCaption.textContent = pick.caption;
     onThisDay.dataset.photoId = String(pick.id);
@@ -2368,8 +3131,11 @@ async function sha256Hex(text){
   });
 
   surpriseBtn.addEventListener('click', () => {
-    if (!currentList.length) return;
-    const idx = Math.floor(Math.random() * currentList.length);
+    const eligibleIndexes = currentList
+      .map((p, i) => (p.surprise && !p.revealed) ? -1 : i)
+      .filter(i => i !== -1);
+    if (!eligibleIndexes.length) return;
+    const idx = eligibleIndexes[Math.floor(Math.random() * eligibleIndexes.length)];
     openLightbox(idx);
   });
 
@@ -2512,6 +3278,7 @@ async function sha256Hex(text){
 
     const choice = await askPhotoStyle(files[0]);
     const keepOriginal = qualityToggle.checked;
+    const isSurprise = surpriseToggle.checked;
     const originalBtnLabel = heroAddBtn.textContent;
     const multi = files.length > 1;
 
@@ -2530,7 +3297,7 @@ async function sha256Hex(text){
           const baseName = (file.name || 'photo').replace(/\.[^.]+$/, '');
           uploadFile = new File([blob], baseName + '.jpg', { type: 'image/jpeg' });
         }
-        const record = await uploadAndSave(uploadFile);
+        const record = await uploadAndSave(uploadFile, isSurprise);
         photos.push(record);
         render();
         burstHearts(heroAddBtn);
@@ -2661,23 +3428,6 @@ async function sha256Hex(text){
     wrap.className = 'polaroid-wrap';
     wrap.style.setProperty('--tilt', randomTilt());
 
-    if (supportsHoverTilt){
-      wrap.addEventListener('mousemove', (e) => {
-        const rect = wrap.getBoundingClientRect();
-        const px = (e.clientX - rect.left) / rect.width;
-        const py = (e.clientY - rect.top) / rect.height;
-        const maxTilt = 7;
-        const rotateY = (px - 0.5) * maxTilt * 2;
-        const rotateX = (0.5 - py) * maxTilt * 2;
-        wrap.style.transition = 'transform 0.1s ease-out';
-        wrap.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
-      });
-      wrap.addEventListener('mouseleave', () => {
-        wrap.style.transition = 'transform 0.4s ease-out';
-        wrap.style.transform = '';
-      });
-    }
-
     wrap.innerHTML = `
       <div class="pin"></div>
       <div class="polaroid" tabindex="0" role="button" aria-label="Flip photo to see the note">
@@ -2685,10 +3435,11 @@ async function sha256Hex(text){
           <button class="fav-heart" type="button" aria-label="Toggle favorite">${photo.favorite ? '♥' : '♡'}</button>
           <div class="photo-frame">
             <img src="${photo.src}" alt="A memory">
-            <button class="expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>
+            ${(photo.surprise && !photo.revealed) ? '' : `<button class="expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>`}
             ${photo.mood ? `<span class="mood-badge">${photo.mood}</span>` : ''}
+            ${(photo.surprise && !photo.revealed) ? `<canvas class="scratch-layer" aria-label="Scratch to reveal the surprise"></canvas><div class="scratch-hint"><span class="scratch-hint-emoji">🎁</span><span>scratch to reveal</span></div>` : ''}
           </div>
-          <div class="cap-preview">${escapeHtml(photo.caption)}</div>
+          <div class="cap-preview">${(photo.surprise && !photo.revealed) ? 'a surprise is waiting... 🎁' : escapeHtml(photo.caption)}</div>
         </div>
         <div class="face back">
           <textarea maxlength="120" aria-label="Write a note for this memory">${escapeHtml(photo.caption)}</textarea>
@@ -2730,6 +3481,9 @@ async function sha256Hex(text){
       const markLoaded = () => {
         photoImg.classList.add('loaded');
         if (photoFrame) photoFrame.classList.add('loaded');
+        if (photo.surprise && !photo.revealed){
+          requestAnimationFrame(() => requestAnimationFrame(() => initScratchCard(wrap, photo)));
+        }
       };
       if (photoImg.complete){
         markLoaded();
@@ -2835,10 +3589,12 @@ async function sha256Hex(text){
       });
     });
 
-    expandBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openLightbox(index);
-    });
+    if (expandBtn){
+      expandBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openLightbox(index);
+      });
+    }
 
     return wrap;
   }
@@ -2864,6 +3620,8 @@ async function sha256Hex(text){
     if (!currentList.length) return;
     lightboxIndex = (lightboxIndex + currentList.length) % currentList.length;
     const p = currentList[lightboxIndex];
+    lightboxImg.classList.remove('loaded');
+    lightboxImg.onload = () => lightboxImg.classList.add('loaded');
     lightboxImg.src = p.src;
     lightboxImg.alt = 'A memory';
     lightboxCaption.textContent = p.caption;
@@ -2906,6 +3664,58 @@ async function sha256Hex(text){
     }, { passive: true });
   }
 
+  /* ---------- live presence ----------
+     Uses Supabase's Realtime Presence — a live WebSocket channel that
+     doesn't touch any database table. Each browser gets a persistent
+     random ID (stored locally, never shown anywhere), and the dot
+     lights up whenever two different IDs are connected to the same
+     channel at once — meaning both of you have the page open right now. */
+  const PRESENCE_ID_KEY = 'ourLittleUniversePresenceId';
+  function getPresenceId(){
+    let id = localStorage.getItem(PRESENCE_ID_KEY);
+    if (!id){
+      id = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+      localStorage.setItem(PRESENCE_ID_KEY, id);
+    }
+    return id;
+  }
+
+  function updatePresenceUI(othersOnline){
+    if (othersOnline){
+      presenceIndicator.classList.add('together');
+      presenceText.textContent = "you're both here right now 💕";
+      presenceIndicator.title = "Both of you have this page open at the same time";
+    }else{
+      presenceIndicator.classList.remove('together');
+      presenceText.textContent = 'just you right now';
+      presenceIndicator.title = '';
+    }
+  }
+
+  function startPresence(){
+    if (!supabase) return;
+    try{
+      const presenceId = getPresenceId();
+      const channel = supabase.channel('our-little-universe-presence', {
+        config: { presence: { key: presenceId } }
+      });
+
+      channel.on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const distinctVisitors = Object.keys(state).length;
+        updatePresenceUI(distinctVisitors >= 2);
+      });
+
+      channel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED'){
+          await channel.track({ online_at: new Date().toISOString() });
+        }
+      });
+    }catch(err){
+      console.error('Could not start live presence:', err);
+    }
+  }
+
   let initialized = false;
   function init(){
     if (initialized) return;
@@ -2914,6 +3724,7 @@ async function sha256Hex(text){
     buildAmbientHearts();
     loadSiteSettings();
     loadPhotos();
+    startPresence();
   }
 
   let lastIsMobile = window.innerWidth <= 480;
