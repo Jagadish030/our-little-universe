@@ -722,6 +722,9 @@
     color: var(--ink);
     flex: 1;
     margin-top: 16px;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    min-width: 0;
   }
   .note-date{
     position: absolute;
@@ -946,6 +949,7 @@
   }
   .style-modal.hidden{ display: none; }
   .style-card{
+    position: relative;
     background: var(--glass-bg-strong);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -958,6 +962,23 @@
     max-height: 90vh;
     overflow-y: auto;
   }
+  .style-modal-close{
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,253,249,0.55);
+    color: #6B5344;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .style-modal-close:hover{ background: var(--rose-deep); color: var(--white); }
   .style-card h3{
     font-family: 'Caveat', cursive;
     font-size: 1.6rem;
@@ -1266,6 +1287,9 @@
     touch-action: none;
     cursor: pointer;
     transition: opacity 0.5s ease;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
   }
   .scratch-hint{
     position: absolute;
@@ -1760,6 +1784,7 @@
 
 <div class="style-modal hidden" id="styleModal">
   <div class="style-card">
+    <button class="style-modal-close" id="styleModalClose" type="button" aria-label="Cancel upload">✕</button>
     <h3>How should this photo look?</h3>
     <div class="style-previews" id="stylePreviews"></div>
     <label class="quality-toggle">
@@ -1887,6 +1912,7 @@
   const milestoneClose = document.getElementById('milestoneClose');
 
   const styleModal = document.getElementById('styleModal');
+  const styleModalClose = document.getElementById('styleModalClose');
   const stylePreviews = document.getElementById('stylePreviews');
   const qualityToggle = document.getElementById('qualityToggle');
   const surpriseToggle = document.getElementById('surpriseToggle');
@@ -2244,7 +2270,7 @@ async function sha256Hex(text){
     let scratching = false;
     let lastPoint = null;
 
-    function scratchAt(clientX, clientY){
+    function scratchAt(clientX, clientY, pointerType){
       const rect = canvas.getBoundingClientRect();
       const x = clientX - rect.left;
       const y = clientY - rect.top;
@@ -2252,7 +2278,7 @@ async function sha256Hex(text){
       ctx.globalCompositeOperation = 'destination-out';
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
-      ctx.lineWidth = 32;
+      ctx.lineWidth = pointerType === 'touch' ? 50 : 32;
       ctx.beginPath();
       if (lastPoint){
         ctx.moveTo(lastPoint.x, lastPoint.y);
@@ -2301,13 +2327,15 @@ async function sha256Hex(text){
       scratching = true;
       lastPoint = null;
       try{ canvas.setPointerCapture(e.pointerId); }catch(err){}
-      scratchAt(e.clientX, e.clientY);
+      e.preventDefault();
+      scratchAt(e.clientX, e.clientY, e.pointerType);
       if (hint) hint.style.opacity = '0';
     });
     canvas.addEventListener('pointermove', (e) => {
       if (!scratching) return;
-      scratchAt(e.clientX, e.clientY);
-    });
+      e.preventDefault();
+      scratchAt(e.clientX, e.clientY, e.pointerType);
+    }, { passive: false });
     const stopScratch = () => {
       if (!scratching) return;
       scratching = false;
@@ -2752,13 +2780,17 @@ async function sha256Hex(text){
 
       const { data: urlData } = supabase.storage.from(VOICE_BUCKET).getPublicUrl(path);
 
+      const typedLabel = noteInput.value.trim();
+      const message = typedLabel ? `🎤 ${typedLabel}` : '🎤 Voice note';
+
       await supabase.from(NOTES_TABLE).insert({
-        message: '🎤 Voice note',
+        message,
         audio_url: urlData.publicUrl,
         audio_path: path,
         author: currentNoteAuthor
       });
 
+      noteInput.value = '';
       showToast('Voice note saved!');
       loadNotes();
     }catch(err){
@@ -3247,15 +3279,23 @@ async function sha256Hex(text){
           .catch(err => console.error('Could not build style preview:', err));
       }
 
+      // Reset per-upload options so a choice from a previous photo
+      // never silently carries over to the next one.
+      surpriseToggle.checked = false;
+
       styleModal.classList.remove('hidden');
 
       function cleanup(choice){
         styleModal.classList.add('hidden');
         buttons.forEach((btn, i) => btn.removeEventListener('click', handlers[i]));
+        styleModalClose.removeEventListener('click', onClose);
         resolve(choice);
       }
       const handlers = FILTERS.map((filter, i) => () => cleanup(filter.key));
       buttons.forEach((btn, i) => btn.addEventListener('click', handlers[i]));
+
+      function onClose(){ cleanup(null); }
+      styleModalClose.addEventListener('click', onClose);
     });
   }
 
@@ -3277,6 +3317,10 @@ async function sha256Hex(text){
     if (!files.length || !supabase) return;
 
     const choice = await askPhotoStyle(files[0]);
+    if (choice === null){
+      fileInput.value = '';
+      return;
+    }
     const keepOriginal = qualityToggle.checked;
     const isSurprise = surpriseToggle.checked;
     const originalBtnLabel = heroAddBtn.textContent;
