@@ -3371,6 +3371,7 @@ async function sha256Hex(text){
   let hasRenderedOnce = false;
 
   function render(){
+    const savedScrollY = window.scrollY;
     loadingState.style.display = 'none';
     garlandEl.innerHTML = '';
     const animate = !hasRenderedOnce;
@@ -3434,6 +3435,10 @@ async function sha256Hex(text){
     }
 
     hasRenderedOnce = true;
+
+    if (savedScrollY > 0){
+      requestAnimationFrame(() => window.scrollTo(0, savedScrollY));
+    }
   }
 
   function buildAddTile(animate){
