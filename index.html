@@ -941,7 +941,8 @@
   body.dark-mode .doodle-tools button.active{ background:#d9758b; border-color:#ffd5df; color:#fff; }
   body.dark-mode .doodle-size{ color:#f0dfe3; }
   body.dark-mode .doodle-size input{ accent-color:#f29aae; }
-  .doodle-caption{ width:100%; box-sizing:border-box; border:1px solid #E3D3C2; border-radius:999px; padding:.58rem .9rem; margin:.65rem 0; background:rgba(255,255,255,.75); color:var(--ink); font:1rem 'Caveat',cursive; outline:none; }
+  .doodle-caption{ width:100%; box-sizing:border-box; border:1px solid #E3D3C2; border-radius:999px; padding:.58rem .9rem; margin:.65rem 0; background:#FFFDF9; color:#3B2D38; caret-color:var(--rose-deep); font:1rem 'Caveat',cursive; outline:none; }
+  .doodle-caption::placeholder{ color:#8B7784; opacity:1; }
   .doodle-caption:focus{ border-color:var(--rose-deep); }
   .doodle-submit{ border:0; border-radius:999px; padding:.62rem 1.35rem; background:var(--rose-deep); color:var(--white); cursor:pointer; font:600 .85rem 'Quicksand',sans-serif; }
   .doodle-submit:disabled{ opacity:.6; cursor:wait; }
@@ -955,6 +956,7 @@
   .doodle-face{ backface-visibility:hidden; border-radius:5px; box-shadow:0 5px 12px var(--shadow); box-sizing:border-box; }
   .doodle-front{ position:relative; min-height:230px; padding:9px 9px 33px; background:#FFF9E8; }
   .doodle-image{ width:100%; aspect-ratio:1 / 1; object-fit:contain; background:#fffdf7; display:block; cursor:zoom-in; }
+  .doodle-caption-preview{ position:absolute; left:10px; right:10px; bottom:25px; color:#6B5344; text-align:center; font:600 .85rem/1.1 'Caveat',cursive; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .doodle-back{ position:absolute; inset:0; padding:.9rem; display:flex; flex-direction:column; justify-content:space-between; background:#FFF3D6; transform:rotateY(180deg); }
   .doodle-text{ font:1.18rem 'Caveat',cursive; color:var(--ink); overflow-wrap:anywhere; }
   .doodle-author-badge{ position:absolute; bottom:7px; left:9px; padding:.18rem .42rem; border-radius:999px; color:var(--white); font:700 .62rem 'Quicksand',sans-serif; }
@@ -1559,14 +1561,20 @@
   }
   .face.front .cap-preview{
     font-family: 'Caveat', cursive;
-    font-size: 1.15rem;
+    font-size: 1.1rem;
+    line-height: 1.16;
     color: var(--ink);
     text-align: center;
     padding: 6px 2px 0;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
     overflow: hidden;
-    text-overflow: ellipsis;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity .22s ease, transform .22s ease;
   }
+  .face.front .cap-preview.is-changing{ opacity:0; transform:translateY(-4px); }
 
   .fav-heart{
     position: absolute;
@@ -2655,6 +2663,14 @@ async function sha256Hex(text){
     function revealSurprise(){
       if (photo.revealed) return;
       photo.revealed = true;
+      const captionPreview = wrap.querySelector('.cap-preview');
+      if (captionPreview){
+        captionPreview.classList.add('is-changing');
+        setTimeout(() => {
+          captionPreview.textContent = photo.caption || 'a moment worth keeping ✨';
+          captionPreview.classList.remove('is-changing');
+        }, 220);
+      }
       canvas.style.opacity = '0';
       if (hint) hint.style.opacity = '0';
       setTimeout(() => {
@@ -3110,7 +3126,7 @@ async function sha256Hex(text){
   function renderDoodles(items){
     doodlesGrid.innerHTML=''; if(!items.length){ const p=document.createElement('p'); p.className='empty-note'; p.style.display='block'; p.textContent=qOrEmptyDoodles(); doodlesGrid.appendChild(p); return; }
     items.forEach(d=>{ const wrap=document.createElement('div'); wrap.className='doodle-wrap'; wrap.style.setProperty('--nt',(Math.random()*6-3).toFixed(1)+'deg'); const author=String(d.author||1), date=d.created_at?new Date(d.created_at).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'';
-      wrap.innerHTML=`<div class="doodle-flip" tabindex="0" role="button" aria-label="Flip doodle"><div class="doodle-face doodle-front"><button class="doodle-fav" type="button">${d.favorite?'♥':'♡'}</button><button class="doodle-remove" type="button">✕</button><img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption?`: ${escapeHtml(d.caption)}`:''}">${d.reaction?`<span class="doodle-reaction-badge">${d.reaction}</span>`:''}<span class="doodle-author-badge author-${author}">By ${author==='2'?'M':'J'}</span><span class="doodle-date">${date}</span></div><div class="doodle-face doodle-back"><div class="doodle-text">${escapeHtml(d.caption||'A little doodle ✨')}</div><textarea class="doodle-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(d.reply||'')}</textarea><div class="doodle-reaction-picker">${DOODLE_REACTIONS.map(r=>`<button type="button" data-reaction="${r}" class="${d.reaction===r?'active':''}">${r}</button>`).join('')}</div><div class="doodle-back-actions"><button class="note-flip-back-btn" type="button">‹ back</button><button class="doodle-download" type="button">⇩ PNG</button></div></div></div>`;
+      wrap.innerHTML=`<div class="doodle-flip" tabindex="0" role="button" aria-label="Flip doodle"><div class="doodle-face doodle-front"><button class="doodle-fav" type="button">${d.favorite?'♥':'♡'}</button><button class="doodle-remove" type="button">✕</button><img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption?`: ${escapeHtml(d.caption)}`:''}">${d.caption?`<div class="doodle-caption-preview">${escapeHtml(d.caption)}</div>`:''}${d.reaction?`<span class="doodle-reaction-badge">${d.reaction}</span>`:''}<span class="doodle-author-badge author-${author}">By ${author==='2'?'M':'J'}</span><span class="doodle-date">${date}</span></div><div class="doodle-face doodle-back"><div class="doodle-text">${escapeHtml(d.caption||'A little doodle ✨')}</div><textarea class="doodle-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(d.reply||'')}</textarea><div class="doodle-reaction-picker">${DOODLE_REACTIONS.map(r=>`<button type="button" data-reaction="${r}" class="${d.reaction===r?'active':''}">${r}</button>`).join('')}</div><div class="doodle-back-actions"><button class="note-flip-back-btn" type="button">‹ back</button><button class="doodle-download" type="button">⇩ PNG</button></div></div></div>`;
       const flip=wrap.querySelector('.doodle-flip'), image=wrap.querySelector('.doodle-image'), fav=wrap.querySelector('.doodle-fav'), remove=wrap.querySelector('.doodle-remove'), reply=wrap.querySelector('.doodle-reply-input'), back=wrap.querySelector('.note-flip-back-btn'), download=wrap.querySelector('.doodle-download');
       flip.addEventListener('click',e=>{ if(e.target.closest('button,textarea,img'))return; flip.classList.toggle('flipped'); }); flip.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===flip){e.preventDefault();flip.classList.toggle('flipped');}}); back.addEventListener('click',()=>flip.classList.remove('flipped'));
       image.addEventListener('click',()=>{ currentList=items.map(x=>({src:x.image_url,caption:x.caption||'A little doodle'})); lightboxIndex=items.findIndex(x=>x.id===d.id); openLightbox(lightboxIndex); });
