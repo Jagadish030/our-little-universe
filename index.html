@@ -483,6 +483,17 @@
     .secondary-row{ gap:.55rem; }
     .secondary-row .search-input{ width:min(260px, 100%); }
     .secondary-row > *{ max-width:100%; }
+    /* Centering a wide popover on a small trigger can push it beyond the
+       viewport. On phones, line the menu up with the trigger instead. */
+    .feature-menu-popover,
+    .photo-sort-popover{
+      left:0;
+      transform:translate(0,-8px) scale(.96);
+    }
+    .feature-menu.open .feature-menu-popover,
+    .photo-sort-menu.open .photo-sort-popover{
+      transform:translate(0,0) scale(1);
+    }
   }
 
   /* ---------- love notes wall ---------- */
@@ -999,6 +1010,12 @@
   .feature-menu{ position:relative; z-index:20; }.feature-menu-trigger{ display:inline-flex; align-items:center; gap:.4rem; }.feature-menu-trigger .menu-caret{ transition:transform .25s ease; }.feature-menu.open .menu-caret{ transform:rotate(180deg); }
   .feature-menu-popover{ position:absolute; top:calc(100% + .55rem); left:50%; width:min(275px, calc(100vw - 2rem)); transform:translate(-50%,-8px) scale(.96); opacity:0; visibility:hidden; pointer-events:none; padding:.5rem; border:1px solid var(--glass-border); border-radius:14px; background:var(--glass-bg-strong); backdrop-filter:blur(18px); box-shadow:0 14px 30px var(--shadow); transition:opacity .22s ease, transform .22s cubic-bezier(.2,.9,.3,1), visibility .22s; }
   .feature-menu.open .feature-menu-popover{ opacity:1; visibility:visible; pointer-events:auto; transform:translate(-50%,0) scale(1); }.feature-menu-popover button{ width:100%; border:0; border-radius:9px; background:transparent; color:var(--ink); text-align:left; padding:.65rem .75rem; cursor:pointer; font:600 .82rem 'Quicksand',sans-serif; }.feature-menu-popover button:hover,.feature-menu-popover button:focus-visible{ background:rgba(219,125,143,.16); outline:none; }.feature-menu-popover button + button{ margin-top:2px; } body.dark-mode .feature-menu-popover button{ color:#f6eaf3; } body.dark-mode .feature-menu-popover button:hover{ background:rgba(242,154,174,.2); }
+  @media (max-width: 720px){
+    /* This comes after the desktop popover rule so the open state cannot
+       re-centre the menu beyond the left edge of a phone screen. */
+    .feature-menu-popover{ left:0; transform:translate(0,-8px) scale(.96); }
+    .feature-menu.open .feature-menu-popover{ transform:translate(0,0) scale(1); }
+  }
 
   /* ---------- milestone banner ---------- */
   .toast-container{
