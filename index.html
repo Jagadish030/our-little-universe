@@ -393,7 +393,16 @@
   .cancel-title-btn{ background: var(--paper-deep); color: var(--ink); }
 
   /* ---------- search / sort row ---------- */
-  .secondary-row{ margin-top: 0.6rem; }
+  .secondary-row{
+    width: min(100%, 1080px);
+    margin: 0.8rem auto 0;
+    gap: 0.7rem;
+    align-items: center;
+    transition: margin-bottom .22s ease;
+  }
+  /* Keep an open menu clear of the memories below instead of layering over them. */
+  .secondary-row:has(.photo-sort-menu.open){ margin-bottom: 172px; }
+  .secondary-row:has(.feature-menu.open){ margin-bottom: 286px; }
   .search-input, .sort-select{
     font-family: 'Quicksand', sans-serif;
     font-size: 0.85rem;
@@ -415,6 +424,66 @@
   }
   .search-input{ width: 200px; max-width: 60vw; }
   .search-input:focus, .sort-select:focus{ border-color: var(--rose-deep); }
+
+  /* The photo sorter deliberately matches the Little things menu. Notes and
+     Doodles retain their simple native selects. */
+  .photo-sort-menu{ position:relative; z-index:30; flex:0 0 auto; }
+  .photo-sort-trigger{
+    min-width: 158px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.65rem;
+  }
+  .photo-sort-trigger .sort-caret{ transition:transform .25s ease; }
+  .photo-sort-menu.open .sort-caret{ transform:rotate(180deg); }
+  .photo-sort-popover{
+    position:absolute;
+    top:calc(100% + .55rem);
+    left:50%;
+    width:220px;
+    transform:translate(-50%,-8px) scale(.96);
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    padding:.5rem;
+    border:1px solid var(--glass-border);
+    border-radius:14px;
+    background:var(--glass-bg-strong);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    box-shadow:0 14px 30px var(--shadow);
+    transition:opacity .22s ease, transform .22s cubic-bezier(.2,.9,.3,1), visibility .22s;
+  }
+  .photo-sort-menu.open .photo-sort-popover{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transform:translate(-50%,0) scale(1);
+  }
+  .photo-sort-option{
+    width:100%;
+    border:0;
+    border-radius:9px;
+    background:transparent;
+    color:var(--ink);
+    text-align:left;
+    padding:.65rem .75rem;
+    cursor:pointer;
+    font:600 .82rem 'Quicksand',sans-serif;
+  }
+  .photo-sort-option:hover,.photo-sort-option:focus-visible,.photo-sort-option.active{
+    background:rgba(219,125,143,.16);
+    outline:none;
+  }
+  .photo-sort-option + .photo-sort-option{ margin-top:2px; }
+  body.dark-mode .photo-sort-option{ color:#f6eaf3; }
+  body.dark-mode .photo-sort-option:hover,body.dark-mode .photo-sort-option.active{ background:rgba(242,154,174,.2); }
+  @media (max-width: 720px){
+    .secondary-row{ gap:.55rem; }
+    .secondary-row .search-input{ width:min(260px, 100%); }
+    .secondary-row > *{ max-width:100%; }
+  }
 
   /* ---------- love notes wall ---------- */
   .notes-wall{
@@ -834,6 +903,102 @@
     padding: 4px;
   }
   .note-flip-back-btn:hover{ opacity: 1; color: var(--rose-deep); }
+
+  /* ---------- doodles wall ---------- */
+  .doodles-wall{ max-width: 760px; margin: 0 auto 3rem; padding: 0 1.5rem; position: relative; z-index: 1; }
+  .doodles-wall.hidden{ display:none; }
+  .doodle-studio{ max-width: 520px; margin:0 auto 1.5rem; padding:1rem; border-radius:16px; background:var(--glass-bg-strong); border:1px solid var(--glass-border); box-shadow:0 10px 28px var(--shadow); }
+  .doodle-author-toggle .toggle-track{ width:140px; }
+  .doodle-author-toggle .toggle-glow{ width:66px; }
+  .doodle-author-toggle[data-author="2"] .toggle-glow{ transform:translateX(66px); }
+  .doodle-author-toggle .toggle-letter{ font-size:.78rem; }
+  .doodle-canvas-wrap{ margin:.7rem 0; border:1px solid #E3D3C2; border-radius:10px; overflow:hidden; background:#FFFDF7; aspect-ratio: 4 / 3; }
+  #doodleCanvas{ display:block; width:100%; height:100%; touch-action:none; cursor:crosshair; }
+  .doodle-toolbar,.doodle-tools,.doodle-size-row,.doodle-submit-row{ display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:.45rem; }
+  .doodle-toolbar{ margin-bottom:.5rem; }
+  .doodle-swatches{ display:flex; align-items:center; gap:.32rem; flex-wrap:wrap; justify-content:center; }
+  .doodle-swatch{ width:21px; height:21px; border-radius:50%; border:2px solid rgba(255,255,255,.8); box-shadow:0 0 0 1px rgba(72,49,37,.18); cursor:pointer; padding:0; }
+  .doodle-swatch.active{ box-shadow:0 0 0 2px var(--ink); transform:scale(1.08); }
+  .doodle-color-picker{ width:26px; height:26px; padding:0; border:0; border-radius:50%; overflow:hidden; background:none; cursor:pointer; }
+  .doodle-size-row{ margin-top:.55rem; min-height:28px; }
+  .doodle-size{ display:flex; align-items:center; gap:.35rem; font-size:.72rem; color:var(--ink-soft); white-space:nowrap; }
+  .doodle-size input{ accent-color:var(--rose-deep); width:84px; }
+  .doodle-tools button,.doodle-download{ border:1px solid #E3D3C2; background:rgba(255,255,255,.7); color:var(--ink); border-radius:999px; padding:.36rem .68rem; cursor:pointer; font:600 .72rem 'Quicksand',sans-serif; }
+  .doodle-tools button.active{ color:var(--white); background:var(--rose-deep); border-color:var(--rose-deep); }
+  body.dark-mode .doodle-tools button, body.dark-mode .doodle-download{ background:#5a4d5b; border-color:#bdaeb7; color:#fffaf8; box-shadow:0 1px 3px rgba(0,0,0,.28); }
+  body.dark-mode .doodle-tools button:hover, body.dark-mode .doodle-download:hover{ background:#726171; border-color:#f1d8df; }
+  body.dark-mode .doodle-tools button.active{ background:#d9758b; border-color:#ffd5df; color:#fff; }
+  body.dark-mode .doodle-size{ color:#f0dfe3; }
+  body.dark-mode .doodle-size input{ accent-color:#f29aae; }
+  .doodle-caption{ width:100%; box-sizing:border-box; border:1px solid #E3D3C2; border-radius:999px; padding:.58rem .9rem; margin:.65rem 0; background:rgba(255,255,255,.75); color:var(--ink); font:1rem 'Caveat',cursive; outline:none; }
+  .doodle-caption:focus{ border-color:var(--rose-deep); }
+  .doodle-submit{ border:0; border-radius:999px; padding:.62rem 1.35rem; background:var(--rose-deep); color:var(--white); cursor:pointer; font:600 .85rem 'Quicksand',sans-serif; }
+  .doodle-submit:disabled{ opacity:.6; cursor:wait; }
+  .doodles-controls,.doodles-grid{ display:flex; flex-wrap:wrap; justify-content:center; gap:1rem; }
+  .doodles-controls{ margin-bottom:1.4rem; }
+  .doodle-wrap{ width:184px; position:relative; perspective:1000px; transform:rotate(var(--nt,-2deg)); content-visibility:auto; contain-intrinsic-size:184px 250px; }
+  .doodle-flip{ position:relative; min-height:230px; cursor:pointer; transform-style:preserve-3d; transition:transform .5s cubic-bezier(.2,.8,.2,1); }
+  .doodle-flip.flipped{ transform:rotateY(180deg); }
+  .doodle-front{ pointer-events:auto; } .doodle-back{ pointer-events:none; }
+  .doodle-flip.flipped .doodle-front{ pointer-events:none; } .doodle-flip.flipped .doodle-back{ pointer-events:auto; }
+  .doodle-face{ backface-visibility:hidden; border-radius:5px; box-shadow:0 5px 12px var(--shadow); box-sizing:border-box; }
+  .doodle-front{ position:relative; min-height:230px; padding:9px 9px 33px; background:#FFF9E8; }
+  .doodle-image{ width:100%; aspect-ratio:1 / 1; object-fit:contain; background:#fffdf7; display:block; cursor:zoom-in; }
+  .doodle-back{ position:absolute; inset:0; padding:.9rem; display:flex; flex-direction:column; justify-content:space-between; background:#FFF3D6; transform:rotateY(180deg); }
+  .doodle-text{ font:1.18rem 'Caveat',cursive; color:var(--ink); overflow-wrap:anywhere; }
+  .doodle-author-badge{ position:absolute; bottom:7px; left:9px; padding:.18rem .42rem; border-radius:999px; color:var(--white); font:700 .62rem 'Quicksand',sans-serif; }
+  .doodle-author-badge.author-1{ background:var(--rose-deep); } .doodle-author-badge.author-2{ background:var(--sage); }
+  .doodle-date{ position:absolute; right:10px; bottom:10px; color:var(--ink-soft); font:.62rem 'Quicksand',sans-serif; }
+  .doodle-fav,.doodle-remove{ position:absolute; top:5px; z-index:2; border:0; background:rgba(255,255,255,.75); border-radius:50%; cursor:pointer; color:var(--rose-deep); }
+  .doodle-fav{ left:5px; font-size:.92rem; } .doodle-remove{ right:5px; color:var(--ink-soft); font-size:.72rem; }
+  .doodle-reaction-badge{ position:absolute; top:-9px; left:50%; transform:translateX(-50%); font-size:1.1rem; z-index:3; }
+  .doodle-reply-input{ resize:none; min-height:74px; border:0; outline:0; background:transparent; color:var(--ink); font:1rem 'Caveat',cursive; }
+  .doodle-reaction-picker{ display:flex; justify-content:center; gap:6px; }
+  .doodle-reaction-picker button{ border:1px solid transparent; background:none; border-radius:50%; cursor:pointer; opacity:.6; }
+  .doodle-reaction-picker button.active{ opacity:1; border-color:var(--rose-deep); }
+  .doodle-back-actions{ display:flex; justify-content:space-between; align-items:center; }
+  @media (max-width:480px){ .doodles-wall{ padding:0 1rem; } .doodle-studio{ padding:.75rem; } .doodle-tools button{ padding:.32rem .5rem; } }
+
+  /* ---------- little universe extras ---------- */
+  .extras-wall{ max-width:720px; margin:0 auto 3rem; padding:0 1.5rem; position:relative; z-index:1; }
+  .extras-wall.hidden{ display:none; }
+  .extras-card{ max-width:540px; margin:0 auto; padding:1rem; border:1px solid var(--glass-border); border-radius:16px; background:var(--glass-bg-strong); box-shadow:0 10px 28px var(--shadow); }
+  .extras-card p{ text-align:center; color:var(--ink-soft); font-size:.8rem; margin:.1rem 0 .8rem; }
+  .mood-picker-row,.extras-form,.bucket-add{ display:flex; flex-wrap:wrap; gap:.5rem; justify-content:center; align-items:center; }
+  .extra-author{ display:flex; justify-content:center; gap:.3rem; margin:0 0 .7rem; }
+  .extra-author button{ border:1px solid #E3D3C2; border-radius:999px; background:rgba(255,255,255,.65); color:var(--ink-soft); padding:.32rem .72rem; cursor:pointer; font:700 .72rem 'Quicksand',sans-serif; }
+  .extra-author button.active[data-author="1"]{ background:var(--rose-deep); color:var(--white); }.extra-author button.active[data-author="2"]{ background:var(--sage); color:var(--white);}
+  .extra-author.note-author-toggle{ display:block; background:none; border:0; padding:0; cursor:pointer; }
+  .extra-author .toggle-track{ width:140px; }.extra-author .toggle-glow{ width:66px; }.extra-author[data-author="2"] .toggle-glow{ transform:translateX(66px); }.extra-author .toggle-letter{ font-size:.78rem; }
+  .mood-picker-row button{ border:1px solid #E3D3C2; background:rgba(255,255,255,.7); border-radius:50%; width:34px; height:34px; cursor:pointer; font-size:1rem; }
+  .mood-picker-row button.active{ border-color:var(--rose-deep); background:#FCE5E9; transform:scale(1.08); }
+  .calendar-nav{ display:flex; align-items:center; justify-content:center; gap:.8rem; margin:.7rem 0 .35rem; }.calendar-nav button{ border:0; border-radius:50%; width:28px; height:28px; color:var(--ink); background:rgba(255,255,255,.65); cursor:pointer; }
+  .calendar-title{ text-align:center; font:1.5rem 'Caveat',cursive; color:var(--ink); margin:0; min-width:140px; }
+  .mood-calendar{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .calendar-weekday{ text-align:center; color:var(--ink-soft); font:700 .6rem 'Quicksand',sans-serif; padding:.2rem; }
+  .calendar-day{ min-height:46px; border:1px solid rgba(138,101,78,.18); border-radius:8px; background:rgba(255,255,255,.5); color:var(--ink); cursor:pointer; font:700 .68rem 'Quicksand',sans-serif; position:relative; }
+  .calendar-day:hover{ border-color:var(--rose-deep); }.calendar-day.empty{ visibility:hidden; }.calendar-day.today{ box-shadow:inset 0 0 0 1px var(--rose-deep); }
+  .calendar-day .day-moods{ display:flex; justify-content:center; gap:2px; margin-top:2px; }.calendar-day .day-mood{ font-size:.9rem; }.day-mood.author-1{ filter:drop-shadow(0 0 2px var(--rose-deep)); }.day-mood.author-2{ filter:drop-shadow(0 0 2px var(--sage)); }
+  .extras-form input,.extras-form textarea,.bucket-add input{ box-sizing:border-box; border:1px solid #E3D3C2; border-radius:10px; padding:.55rem .7rem; background:rgba(255,255,255,.75); color:var(--ink); font:inherit; }
+  .extras-form textarea{ width:100%; height:86px; resize:none; font-family:'Caveat',cursive; font-size:1.1rem; }.extras-form input{ flex:1; min-width:150px; }
+  .extras-form button,.bucket-add button{ border:0; border-radius:999px; padding:.55rem 1rem; background:var(--rose-deep); color:white; cursor:pointer; font:600 .78rem 'Quicksand',sans-serif; }
+  .capsule-list,.bucket-list{ list-style:none; padding:0; margin:1rem 0 0; display:grid; gap:.55rem; }
+  .capsule-item,.bucket-item{ padding:.7rem .8rem; border-radius:10px; background:rgba(255,249,232,.72); color:var(--ink); box-shadow:0 2px 5px rgba(64,40,25,.08); }
+  .capsule-item.locked{ color:var(--ink-soft); text-align:center; font-family:'Caveat',cursive; font-size:1.1rem; }.capsule-date{ display:block; font:.65rem 'Quicksand',sans-serif; color:var(--ink-soft); margin-top:.2rem; }
+  .bucket-add .extra-author,.extras-form .extra-author{ width:100%; }.bucket-add input{ flex:1; min-width:180px; }.bucket-item{ display:flex; align-items:center; gap:.55rem; font-family:'Caveat',cursive; font-size:1.15rem; }.bucket-item small{ font:600 .6rem 'Quicksand',sans-serif; color:var(--ink-soft); white-space:nowrap; }.bucket-item.done{ text-decoration:line-through; opacity:.55; }.bucket-remove{ margin-left:auto; border:0; background:none; color:var(--ink-soft); cursor:pointer; }
+  .constellation-sky{ min-height:360px; position:relative; overflow:hidden; border-radius:14px; background:radial-gradient(circle at 50% 15%,#51435c,#191522 72%); box-shadow:inset 0 0 40px rgba(0,0,0,.45); }
+  .constellation-star{ position:absolute; width:18px; height:18px; border:0; border-radius:50%; background:#fff7c9; box-shadow:0 0 0 3px rgba(255,242,177,.15),0 0 12px #fff3ad; cursor:pointer; transform:translate(-50%,-50%); }.constellation-star:hover{ transform:translate(-50%,-50%) scale(1.45); }
+  .constellation-star::after{ content:attr(data-label); position:absolute; bottom:23px; left:50%; transform:translateX(-50%); width:116px; box-sizing:border-box; padding:3px 5px; border-radius:7px; background:rgba(25,21,34,.82); color:#fff4df; font:1rem/1.05 'Caveat',cursive; text-align:center; opacity:0; transition:opacity .2s; pointer-events:none; }.constellation-star:hover::after,.constellation-star:focus-visible::after{opacity:1;}
+  .constellation-empty{ color:#fff4df; text-align:center; padding:9rem 1rem; font:1.4rem 'Caveat',cursive; }
+  body.dark-mode .extras-card{ background:#342b39; } body.dark-mode .calendar-day{ background:#4a3e4d; color:#fff; }
+  body.dark-mode .calendar-nav button{ color:#17121a; background:#d9d2da; }
+  body.dark-mode .bucket-item, body.dark-mode .capsule-item{ background:#d2cdc3; color:#302735; } body.dark-mode .capsule-item.locked{ color:#604868; } body.dark-mode .bucket-remove{ color:#6f4e60; } body.dark-mode .extras-form input, body.dark-mode .extras-form textarea, body.dark-mode .bucket-add input{ color:#302735; background:#dedbe0; } body.dark-mode .extras-form input::placeholder, body.dark-mode .extras-form textarea::placeholder, body.dark-mode .bucket-add input::placeholder{ color:#746b78; }
+  body.dark-mode .doodle-back .doodle-text, body.dark-mode .doodle-back .doodle-reply-input, body.dark-mode .doodle-back .note-flip-back-btn{ color:#3b2d38; } body.dark-mode .doodle-back .doodle-reply-input::placeholder{ color:#786575; }
+  body.dark-mode .notes-close-btn{ background:#e3dce3; color:#241d28; border:1px solid #f7eaf5; box-shadow:0 2px 8px rgba(0,0,0,.35); font-weight:800; } body.dark-mode .notes-close-btn:hover{ background:#d9758b; color:white; }
+  body.dark-mode .extra-author .toggle-letter{ color:#eaddea; opacity:.7; } body.dark-mode .bucket-item small{ color:#6f4e60; font-weight:800; }
+  .feature-menu{ position:relative; z-index:20; }.feature-menu-trigger{ display:inline-flex; align-items:center; gap:.4rem; }.feature-menu-trigger .menu-caret{ transition:transform .25s ease; }.feature-menu.open .menu-caret{ transform:rotate(180deg); }
+  .feature-menu-popover{ position:absolute; top:calc(100% + .55rem); left:50%; width:min(275px, calc(100vw - 2rem)); transform:translate(-50%,-8px) scale(.96); opacity:0; visibility:hidden; pointer-events:none; padding:.5rem; border:1px solid var(--glass-border); border-radius:14px; background:var(--glass-bg-strong); backdrop-filter:blur(18px); box-shadow:0 14px 30px var(--shadow); transition:opacity .22s ease, transform .22s cubic-bezier(.2,.9,.3,1), visibility .22s; }
+  .feature-menu.open .feature-menu-popover{ opacity:1; visibility:visible; pointer-events:auto; transform:translate(-50%,0) scale(1); }.feature-menu-popover button{ width:100%; border:0; border-radius:9px; background:transparent; color:var(--ink); text-align:left; padding:.65rem .75rem; cursor:pointer; font:600 .82rem 'Quicksand',sans-serif; }.feature-menu-popover button:hover,.feature-menu-popover button:focus-visible{ background:rgba(219,125,143,.16); outline:none; }.feature-menu-popover button + button{ margin-top:2px; } body.dark-mode .feature-menu-popover button{ color:#f6eaf3; } body.dark-mode .feature-menu-popover button:hover{ background:rgba(242,154,174,.2); }
 
   /* ---------- milestone banner ---------- */
   .toast-container{
@@ -1741,12 +1906,27 @@
   </div>
   <div class="hero-actions secondary-row">
     <input type="text" id="searchInput" class="search-input" placeholder="🔍 search captions...">
-    <select id="sortSelect" class="sort-select" aria-label="Sort order">
-      <option value="oldest">Oldest first</option>
-      <option value="newest">Newest first</option>
-      <option value="shuffle">Shuffle</option>
-    </select>
+    <div class="photo-sort-menu" id="photoSortMenu">
+      <button class="fav-filter-btn photo-sort-trigger" id="photoSortBtn" type="button" aria-expanded="false" aria-controls="photoSortPopover">
+        <span id="photoSortLabel">Oldest first</span><span class="sort-caret">⌄</span>
+      </button>
+      <div class="photo-sort-popover" id="photoSortPopover" role="menu" aria-label="Sort uploaded memories">
+        <button class="photo-sort-option active" type="button" role="menuitemradio" aria-checked="true" data-sort="oldest">Oldest first</button>
+        <button class="photo-sort-option" type="button" role="menuitemradio" aria-checked="false" data-sort="newest">Newest first</button>
+        <button class="photo-sort-option" type="button" role="menuitemradio" aria-checked="false" data-sort="shuffle">Shuffle</button>
+      </div>
+    </div>
     <button class="fav-filter-btn" id="notesToggleBtn" type="button">Love notes 💌</button>
+    <div class="feature-menu" id="featureMenu">
+      <button class="fav-filter-btn feature-menu-trigger" id="featureMenuBtn" type="button" aria-expanded="false" aria-controls="featureMenuPopover">Little things <span class="menu-caret">⌄</span></button>
+      <div class="feature-menu-popover" id="featureMenuPopover">
+        <button id="doodlesToggleBtn" type="button">✏️ Doodles Wall</button>
+        <button id="moodsToggleBtn" type="button">🗓️ Mood Calendar</button>
+        <button id="capsulesToggleBtn" type="button">⏳ Time Capsules</button>
+        <button id="bucketToggleBtn" type="button">✨ Our Bucket List</button>
+        <button id="constellationToggleBtn" type="button">✦ Memory Constellation</button>
+      </div>
+    </div>
     <button class="fav-filter-btn" id="backupBtn" type="button">⬇ Backup everything</button>
   </div>
   <div class="count-note" id="countNote"></div>
@@ -1800,6 +1980,40 @@
   </div>
   <div class="notes-grid" id="notesGrid"></div>
 </section>
+
+<section class="doodles-wall hidden" id="doodlesWall">
+  <div class="notes-header">
+    <h2>Doodles Wall</h2>
+    <button class="notes-close-btn" id="doodlesCloseBtn" type="button" aria-label="Close doodles">✕</button>
+  </div>
+  <form class="doodle-studio" id="doodleForm">
+    <button type="button" class="note-author-toggle doodle-author-toggle" data-author="1" id="doodleAuthorToggle" aria-label="Currently drawing as By J — tap to switch">
+      <span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span>
+    </button>
+    <div class="doodle-canvas-wrap"><canvas id="doodleCanvas" aria-label="Draw your doodle"></canvas></div>
+    <div class="doodle-toolbar">
+      <div class="doodle-swatches" id="doodleSwatches" aria-label="Colour palette"></div>
+      <input class="doodle-color-picker" id="doodleColorPicker" type="color" value="#C96A7A" aria-label="Choose any colour">
+    </div>
+    <div class="doodle-tools" id="doodleTools">
+      <button type="button" class="active" data-tool="pen">✏️ Pen</button><button type="button" data-tool="line">╱ Line</button><button type="button" data-tool="fill">🪣 Fill</button><button type="button" data-tool="spray">💨 Spray</button><button type="button" data-tool="eraser">🧼 Eraser</button><button type="button" id="doodleUndo">↶ Undo</button><button type="button" id="doodleClear">♜ Clear</button>
+    </div>
+    <div class="doodle-size-row"><label class="doodle-size">Brush size <input id="doodleBrushSize" type="range" min="1" max="30" value="4"><span id="doodleBrushValue">4</span></label></div>
+    <input class="doodle-caption" id="doodleCaption" maxlength="200" placeholder="Add a caption (optional)">
+    <div class="doodle-submit-row"><button class="doodle-submit" id="doodleSubmitBtn" type="submit">Leave a doodle</button></div>
+  </form>
+  <div class="doodles-controls">
+    <input type="text" id="doodlesSearchInput" class="search-input" placeholder="🔍 search captions...">
+    <select id="doodlesSortSelect" class="sort-select" aria-label="Sort doodles"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="shuffle">Shuffle</option></select>
+    <button class="fav-filter-btn" id="doodlesFavFilterBtn" type="button">♡ Favorites only</button>
+  </div>
+  <div class="doodles-grid" id="doodlesGrid"></div>
+</section>
+
+<section class="extras-wall hidden" id="moodsWall"><div class="notes-header"><h2>Mood Calendar</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Choose who is pinning, choose a mood, then tap a day. Tap your own pinned mood again to unpin it.</p><button type="button" class="note-author-toggle extra-author" data-author="1" id="moodAuthorToggle" aria-label="Choose mood author"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button><div class="mood-picker-row" id="calendarMoodPicker"></div><div class="calendar-nav"><button id="calendarPrev" type="button" aria-label="Previous month">‹</button><div class="calendar-title" id="calendarTitle"></div><button id="calendarNext" type="button" aria-label="Next month">›</button></div><div class="mood-calendar" id="moodCalendar"></div></div></section>
+<section class="extras-wall hidden" id="capsulesWall"><div class="notes-header"><h2>Time Capsules</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Leave something sweet for future you.</p><form class="extras-form" id="capsuleForm"><button type="button" class="note-author-toggle extra-author" data-author="1" id="capsuleAuthorToggle" aria-label="Choose capsule author"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button><input id="capsuleDate" type="date" required><textarea id="capsuleMessage" maxlength="500" placeholder="A message for the future..." required></textarea><button type="submit">Seal capsule</button></form><ul class="capsule-list" id="capsuleList"></ul></div></section>
+<section class="extras-wall hidden" id="bucketWall"><div class="notes-header"><h2>Our Bucket List</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Little dreams, big adventures, all in one place.</p><form class="bucket-add" id="bucketForm"><button type="button" class="note-author-toggle extra-author" data-author="1" id="bucketAuthorToggle" aria-label="Choose bucket list author"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button><input id="bucketInput" maxlength="180" placeholder="Add something to do together..." required><button type="submit">Add wish</button></form><ul class="bucket-list" id="bucketList"></ul></div></section>
+<section class="extras-wall hidden" id="constellationWall"><div class="notes-header"><h2>Our Memory Constellation</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Every star is a memory — tap one to revisit it.</p><div class="constellation-sky" id="constellationSky"></div></div></section>
 
 <div class="setup-banner" id="setupBanner">
 
@@ -1949,7 +2163,10 @@
   const cancelTitleBtn = document.getElementById('cancelTitleBtn');
 
   const searchInput = document.getElementById('searchInput');
-  const sortSelect = document.getElementById('sortSelect');
+  const photoSortMenu = document.getElementById('photoSortMenu');
+  const photoSortBtn = document.getElementById('photoSortBtn');
+  const photoSortLabel = document.getElementById('photoSortLabel');
+  const photoSortOptions = document.querySelectorAll('.photo-sort-option');
   const surpriseBtn = document.getElementById('surpriseBtn');
 
   const notesToggleBtn = document.getElementById('notesToggleBtn');
@@ -2786,6 +3003,158 @@ async function sha256Hex(text){
     }
   });
 
+  /* ---------- doodles wall & canvas ---------- */
+  const DOODLES_TABLE = 'doodles';
+  const DOODLES_BUCKET = 'doodles';
+  const DOODLE_REACTIONS = ['😂', '💕', '😙', '🎉', '😢'];
+  const doodlesToggleBtn = document.getElementById('doodlesToggleBtn');
+  const doodlesWall = document.getElementById('doodlesWall');
+  const doodlesCloseBtn = document.getElementById('doodlesCloseBtn');
+  const doodleForm = document.getElementById('doodleForm');
+  const doodleCanvas = document.getElementById('doodleCanvas');
+  const doodleCtx = doodleCanvas.getContext('2d', { willReadFrequently: true });
+  const doodleSwatches = document.getElementById('doodleSwatches');
+  const doodleColorPicker = document.getElementById('doodleColorPicker');
+  const doodleBrushSize = document.getElementById('doodleBrushSize');
+  const doodleBrushValue = document.getElementById('doodleBrushValue');
+  const doodleTools = document.getElementById('doodleTools');
+  const doodleUndo = document.getElementById('doodleUndo');
+  const doodleClear = document.getElementById('doodleClear');
+  const doodleCaption = document.getElementById('doodleCaption');
+  const doodleSubmitBtn = document.getElementById('doodleSubmitBtn');
+  const doodleAuthorToggle = document.getElementById('doodleAuthorToggle');
+  const doodlesGrid = document.getElementById('doodlesGrid');
+  const doodlesSearchInput = document.getElementById('doodlesSearchInput');
+  const doodlesSortSelect = document.getElementById('doodlesSortSelect');
+  const doodlesFavFilterBtn = document.getElementById('doodlesFavFilterBtn');
+  const DOODLE_COLORS = ['#C96A7A','#F0A9B7','#6B5344','#8E7768','#D3A65A','#74A9C9','#487CA7','#8AAE87','#617A64','#C576E7','#FFB51B','#111111'];
+  let doodleColor = DOODLE_COLORS[0], doodleTool = 'pen', doodleAuthor = localStorage.getItem('ourLittleUniverseDoodleAuthor') === '2' ? '2' : '1';
+  let doodleHistory = [], doodleDrawing = false, doodleLastPoint = null, doodleStartPoint = null;
+  let doodlesLoaded = false, allDoodles = [], doodlesSearchQuery = '', doodlesSortMode = 'newest', doodlesFavoritesOnly = false, doodlesRealtimeStarted = false;
+
+  function setupDoodleCanvas(){
+    const rect = doodleCanvas.getBoundingClientRect();
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    const previous = doodleCanvas.width ? doodleCanvas.toDataURL() : null;
+    doodleCanvas.width = Math.max(1, Math.round(rect.width * ratio));
+    doodleCanvas.height = Math.max(1, Math.round(rect.height * ratio));
+    doodleCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    doodleCtx.fillStyle = '#FFFDF7'; doodleCtx.fillRect(0, 0, rect.width, rect.height);
+    if (previous){ const img = new Image(); img.onload = () => doodleCtx.drawImage(img, 0, 0, rect.width, rect.height); img.src = previous; }
+  }
+  function pointForDoodle(event){ const r = doodleCanvas.getBoundingClientRect(); return { x:event.clientX-r.left, y:event.clientY-r.top }; }
+  // Store one checkpoint before each completed action. For freehand tools,
+  // that means a whole pointer-down → pointer-up stroke is undone at once.
+  function snapshotDoodle(){
+    const pixels = doodleCtx.getImageData(0,0,doodleCanvas.width,doodleCanvas.height);
+    doodleHistory.push(new ImageData(new Uint8ClampedArray(pixels.data), pixels.width, pixels.height));
+    if (doodleHistory.length > 500) doodleHistory.shift();
+  }
+  function paintDoodleSegment(from, to){
+    doodleCtx.save(); doodleCtx.lineCap = 'round'; doodleCtx.lineJoin = 'round'; doodleCtx.lineWidth = +doodleBrushSize.value;
+    if (doodleTool === 'eraser'){ doodleCtx.globalCompositeOperation = 'destination-out'; } else { doodleCtx.strokeStyle = doodleColor; }
+    doodleCtx.beginPath(); doodleCtx.moveTo(from.x, from.y); doodleCtx.lineTo(to.x, to.y); doodleCtx.stroke(); doodleCtx.restore();
+  }
+  function sprayDoodle(point){
+    const radius = +doodleBrushSize.value * 2;
+    doodleCtx.save(); doodleCtx.fillStyle = doodleColor;
+    for(let i=0;i<22;i++){ const a=Math.random()*Math.PI*2, d=Math.random()*radius; doodleCtx.fillRect(point.x+Math.cos(a)*d, point.y+Math.sin(a)*d, 1.2, 1.2); }
+    doodleCtx.restore();
+  }
+  function floodFill(point){
+    const ratio = doodleCanvas.width / doodleCanvas.getBoundingClientRect().width, x=Math.floor(point.x*ratio), y=Math.floor(point.y*ratio);
+    const image=doodleCtx.getImageData(0,0,doodleCanvas.width,doodleCanvas.height), data=image.data, width=image.width, start=(y*width+x)*4;
+    const target=[data[start],data[start+1],data[start+2],data[start+3]];
+    const hex=doodleColor.replace('#',''); const fill=[parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16),255];
+    if(target.every((v,i)=>v===fill[i])) return;
+    const matches=(idx)=> data[idx]===target[0]&&data[idx+1]===target[1]&&data[idx+2]===target[2]&&data[idx+3]===target[3];
+    const stack=[[x,y]];
+    while(stack.length){ const [px,py]=stack.pop(); if(px<0||py<0||px>=width||py>=image.height) continue; const idx=(py*width+px)*4; if(!matches(idx)) continue; data[idx]=fill[0];data[idx+1]=fill[1];data[idx+2]=fill[2];data[idx+3]=fill[3]; stack.push([px+1,py],[px-1,py],[px,py+1],[px,py-1]); }
+    doodleCtx.putImageData(image,0,0);
+  }
+  function setDoodleColor(color){ doodleColor=color; doodleColorPicker.value=color; doodleSwatches.querySelectorAll('.doodle-swatch').forEach(b=>b.classList.toggle('active',b.dataset.color===color)); }
+  DOODLE_COLORS.forEach(color=>{ const b=document.createElement('button'); b.type='button'; b.className='doodle-swatch'; b.dataset.color=color; b.style.background=color; b.setAttribute('aria-label',`Use ${color}`); b.addEventListener('click',()=>setDoodleColor(color)); doodleSwatches.appendChild(b); });
+  setDoodleColor(doodleColor); setupDoodleCanvas();
+  doodleColorPicker.addEventListener('input',()=>setDoodleColor(doodleColorPicker.value));
+  doodleBrushSize.addEventListener('input',()=>doodleBrushValue.textContent=doodleBrushSize.value);
+  doodleTools.addEventListener('click',(e)=>{ const b=e.target.closest('[data-tool]'); if(!b)return; doodleTool=b.dataset.tool; doodleTools.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x===b)); doodleCanvas.style.cursor=doodleTool==='fill'?'cell':'crosshair'; });
+  doodleCanvas.addEventListener('pointerdown',(e)=>{ e.preventDefault(); const p=pointForDoodle(e); doodleCanvas.setPointerCapture(e.pointerId); doodleDrawing=true; doodleStartPoint=p; doodleLastPoint=p;
+    if(doodleTool==='fill'){ snapshotDoodle(); floodFill(p); doodleDrawing=false; return; } snapshotDoodle(); if(doodleTool==='pen'||doodleTool==='eraser') paintDoodleSegment(p,{x:p.x+.01,y:p.y+.01}); else if(doodleTool==='spray') sprayDoodle(p);
+  });
+  doodleCanvas.addEventListener('pointermove',(e)=>{ if(!doodleDrawing)return; const p=pointForDoodle(e); if(doodleTool==='line'){ const saved=doodleHistory[doodleHistory.length-1]; if(saved) doodleCtx.putImageData(saved,0,0); paintDoodleSegment(doodleStartPoint,p); } else if(doodleTool==='spray'){ sprayDoodle(p); } else { paintDoodleSegment(doodleLastPoint,p); } doodleLastPoint=p; });
+  doodleCanvas.addEventListener('pointerup',()=>{ doodleDrawing=false; doodleLastPoint=null; }); doodleCanvas.addEventListener('pointercancel',()=>{ doodleDrawing=false; doodleLastPoint=null; });
+  doodleUndo.addEventListener('click',(e)=>{ e.preventDefault(); e.stopPropagation(); const prior=doodleHistory.pop(); if(prior){ doodleCtx.putImageData(prior,0,0); doodleLastPoint=null; } });
+  doodleClear.addEventListener('click',()=>{ snapshotDoodle(); doodleCtx.clearRect(0,0,doodleCanvas.width,doodleCanvas.height); });
+  doodleAuthorToggle.addEventListener('click',()=>{ doodleAuthor=doodleAuthor==='1'?'2':'1'; localStorage.setItem('ourLittleUniverseDoodleAuthor',doodleAuthor); doodleAuthorToggle.dataset.author=doodleAuthor; doodleAuthorToggle.setAttribute('aria-label',`Currently drawing as By ${doodleAuthor==='1'?'J':'M'} — tap to switch`); });
+
+  async function loadDoodles(){ if(!supabase)return; try{ const {data,error}=await supabase.from(DOODLES_TABLE).select('*').order('created_at',{ascending:false}); if(error)throw error; allDoodles=data||[]; renderDoodlesFiltered(); }catch(err){ console.error('Could not load doodles:',err); showToast('Could not load doodles. Run the doodles setup SQL first.',{type:'error'}); } }
+  function renderDoodlesFiltered(){ let items=doodlesFavoritesOnly?allDoodles.filter(d=>d.favorite):allDoodles.slice(); const q=doodlesSearchQuery.trim().toLowerCase(); if(q)items=items.filter(d=>`${d.caption||''} ${d.reply||''}`.toLowerCase().includes(q)); if(doodlesSortMode==='oldest')items.reverse(); if(doodlesSortMode==='shuffle')items.sort(()=>Math.random()-.5); renderDoodles(items); }
+  async function updateDoodle(d, patch){ const {error}=await supabase.from(DOODLES_TABLE).update(patch).eq('id',d.id); if(error){ console.error(error); showToast('Could not save that doodle change.',{type:'error'}); } }
+  function renderDoodles(items){
+    doodlesGrid.innerHTML=''; if(!items.length){ const p=document.createElement('p'); p.className='empty-note'; p.style.display='block'; p.textContent=qOrEmptyDoodles(); doodlesGrid.appendChild(p); return; }
+    items.forEach(d=>{ const wrap=document.createElement('div'); wrap.className='doodle-wrap'; wrap.style.setProperty('--nt',(Math.random()*6-3).toFixed(1)+'deg'); const author=String(d.author||1), date=d.created_at?new Date(d.created_at).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'';
+      wrap.innerHTML=`<div class="doodle-flip" tabindex="0" role="button" aria-label="Flip doodle"><div class="doodle-face doodle-front"><button class="doodle-fav" type="button">${d.favorite?'♥':'♡'}</button><button class="doodle-remove" type="button">✕</button><img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption?`: ${escapeHtml(d.caption)}`:''}">${d.reaction?`<span class="doodle-reaction-badge">${d.reaction}</span>`:''}<span class="doodle-author-badge author-${author}">By ${author==='2'?'M':'J'}</span><span class="doodle-date">${date}</span></div><div class="doodle-face doodle-back"><div class="doodle-text">${escapeHtml(d.caption||'A little doodle ✨')}</div><textarea class="doodle-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(d.reply||'')}</textarea><div class="doodle-reaction-picker">${DOODLE_REACTIONS.map(r=>`<button type="button" data-reaction="${r}" class="${d.reaction===r?'active':''}">${r}</button>`).join('')}</div><div class="doodle-back-actions"><button class="note-flip-back-btn" type="button">‹ back</button><button class="doodle-download" type="button">⇩ PNG</button></div></div></div>`;
+      const flip=wrap.querySelector('.doodle-flip'), image=wrap.querySelector('.doodle-image'), fav=wrap.querySelector('.doodle-fav'), remove=wrap.querySelector('.doodle-remove'), reply=wrap.querySelector('.doodle-reply-input'), back=wrap.querySelector('.note-flip-back-btn'), download=wrap.querySelector('.doodle-download');
+      flip.addEventListener('click',e=>{ if(e.target.closest('button,textarea,img'))return; flip.classList.toggle('flipped'); }); flip.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===flip){e.preventDefault();flip.classList.toggle('flipped');}}); back.addEventListener('click',()=>flip.classList.remove('flipped'));
+      image.addEventListener('click',()=>{ currentList=items.map(x=>({src:x.image_url,caption:x.caption||'A little doodle'})); lightboxIndex=items.findIndex(x=>x.id===d.id); openLightbox(lightboxIndex); });
+      fav.addEventListener('click',async()=>{ d.favorite=!d.favorite; fav.textContent=d.favorite?'♥':'♡'; await updateDoodle(d,{favorite:d.favorite}); if(doodlesFavoritesOnly)renderDoodlesFiltered(); });
+      let replyTimer; reply.addEventListener('input',()=>{ d.reply=reply.value; clearTimeout(replyTimer); replyTimer=setTimeout(()=>updateDoodle(d,{reply:d.reply}),400); });
+      wrap.querySelectorAll('[data-reaction]').forEach(b=>b.addEventListener('click',async()=>{ d.reaction=d.reaction===b.dataset.reaction?null:b.dataset.reaction; await updateDoodle(d,{reaction:d.reaction}); renderDoodlesFiltered(); }));
+      download.addEventListener('click',async()=>{ try{ const blob=await fetch(d.image_url).then(r=>r.blob()), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`doodle-${d.id}.png`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500); }catch(err){ window.open(d.image_url,'_blank','noopener'); } });
+      remove.addEventListener('click',()=>{ const i=allDoodles.findIndex(x=>x.id===d.id); allDoodles.splice(i,1); renderDoodlesFiltered(); const timer=setTimeout(async()=>{ try{ if(d.storage_path)await supabase.storage.from(DOODLES_BUCKET).remove([d.storage_path]); await supabase.from(DOODLES_TABLE).delete().eq('id',d.id); }catch(err){showToast('Could not remove doodle.',{type:'error'});} },5000); showToast('Doodle removed.',{actionLabel:'Undo',duration:5000,onAction:()=>{clearTimeout(timer);allDoodles.splice(i,0,d);renderDoodlesFiltered();}}); });
+      doodlesGrid.appendChild(wrap);
+    });
+  }
+  function qOrEmptyDoodles(){ return doodlesSearchQuery.trim()?'no doodles match that search':'no doodles yet — draw one!'; }
+  doodleForm.addEventListener('submit',async e=>{ e.preventDefault(); if(!supabase){showToast('Connect Supabase before saving doodles.',{type:'error'});return;} doodleSubmitBtn.disabled=true; try{ const blob=await new Promise(resolve=>doodleCanvas.toBlob(resolve,'image/png')); if(!blob)throw new Error('Could not create PNG'); const path=`${Date.now()}-${crypto.randomUUID()}.png`; const {error:uploadError}=await supabase.storage.from(DOODLES_BUCKET).upload(path,blob,{contentType:'image/png'}); if(uploadError)throw uploadError; const {data:urlData}=supabase.storage.from(DOODLES_BUCKET).getPublicUrl(path); const {error}=await supabase.from(DOODLES_TABLE).insert({image_url:urlData.publicUrl,storage_path:path,caption:doodleCaption.value.trim()||null,author:Number(doodleAuthor)}); if(error)throw error; doodleCaption.value=''; doodleHistory=[]; doodleCtx.clearRect(0,0,doodleCanvas.width,doodleCanvas.height); showToast('Doodle pinned!'); loadDoodles(); }catch(err){console.error(err);showToast('Could not save doodle. Check the doodles bucket and SQL setup.',{type:'error'});}finally{doodleSubmitBtn.disabled=false;} });
+  doodlesToggleBtn.addEventListener('click',()=>{ const opening=doodlesWall.classList.contains('hidden'); doodlesWall.classList.toggle('hidden'); if(opening){notesWall.classList.add('hidden'); setupDoodleCanvas(); if(!doodlesLoaded){doodlesLoaded=true;loadDoodles();}} });
+  doodlesCloseBtn.addEventListener('click',()=>doodlesWall.classList.add('hidden'));
+  notesToggleBtn.addEventListener('click',()=>doodlesWall.classList.add('hidden'));
+  doodlesFavFilterBtn.addEventListener('click',()=>{doodlesFavoritesOnly=!doodlesFavoritesOnly; doodlesFavFilterBtn.classList.toggle('active',doodlesFavoritesOnly); doodlesFavFilterBtn.textContent=doodlesFavoritesOnly?'♥ Showing favorites':'♡ Favorites only'; renderDoodlesFiltered();});
+  let doodleSearchTimer; doodlesSearchInput.addEventListener('input',()=>{clearTimeout(doodleSearchTimer);doodleSearchTimer=setTimeout(()=>{doodlesSearchQuery=doodlesSearchInput.value;renderDoodlesFiltered();},250);}); doodlesSortSelect.addEventListener('change',()=>{doodlesSortMode=doodlesSortSelect.value;renderDoodlesFiltered();});
+  function startDoodlesRealtime(){ if(!supabase||doodlesRealtimeStarted)return; doodlesRealtimeStarted=true; supabase.channel('doodles-wall').on('postgres_changes',{event:'*',schema:'public',table:DOODLES_TABLE},()=>{if(doodlesLoaded)loadDoodles();}).subscribe(); }
+  startDoodlesRealtime();
+
+  /* ---------- mood calendar, capsules, bucket list & constellation ---------- */
+  const MOODS_TABLE = 'daily_moods', CAPSULES_TABLE = 'time_capsules', BUCKET_LIST_TABLE = 'bucket_list';
+  const CALENDAR_MOODS = ['😊','🥰','😌','😢','😤','🎉','💤'];
+  const moodsToggleBtn=document.getElementById('moodsToggleBtn'), capsulesToggleBtn=document.getElementById('capsulesToggleBtn'), bucketToggleBtn=document.getElementById('bucketToggleBtn'), constellationToggleBtn=document.getElementById('constellationToggleBtn');
+  const moodsWall=document.getElementById('moodsWall'), capsulesWall=document.getElementById('capsulesWall'), bucketWall=document.getElementById('bucketWall'), constellationWall=document.getElementById('constellationWall');
+  const calendarMoodPicker=document.getElementById('calendarMoodPicker'), moodCalendar=document.getElementById('moodCalendar'), calendarTitle=document.getElementById('calendarTitle');
+  const moodAuthorToggle=document.getElementById('moodAuthorToggle'), capsuleAuthorToggle=document.getElementById('capsuleAuthorToggle'), bucketAuthorToggle=document.getElementById('bucketAuthorToggle'), calendarPrev=document.getElementById('calendarPrev'), calendarNext=document.getElementById('calendarNext');
+  const featureMenu=document.getElementById('featureMenu'), featureMenuBtn=document.getElementById('featureMenuBtn');
+  const capsuleForm=document.getElementById('capsuleForm'), capsuleDate=document.getElementById('capsuleDate'), capsuleMessage=document.getElementById('capsuleMessage'), capsuleList=document.getElementById('capsuleList');
+  const bucketForm=document.getElementById('bucketForm'), bucketInput=document.getElementById('bucketInput'), bucketList=document.getElementById('bucketList'), constellationSky=document.getElementById('constellationSky');
+  let selectedCalendarMood=CALENDAR_MOODS[0], allMoods=[], allCapsules=[], allBucketItems=[], extrasRealtimeStarted=false;
+  let moodAuthor=localStorage.getItem('ourLittleUniverseMoodAuthor')==='2'?'2':'1', capsuleAuthor=localStorage.getItem('ourLittleUniverseCapsuleAuthor')==='2'?'2':'1', bucketAuthor=localStorage.getItem('ourLittleUniverseBucketAuthor')==='2'?'2':'1';
+  let calendarCursor=new Date(new Date().getFullYear(),new Date().getMonth(),1);
+  const extrasWalls=[moodsWall,capsulesWall,bucketWall,constellationWall];
+  function closeFeatureMenu(){ featureMenu.classList.remove('open'); featureMenuBtn.setAttribute('aria-expanded','false'); }
+  featureMenuBtn.addEventListener('click',()=>{ const opening=!featureMenu.classList.contains('open'); featureMenu.classList.toggle('open',opening); featureMenuBtn.setAttribute('aria-expanded',String(opening)); });
+  featureMenu.addEventListener('click',(e)=>{ if(e.target.closest('#featureMenuPopover button')) closeFeatureMenu(); });
+  document.addEventListener('click',(e)=>{ if(!featureMenu.contains(e.target)) closeFeatureMenu(); });
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeFeatureMenu(); });
+  function closeExtras(){ extrasWalls.forEach(w=>w.classList.add('hidden')); }
+  function openExtra(wall){ closeExtras(); notesWall.classList.add('hidden'); doodlesWall.classList.add('hidden'); wall.classList.remove('hidden'); }
+  CALENDAR_MOODS.forEach(m=>{const b=document.createElement('button');b.type='button';b.textContent=m;b.classList.toggle('active',m===selectedCalendarMood);b.addEventListener('click',()=>{selectedCalendarMood=m;calendarMoodPicker.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x.textContent===m));});calendarMoodPicker.appendChild(b);});
+  function setExtraAuthor(kind,value){ const toggle=kind==='mood'?moodAuthorToggle:kind==='capsule'?capsuleAuthorToggle:bucketAuthorToggle; if(kind==='mood'){moodAuthor=value;localStorage.setItem('ourLittleUniverseMoodAuthor',value);}if(kind==='capsule'){capsuleAuthor=value;localStorage.setItem('ourLittleUniverseCapsuleAuthor',value);}if(kind==='bucket'){bucketAuthor=value;localStorage.setItem('ourLittleUniverseBucketAuthor',value);}toggle.dataset.author=value;toggle.setAttribute('aria-label',`Currently posting as By ${value==='2'?'M':'J'} — tap to switch`); }
+  [['mood',moodAuthorToggle],['capsule',capsuleAuthorToggle],['bucket',bucketAuthorToggle]].forEach(([kind,toggle])=>{toggle.addEventListener('click',()=>{const current=kind==='mood'?moodAuthor:kind==='capsule'?capsuleAuthor:bucketAuthor;setExtraAuthor(kind,current==='1'?'2':'1');});setExtraAuthor(kind,kind==='mood'?moodAuthor:kind==='capsule'?capsuleAuthor:bucketAuthor);});
+  function dateKey(d){return d.toISOString().slice(0,10);}
+  function renderMoodCalendar(){ const now=new Date(), y=calendarCursor.getFullYear(), month=calendarCursor.getMonth(), first=new Date(y,month,1), last=new Date(y,month+1,0), today=dateKey(now); calendarTitle.textContent=calendarCursor.toLocaleDateString(undefined,{month:'long',year:'numeric'}); moodCalendar.innerHTML=['S','M','T','W','T','F','S'].map(x=>`<span class="calendar-weekday">${x}</span>`).join(''); for(let i=0;i<first.getDay();i++)moodCalendar.insertAdjacentHTML('beforeend','<span class="calendar-day empty"></span>'); for(let day=1;day<=last.getDate();day++){const key=`${y}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`,entries=allMoods.filter(m=>m.mood_date===key),b=document.createElement('button');b.type='button';b.className='calendar-day'+(key===today?' today':'');b.dataset.date=key;b.innerHTML=`${day}${entries.length?`<span class="day-moods">${entries.map(e=>`<span class="day-mood author-${e.author||1}" title="By ${String(e.author||1)==='2'?'M':'J'}">${e.mood}</span>`).join('')}</span>`:''}`;b.addEventListener('click',()=>saveMood(key));moodCalendar.appendChild(b);} }
+  async function loadMoods(){if(!supabase)return;try{const {data,error}=await supabase.from(MOODS_TABLE).select('*');if(error)throw error;allMoods=data||[];renderMoodCalendar();}catch(e){console.error(e);showToast('Could not load moods. Run the extras SQL setup first.',{type:'error'});}}
+  async function saveMood(mood_date){if(!supabase)return;const existing=allMoods.find(x=>x.mood_date===mood_date&&String(x.author||1)===moodAuthor);if(existing&&existing.mood===selectedCalendarMood){const {error}=await supabase.from(MOODS_TABLE).delete().eq('mood_date',mood_date).eq('author',Number(moodAuthor));if(error){showToast('Could not unpin that mood.',{type:'error'});return;}allMoods=allMoods.filter(x=>x!==existing);renderMoodCalendar();return;}const item={mood_date,mood:selectedCalendarMood,author:Number(moodAuthor)};const {error}=await supabase.from(MOODS_TABLE).upsert(item,{onConflict:'mood_date,author'});if(error){showToast('Could not save that mood.',{type:'error'});return;}const i=allMoods.findIndex(x=>x.mood_date===mood_date&&String(x.author||1)===moodAuthor);if(i>-1)allMoods[i]={...allMoods[i],...item};else allMoods.push(item);renderMoodCalendar();}
+  calendarPrev.addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()-1,1);renderMoodCalendar();});calendarNext.addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+1,1);renderMoodCalendar();});
+  function renderCapsules(){capsuleList.innerHTML='';if(!allCapsules.length){capsuleList.innerHTML='<li class="capsule-item locked">No time capsules yet — seal the first one.</li>';return;}const today=dateKey(new Date());allCapsules.forEach(c=>{const unlocked=c.unlock_date<=today,li=document.createElement('li');li.className='capsule-item'+(unlocked?'':' locked');const by=`By ${String(c.author||1)==='2'?'M':'J'}`;li.innerHTML=unlocked?`${escapeHtml(c.message)}<span class="capsule-date">${by} · Opened ${new Date(c.unlock_date+'T00:00:00').toLocaleDateString()}</span>`:`🔒 ${by}'s capsule · sealed until ${new Date(c.unlock_date+'T00:00:00').toLocaleDateString()}`;capsuleList.appendChild(li);});}
+  async function loadCapsules(){if(!supabase)return;try{const {data,error}=await supabase.from(CAPSULES_TABLE).select('*').order('unlock_date',{ascending:true});if(error)throw error;allCapsules=data||[];renderCapsules();}catch(e){console.error(e);showToast('Could not load time capsules.',{type:'error'});}}
+  capsuleForm.addEventListener('submit',async e=>{e.preventDefault();if(!supabase)return;const {data,error}=await supabase.from(CAPSULES_TABLE).insert({unlock_date:capsuleDate.value,message:capsuleMessage.value.trim(),author:Number(capsuleAuthor)}).select().single();if(error){showToast('Could not seal that capsule.',{type:'error'});return;}allCapsules.push(data);capsuleMessage.value='';renderCapsules();showToast('Time capsule sealed ✨');});
+  function renderBucket(){bucketList.innerHTML='';if(!allBucketItems.length){bucketList.innerHTML='<li class="bucket-item">No wishes yet — add one above.</li>';return;}allBucketItems.forEach(item=>{const li=document.createElement('li');li.className='bucket-item'+(item.completed?' done':'');li.innerHTML=`<input type="checkbox" ${item.completed?'checked':''} aria-label="Mark completed"><span>${escapeHtml(item.item)}</span><small>By ${String(item.author||1)==='2'?'M':'J'}</small><button class="bucket-remove" type="button" aria-label="Remove wish">✕</button>`;li.querySelector('input').addEventListener('change',async e=>{item.completed=e.target.checked;await supabase.from(BUCKET_LIST_TABLE).update({completed:item.completed}).eq('id',item.id);renderBucket();});li.querySelector('.bucket-remove').addEventListener('click',async()=>{await supabase.from(BUCKET_LIST_TABLE).delete().eq('id',item.id);allBucketItems=allBucketItems.filter(x=>x.id!==item.id);renderBucket();});bucketList.appendChild(li);});}
+  async function loadBucket(){if(!supabase)return;try{const {data,error}=await supabase.from(BUCKET_LIST_TABLE).select('*').order('created_at',{ascending:false});if(error)throw error;allBucketItems=data||[];renderBucket();}catch(e){console.error(e);showToast('Could not load your bucket list.',{type:'error'});}}
+  bucketForm.addEventListener('submit',async e=>{e.preventDefault();if(!supabase)return;const {data,error}=await supabase.from(BUCKET_LIST_TABLE).insert({item:bucketInput.value.trim(),author:Number(bucketAuthor)}).select().single();if(error){showToast('Could not add that wish.',{type:'error'});return;}allBucketItems.unshift(data);bucketInput.value='';renderBucket();});
+  function renderConstellation(){constellationSky.innerHTML='';if(!photos.length){const p=document.createElement('p');p.className='constellation-empty';p.textContent='Pin some memories first, then your sky will fill with stars ✦';constellationSky.appendChild(p);return;}photos.forEach((p,i)=>{const star=document.createElement('button');star.type='button';star.className='constellation-star';star.style.left=`${15+((i*37)%70)}%`;star.style.top=`${20+((i*53)%65)}%`;star.dataset.label=(p.caption||'A memory').slice(0,32);star.setAttribute('aria-label',`Open memory ${i+1}`);star.addEventListener('click',()=>{currentList=photos;openLightbox(i);});constellationSky.appendChild(star);});}
+  moodsToggleBtn.addEventListener('click',()=>{openExtra(moodsWall);loadMoods();});capsulesToggleBtn.addEventListener('click',()=>{openExtra(capsulesWall);loadCapsules();});bucketToggleBtn.addEventListener('click',()=>{openExtra(bucketWall);loadBucket();});constellationToggleBtn.addEventListener('click',()=>{openExtra(constellationWall);renderConstellation();});document.querySelectorAll('.extras-close').forEach(b=>b.addEventListener('click',closeExtras));notesToggleBtn.addEventListener('click',closeExtras);doodlesToggleBtn.addEventListener('click',closeExtras);
+  function startExtrasRealtime(){if(!supabase||extrasRealtimeStarted)return;extrasRealtimeStarted=true;[MOODS_TABLE,CAPSULES_TABLE,BUCKET_LIST_TABLE].forEach(table=>supabase.channel(`extras-${table}`).on('postgres_changes',{event:'*',schema:'public',table},()=>{if(!moodsWall.classList.contains('hidden')&&table===MOODS_TABLE)loadMoods();if(!capsulesWall.classList.contains('hidden')&&table===CAPSULES_TABLE)loadCapsules();if(!bucketWall.classList.contains('hidden')&&table===BUCKET_LIST_TABLE)loadBucket();}).subscribe());}
+  startExtrasRealtime();
+
   /* ---------- voice notes recording ---------- */
   const MAX_RECORDING_SECONDS = 120;
   let mediaRecorder = null;
@@ -3274,9 +3643,35 @@ async function sha256Hex(text){
     }, 250);
   });
 
-  sortSelect.addEventListener('change', () => {
-    sortMode = sortSelect.value;
+  const photoSortLabels = {
+    oldest: 'Oldest first',
+    newest: 'Newest first',
+    shuffle: 'Shuffle'
+  };
+  function closePhotoSortMenu(){
+    photoSortMenu.classList.remove('open');
+    photoSortBtn.setAttribute('aria-expanded', 'false');
+  }
+  photoSortBtn.addEventListener('click', () => {
+    const isOpen = photoSortMenu.classList.toggle('open');
+    photoSortBtn.setAttribute('aria-expanded', String(isOpen));
+  });
+  photoSortOptions.forEach(option => option.addEventListener('click', () => {
+    sortMode = option.dataset.sort;
+    photoSortLabel.textContent = photoSortLabels[sortMode];
+    photoSortOptions.forEach(item => {
+      const selected = item === option;
+      item.classList.toggle('active', selected);
+      item.setAttribute('aria-checked', String(selected));
+    });
+    closePhotoSortMenu();
     transitionRender();
+  }));
+  document.addEventListener('click', (event) => {
+    if (!photoSortMenu.contains(event.target)) closePhotoSortMenu();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closePhotoSortMenu();
   });
 
   surpriseBtn.addEventListener('click', () => {
