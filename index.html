@@ -94,51 +94,60 @@
     position: fixed;
     inset: 0;
     z-index: 999;
-    background: var(--paper);
+    background: #2c2333;
     background-image:
-      radial-gradient(circle at 20% 15%, rgba(232,180,184,0.25), transparent 45%),
-      radial-gradient(circle at 85% 75%, rgba(168,184,156,0.22), transparent 45%);
+      radial-gradient(circle at 50% 46%, rgba(232,180,184,0.22), transparent 26%),
+      radial-gradient(circle at 6% 8%, rgba(217,138,147,0.20), transparent 31%),
+      radial-gradient(circle at 94% 88%, rgba(212,165,116,0.16), transparent 34%),
+      linear-gradient(135deg, #34293b, #211b29);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 1.5rem;
+    overflow: hidden;
+    transition: opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1);
   }
   .pass-gate.hidden{ display: none; }
+  .pass-gate.unlocking{ opacity:0; transform:scale(1.02); pointer-events:none; }
   .pass-card{
-    background: var(--glass-bg);
+    z-index:2;
+    background:rgba(47,38,55,.72);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     border: 1px solid var(--glass-border);
-    border-radius: 14px;
-    box-shadow: 0 14px 34px var(--shadow);
-    padding: 2.2rem 2rem;
+    border-radius: 28px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.12);
+    padding: 2.25rem 2rem 1.65rem;
     text-align: center;
-    max-width: 320px;
+    max-width: 360px;
     width: 100%;
+    position: relative;
+    overflow: visible;
   }
+  .pass-card::before{ content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none; background:radial-gradient(circle at 50% 0%, rgba(232,180,184,.24), transparent 38%); }
   .pass-card h2{
     font-family: 'Caveat', cursive;
     font-size: 2rem;
     margin: 0 0 0.3rem;
-    color: var(--ink);
+    color: #fff4f6;
   }
   .pass-card p{
     font-size: 0.85rem;
-    color: var(--ink-soft);
+    color: #e0cfd9;
     margin: 0 0 1.2rem;
   }
   .pass-card input{
     width: 100%;
     padding: 0.7rem 0.9rem;
     border-radius: 999px;
-    border: 1px solid #E3D3C2;
+    border: 1px solid rgba(255,255,255,.4);
     font-family: 'Quicksand', sans-serif;
     font-size: 0.95rem;
     text-align: center;
     margin-bottom: 0.9rem;
     outline: none;
   }
-  .pass-card input:focus{ border-color: var(--rose-deep); }
+  .pass-card input:focus{ border-color: var(--rose-deep); box-shadow:0 0 0 4px rgba(227,145,159,.18); }
   .pass-card button{
     width: 100%;
     font-family: 'Quicksand', sans-serif;
@@ -157,6 +166,35 @@
     margin-top: 0.7rem;
     min-height: 1.1em;
   }
+  .vault-message{ position:relative; z-index:1; font:600 1.35rem/1.1 'Caveat',cursive; color:#f7bdc8; margin:0 0 .55rem; animation:vaultFloat 3.8s ease-in-out infinite; }
+  .vault-lock{ --key-progress:0px; position:relative; z-index:1; width:226px; height:96px; margin:0 auto .65rem; }
+  .vault-lock-heart{ position:absolute; z-index:1; left:158px; top:26px; width:54px; color:var(--rose-deep); font:3.25rem/.8 Arial,sans-serif; text-align:center; text-shadow:0 5px 12px rgba(217,138,147,.32); }
+  .vault-lock-heart::before{ content:''; position:absolute; left:12px; top:-23px; width:24px; height:25px; border:4px solid var(--gold); border-bottom:0; border-radius:18px 18px 0 0; }
+  .vault-lock-heart::after{ content:'✦'; position:absolute; left:19px; top:13px; color:var(--white); font:1rem/1 Arial,sans-serif; text-shadow:none; }
+  .vault-lock-key{ position:absolute; z-index:2; left:13px; top:25px; color:var(--gold); font:2.25rem/1 Arial,sans-serif; text-shadow:0 2px 6px rgba(212,165,116,.35); transform:translateX(var(--key-progress)) rotate(-12deg); transform-origin:50% 50%; transition:transform .24s cubic-bezier(.2,.9,.3,1); }
+  .vault-key-heart{ display:none; }
+  .pass-card.typing .vault-lock-heart{ color:#C97781; }
+  .pass-card.unlocked .vault-lock-key{ animation:keyIntoLock .72s cubic-bezier(.2,.9,.25,1) forwards; }
+  .pass-card.unlocked .vault-lock-heart{ animation:heartUnlock .55s .55s ease forwards; }
+  .vault-stars{ position:relative; z-index:1; display:flex; justify-content:center; gap:.42rem; margin:0 0 1rem; color:var(--gold); }
+  .vault-star{ opacity:.24; transform:scale(.72); transition:opacity .18s ease, transform .18s ease, color .18s ease; }
+  .vault-star.lit{ opacity:1; transform:scale(1.12); color:var(--rose-deep); text-shadow:0 0 9px rgba(217,138,147,.72); }
+  .moon-arc{ position:relative; z-index:1; display:flex; align-items:flex-end; justify-content:center; gap:.42rem; height:42px; margin:.3rem 0 .55rem; }
+  .moon-phase{ --moon-light:0; width:20px; height:20px; flex:0 0 20px; border:1px solid rgba(255,237,180,.3); border-radius:50%; background:#4a3a50; box-shadow:inset 0 0 0 2px rgba(0,0,0,.08); transition:background .35s ease, box-shadow .35s ease, transform .35s ease, filter .35s ease; }
+  .moon-phase:nth-child(1),.moon-phase:nth-child(7){ transform:translateY(13px); }.moon-phase:nth-child(2),.moon-phase:nth-child(6){ transform:translateY(7px); }.moon-phase:nth-child(3),.moon-phase:nth-child(5){ transform:translateY(2px); }
+  .moon-phase:nth-child(2){ background:radial-gradient(circle at 64% 50%,#4a3a50 52%,transparent 54%),#735d62; }.moon-phase:nth-child(3){ background:radial-gradient(circle at 78% 50%,#4a3a50 51%,transparent 53%),#9d8180; }.moon-phase:nth-child(4){ background:radial-gradient(circle at 100% 50%,#4a3a50 50%,transparent 53%),#bca08e; }.moon-phase:nth-child(5){ background:radial-gradient(circle at 124% 50%,#4a3a50 50%,transparent 53%),#d7bb9d; }.moon-phase:nth-child(6){ background:radial-gradient(circle at 146% 50%,#4a3a50 49%,transparent 52%),#ead0aa; }.moon-phase:nth-child(7){ background:#ffe5b3; }
+  .moon-phase.lit{ filter:brightness(1.35); border-color:#ffecb5; box-shadow:0 0 13px rgba(255,224,151,.75),inset 0 0 5px rgba(255,255,255,.55); }
+  .pass-card.shake{ animation:gentleShake .38s ease; }
+  .pass-footer{ position:relative; z-index:1; margin:.95rem 0 0; color:#decbd4; font:600 .7rem 'Quicksand',sans-serif; letter-spacing:.06em; }
+  .vault-celebration{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:3; }
+  .vault-celebration span{ position:absolute; bottom:20%; left:var(--x); color:var(--rose-deep); font-size:var(--s); animation:vaultHeartRise .8s ease-out forwards; }
+  @keyframes vaultFloat{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+  @keyframes keyIntoLock{ 62%{ transform:translateX(151px) rotate(0deg) scale(1.08); } 100%{ transform:translateX(151px) rotate(92deg) scale(.74); opacity:0; } }
+  @keyframes heartUnlock{ 50%{transform:scale(1.16)} 100%{transform:scale(.9); opacity:.42} }
+  @keyframes gentleShake{ 20%,60%{transform:translateX(-5px)} 40%,80%{transform:translateX(5px)} 100%{transform:translateX(0)} }
+  @keyframes vaultHeartRise{ to{ transform:translate(var(--dx),-125px) rotate(22deg); opacity:0; } }
+  @media (max-width:480px){ .pass-gate{ align-items:center; padding:1rem; } .pass-card{ margin:auto 0; padding:1.65rem 1.25rem 1.2rem; } .vault-message{ font-size:1.18rem; } .pass-card h2{ font-size:1.8rem; } .moon-arc{ gap:.32rem; } .moon-phase{ width:18px; height:18px; flex-basis:18px; } }
+  @media (prefers-reduced-motion:reduce){ .vault-message,.pass-card.shake,.pass-card.unlocked .vault-lock::before,.pass-card.unlocked .vault-lock-heart,.vault-celebration span{ animation:none; } .pass-gate{ transition:none; } }
   #siteContent.hidden{ display: none; }
 
   /* ---------- ambient floating hearts ---------- */
@@ -1894,11 +1932,17 @@
 
 <div class="pass-gate" id="passGate">
   <form class="pass-card" id="passForm">
+    <div class="vault-celebration" id="vaultCelebration" aria-hidden="true"></div>
+    <p class="vault-message" id="vaultMessage">our little universe is waiting for you</p>
+    <div class="vault-lock" id="vaultLock" aria-hidden="true"><span class="vault-lock-heart">♥</span><span class="vault-lock-key">🗝</span></div>
     <h2>Our Little Universe</h2>
     <p>this space is just for the two of us 🤍</p>
+    <div class="moon-arc" id="moonArc" aria-label="Password progress shown as moon phases"><span class="moon-phase"></span><span class="moon-phase"></span><span class="moon-phase"></span><span class="moon-phase"></span><span class="moon-phase"></span><span class="moon-phase"></span><span class="moon-phase"></span></div>
+    <div class="vault-stars" id="vaultStars" aria-hidden="true"><span class="vault-star">✦</span><span class="vault-star">✦</span><span class="vault-star">✦</span><span class="vault-star">✦</span><span class="vault-star">✦</span><span class="vault-star">✦</span></div>
     <input type="password" id="passInput" placeholder="Enter the password" autocomplete="off">
     <button type="submit">Unlock</button>
     <div class="pass-error" id="passError"></div>
+    <p class="pass-footer">Made for just the two of us</p>
   </form>
 </div>
 
@@ -2239,6 +2283,11 @@
   const passInput = document.getElementById('passInput');
   const passError = document.getElementById('passError');
   const siteContent = document.getElementById('siteContent');
+  const vaultMessage = document.getElementById('vaultMessage');
+  const vaultStars = document.querySelectorAll('.vault-star');
+  const moonPhases = document.querySelectorAll('.moon-phase');
+  const vaultLock = document.getElementById('vaultLock');
+  const vaultCelebration = document.getElementById('vaultCelebration');
 
   const lightbox = document.getElementById('lightbox');
   const lightboxImg = document.getElementById('lightboxImg');
@@ -2255,6 +2304,8 @@
   // security (anyone who views the page source can find it) — it just
   // keeps random link visitors out. Change it to whatever you like.
   const PASSWORD_HASH = 'f7b38af3b7540ce6d1a89a6c47cdd85f5d884718b9d162818a22bb56443e117e';
+  // Keep this in sync with the character count of the chosen passcode.
+  const PASSWORD_LENGTH = 7;
 
 async function sha256Hex(text){
   const data = new TextEncoder().encode(text.trim().toLowerCase());
@@ -2298,10 +2349,45 @@ async function sha256Hex(text){
   /* ---------- password gate ----------
      Asks every time the page loads or reloads — nothing is remembered
      in the browser, so it's not a one-time-per-session unlock anymore. */
+  const VAULT_WELCOMES = [
+    'our little universe is waiting for you',
+    'psst… your memories missed you',
+    'a tiny world of us is behind this lock',
+    'come in, love — there is magic waiting'
+  ];
+  vaultMessage.textContent = VAULT_WELCOMES[Math.floor(Math.random() * VAULT_WELCOMES.length)];
+
+  function lightVaultStars(){
+    const entered = Math.min(passInput.value.length, PASSWORD_LENGTH);
+    const progress = entered / PASSWORD_LENGTH;
+    const filled = Math.floor(progress * vaultStars.length);
+    const moonFilled = Math.floor(progress * moonPhases.length);
+    passForm.classList.toggle('typing', passInput.value.length > 0);
+    vaultStars.forEach((star, index) => star.classList.toggle('lit', index < filled));
+    moonPhases.forEach((moon, index) => moon.classList.toggle('lit', index < moonFilled));
+    vaultLock.style.setProperty('--key-progress', (progress * 151) + 'px');
+  }
+  passInput.addEventListener('input', lightVaultStars);
+
+  function celebrateVaultUnlock(){
+    for (let i = 0; i < 14; i++){
+      const heart = document.createElement('span');
+      heart.textContent = i % 3 === 0 ? '✦' : '♥';
+      heart.style.setProperty('--x', (18 + Math.random() * 64) + '%');
+      heart.style.setProperty('--dx', ((Math.random() - .5) * 110) + 'px');
+      heart.style.setProperty('--s', (.85 + Math.random() * .8) + 'rem');
+      vaultCelebration.appendChild(heart);
+      setTimeout(() => heart.remove(), 900);
+    }
+  }
+
   function unlockSite(){
-    passGate.classList.add('hidden');
     siteContent.classList.remove('hidden');
     init();
+    passForm.classList.add('unlocked');
+    setTimeout(celebrateVaultUnlock, 520);
+    setTimeout(() => passGate.classList.add('unlocking'), 720);
+    setTimeout(() => passGate.classList.add('hidden'), 1300);
   }
 
   passForm.addEventListener('submit', async (e) => {
@@ -2309,11 +2395,14 @@ async function sha256Hex(text){
     const enteredHash = await sha256Hex(passInput.value);
     if (enteredHash === PASSWORD_HASH){
       passError.textContent = '';
-      burstHearts(passForm.querySelector('button[type="submit"]'));
       unlockSite();
     }else{
-      passError.textContent = 'that\'s not quite it — try again';
+      passError.textContent = 'almost, love — try our special word again ♡';
+      passForm.classList.remove('shake');
+      void passForm.offsetWidth;
+      passForm.classList.add('shake');
       passInput.value = '';
+      lightVaultStars();
       passInput.focus();
     }
   });
