@@ -206,6 +206,19 @@
     100%{ transform: translate(var(--dx,0px), -70px) scale(1.1); opacity: 0; }
   }
 
+  .burst-heart-big{
+    position: fixed;
+    z-index: 500;
+    pointer-events: none;
+    font-size: 1.9rem;
+    color: var(--rose-deep);
+    animation: burstUpBig 1.2s ease-out forwards;
+  }
+  @keyframes burstUpBig{
+    0%{ transform: translate(0,0) scale(0.6); opacity: 1; }
+    100%{ transform: translate(var(--dx,0px), -110px) scale(1.3); opacity: 0; }
+  }
+
   .cursor-trail-heart{
     position: fixed;
     z-index: 500;
@@ -1034,6 +1047,46 @@
     cursor: pointer;
   }
 
+  .surprise-field-label{
+    display: block;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    text-align: left;
+    margin: 0 0 0.3rem;
+  }
+  #surpriseHintInput{
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Caveat', cursive;
+    font-size: 1.1rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255,255,255,0.5);
+    color: var(--ink);
+    outline: none;
+    margin-bottom: 1rem;
+  }
+  #surpriseTextInput{
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Caveat', cursive;
+    font-size: 1.15rem;
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255,255,255,0.5);
+    color: var(--ink);
+    resize: none;
+    height: 80px;
+    outline: none;
+    margin-bottom: 1rem;
+  }
+  #surpriseHintInput:focus, #surpriseTextInput:focus{ border-color: var(--rose-deep); }
+  body.dark-mode #surpriseHintInput, body.dark-mode #surpriseTextInput{ background: rgba(0,0,0,0.18); }
+
   .on-this-day{
     position: relative;
     max-width: 340px;
@@ -1798,6 +1851,18 @@
   </div>
 </div>
 
+<div class="style-modal hidden" id="surpriseTextModal">
+  <div class="style-card surprise-text-card">
+    <button class="style-modal-close" id="surpriseTextClose" type="button" aria-label="Back to filters">✕</button>
+    <h3>Customize the surprise 🎁</h3>
+    <label class="surprise-field-label" for="surpriseHintInput">Shown on the frosted card, before scratching</label>
+    <input type="text" id="surpriseHintInput" maxlength="40" placeholder="scratch to reveal">
+    <label class="surprise-field-label" for="surpriseTextInput">Caption shown once it's revealed</label>
+    <textarea id="surpriseTextInput" maxlength="150" placeholder="Surpriseeee !!!"></textarea>
+    <button type="button" id="surpriseTextDone" class="add-btn">Save & back</button>
+  </div>
+</div>
+
 <div class="toast-container" id="toastContainer"></div>
 
 <div class="countdown-overlay hidden" id="countdownOverlay">
@@ -1916,6 +1981,11 @@
   const stylePreviews = document.getElementById('stylePreviews');
   const qualityToggle = document.getElementById('qualityToggle');
   const surpriseToggle = document.getElementById('surpriseToggle');
+  const surpriseTextModal = document.getElementById('surpriseTextModal');
+  const surpriseHintInput = document.getElementById('surpriseHintInput');
+  const surpriseTextInput = document.getElementById('surpriseTextInput');
+  const surpriseTextClose = document.getElementById('surpriseTextClose');
+  const surpriseTextDone = document.getElementById('surpriseTextDone');
   const toastContainer = document.getElementById('toastContainer');
   const loadingState = document.getElementById('loadingState');
   const themeBtn = document.getElementById('themeBtn');
@@ -2041,6 +2111,25 @@ async function sha256Hex(text){
     }
   }
 
+  // A bigger, more generous heart burst — used ONLY for the scratch-off
+  // reveal moment, never for regular button/photo/note clicks.
+  function burstHeartsBig(originEl){
+    const rect = originEl.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    for (let i = 0; i < 14; i++){
+      const h = document.createElement('span');
+      h.className = 'burst-heart-big';
+      h.textContent = '♥';
+      h.style.left = cx + 'px';
+      h.style.top = cy + 'px';
+      h.style.setProperty('--dx', (Math.random() * 160 - 80) + 'px');
+      h.style.animationDelay = (Math.random() * 0.25) + 's';
+      document.body.appendChild(h);
+      setTimeout(() => h.remove(), 1500);
+    }
+  }
+
   /* ---------- cursor trail of hearts (desktop only) ---------- */
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const supportsHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -2130,7 +2219,8 @@ async function sha256Hex(text){
         favorite: !!row.is_favorite,
         mood: row.mood || null,
         surprise: !!row.is_surprise,
-        revealed: row.is_revealed === undefined ? true : !!row.is_revealed
+        revealed: row.is_revealed === undefined ? true : !!row.is_revealed,
+        hintText: row.surprise_hint || ''
       }));
     }catch(err){
       console.error('Could not load memories from the cloud:', err);
@@ -2141,7 +2231,7 @@ async function sha256Hex(text){
     maybeShowOnThisDay();
   }
 
-  async function uploadAndSave(file, isSurprise){
+  async function uploadAndSave(file, isSurprise, customCaption, hintText){
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
     const path = `${crypto.randomUUID()}.${ext}`;
 
@@ -2152,14 +2242,16 @@ async function sha256Hex(text){
 
     const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
 
+    const defaultCaption = isSurprise ? 'Surpriseeee !!!' : 'a moment worth keeping ✨';
     const record = {
       image_path: path,
       image_url: urlData.publicUrl,
-      caption: 'a moment worth keeping ✨',
+      caption: (customCaption && customCaption.trim()) ? customCaption.trim() : defaultCaption,
       date_label: formatToday(),
       is_favorite: false,
       is_surprise: !!isSurprise,
-      is_revealed: !isSurprise
+      is_revealed: !isSurprise,
+      surprise_hint: isSurprise ? ((hintText && hintText.trim()) ? hintText.trim() : null) : null
     };
 
     const { data: inserted, error: insertError } = await supabase
@@ -2178,7 +2270,8 @@ async function sha256Hex(text){
       favorite: !!inserted.is_favorite,
       mood: inserted.mood || null,
       surprise: !!inserted.is_surprise,
-      revealed: !!inserted.is_revealed
+      revealed: !!inserted.is_revealed,
+      hintText: inserted.surprise_hint || ''
     };
   }
 
@@ -2242,16 +2335,22 @@ async function sha256Hex(text){
     const frame = wrap.querySelector('.photo-frame');
     if (!canvas || !frame) return;
 
-    const dpr = window.devicePixelRatio || 1;
-
+    // Deliberately NOT scaling by devicePixelRatio here. A dpr-scaled
+    // buffer needs every drawing coordinate multiplied by that same
+    // ratio at draw time — if it drifts even slightly (common on phones,
+    // where dpr is often 2-3x and can shift with pinch/zoom state), the
+    // scratch trail stops lining up with the actual finger position.
+    // Mapping 1:1 to CSS pixels instead means "click here" always means
+    // "erase here", with zero chance of a scaling mismatch. This layer
+    // is a soft translucent gradient, not fine detail, so it doesn't
+    // need retina sharpness anyway.
     function setupCanvas(){
       const w = frame.clientWidth;
       const h = frame.clientHeight;
       if (!w || !h) return;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
+      canvas.width = w;
+      canvas.height = h;
       const ctx = canvas.getContext('2d');
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const grad = ctx.createLinearGradient(0, 0, w, h);
       grad.addColorStop(0, '#D4A574');
       grad.addColorStop(0.55, '#D98A93');
@@ -2267,6 +2366,16 @@ async function sha256Hex(text){
     }
     setupCanvas();
 
+    // Re-sync if the card's size changes after setup (orientation
+    // change, pinch-zoom, font reflow) — without this, an old buffer
+    // size could go stale relative to the live layout box.
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      if (photo.revealed) return;
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(setupCanvas, 200);
+    });
+
     let scratching = false;
     let lastPoint = null;
 
@@ -2278,7 +2387,7 @@ async function sha256Hex(text){
       ctx.globalCompositeOperation = 'destination-out';
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
-      ctx.lineWidth = pointerType === 'touch' ? 50 : 32;
+      ctx.lineWidth = pointerType === 'touch' ? 42 : 29;
       ctx.beginPath();
       if (lastPoint){
         ctx.moveTo(lastPoint.x, lastPoint.y);
@@ -2301,7 +2410,7 @@ async function sha256Hex(text){
           total++;
           if (data[i] < 80) transparent++;
         }
-        if (total > 0 && (transparent / total) >= 0.45){
+        if (total > 0 && (transparent / total) >= 0.55){
           revealSurprise();
         }
       }catch(err){
@@ -2318,7 +2427,7 @@ async function sha256Hex(text){
         canvas.remove();
         if (hint) hint.remove();
       }, 500);
-      burstHearts(frame);
+      burstHeartsBig(frame);
       playPinChime();
       saveSurpriseRevealed(photo);
     }
@@ -2344,6 +2453,14 @@ async function sha256Hex(text){
     };
     canvas.addEventListener('pointerup', stopScratch);
     canvas.addEventListener('pointercancel', stopScratch);
+
+    // A scratch gesture can synthesize a native 'click' on release (this
+    // is standard browser behavior, not a bug in the scratch code) — if
+    // that click bubbled up to the card, it would flip it immediately
+    // after a reveal, since `photo.revealed` is already true by then.
+    // Stopping it here means tapping the card to flip only ever happens
+    // as its own deliberate, separate tap.
+    canvas.addEventListener('click', (e) => e.stopPropagation());
   }
 
   async function removePhoto(photo){
@@ -3262,6 +3379,31 @@ async function sha256Hex(text){
     return canvas.toDataURL('image/jpeg', 0.85);
   }
 
+  let surpriseHintText = '';
+  let surpriseCaptionText = '';
+
+  function closeSurpriseTextModal(){
+    surpriseHintText = surpriseHintInput.value.trim();
+    surpriseCaptionText = surpriseTextInput.value.trim();
+    surpriseTextModal.classList.add('hidden');
+    styleModal.classList.remove('hidden');
+  }
+  surpriseTextClose.addEventListener('click', closeSurpriseTextModal);
+  surpriseTextDone.addEventListener('click', closeSurpriseTextModal);
+
+  surpriseToggle.addEventListener('change', () => {
+    if (surpriseToggle.checked){
+      surpriseHintInput.value = surpriseHintText;
+      surpriseTextInput.value = surpriseCaptionText;
+      styleModal.classList.add('hidden');
+      surpriseTextModal.classList.remove('hidden');
+      surpriseHintInput.focus();
+    }else{
+      surpriseHintText = '';
+      surpriseCaptionText = '';
+    }
+  });
+
   function askPhotoStyle(file){
     return new Promise(async (resolve) => {
       stylePreviews.innerHTML = '';
@@ -3282,6 +3424,8 @@ async function sha256Hex(text){
       // Reset per-upload options so a choice from a previous photo
       // never silently carries over to the next one.
       surpriseToggle.checked = false;
+      surpriseHintText = '';
+      surpriseCaptionText = '';
 
       styleModal.classList.remove('hidden');
 
@@ -3341,7 +3485,7 @@ async function sha256Hex(text){
           const baseName = (file.name || 'photo').replace(/\.[^.]+$/, '');
           uploadFile = new File([blob], baseName + '.jpg', { type: 'image/jpeg' });
         }
-        const record = await uploadAndSave(uploadFile, isSurprise);
+        const record = await uploadAndSave(uploadFile, isSurprise, isSurprise ? surpriseCaptionText : '', isSurprise ? surpriseHintText : '');
         photos.push(record);
         render();
         burstHearts(heroAddBtn);
@@ -3479,14 +3623,14 @@ async function sha256Hex(text){
 
     wrap.innerHTML = `
       <div class="pin"></div>
-      <div class="polaroid" tabindex="0" role="button" aria-label="Flip photo to see the note">
+      <div class="polaroid" tabindex="0" role="button" aria-label="${(photo.surprise && !photo.revealed) ? 'Scratch to reveal the surprise' : 'Flip photo to see the note'}">
         <div class="face front">
           <button class="fav-heart" type="button" aria-label="Toggle favorite">${photo.favorite ? '♥' : '♡'}</button>
           <div class="photo-frame">
             <img src="${photo.src}" alt="A memory">
             ${(photo.surprise && !photo.revealed) ? '' : `<button class="expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>`}
             ${photo.mood ? `<span class="mood-badge">${photo.mood}</span>` : ''}
-            ${(photo.surprise && !photo.revealed) ? `<canvas class="scratch-layer" aria-label="Scratch to reveal the surprise"></canvas><div class="scratch-hint"><span class="scratch-hint-emoji">🎁</span><span>scratch to reveal</span></div>` : ''}
+            ${(photo.surprise && !photo.revealed) ? `<canvas class="scratch-layer" aria-label="Scratch to reveal the surprise"></canvas><div class="scratch-hint"><span class="scratch-hint-emoji">🎁</span><span>${escapeHtml(photo.hintText || 'scratch to reveal')}</span></div>` : ''}
           </div>
           <div class="cap-preview">${(photo.surprise && !photo.revealed) ? 'a surprise is waiting... 🎁' : escapeHtml(photo.caption)}</div>
         </div>
@@ -3542,6 +3686,7 @@ async function sha256Hex(text){
     }
 
     function flip(e){
+      if (photo.surprise && !photo.revealed) return;
       if ([textarea, unpinBtn, favBtn, expandBtn, downloadBtn, flipBackBtn].includes(e.target)) return;
       if (e.target.closest && e.target.closest('.mood-picker')) return;
       card.classList.toggle('flipped');
@@ -3549,6 +3694,7 @@ async function sha256Hex(text){
     card.addEventListener('click', flip);
     card.addEventListener('keydown', (e) => {
       if ((e.key === 'Enter' || e.key === ' ') && e.target === card){
+        if (photo.surprise && !photo.revealed) return;
         e.preventDefault();
         card.classList.toggle('flipped');
       }
