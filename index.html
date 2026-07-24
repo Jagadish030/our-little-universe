@@ -194,6 +194,8 @@
   @keyframes gentleShake{ 20%,60%{transform:translateX(-5px)} 40%,80%{transform:translateX(5px)} 100%{transform:translateX(0)} }
   @keyframes vaultHeartRise{ to{ transform:translate(var(--dx),-125px) rotate(22deg); opacity:0; } }
   @media (max-width:480px){ .pass-gate{ align-items:center; padding:1rem; } .pass-card{ margin:auto 0; padding:1.65rem 1.25rem 1.2rem; } .vault-message{ font-size:1.18rem; } .pass-card h2{ font-size:1.8rem; } .moon-arc{ gap:.32rem; } .moon-phase{ width:18px; height:18px; flex-basis:18px; } }
+  body.pass-keyboard-open .pass-gate{ align-items:flex-start; padding:.2rem; overflow:hidden; }
+  body.pass-keyboard-open .pass-card{ margin:0; transform:scale(.64); transform-origin:top center; }
   @media (prefers-reduced-motion:reduce){ .vault-message,.pass-card.shake,.pass-card.unlocked .vault-lock::before,.pass-card.unlocked .vault-lock-heart,.vault-celebration span{ animation:none; } .pass-gate{ transition:none; } }
   #siteContent.hidden{ display: none; }
 
@@ -572,6 +574,11 @@
     justify-content: center;
   }
   .notes-close-btn:hover{ background: var(--rose-deep); color: var(--white); }
+  .little-things-nav{ position:absolute; z-index:4; top:0; left:-225px; right:-185px; display:flex; justify-content:space-between; pointer-events:none; }
+  .little-things-nav button{ pointer-events:auto; width:38px; height:38px; border:1px solid var(--glass-border); border-radius:50%; background:var(--glass-bg-strong); color:var(--rose-deep); cursor:pointer; font:700 1.35rem/1 Arial,sans-serif; box-shadow:0 4px 12px var(--shadow); }
+  .little-things-nav button:hover{ background:var(--rose-deep); color:var(--white); }
+  @media (max-width:960px){ .little-things-nav{ left:-4rem; right:-4rem; } }
+  @media (max-width:480px){ .little-things-nav{ top:0; left:-.25rem; right:2.2rem; } .little-things-nav button{ width:36px; height:36px; } }
   .note-form{
     display: flex;
     flex-direction: column;
@@ -986,7 +993,7 @@
   .doodle-submit:disabled{ opacity:.6; cursor:wait; }
   .doodles-controls,.doodles-grid{ display:flex; flex-wrap:wrap; justify-content:center; gap:1rem; }
   .doodles-controls{ margin-bottom:1.4rem; }
-  .doodle-wrap{ width:184px; position:relative; perspective:1000px; transform:rotate(var(--nt,-2deg)); content-visibility:auto; contain-intrinsic-size:184px 250px; }
+  .doodle-wrap{ width:184px; position:relative; perspective:1000px; transform:none; content-visibility:auto; contain-intrinsic-size:184px 250px; }
   .doodle-flip{ position:relative; min-height:230px; cursor:pointer; transform-style:preserve-3d; transition:transform .5s cubic-bezier(.2,.8,.2,1); }
   .doodle-flip.flipped{ transform:rotateY(180deg); }
   .doodle-front{ pointer-events:auto; } .doodle-back{ pointer-events:none; }
@@ -1002,13 +1009,13 @@
   .doodle-date{ position:absolute; right:10px; bottom:10px; color:var(--ink-soft); font:.62rem 'Quicksand',sans-serif; }
   .doodle-fav,.doodle-remove{ position:absolute; top:5px; z-index:2; border:0; background:rgba(255,255,255,.75); border-radius:50%; cursor:pointer; color:var(--rose-deep); }
   .doodle-fav{ left:5px; font-size:.92rem; } .doodle-remove{ right:5px; color:var(--ink-soft); font-size:.72rem; }
-  .doodle-reaction-badge{ position:absolute; top:-9px; left:50%; transform:translateX(-50%); font-size:1.1rem; z-index:3; }
+  .doodle-reaction-badge{ position:absolute; top:4px; left:50%; transform:translateX(-50%); font-size:1.1rem; z-index:3; line-height:1; }
   .doodle-reply-input{ resize:none; min-height:74px; border:0; outline:0; background:transparent; color:var(--ink); font:1rem 'Caveat',cursive; }
   .doodle-reaction-picker{ display:flex; justify-content:center; gap:6px; }
   .doodle-reaction-picker button{ border:1px solid transparent; background:none; border-radius:50%; cursor:pointer; opacity:.6; }
   .doodle-reaction-picker button.active{ opacity:1; border-color:var(--rose-deep); }
   .doodle-back-actions{ display:flex; justify-content:space-between; align-items:center; }
-  @media (max-width:480px){ .doodles-wall{ padding:0 1rem; } .doodle-studio{ padding:.75rem; } .doodle-tools button{ padding:.32rem .5rem; } }
+  @media (max-width:480px){ .doodles-wall{ padding:0 1rem; } .doodle-studio{ padding:.75rem; } .doodle-tools button{ padding:.32rem .5rem; } .doodles-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; align-items:start; } .doodle-wrap{ width:100%; min-width:0; contain-intrinsic-size:0 165px; } .doodle-flip,.doodle-front{ min-height:166px; } .doodle-front{ padding:5px 5px 25px; } .doodle-caption-preview{ left:5px; right:5px; bottom:17px; font-size:.7rem; } .doodle-author-badge{ left:5px; bottom:5px; font-size:.5rem; } .doodle-date{ right:5px; bottom:6px; font-size:.48rem; } .doodle-fav,.doodle-remove{ top:3px; font-size:.7rem; } .doodle-fav{left:3px}.doodle-remove{right:3px}.doodle-reaction-badge{ top:3px; font-size:.82rem; } }
 
   /* ---------- little universe extras ---------- */
   .extras-wall{ max-width:720px; margin:0 auto 3rem; padding:0 1.5rem; position:relative; z-index:1; }
@@ -1035,6 +1042,9 @@
   .extras-form button,.bucket-add button{ border:0; border-radius:999px; padding:.55rem 1rem; background:var(--rose-deep); color:white; cursor:pointer; font:600 .78rem 'Quicksand',sans-serif; }
   .capsule-list,.bucket-list{ list-style:none; padding:0; margin:1rem 0 0; display:grid; gap:.55rem; }
   .capsule-item,.bucket-item{ padding:.7rem .8rem; border-radius:10px; background:rgba(255,249,232,.72); color:var(--ink); box-shadow:0 2px 5px rgba(64,40,25,.08); }
+  .capsule-item{ position:relative; padding-right:2.5rem; }
+  .capsule-remove{ position:absolute; top:.42rem; right:.45rem; width:24px; height:24px; border:0; border-radius:50%; background:rgba(107,83,68,.1); color:var(--ink-soft); cursor:pointer; font:700 1rem/1 Arial,sans-serif; }
+  .capsule-remove:hover{ background:var(--rose-deep); color:var(--white); }
   .capsule-item.locked{ color:var(--ink-soft); text-align:center; font-family:'Caveat',cursive; font-size:1.1rem; }.capsule-date{ display:block; font:.65rem 'Quicksand',sans-serif; color:var(--ink-soft); margin-top:.2rem; }
   .bucket-add .extra-author,.extras-form .extra-author{ width:100%; }.bucket-add input{ flex:1; min-width:180px; }.bucket-item{ display:flex; align-items:center; gap:.55rem; font-family:'Caveat',cursive; font-size:1.15rem; }.bucket-item small{ font:600 .6rem 'Quicksand',sans-serif; color:var(--ink-soft); white-space:nowrap; }.bucket-item.done{ text-decoration:line-through; opacity:.55; }.bucket-remove{ margin-left:auto; border:0; background:none; color:var(--ink-soft); cursor:pointer; }
   .constellation-sky{ min-height:360px; position:relative; overflow:hidden; border-radius:14px; background:radial-gradient(circle at 50% 15%,#51435c,#191522 72%); box-shadow:inset 0 0 40px rgba(0,0,0,.45); }
@@ -1043,7 +1053,7 @@
   .constellation-empty{ color:#fff4df; text-align:center; padding:9rem 1rem; font:1.4rem 'Caveat',cursive; }
   body.dark-mode .extras-card{ background:#342b39; } body.dark-mode .calendar-day{ background:#4a3e4d; color:#fff; }
   body.dark-mode .calendar-nav button{ color:#17121a; background:#d9d2da; }
-  body.dark-mode .bucket-item, body.dark-mode .capsule-item{ background:#d2cdc3; color:#302735; } body.dark-mode .capsule-item.locked{ color:#604868; } body.dark-mode .bucket-remove{ color:#6f4e60; } body.dark-mode .extras-form input, body.dark-mode .extras-form textarea, body.dark-mode .bucket-add input{ color:#302735; background:#dedbe0; } body.dark-mode .extras-form input::placeholder, body.dark-mode .extras-form textarea::placeholder, body.dark-mode .bucket-add input::placeholder{ color:#746b78; }
+  body.dark-mode .bucket-item, body.dark-mode .capsule-item{ background:#d2cdc3; color:#302735; } body.dark-mode .capsule-item.locked{ color:#604868; } body.dark-mode .capsule-date{ color:#6f4e60; font-weight:800; } body.dark-mode .capsule-remove{ color:#6f4e60; background:rgba(48,39,53,.1); } body.dark-mode .bucket-remove{ color:#6f4e60; } body.dark-mode .extras-form input, body.dark-mode .extras-form textarea, body.dark-mode .bucket-add input{ color:#302735; background:#dedbe0; } body.dark-mode .extras-form input::placeholder, body.dark-mode .extras-form textarea::placeholder, body.dark-mode .bucket-add input::placeholder{ color:#746b78; }
   body.dark-mode .doodle-back .doodle-text, body.dark-mode .doodle-back .doodle-reply-input, body.dark-mode .doodle-back .note-flip-back-btn{ color:#3b2d38; } body.dark-mode .doodle-back .doodle-reply-input::placeholder{ color:#786575; }
   body.dark-mode .notes-close-btn{ background:#e3dce3; color:#241d28; border:1px solid #f7eaf5; box-shadow:0 2px 8px rgba(0,0,0,.35); font-weight:800; } body.dark-mode .notes-close-btn:hover{ background:#d9758b; color:white; }
   body.dark-mode .extra-author .toggle-letter{ color:#eaddea; opacity:.7; } body.dark-mode .bucket-item small{ color:#6f4e60; font-weight:800; }
@@ -1875,6 +1885,8 @@
     filter: none;
     transform: scale(1);
   }
+  .lightbox.doodle-lightbox > div{ background:#FFFDF7; border-radius:7px; box-shadow:0 20px 50px rgba(0,0,0,.5); }
+  .lightbox.doodle-lightbox img{ display:block; background:#FFFDF7; box-shadow:none; }
   @media (prefers-reduced-motion: reduce){
     .lightbox img{
       filter: none;
@@ -1926,6 +1938,7 @@
   .lightbox-nav.prev{ left: 1.2rem; }
   .lightbox-nav.next{ right: 1.2rem; }
   .lightbox-nav:hover, .lightbox-close:hover{ background: rgba(255,255,255,0.22); }
+  @media (max-width:480px){ .lightbox{ padding:4.5rem .7rem 1.5rem; } .lightbox img{ max-width:calc(100vw - 1.4rem); max-height:68svh; } .lightbox-nav{ z-index:2; width:44px; height:44px; top:50svh; background:rgba(45,36,49,.92); border-color:rgba(255,255,255,.5); } .lightbox-nav.prev{ left:.45rem; } .lightbox-nav.next{ right:.45rem; } .lightbox-close{ z-index:2; top:.75rem; right:.75rem; } .lightbox-caption{ font-size:1.2rem; margin-top:.6rem; } }
 </style>
 </head>
 <body>
@@ -2368,6 +2381,16 @@ async function sha256Hex(text){
     vaultLock.style.setProperty('--key-progress', (progress * 151) + 'px');
   }
   passInput.addEventListener('input', lightVaultStars);
+  const initialGateViewportHeight=window.innerHeight;
+  function updatePassKeyboardState(){
+    const viewport=window.visualViewport;
+    const visibleHeight=viewport ? viewport.height : window.innerHeight;
+    const keyboardVisible=document.activeElement===passInput && (window.innerHeight-visibleHeight>120 || initialGateViewportHeight-visibleHeight>120);
+    document.body.classList.toggle('pass-keyboard-open',Boolean(keyboardVisible));
+  }
+  passInput.addEventListener('focus',()=>setTimeout(updatePassKeyboardState,80));
+  passInput.addEventListener('blur',()=>document.body.classList.remove('pass-keyboard-open'));
+  if(window.visualViewport) window.visualViewport.addEventListener('resize',updatePassKeyboardState);
 
   function celebrateVaultUnlock(){
     for (let i = 0; i < 14; i++){
@@ -3154,6 +3177,10 @@ async function sha256Hex(text){
   let doodleHistory = [], doodleDrawing = false, doodleLastPoint = null, doodleStartPoint = null;
   let doodlesLoaded = false, allDoodles = [], doodlesSearchQuery = '', doodlesSortMode = 'newest', doodlesFavoritesOnly = false, doodlesRealtimeStarted = false;
 
+  function fillDoodleBackground(){
+    const r=doodleCanvas.getBoundingClientRect();
+    doodleCtx.save(); doodleCtx.setTransform(1,0,0,1,0,0); doodleCtx.fillStyle='#FFFDF7'; doodleCtx.fillRect(0,0,doodleCanvas.width,doodleCanvas.height); doodleCtx.restore();
+  }
   function setupDoodleCanvas(){
     const rect = doodleCanvas.getBoundingClientRect();
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
@@ -3161,7 +3188,7 @@ async function sha256Hex(text){
     doodleCanvas.width = Math.max(1, Math.round(rect.width * ratio));
     doodleCanvas.height = Math.max(1, Math.round(rect.height * ratio));
     doodleCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
-    doodleCtx.fillStyle = '#FFFDF7'; doodleCtx.fillRect(0, 0, rect.width, rect.height);
+    fillDoodleBackground();
     if (previous){ const img = new Image(); img.onload = () => doodleCtx.drawImage(img, 0, 0, rect.width, rect.height); img.src = previous; }
   }
   function pointForDoodle(event){ const r = doodleCanvas.getBoundingClientRect(); return { x:event.clientX-r.left, y:event.clientY-r.top }; }
@@ -3206,7 +3233,7 @@ async function sha256Hex(text){
   doodleCanvas.addEventListener('pointermove',(e)=>{ if(!doodleDrawing)return; const p=pointForDoodle(e); if(doodleTool==='line'){ const saved=doodleHistory[doodleHistory.length-1]; if(saved) doodleCtx.putImageData(saved,0,0); paintDoodleSegment(doodleStartPoint,p); } else if(doodleTool==='spray'){ sprayDoodle(p); } else { paintDoodleSegment(doodleLastPoint,p); } doodleLastPoint=p; });
   doodleCanvas.addEventListener('pointerup',()=>{ doodleDrawing=false; doodleLastPoint=null; }); doodleCanvas.addEventListener('pointercancel',()=>{ doodleDrawing=false; doodleLastPoint=null; });
   doodleUndo.addEventListener('click',(e)=>{ e.preventDefault(); e.stopPropagation(); const prior=doodleHistory.pop(); if(prior){ doodleCtx.putImageData(prior,0,0); doodleLastPoint=null; } });
-  doodleClear.addEventListener('click',()=>{ snapshotDoodle(); doodleCtx.clearRect(0,0,doodleCanvas.width,doodleCanvas.height); });
+  doodleClear.addEventListener('click',()=>{ snapshotDoodle(); fillDoodleBackground(); });
   doodleAuthorToggle.addEventListener('click',()=>{ doodleAuthor=doodleAuthor==='1'?'2':'1'; localStorage.setItem('ourLittleUniverseDoodleAuthor',doodleAuthor); doodleAuthorToggle.dataset.author=doodleAuthor; doodleAuthorToggle.setAttribute('aria-label',`Currently drawing as By ${doodleAuthor==='1'?'J':'M'} — tap to switch`); });
 
   async function loadDoodles(){ if(!supabase)return; try{ const {data,error}=await supabase.from(DOODLES_TABLE).select('*').order('created_at',{ascending:false}); if(error)throw error; allDoodles=data||[]; renderDoodlesFiltered(); }catch(err){ console.error('Could not load doodles:',err); showToast('Could not load doodles. Run the doodles setup SQL first.',{type:'error'}); } }
@@ -3218,7 +3245,7 @@ async function sha256Hex(text){
       wrap.innerHTML=`<div class="doodle-flip" tabindex="0" role="button" aria-label="Flip doodle"><div class="doodle-face doodle-front"><button class="doodle-fav" type="button">${d.favorite?'♥':'♡'}</button><button class="doodle-remove" type="button">✕</button><img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption?`: ${escapeHtml(d.caption)}`:''}">${d.caption?`<div class="doodle-caption-preview">${escapeHtml(d.caption)}</div>`:''}${d.reaction?`<span class="doodle-reaction-badge">${d.reaction}</span>`:''}<span class="doodle-author-badge author-${author}">By ${author==='2'?'M':'J'}</span><span class="doodle-date">${date}</span></div><div class="doodle-face doodle-back"><div class="doodle-text">${escapeHtml(d.caption||'A little doodle ✨')}</div><textarea class="doodle-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(d.reply||'')}</textarea><div class="doodle-reaction-picker">${DOODLE_REACTIONS.map(r=>`<button type="button" data-reaction="${r}" class="${d.reaction===r?'active':''}">${r}</button>`).join('')}</div><div class="doodle-back-actions"><button class="note-flip-back-btn" type="button">‹ back</button><button class="doodle-download" type="button">⇩ PNG</button></div></div></div>`;
       const flip=wrap.querySelector('.doodle-flip'), image=wrap.querySelector('.doodle-image'), fav=wrap.querySelector('.doodle-fav'), remove=wrap.querySelector('.doodle-remove'), reply=wrap.querySelector('.doodle-reply-input'), back=wrap.querySelector('.note-flip-back-btn'), download=wrap.querySelector('.doodle-download');
       flip.addEventListener('click',e=>{ if(e.target.closest('button,textarea,img'))return; flip.classList.toggle('flipped'); }); flip.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===flip){e.preventDefault();flip.classList.toggle('flipped');}}); back.addEventListener('click',()=>flip.classList.remove('flipped'));
-      image.addEventListener('click',()=>{ currentList=items.map(x=>({src:x.image_url,caption:x.caption||'A little doodle'})); lightboxIndex=items.findIndex(x=>x.id===d.id); openLightbox(lightboxIndex); });
+      image.addEventListener('click',()=>{ currentList=items.map(x=>({src:x.image_url,caption:x.caption||'A little doodle'})); lightboxIndex=items.findIndex(x=>x.id===d.id); openLightbox(lightboxIndex,'doodle'); });
       fav.addEventListener('click',async()=>{ d.favorite=!d.favorite; fav.textContent=d.favorite?'♥':'♡'; await updateDoodle(d,{favorite:d.favorite}); if(doodlesFavoritesOnly)renderDoodlesFiltered(); });
       let replyTimer; reply.addEventListener('input',()=>{ d.reply=reply.value; clearTimeout(replyTimer); replyTimer=setTimeout(()=>updateDoodle(d,{reply:d.reply}),400); });
       wrap.querySelectorAll('[data-reaction]').forEach(b=>b.addEventListener('click',async()=>{ d.reaction=d.reaction===b.dataset.reaction?null:b.dataset.reaction; await updateDoodle(d,{reaction:d.reaction}); renderDoodlesFiltered(); }));
@@ -3228,7 +3255,13 @@ async function sha256Hex(text){
     });
   }
   function qOrEmptyDoodles(){ return doodlesSearchQuery.trim()?'no doodles match that search':'no doodles yet — draw one!'; }
-  doodleForm.addEventListener('submit',async e=>{ e.preventDefault(); if(!supabase){showToast('Connect Supabase before saving doodles.',{type:'error'});return;} doodleSubmitBtn.disabled=true; try{ const blob=await new Promise(resolve=>doodleCanvas.toBlob(resolve,'image/png')); if(!blob)throw new Error('Could not create PNG'); const path=`${Date.now()}-${crypto.randomUUID()}.png`; const {error:uploadError}=await supabase.storage.from(DOODLES_BUCKET).upload(path,blob,{contentType:'image/png'}); if(uploadError)throw uploadError; const {data:urlData}=supabase.storage.from(DOODLES_BUCKET).getPublicUrl(path); const {error}=await supabase.from(DOODLES_TABLE).insert({image_url:urlData.publicUrl,storage_path:path,caption:doodleCaption.value.trim()||null,author:Number(doodleAuthor)}); if(error)throw error; doodleCaption.value=''; doodleHistory=[]; doodleCtx.clearRect(0,0,doodleCanvas.width,doodleCanvas.height); showToast('Doodle pinned!'); loadDoodles(); }catch(err){console.error(err);showToast('Could not save doodle. Check the doodles bucket and SQL setup.',{type:'error'});}finally{doodleSubmitBtn.disabled=false;} });
+  function exportDoodleBlob(){
+    const scale=3, exportCanvas=document.createElement('canvas');
+    exportCanvas.width=doodleCanvas.width*scale; exportCanvas.height=doodleCanvas.height*scale;
+    const ctx=exportCanvas.getContext('2d'); ctx.fillStyle='#FFFDF7'; ctx.fillRect(0,0,exportCanvas.width,exportCanvas.height); ctx.drawImage(doodleCanvas,0,0,exportCanvas.width,exportCanvas.height);
+    return new Promise(resolve=>exportCanvas.toBlob(resolve,'image/png'));
+  }
+  doodleForm.addEventListener('submit',async e=>{ e.preventDefault(); if(!supabase){showToast('Connect Supabase before saving doodles.',{type:'error'});return;} doodleSubmitBtn.disabled=true; try{ const blob=await exportDoodleBlob(); if(!blob)throw new Error('Could not create PNG'); const path=`${Date.now()}-${crypto.randomUUID()}.png`; const {error:uploadError}=await supabase.storage.from(DOODLES_BUCKET).upload(path,blob,{contentType:'image/png'}); if(uploadError)throw uploadError; const {data:urlData}=supabase.storage.from(DOODLES_BUCKET).getPublicUrl(path); const {error}=await supabase.from(DOODLES_TABLE).insert({image_url:urlData.publicUrl,storage_path:path,caption:doodleCaption.value.trim()||null,author:Number(doodleAuthor)}); if(error)throw error; doodleCaption.value=''; doodleHistory=[]; fillDoodleBackground(); showToast('Doodle pinned!'); loadDoodles(); }catch(err){console.error(err);showToast('Could not save doodle. Check the doodles bucket and SQL setup.',{type:'error'});}finally{doodleSubmitBtn.disabled=false;} });
   doodlesToggleBtn.addEventListener('click',()=>{ const opening=doodlesWall.classList.contains('hidden'); doodlesWall.classList.toggle('hidden'); if(opening){notesWall.classList.add('hidden'); setupDoodleCanvas(); if(!doodlesLoaded){doodlesLoaded=true;loadDoodles();}} });
   doodlesCloseBtn.addEventListener('click',()=>doodlesWall.classList.add('hidden'));
   notesToggleBtn.addEventListener('click',()=>doodlesWall.classList.add('hidden'));
@@ -3258,6 +3291,30 @@ async function sha256Hex(text){
   document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeFeatureMenu(); });
   function closeExtras(){ extrasWalls.forEach(w=>w.classList.add('hidden')); }
   function openExtra(wall){ closeExtras(); notesWall.classList.add('hidden'); doodlesWall.classList.add('hidden'); wall.classList.remove('hidden'); }
+  const littleThingsWalls=[doodlesWall,moodsWall,capsulesWall,bucketWall,constellationWall];
+  function openLittleThing(index){
+    const wall=littleThingsWalls[(index+littleThingsWalls.length)%littleThingsWalls.length];
+    if(wall===doodlesWall){
+      closeExtras(); notesWall.classList.add('hidden'); doodlesWall.classList.remove('hidden'); setupDoodleCanvas();
+      if(!doodlesLoaded){ doodlesLoaded=true; loadDoodles(); }
+    }else{
+      openExtra(wall);
+      if(wall===moodsWall) loadMoods();
+      if(wall===capsulesWall) loadCapsules();
+      if(wall===bucketWall) loadBucket();
+      if(wall===constellationWall) renderConstellation();
+    }
+  }
+  littleThingsWalls.forEach((wall,index)=>{
+    const header=wall.querySelector('.notes-header');
+    if(!header) return;
+    const nav=document.createElement('div'); nav.className='little-things-nav'; nav.setAttribute('aria-label','Browse Little things');
+    nav.innerHTML='<button type="button" aria-label="Previous Little thing">‹</button><button type="button" aria-label="Next Little thing">›</button>';
+    const [previous,next]=nav.querySelectorAll('button');
+    previous.addEventListener('click',()=>openLittleThing(index-1));
+    next.addEventListener('click',()=>openLittleThing(index+1));
+    header.appendChild(nav);
+  });
   CALENDAR_MOODS.forEach(m=>{const b=document.createElement('button');b.type='button';b.textContent=m;b.classList.toggle('active',m===selectedCalendarMood);b.addEventListener('click',()=>{selectedCalendarMood=m;calendarMoodPicker.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x.textContent===m));});calendarMoodPicker.appendChild(b);});
   function setExtraAuthor(kind,value){ const toggle=kind==='mood'?moodAuthorToggle:kind==='capsule'?capsuleAuthorToggle:bucketAuthorToggle; if(kind==='mood'){moodAuthor=value;localStorage.setItem('ourLittleUniverseMoodAuthor',value);}if(kind==='capsule'){capsuleAuthor=value;localStorage.setItem('ourLittleUniverseCapsuleAuthor',value);}if(kind==='bucket'){bucketAuthor=value;localStorage.setItem('ourLittleUniverseBucketAuthor',value);}toggle.dataset.author=value;toggle.setAttribute('aria-label',`Currently posting as By ${value==='2'?'M':'J'} — tap to switch`); }
   [['mood',moodAuthorToggle],['capsule',capsuleAuthorToggle],['bucket',bucketAuthorToggle]].forEach(([kind,toggle])=>{toggle.addEventListener('click',()=>{const current=kind==='mood'?moodAuthor:kind==='capsule'?capsuleAuthor:bucketAuthor;setExtraAuthor(kind,current==='1'?'2':'1');});setExtraAuthor(kind,kind==='mood'?moodAuthor:kind==='capsule'?capsuleAuthor:bucketAuthor);});
@@ -3266,7 +3323,7 @@ async function sha256Hex(text){
   async function loadMoods(){if(!supabase)return;try{const {data,error}=await supabase.from(MOODS_TABLE).select('*');if(error)throw error;allMoods=data||[];renderMoodCalendar();}catch(e){console.error(e);showToast('Could not load moods. Run the extras SQL setup first.',{type:'error'});}}
   async function saveMood(mood_date){if(!supabase)return;const existing=allMoods.find(x=>x.mood_date===mood_date&&String(x.author||1)===moodAuthor);if(existing&&existing.mood===selectedCalendarMood){const {error}=await supabase.from(MOODS_TABLE).delete().eq('mood_date',mood_date).eq('author',Number(moodAuthor));if(error){showToast('Could not unpin that mood.',{type:'error'});return;}allMoods=allMoods.filter(x=>x!==existing);renderMoodCalendar();return;}const item={mood_date,mood:selectedCalendarMood,author:Number(moodAuthor)};const {error}=await supabase.from(MOODS_TABLE).upsert(item,{onConflict:'mood_date,author'});if(error){showToast('Could not save that mood.',{type:'error'});return;}const i=allMoods.findIndex(x=>x.mood_date===mood_date&&String(x.author||1)===moodAuthor);if(i>-1)allMoods[i]={...allMoods[i],...item};else allMoods.push(item);renderMoodCalendar();}
   calendarPrev.addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()-1,1);renderMoodCalendar();});calendarNext.addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+1,1);renderMoodCalendar();});
-  function renderCapsules(){capsuleList.innerHTML='';if(!allCapsules.length){capsuleList.innerHTML='<li class="capsule-item locked">No time capsules yet — seal the first one.</li>';return;}const today=dateKey(new Date());allCapsules.forEach(c=>{const unlocked=c.unlock_date<=today,li=document.createElement('li');li.className='capsule-item'+(unlocked?'':' locked');const by=`By ${String(c.author||1)==='2'?'M':'J'}`;li.innerHTML=unlocked?`${escapeHtml(c.message)}<span class="capsule-date">${by} · Opened ${new Date(c.unlock_date+'T00:00:00').toLocaleDateString()}</span>`:`🔒 ${by}'s capsule · sealed until ${new Date(c.unlock_date+'T00:00:00').toLocaleDateString()}`;capsuleList.appendChild(li);});}
+  function renderCapsules(){capsuleList.innerHTML='';if(!allCapsules.length){capsuleList.innerHTML='<li class="capsule-item locked">No time capsules yet — seal the first one.</li>';return;}const today=dateKey(new Date());allCapsules.forEach(c=>{const unlocked=c.unlock_date<=today,li=document.createElement('li');li.className='capsule-item'+(unlocked?'':' locked');const by=`By ${String(c.author||1)==='2'?'M':'J'}`;li.innerHTML=`${unlocked?`${escapeHtml(c.message)}<span class="capsule-date">${by} · Opened ${new Date(c.unlock_date+'T00:00:00').toLocaleDateString()}</span>`:`🔒 ${by}'s capsule · sealed until ${new Date(c.unlock_date+'T00:00:00').toLocaleDateString()}`}<button class="capsule-remove" type="button" aria-label="Delete this time capsule" title="Delete capsule">✕</button>`;li.querySelector('.capsule-remove').addEventListener('click',async()=>{if(!confirm('Delete this time capsule? This cannot be undone.'))return;const {error}=await supabase.from(CAPSULES_TABLE).delete().eq('id',c.id);if(error){console.error(error);showToast('Could not delete that capsule.',{type:'error'});return;}allCapsules=allCapsules.filter(item=>item.id!==c.id);renderCapsules();showToast('Time capsule deleted.');});capsuleList.appendChild(li);});}
   async function loadCapsules(){if(!supabase)return;try{const {data,error}=await supabase.from(CAPSULES_TABLE).select('*').order('unlock_date',{ascending:true});if(error)throw error;allCapsules=data||[];renderCapsules();}catch(e){console.error(e);showToast('Could not load time capsules.',{type:'error'});}}
   capsuleForm.addEventListener('submit',async e=>{e.preventDefault();if(!supabase)return;const {data,error}=await supabase.from(CAPSULES_TABLE).insert({unlock_date:capsuleDate.value,message:capsuleMessage.value.trim(),author:Number(capsuleAuthor)}).select().single();if(error){showToast('Could not seal that capsule.',{type:'error'});return;}allCapsules.push(data);capsuleMessage.value='';renderCapsules();showToast('Time capsule sealed ✨');});
   function renderBucket(){bucketList.innerHTML='';if(!allBucketItems.length){bucketList.innerHTML='<li class="bucket-item">No wishes yet — add one above.</li>';return;}allBucketItems.forEach(item=>{const li=document.createElement('li');li.className='bucket-item'+(item.completed?' done':'');li.innerHTML=`<input type="checkbox" ${item.completed?'checked':''} aria-label="Mark completed"><span>${escapeHtml(item.item)}</span><small>By ${String(item.author||1)==='2'?'M':'J'}</small><button class="bucket-remove" type="button" aria-label="Remove wish">✕</button>`;li.querySelector('input').addEventListener('change',async e=>{item.completed=e.target.checked;await supabase.from(BUCKET_LIST_TABLE).update({completed:item.completed}).eq('id',item.id);renderBucket();});li.querySelector('.bucket-remove').addEventListener('click',async()=>{await supabase.from(BUCKET_LIST_TABLE).delete().eq('id',item.id);allBucketItems=allBucketItems.filter(x=>x.id!==item.id);renderBucket();});bucketList.appendChild(li);});}
@@ -4318,14 +4375,16 @@ async function sha256Hex(text){
   }
 
   /* ---------- lightbox ---------- */
-  function openLightbox(index){
+  function openLightbox(index, kind='photo'){
     lightboxIndex = index;
+    lightbox.classList.toggle('doodle-lightbox',kind==='doodle');
     showLightboxPhoto();
     lightbox.classList.remove('hidden');
     document.addEventListener('keydown', handleLightboxKeys);
   }
   function closeLightbox(){
     lightbox.classList.add('hidden');
+    lightbox.classList.remove('doodle-lightbox');
     document.removeEventListener('keydown', handleLightboxKeys);
   }
   function showLightboxPhoto(){
