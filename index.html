@@ -1046,8 +1046,6 @@
   .capsule-remove{ position:absolute; top:.42rem; right:.45rem; width:24px; height:24px; border:0; border-radius:50%; background:rgba(107,83,68,.1); color:var(--ink-soft); cursor:pointer; font:700 1rem/1 Arial,sans-serif; }
   .capsule-remove:hover{ background:var(--rose-deep); color:var(--white); }
   .capsule-item.locked{ color:var(--ink-soft); text-align:center; font-family:'Caveat',cursive; font-size:1.1rem; }.capsule-date{ display:block; font:.65rem 'Quicksand',sans-serif; color:var(--ink-soft); margin-top:.2rem; }
-  /* The row is full width; the author button itself stays only as wide as its track.
-     This keeps the empty space in the row from changing the selected author. */
   .author-toggle-row{ flex:0 0 100%; display:flex; justify-content:center; }
   .bucket-add .extra-author,.extras-form .extra-author{ width:auto; margin:0; }
   .date-field{ position:relative; flex:1; min-width:150px; }
@@ -1074,11 +1072,7 @@
     .feature-menu-popover{ left:0; transform:translate(0,-8px) scale(.96); }
     .feature-menu.open .feature-menu-popover{ transform:translate(0,0) scale(1); }
   }
-  @media (max-width:480px){
-    /* Keep the entire bucket-list placeholder readable beside its submit button. */
-    .bucket-add input{ min-width:0; font-size:.78rem; }
-    .bucket-add button[type="submit"]{ padding-left:.75rem; padding-right:.75rem; }
-  }
+  @media (max-width:480px){ .bucket-add input{ min-width:0; font-size:.78rem; }.bucket-add button[type="submit"]{ padding-left:.75rem; padding-right:.75rem; } }
 
   /* ---------- milestone banner ---------- */
   .toast-container{
@@ -1630,6 +1624,7 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     overflow: hidden;
     opacity: 1;
     transform: translateY(0);
@@ -2666,7 +2661,9 @@ async function sha256Hex(text){
     }
   }
 
-  async function saveMood(photo){
+  // This is for a polaroid's emoji reaction, stored on the memories row.
+  // It must not share a name with the separate Mood Calendar save handler.
+  async function savePhotoMood(photo){
     if (!supabase) return;
     const { error } = await supabase
       .from(TABLE)
@@ -3334,9 +3331,9 @@ async function sha256Hex(text){
   [['mood',moodAuthorToggle],['capsule',capsuleAuthorToggle],['bucket',bucketAuthorToggle]].forEach(([kind,toggle])=>{toggle.addEventListener('click',()=>{const current=kind==='mood'?moodAuthor:kind==='capsule'?capsuleAuthor:bucketAuthor;setExtraAuthor(kind,current==='1'?'2':'1');});setExtraAuthor(kind,kind==='mood'?moodAuthor:kind==='capsule'?capsuleAuthor:bucketAuthor);});
   capsuleDate.addEventListener('input',()=>capsuleDateField.classList.toggle('has-value',Boolean(capsuleDate.value)));
   function dateKey(d){return d.toISOString().slice(0,10);}
-  function renderMoodCalendar(){ const now=new Date(), y=calendarCursor.getFullYear(), month=calendarCursor.getMonth(), first=new Date(y,month,1), last=new Date(y,month+1,0), today=dateKey(now); calendarTitle.textContent=calendarCursor.toLocaleDateString(undefined,{month:'long',year:'numeric'}); moodCalendar.innerHTML=['S','M','T','W','T','F','S'].map(x=>`<span class="calendar-weekday">${x}</span>`).join(''); for(let i=0;i<first.getDay();i++)moodCalendar.insertAdjacentHTML('beforeend','<span class="calendar-day empty"></span>'); for(let day=1;day<=last.getDate();day++){const key=`${y}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`,entries=allMoods.filter(m=>m.mood_date===key),b=document.createElement('button');b.type='button';b.className='calendar-day'+(key===today?' today':'');b.dataset.date=key;b.innerHTML=`${day}${entries.length?`<span class="day-moods">${entries.map(e=>`<span class="day-mood author-${e.author||1}" title="By ${String(e.author||1)==='2'?'M':'J'}">${e.mood}</span>`).join('')}</span>`:''}`;b.addEventListener('click',()=>saveMood(key));moodCalendar.appendChild(b);} }
+  function renderMoodCalendar(){ const now=new Date(), y=calendarCursor.getFullYear(), month=calendarCursor.getMonth(), first=new Date(y,month,1), last=new Date(y,month+1,0), today=dateKey(now); calendarTitle.textContent=calendarCursor.toLocaleDateString(undefined,{month:'long',year:'numeric'}); moodCalendar.innerHTML=['S','M','T','W','T','F','S'].map(x=>`<span class="calendar-weekday">${x}</span>`).join(''); for(let i=0;i<first.getDay();i++)moodCalendar.insertAdjacentHTML('beforeend','<span class="calendar-day empty"></span>'); for(let day=1;day<=last.getDate();day++){const key=`${y}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`,entries=allMoods.filter(m=>m.mood_date===key),b=document.createElement('button');b.type='button';b.className='calendar-day'+(key===today?' today':'');b.dataset.date=key;b.innerHTML=`${day}${entries.length?`<span class="day-moods">${entries.map(e=>`<span class="day-mood author-${e.author||1}" title="By ${String(e.author||1)==='2'?'M':'J'}">${e.mood}</span>`).join('')}</span>`:''}`;b.addEventListener('click',()=>saveCalendarMood(key));moodCalendar.appendChild(b);} }
   async function loadMoods(){if(!supabase)return;try{const {data,error}=await supabase.from(MOODS_TABLE).select('*');if(error)throw error;allMoods=data||[];renderMoodCalendar();}catch(e){console.error(e);showToast('Could not load moods. Run the extras SQL setup first.',{type:'error'});}}
-  async function saveMood(mood_date){
+  async function saveCalendarMood(mood_date){
     if(!supabase)return;
     const existing=allMoods.find(x=>x.mood_date===mood_date&&String(x.author||1)===moodAuthor);
     if(existing&&existing.mood===selectedCalendarMood){
@@ -4386,7 +4383,7 @@ async function sha256Hex(text){
         }else if (badge){
           badge.remove();
         }
-        await saveMood(photo);
+        await savePhotoMood(photo);
       });
     });
 
