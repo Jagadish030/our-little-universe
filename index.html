@@ -50,6 +50,7 @@
   body.dark-mode .ambient span{ opacity: 0.22; }
   body.dark-mode .setup-banner{ background: #4A3F2E; color: var(--ink); }
   body.dark-mode .note-front{ background: #3A3044; }
+  body.dark-mode .face{ background: #3D3348; box-shadow: 0 12px 26px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,250,240,.08); }
   body.dark-mode .note-back{ background: #332C40; }
   body.dark-mode .lightbox{ background: rgba(10,8,14,0.94); }
 
@@ -92,7 +93,11 @@
   /* ---------- password gate ---------- */
   .pass-gate{
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    height: 100dvh;
     z-index: 999;
     background: #2c2333;
     background-image:
@@ -109,57 +114,83 @@
   }
   .pass-gate.hidden{ display: none; }
   .pass-gate.unlocking{ opacity:0; transform:scale(1.02); pointer-events:none; }
+  .pass-gate-sparkle{ position:absolute; color:rgba(247,189,200,.55); text-shadow:0 0 8px rgba(247,189,200,.5); animation:twinkle ease-in-out infinite alternate; pointer-events:none; z-index:1; }
+  .pass-gate-sparkle:nth-child(1){ top:12%; left:14%; font-size:1.1rem; animation-duration:2.6s; }
+  .pass-gate-sparkle:nth-child(2){ top:22%; right:10%; font-size:.8rem; animation-duration:3.4s; animation-delay:-1s; }
+  .pass-gate-sparkle:nth-child(3){ top:68%; left:8%; font-size:.95rem; animation-duration:2.9s; animation-delay:-.6s; }
+  .pass-gate-sparkle:nth-child(4){ bottom:14%; right:16%; font-size:1.2rem; animation-duration:3.8s; animation-delay:-2s; }
+  .pass-gate-sparkle:nth-child(5){ top:44%; left:5%; font-size:.7rem; animation-duration:2.3s; animation-delay:-1.4s; }
+  .pass-gate-sparkle:nth-child(6){ bottom:24%; right:6%; font-size:.75rem; animation-duration:3.1s; animation-delay:-.3s; }
   .pass-card{
     z-index:2;
-    background:rgba(47,38,55,.72);
+    background: radial-gradient(circle at 50% 0%, rgba(232,180,184,.24), transparent 38%), rgba(47,38,55,.72);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     border: 1px solid var(--glass-border);
     border-radius: 28px;
-    box-shadow: 0 24px 60px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.12);
+    box-shadow: 0 28px 70px rgba(0,0,0,.34), 0 4px 18px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.14), inset 0 0 40px rgba(232,180,184,.05);
     padding: 2.25rem 2rem 1.65rem;
     text-align: center;
     max-width: 360px;
     width: 100%;
     position: relative;
     overflow: visible;
+    animation: passCardIn .65s cubic-bezier(.2,.85,.25,1);
   }
-  .pass-card::before{ content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none; background:radial-gradient(circle at 50% 0%, rgba(232,180,184,.24), transparent 38%); }
+  .pass-card::after{ content:''; position:absolute; inset:-22px; border-radius:40px; background:radial-gradient(circle, rgba(232,180,184,.3), transparent 68%); filter:blur(18px); z-index:-1; animation:glowPulse 4s ease-in-out infinite; pointer-events:none; }
   .pass-card h2{
     font-family: 'Caveat', cursive;
     font-size: 2rem;
     margin: 0 0 0.3rem;
     color: #fff4f6;
+    text-shadow: 0 2px 14px rgba(232,180,184,.4);
   }
   .pass-card p{
     font-size: 0.85rem;
     color: #e0cfd9;
     margin: 0 0 1.2rem;
   }
+  .pass-input-wrap{ position:relative; z-index:1; margin-bottom:0.9rem; }
+  .pass-input-wrap::before{ content:'🔒'; position:absolute; left:1rem; top:50%; transform:translateY(-50%); font-size:.85rem; opacity:.65; pointer-events:none; }
   .pass-card input{
     width: 100%;
-    padding: 0.7rem 0.9rem;
+    padding: 0.7rem 2.15rem;
     border-radius: 999px;
     border: 1px solid rgba(255,255,255,.4);
+    background: rgba(255,255,255,.06);
+    color: #fff4f6;
     font-family: 'Quicksand', sans-serif;
     font-size: 0.95rem;
     text-align: center;
-    margin-bottom: 0.9rem;
+    margin-bottom: 0;
     outline: none;
+    transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+    box-sizing: border-box;
   }
-  .pass-card input:focus{ border-color: var(--rose-deep); box-shadow:0 0 0 4px rgba(227,145,159,.18); }
+  .pass-card input::placeholder{ color: rgba(255,244,246,.5); }
+  .pass-card input:focus{ border-color: var(--rose-deep); background: rgba(255,255,255,.1); box-shadow:0 0 0 4px rgba(227,145,159,.22), inset 0 1px 4px rgba(0,0,0,.12); }
   .pass-card button{
+    position: relative;
     width: 100%;
     font-family: 'Quicksand', sans-serif;
     font-weight: 600;
     font-size: 0.95rem;
     color: var(--white);
-    background: var(--rose-deep);
+    background: linear-gradient(135deg, var(--rose-deep), #c97781);
     border: none;
     border-radius: 999px;
-    padding: 0.75rem;
+    padding: 0.78rem;
     cursor: pointer;
+    overflow: hidden;
+    box-shadow: 0 10px 26px rgba(217,138,147,.35), inset 0 1px 0 rgba(255,255,255,.25);
+    transition: transform .18s ease, box-shadow .18s ease;
   }
+  .pass-card button:hover{ transform: translateY(-1px); box-shadow: 0 14px 32px rgba(217,138,147,.45), inset 0 1px 0 rgba(255,255,255,.3); }
+  .pass-card button:active{ transform: translateY(0); }
+  .pass-card button::after{ content:''; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(115deg, transparent, rgba(255,255,255,.4), transparent); animation: btnShine 3.2s ease-in-out infinite; }
+  @keyframes btnShine{ 0%,20%{ left:-60%; } 55%,100%{ left:130%; } }
+  @keyframes glowPulse{ 0%,100%{ opacity:.55; transform:scale(.97); } 50%{ opacity:.9; transform:scale(1.03); } }
+  @keyframes passCardIn{ from{ opacity:0; transform:translateY(14px) scale(.97); } to{ opacity:1; transform:translateY(0) scale(1); } }
   .pass-error{
     color: var(--rose-deep);
     font-size: 0.8rem;
@@ -168,14 +199,30 @@
   }
   .vault-message{ position:relative; z-index:1; font:600 1.35rem/1.1 'Caveat',cursive; color:#f7bdc8; margin:0 0 .55rem; animation:vaultFloat 3.8s ease-in-out infinite; }
   .vault-lock{ --key-progress:0px; position:relative; z-index:1; width:226px; height:96px; margin:0 auto .65rem; }
-  .vault-lock-heart{ position:absolute; z-index:1; left:158px; top:26px; width:54px; color:var(--rose-deep); font:3.25rem/.8 Arial,sans-serif; text-align:center; text-shadow:0 5px 12px rgba(217,138,147,.32); }
-  .vault-lock-heart::before{ content:''; position:absolute; left:12px; top:-23px; width:24px; height:25px; border:4px solid var(--gold); border-bottom:0; border-radius:18px 18px 0 0; }
+  .vault-lock-heart{ position:absolute; z-index:1; left:158px; top:26px; width:54px; color:var(--rose-deep); font:3.25rem/.8 Arial,sans-serif; text-align:center; text-shadow:0 5px 12px rgba(217,138,147,.32); animation:heartIdleGlow 3.2s ease-in-out infinite; }
+  .vault-lock-heart::before{ content:''; position:absolute; left:12px; top:-23px; width:24px; height:25px; border:4px solid var(--gold); border-bottom:0; border-radius:18px 18px 0 0; transform-origin:12px 2px; }
   .vault-lock-heart::after{ content:'✦'; position:absolute; left:19px; top:13px; color:var(--white); font:1rem/1 Arial,sans-serif; text-shadow:none; }
-  .vault-lock-key{ position:absolute; z-index:2; left:13px; top:25px; color:var(--gold); font:2.25rem/1 Arial,sans-serif; text-shadow:0 2px 6px rgba(212,165,116,.35); transform:translateX(var(--key-progress)) rotate(-12deg); transform-origin:50% 50%; transition:transform .24s cubic-bezier(.2,.9,.3,1); }
-  .vault-key-heart{ display:none; }
+  .vault-lock-key{ position:absolute; z-index:2; left:13px; top:25px; color:var(--gold); font:2.25rem/1 Arial,sans-serif; text-shadow:0 2px 6px rgba(212,165,116,.35); transform:translateX(var(--key-progress)) rotate(-12deg); transform-origin:50% 50%; transition:transform .32s cubic-bezier(.34,1.56,.64,1); }
+  .pass-card:not(.typing):not(.unlocked) .vault-lock-key{ animation:keyIdleBob 2.6s ease-in-out infinite; }
   .pass-card.typing .vault-lock-heart{ color:#C97781; }
   .pass-card.unlocked .vault-lock-key{ animation:keyIntoLock .72s cubic-bezier(.2,.9,.25,1) forwards; }
   .pass-card.unlocked .vault-lock-heart{ animation:heartUnlock .55s .55s ease forwards; }
+  .pass-card.unlocked .vault-lock-heart::before{ animation:shackleSwing .5s .5s ease forwards; }
+  .pass-card.unlocked .vault-lock::after{ content:''; position:absolute; left:151px; top:38px; width:6px; height:6px; border-radius:50%; background:#fff; box-shadow:0 0 0 0 rgba(255,241,168,.9); opacity:0; animation:unlockSpark .5s 1.05s ease-out forwards; }
+  .lock-ripple{ position:absolute; left:185px; top:53px; width:14px; height:14px; margin:-7px 0 0 -7px; border-radius:50%; border:2px solid rgba(255,224,151,.8); opacity:0; pointer-events:none; z-index:2; animation:rippleExpand .7s ease-out forwards; }
+  .energy-spark{ position:absolute; left:158px; bottom:-14px; width:5px; height:5px; border-radius:50%; background:radial-gradient(circle,#fff8e0,var(--gold)); box-shadow:0 0 8px 3px rgba(255,224,151,.8); opacity:0; pointer-events:none; z-index:2; animation:sparkRise .65s ease-out forwards; }
+  .pass-card::before{ content:''; position:absolute; inset:-22px; border-radius:40px; background:radial-gradient(circle,rgba(255,205,120,.5),transparent 68%); filter:blur(18px); z-index:-1; opacity:var(--unlock-pct,0); transition:opacity .5s ease; pointer-events:none; }
+  .pass-card.unlocked{ animation:cardSettleBounce .5s ease; }
+  .corner-thread{ position:absolute; top:12px; z-index:1; opacity:.9; pointer-events:none; }
+  .corner-thread.tl{ left:12px; } .corner-thread.tr{ right:12px; }
+  .corner-thread path{ fill:none; stroke:var(--gold); stroke-width:1.6; stroke-linecap:round; }
+  .pass-card.unlocked .corner-thread path{ animation:threadGlow .6s ease .1s; }
+  .corner-candle{ --lit:0; position:absolute; bottom:10px; width:16px; height:36px; z-index:1; pointer-events:none; }
+  .corner-candle.bl{ left:14px; } .corner-candle.br{ right:14px; }
+  .candle-body{ position:absolute; left:50%; bottom:0; width:10px; height:22px; margin-left:-5px; border-radius:2px; background:linear-gradient(180deg,#fff6e6,#e8dcc8); box-shadow:inset -2px 0 3px rgba(0,0,0,.1); }
+  .candle-wick{ position:absolute; left:50%; bottom:22px; width:2px; height:4px; margin-left:-1px; background:#5a4a3a; }
+  .candle-flame{ position:absolute; left:50%; bottom:25px; width:8px; height:calc(3px + var(--lit) * 13px); margin-left:-4px; border-radius:50% 50% 50% 50% / 65% 65% 35% 35%; background:radial-gradient(circle at 50% 72%,#fff5c2,#ffb84d 60%,#ff7a3d 100%); opacity:calc(.12 + var(--lit) * .88); box-shadow:0 0 calc(var(--lit) * 14px) calc(var(--lit) * 4px) rgba(255,175,80,.7); transform-origin:50% 100%; transition:height .35s ease, opacity .35s ease, box-shadow .35s ease; }
+  .pass-card.unlocked .candle-flame{ animation:candleFlicker 1.6s ease-in-out infinite; }
   .vault-stars{ position:relative; z-index:1; display:flex; justify-content:center; gap:.42rem; margin:0 0 1rem; color:var(--gold); }
   .vault-star{ opacity:.24; transform:scale(.72); transition:opacity .18s ease, transform .18s ease, color .18s ease; }
   .vault-star.lit{ opacity:1; transform:scale(1.12); color:var(--rose-deep); text-shadow:0 0 9px rgba(217,138,147,.72); }
@@ -189,14 +236,39 @@
   .vault-celebration{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:3; }
   .vault-celebration span{ position:absolute; bottom:20%; left:var(--x); color:var(--rose-deep); font-size:var(--s); animation:vaultHeartRise .8s ease-out forwards; }
   @keyframes vaultFloat{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+  @keyframes keyIdleBob{ 0%,100%{ transform:translateX(var(--key-progress)) rotate(-12deg) translateY(0); } 50%{ transform:translateX(var(--key-progress)) rotate(-14deg) translateY(-3px); } }
+  @keyframes heartIdleGlow{ 0%,100%{ text-shadow:0 5px 12px rgba(217,138,147,.32); } 50%{ text-shadow:0 5px 18px rgba(217,138,147,.55), 0 0 14px rgba(247,189,200,.4); } }
   @keyframes keyIntoLock{ 62%{ transform:translateX(151px) rotate(0deg) scale(1.08); } 100%{ transform:translateX(151px) rotate(92deg) scale(.74); opacity:0; } }
   @keyframes heartUnlock{ 50%{transform:scale(1.16)} 100%{transform:scale(.9); opacity:.42} }
+  @keyframes shackleSwing{ 0%{ transform:rotate(0deg); } 100%{ transform:rotate(-38deg) translateX(-3px); } }
+  @keyframes unlockSpark{ 0%{ opacity:0; transform:scale(.4); box-shadow:0 0 0 0 rgba(255,241,168,.9); } 35%{ opacity:1; transform:scale(1); box-shadow:0 0 14px 5px rgba(255,241,168,.85); } 100%{ opacity:0; transform:scale(1.6); box-shadow:0 0 22px 10px rgba(255,241,168,0); } }
+  @keyframes rippleExpand{ 0%{ opacity:.8; transform:scale(.4); } 100%{ opacity:0; transform:scale(3.4); } }
+  @keyframes sparkRise{ 0%{ opacity:0; transform:translateY(0) scale(.6); } 15%{ opacity:1; } 75%{ opacity:.9; transform:translateY(-58px) scale(1); } 100%{ opacity:0; transform:translateY(-70px) scale(.4); } }
+  @keyframes cardSettleBounce{ 0%{ transform:scale(1); } 30%{ transform:scale(1.035); } 55%{ transform:scale(.985); } 100%{ transform:scale(1); } }
+  @keyframes threadGlow{ 0%{ filter:drop-shadow(0 0 0 transparent); } 50%{ filter:drop-shadow(0 0 5px rgba(212,165,116,.85)); } 100%{ filter:drop-shadow(0 0 0 transparent); } }
+  @keyframes candleFlicker{ 0%,100%{ transform:scaleY(1) scaleX(1) rotate(0deg); } 25%{ transform:scaleY(1.08) scaleX(.94) rotate(-2deg); } 50%{ transform:scaleY(.95) scaleX(1.05) rotate(1.5deg); } 75%{ transform:scaleY(1.05) scaleX(.97) rotate(-1deg); } }
   @keyframes gentleShake{ 20%,60%{transform:translateX(-5px)} 40%,80%{transform:translateX(5px)} 100%{transform:translateX(0)} }
   @keyframes vaultHeartRise{ to{ transform:translate(var(--dx),-125px) rotate(22deg); opacity:0; } }
   @media (max-width:480px){ .pass-gate{ align-items:center; padding:1rem; } .pass-card{ margin:auto 0; padding:1.65rem 1.25rem 1.2rem; } .vault-message{ font-size:1.18rem; } .pass-card h2{ font-size:1.8rem; } .moon-arc{ gap:.32rem; } .moon-phase{ width:18px; height:18px; flex-basis:18px; } }
-  body.pass-keyboard-open .pass-gate{ align-items:flex-start; padding:.2rem; overflow:hidden; }
-  body.pass-keyboard-open .pass-card{ margin:0; transform:scale(.64); transform-origin:top center; }
-  @media (prefers-reduced-motion:reduce){ .vault-message,.pass-card.shake,.pass-card.unlocked .vault-lock::before,.pass-card.unlocked .vault-lock-heart,.vault-celebration span{ animation:none; } .pass-gate{ transition:none; } }
+  body.pass-keyboard-open .pass-gate{ align-items:flex-start; padding:.6rem .9rem; }
+  body.pass-keyboard-open .pass-card{ margin:0; padding:1rem 1.3rem .85rem; animation:none; }
+  body.pass-keyboard-open .pass-card::after{ display:none; }
+  body.pass-keyboard-open .pass-card > p:not(.vault-message):not(.pass-footer){ display:none; }
+  body.pass-keyboard-open .pass-footer{ display:none; }
+  body.pass-keyboard-open .vault-message{ font-size:1.02rem; margin-bottom:.35rem; }
+  body.pass-keyboard-open .pass-card h2{ font-size:1.3rem; margin-bottom:.25rem; }
+  body.pass-keyboard-open .vault-lock{ margin:0 auto .35rem; transform:scale(.75); transform-origin:top center; }
+  body.pass-keyboard-open .corner-thread,body.pass-keyboard-open .corner-candle{ transform:scale(.7); }
+  body.pass-keyboard-open .corner-thread.tl,body.pass-keyboard-open .corner-candle.bl{ transform-origin:bottom left; }
+  body.pass-keyboard-open .corner-thread.tr,body.pass-keyboard-open .corner-candle.br{ transform-origin:bottom right; }
+  body.pass-keyboard-open .moon-arc{ height:32px; gap:.3rem; margin:.15rem 0 .4rem; }
+  body.pass-keyboard-open .moon-phase{ width:15px; height:15px; flex-basis:15px; }
+  body.pass-keyboard-open .moon-phase:nth-child(1),body.pass-keyboard-open .moon-phase:nth-child(7){ transform:translateY(10px); }
+  body.pass-keyboard-open .moon-phase:nth-child(2),body.pass-keyboard-open .moon-phase:nth-child(6){ transform:translateY(5px); }
+  body.pass-keyboard-open .moon-phase:nth-child(3),body.pass-keyboard-open .moon-phase:nth-child(5){ transform:translateY(2px); }
+  body.pass-keyboard-open .vault-stars{ margin-bottom:.55rem; }
+  body.pass-keyboard-open .pass-input-wrap{ margin-bottom:.6rem; }
+  @media (prefers-reduced-motion:reduce){ .vault-message,.pass-card.shake,.pass-card.unlocked .vault-lock-heart::before,.pass-card.unlocked .vault-lock-heart,.pass-card.unlocked .vault-lock::after,.vault-lock-heart,.vault-lock-key,.vault-celebration span,.pass-card::after,.pass-card::before,.pass-card button::after,.pass-gate-sparkle,.lock-ripple,.energy-spark,.corner-thread path,.candle-flame{ animation:none; } .lock-ripple,.energy-spark{ display:none; } .pass-card,.pass-card.unlocked{ animation:none; } .pass-gate{ transition:none; } }
   #siteContent.hidden{ display: none; }
 
   /* ---------- ambient floating hearts ---------- */
@@ -207,6 +279,8 @@
     z-index: 0;
     overflow: hidden;
     transform: translateZ(0);
+    will-change: transform;
+    contain: layout style paint;
   }
   .ambient span{
     position: absolute;
@@ -219,11 +293,8 @@
   @media (prefers-reduced-motion: no-preference){
     .ambient span{ animation: drift linear infinite; }
   }
-  .ambient.scroll-pause span{
-    animation-play-state: paused !important;
-  }
   @media (max-width: 480px){
-    .ambient span:nth-child(n+6){ display: none; }
+    .ambient span:nth-child(n+5){ display: none; }
   }
   @keyframes drift{
     0%{ transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
@@ -578,7 +649,7 @@
   .little-things-nav button{ pointer-events:auto; width:38px; height:38px; border:1px solid var(--glass-border); border-radius:50%; background:var(--glass-bg-strong); color:var(--rose-deep); cursor:pointer; font:700 1.35rem/1 Arial,sans-serif; box-shadow:0 4px 12px var(--shadow); }
   .little-things-nav button:hover{ background:var(--rose-deep); color:var(--white); }
   @media (max-width:960px){ .little-things-nav{ left:-4rem; right:-4rem; } }
-  @media (max-width:480px){ .little-things-nav{ top:0; left:-.25rem; right:2.2rem; } .little-things-nav button{ width:36px; height:36px; } }
+  @media (max-width:480px){ .little-things-nav{ position:static; top:auto; left:auto; right:auto; width:100%; margin:.65rem 0 0; } .little-things-nav button{ width:34px; height:34px; } }
   .note-form{
     display: flex;
     flex-direction: column;
@@ -994,6 +1065,8 @@
   .doodles-controls,.doodles-grid{ display:flex; flex-wrap:wrap; justify-content:center; gap:1rem; }
   .doodles-controls{ margin-bottom:1.4rem; }
   .doodle-wrap{ width:184px; position:relative; perspective:1000px; transform:none; content-visibility:auto; contain-intrinsic-size:184px 250px; }
+  .doodle-wrap-enter{ animation:doodleEnter .55s cubic-bezier(.2,.8,.2,1); }
+  @keyframes doodleEnter{ from{ opacity:0; transform:translateX(30px) scale(.9); } to{ opacity:1; transform:translateX(0) scale(1); } }
   .doodle-flip{ position:relative; min-height:230px; cursor:pointer; transform-style:preserve-3d; transition:transform .5s cubic-bezier(.2,.8,.2,1); }
   .doodle-flip.flipped{ transform:rotateY(180deg); }
   .doodle-front{ pointer-events:auto; } .doodle-back{ pointer-events:none; }
@@ -1015,7 +1088,7 @@
   .doodle-reaction-picker button{ border:1px solid transparent; background:none; border-radius:50%; cursor:pointer; opacity:.6; }
   .doodle-reaction-picker button.active{ opacity:1; border-color:var(--rose-deep); }
   .doodle-back-actions{ display:flex; justify-content:space-between; align-items:center; }
-  @media (max-width:480px){ .doodles-wall{ padding:0 1rem; } .doodle-studio{ padding:.75rem; } .doodle-tools button{ padding:.32rem .5rem; } .doodles-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; align-items:start; } .doodle-wrap{ width:100%; min-width:0; contain-intrinsic-size:0 165px; } .doodle-flip,.doodle-front{ min-height:166px; } .doodle-front{ padding:5px 5px 25px; } .doodle-caption-preview{ left:5px; right:5px; bottom:17px; font-size:.7rem; } .doodle-author-badge{ left:5px; bottom:5px; font-size:.5rem; } .doodle-date{ right:5px; bottom:6px; font-size:.48rem; } .doodle-fav,.doodle-remove{ top:3px; font-size:.7rem; } .doodle-fav{left:3px}.doodle-remove{right:3px}.doodle-reaction-badge{ top:3px; font-size:.82rem; } }
+  @media (max-width:480px){ .doodles-wall{ padding:0 1rem; } .doodle-studio{ padding:.75rem; } .doodle-tools button{ padding:.32rem .5rem; } .doodles-grid{ display:flex; flex-wrap:wrap; justify-content:center; gap:.7rem; } .doodle-wrap{ width:calc(50% - .35rem); min-width:0; contain-intrinsic-size:0 250px; } .doodle-flip,.doodle-front{ min-height:0; } .doodle-front{ padding:6px 6px 26px; } .doodle-caption-preview{ left:6px; right:6px; bottom:18px; font-size:.75rem; } .doodle-author-badge{ left:6px; bottom:6px; font-size:.55rem; } .doodle-date{ right:6px; bottom:7px; font-size:.52rem; } .doodle-fav,.doodle-remove{ top:4px; font-size:.75rem; } .doodle-fav{left:4px}.doodle-remove{right:4px}.doodle-reaction-badge{ top:4px; font-size:.95rem; } .doodle-back{ padding:.65rem; } .doodle-text{ font-size:1rem; line-height:1.15; max-height:2.4em; overflow:hidden; } .doodle-reply-input{ min-height:56px; font-size:.9rem; } .doodle-reaction-picker{ gap:4px; } .doodle-reaction-picker button{ font-size:.85rem; } }
 
   /* ---------- little universe extras ---------- */
   .extras-wall{ max-width:720px; margin:0 auto 3rem; padding:0 1.5rem; position:relative; z-index:1; }
@@ -1037,7 +1110,7 @@
   .calendar-day{ min-height:46px; border:1px solid rgba(138,101,78,.18); border-radius:8px; background:rgba(255,255,255,.5); color:var(--ink); cursor:pointer; font:700 .68rem 'Quicksand',sans-serif; position:relative; }
   .calendar-day:hover{ border-color:var(--rose-deep); }.calendar-day.empty{ visibility:hidden; }.calendar-day.today{ box-shadow:inset 0 0 0 1px var(--rose-deep); }
   .calendar-day .day-moods{ display:flex; justify-content:center; gap:2px; margin-top:2px; }.calendar-day .day-mood{ font-size:.9rem; }.day-mood.author-1{ filter:drop-shadow(0 0 2px var(--rose-deep)); }.day-mood.author-2{ filter:drop-shadow(0 0 2px var(--sage)); }
-  .extras-form input,.extras-form textarea,.bucket-add input{ box-sizing:border-box; border:1px solid #E3D3C2; border-radius:10px; padding:.55rem .7rem; background:rgba(255,255,255,.75); color:var(--ink); font:inherit; }
+  .extras-form input,.extras-form textarea,.bucket-add input{ box-sizing:border-box; border:1px solid #E3D3C2; border-radius:10px; padding:.55rem .7rem; background:rgba(255,255,255,.75); color:var(--ink); font:inherit; color-scheme:light; }
   .extras-form textarea{ width:100%; height:86px; resize:none; font-family:'Caveat',cursive; font-size:1.1rem; }.extras-form input{ flex:1; min-width:150px; }
   .extras-form button,.bucket-add button{ border:0; border-radius:999px; padding:.55rem 1rem; background:var(--rose-deep); color:white; cursor:pointer; font:600 .78rem 'Quicksand',sans-serif; }
   .capsule-list,.bucket-list{ list-style:none; padding:0; margin:1rem 0 0; display:grid; gap:.55rem; }
@@ -1395,27 +1468,57 @@
   .season-picker span{ color:var(--ink-soft); font:600 .72rem 'Quicksand',sans-serif; margin-right:.15rem; }
   .season-picker button{ border:1px solid var(--glass-border); border-radius:999px; padding:.38rem .62rem; color:var(--ink); background:var(--glass-bg); font:600 .7rem 'Quicksand',sans-serif; cursor:pointer; }
   .season-picker button.active{ background:var(--rose-deep); color:var(--white); border-color:var(--rose-deep); }
-  .seasonal-layer{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  .seasonal-layer{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; transform:translateZ(0); will-change:transform; contain:layout style paint; }
   .seasonal-layer span{ position:absolute; user-select:none; }
+  .seasonal-layer.rain{ background:linear-gradient(180deg,rgba(30,42,58,.16),transparent 40%); }
+  .seasonal-layer.rain::before{ content:''; position:absolute; inset:0; background:#dbe7ff; opacity:0; animation:lightningFlash 7s ease-in-out infinite; mix-blend-mode:screen; }
   .seasonal-layer.rain span{ top:-15vh; width:2px; height:34px; border-radius:99px; background:linear-gradient(transparent,rgba(160,211,235,.65)); transform:rotate(14deg); animation:rainFall linear infinite; }
+  .seasonal-layer.snow{ background:linear-gradient(180deg,rgba(214,228,248,.14),transparent 45%); }
+  .seasonal-layer.snow span{ top:-8vh; color:#f3f8ff; text-shadow:0 0 5px rgba(255,255,255,.85); animation:snowFall linear infinite; }
+  .seasonal-layer.blossom{ background:linear-gradient(180deg,rgba(255,214,228,.14),transparent 45%); }
+  .seasonal-layer.blossom span{ top:-8vh; width:11px; height:11px; background:linear-gradient(135deg,#ffd9e6,#ff9dbe); border-radius:150px 0 150px 0; box-shadow:0 0 6px rgba(255,175,205,.5); animation:blossomFall linear infinite; }
+  .seasonal-layer.fireworks{ background:linear-gradient(180deg,rgba(10,8,24,.32),transparent 55%); }
+  .seasonal-layer.fireworks span{ bottom:8%; width:4px; height:4px; border-radius:50%; background:transparent; animation:fireworkPop ease-out infinite; }
+  .seasonal-layer.autumn{ background:linear-gradient(180deg,rgba(120,72,38,.10),transparent 45%); }
+  .seasonal-layer.autumn span.leaf{ top:-8vh; border-radius:0 70% 0 70%; box-shadow:inset 0 0 4px rgba(60,30,10,.25); animation:leafFall linear infinite; }
+  .seasonal-layer.autumn span.drizzle{ top:-12vh; width:1.5px; height:22px; border-radius:99px; background:linear-gradient(transparent,rgba(180,203,213,.5)); transform:rotate(11deg); animation:rainFall linear infinite; opacity:.5; }
   .seasonal-layer.stars span{ color:#fff4b6; text-shadow:0 0 8px #fff0a5; animation:twinkle ease-in-out infinite alternate; }
   .seasonal-layer.stars .birthday-balloon{ text-shadow:0 0 12px currentColor,0 0 24px currentColor; animation:birthdayBob ease-in-out infinite alternate; }
+  .seasonal-layer.stars .birthday-balloon::after{ content:''; position:absolute; left:50%; top:100%; width:1px; height:38px; background:linear-gradient(rgba(255,255,255,.5),transparent); }
   .seasonal-layer.stars .birthday-gift{ text-shadow:0 0 10px rgba(255,214,108,.9),0 0 22px rgba(255,158,190,.7); animation:giftGlow 1.8s ease-in-out infinite alternate; }
+  .seasonal-layer.stars .confetti{ border-radius:2px; animation:confettiFall linear infinite; text-shadow:none; }
   .seasonal-layer.festival span{ animation:festivalFloat ease-in-out infinite alternate; filter:drop-shadow(0 3px 3px rgba(0,0,0,.18)); }
-  .seasonal-layer.night{ background:radial-gradient(ellipse at 50% -15%,rgba(70,84,150,.34),transparent 47%),linear-gradient(180deg,rgba(7,13,38,.62),rgba(20,16,44,.22) 62%,transparent); }
+  .seasonal-layer.festival .diya{ animation:diyaFlicker ease-in-out infinite alternate; }
+  .seasonal-layer.festival .sparkle{ animation:festivalFloat ease-in-out infinite alternate, sparkleTwinkle ease-in-out infinite; }
+  .seasonal-layer.night{ background:radial-gradient(ellipse at 50% -15%,rgba(70,84,150,.34),transparent 47%),radial-gradient(ellipse at 12% 85%,rgba(122,84,150,.22),transparent 50%),linear-gradient(180deg,rgba(7,13,38,.62),rgba(20,16,44,.22) 62%,transparent); }
   .seasonal-layer.night .night-star{ color:#fff5bd; text-shadow:0 0 7px #fff0a6,0 0 17px #9cc9ff; animation:twinkle ease-in-out infinite alternate; }
+  .seasonal-layer.night .night-star.bright{ text-shadow:0 0 4px #fff,0 0 12px #fff5c8,0 0 26px #9cc9ff; }
   .season-moon{ position:absolute; top:7vh; right:8vw; color:#fff7cf; font-size:clamp(3.3rem,7vw,5.4rem)!important; line-height:1; text-shadow:0 0 12px #fff9d1,0 0 35px rgba(169,202,255,.8); animation:moonBreathe 4s ease-in-out infinite alternate!important; }
-  .shooting-star{ width:0; height:0; opacity:0; transform:rotate(-28deg); animation:shootAcross var(--shoot-duration) cubic-bezier(.18,.65,.35,1) var(--shoot-delay) infinite!important; }
-  .shooting-star::before{ content:''; position:absolute; left:-3px; top:-3px; width:7px; height:7px; border-radius:50%; background:#fffdf0; box-shadow:0 0 4px 2px #fff,0 0 12px 5px rgba(185,224,255,.95),0 0 28px 9px rgba(132,184,255,.45); }
-  .shooting-star::after{ content:''; position:absolute; left:2px; top:-1px; width:clamp(100px,16vw,220px); height:3px; border-radius:0 99px 99px 0; background:linear-gradient(90deg,rgba(255,255,246,.96) 0%,rgba(188,225,255,.52) 35%,rgba(111,180,255,.08) 76%,transparent 100%); filter:blur(.45px); transform-origin:left center; }
+  .shooting-star{ position:absolute; height:2px; width:var(--tail-len,140px); opacity:0; transform-origin:left center; transform:rotate(var(--angle,-32deg)) translateX(0); animation:shootAcross var(--shoot-duration) cubic-bezier(.32,.02,.2,1) var(--shoot-delay) infinite!important; }
+  .shooting-star::before{ content:''; position:absolute; right:0; top:50%; width:100%; height:1.6px; transform:translateY(-50%); border-radius:99px; background:linear-gradient(90deg,transparent 0%,rgba(200,225,255,.12) 25%,rgba(220,235,255,.55) 65%,#fff 100%); filter:blur(.3px); }
+  .shooting-star::after{ content:''; position:absolute; right:-2.5px; top:50%; width:5px; height:5px; border-radius:50%; transform:translateY(-50%); background:#fffef6; box-shadow:0 0 5px 1.5px #fff,0 0 12px 4px rgba(196,226,255,.95),0 0 26px 9px rgba(140,190,255,.5); }
   @keyframes rainFall{ to{ transform:translate3d(-18vw,120vh,0) rotate(14deg); } }
+  @keyframes snowFall{ 0%{ transform:translate3d(0,-8vh,0) rotate(0deg); } 25%{ transform:translate3d(2.2vw,26vh,0) rotate(45deg); } 50%{ transform:translate3d(-1.8vw,52vh,0) rotate(95deg); } 75%{ transform:translate3d(2.4vw,78vh,0) rotate(150deg); } 100%{ transform:translate3d(-1.2vw,106vh,0) rotate(200deg); } }
+  @keyframes blossomFall{ 0%{ transform:translate3d(0,-8vh,0) rotate(0deg); opacity:0; } 8%{ opacity:.9; } 30%{ transform:translate3d(4vw,32vh,0) rotate(130deg); } 60%{ transform:translate3d(-3vw,64vh,0) rotate(250deg); } 100%{ transform:translate3d(3vw,110vh,0) rotate(400deg); opacity:.75; } }
+  @keyframes fireworkPop{
+    0%{ transform:translateY(0) scale(1); opacity:0; box-shadow:0 0 0 0 transparent,0 0 0 0 transparent,0 0 0 0 transparent,0 0 0 0 transparent,0 0 0 0 transparent,0 0 0 0 transparent,0 0 0 0 transparent; }
+    5%{ opacity:1; }
+    42%{ transform:translateY(var(--rise,-42vh)) scale(1); opacity:1; box-shadow:0 0 0 0 transparent,0 0 0 0 transparent,0 0 0 0 transparent,0 0 0 0 transparent,0 0 0 0 transparent,0 0 0 0 transparent,0 0 0 0 transparent; }
+    68%{ transform:translateY(var(--rise,-42vh)) scale(1.2); opacity:1; box-shadow:0 0 20px 7px var(--core,#fff6d8),0 -42px 6px 0px var(--c1,#ff9ebb),36px -22px 6px 0px var(--c2,#ffd873),36px 22px 6px 0px var(--c3,#8fe3ff),0 42px 6px 0px var(--c4,#caa8ff),-36px 22px 6px 0px var(--c5,#9be6b0),-36px -22px 6px 0px var(--c6,#ffb37a); }
+    100%{ transform:translateY(var(--rise,-42vh)) scale(1); opacity:0; box-shadow:0 0 8px 0 transparent,0 -66px 7px -2px transparent,56px -35px 7px -2px transparent,56px 35px 7px -2px transparent,0 66px 7px -2px transparent,-56px 35px 7px -2px transparent,-56px -35px 7px -2px transparent; }
+  }
+  @keyframes leafFall{ 0%{ transform:translate3d(0,-8vh,0) rotate(0deg); opacity:0; } 10%{ opacity:.95; } 35%{ transform:translate3d(5vw,30vh,0) rotate(140deg); } 60%{ transform:translate3d(-4vw,58vh,0) rotate(260deg); } 85%{ transform:translate3d(3vw,86vh,0) rotate(360deg); } 100%{ transform:translate3d(-2vw,108vh,0) rotate(430deg); opacity:.85; } }
+  @keyframes lightningFlash{ 0%,38%,40%,71%,100%{ opacity:0; } 38.4%{ opacity:.5; } 38.8%{ opacity:.05; } 39.2%{ opacity:.65; } 39.6%{ opacity:0; } 71.4%{ opacity:.4; } 71.8%{ opacity:.05; } 72.2%{ opacity:.55; } 72.6%{ opacity:0; } }
   @keyframes twinkle{ from{ opacity:.2; transform:scale(.65) rotate(-12deg); } to{ opacity:1; transform:scale(1.2) rotate(12deg); } }
   @keyframes festivalFloat{ from{ transform:translateY(0) rotate(-8deg); } to{ transform:translateY(-18px) rotate(8deg); } }
+  @keyframes diyaFlicker{ 0%{ filter:drop-shadow(0 3px 3px rgba(0,0,0,.18)) brightness(.92) drop-shadow(0 0 6px rgba(255,164,60,.4)); } 50%{ filter:drop-shadow(0 3px 3px rgba(0,0,0,.18)) brightness(1.15) drop-shadow(0 0 14px rgba(255,180,80,.85)); } 100%{ filter:drop-shadow(0 3px 3px rgba(0,0,0,.18)) brightness(.97) drop-shadow(0 0 9px rgba(255,170,70,.6)); } }
+  @keyframes sparkleTwinkle{ 0%,100%{ opacity:.4; } 50%{ opacity:1; } }
   @keyframes birthdayBob{ from{ transform:translateY(5px) rotate(-5deg) scale(.9); } to{ transform:translateY(-12px) rotate(5deg) scale(1.08); } }
   @keyframes giftGlow{ from{ transform:scale(.88) rotate(-5deg); opacity:.55; } to{ transform:scale(1.12) rotate(5deg); opacity:1; } }
+  @keyframes confettiFall{ from{ transform:translate3d(0,-10vh,0) rotate(0deg); } to{ transform:translate3d(6vw,110vh,0) rotate(340deg); } }
   @keyframes moonBreathe{ from{ transform:scale(.96); opacity:.82; } to{ transform:scale(1.05); opacity:1; } }
-  @keyframes shootAcross{ 0%,70%{ opacity:0; transform:translate3d(0,0,0) rotate(-28deg) scaleX(.15); } 72%{ opacity:1; transform:translate3d(0,0,0) rotate(-28deg) scaleX(.55); } 80%{ opacity:1; transform:translate3d(var(--shoot-x),var(--shoot-y),0) rotate(-28deg) scaleX(1); } 84%,100%{ opacity:0; transform:translate3d(var(--shoot-x),var(--shoot-y),0) rotate(-28deg) scaleX(.5); } }
-  @media (prefers-reduced-motion:reduce){ .on-this-day,.seasonal-layer span{ animation:none!important; } }
+  @keyframes shootAcross{ 0%,58%{ opacity:0; transform:rotate(var(--angle,-32deg)) translateX(0); } 60%{ opacity:1; } 76%{ opacity:1; transform:rotate(var(--angle,-32deg)) translateX(var(--shoot-dist,260px)); } 88%,100%{ opacity:0; transform:rotate(var(--angle,-32deg)) translateX(calc(var(--shoot-dist,260px) + 90px)); } }
+  @media (prefers-reduced-motion:reduce){ .on-this-day,.seasonal-layer span,.seasonal-layer::before{ animation:none!important; } }
   .add-btn:focus-visible, button:focus-visible, .polaroid:focus-visible{
     outline: 3px solid var(--sage);
     outline-offset: 3px;
@@ -1498,11 +1601,14 @@
   .polaroid-wrap{
     position: relative;
     width: 190px;
+    padding-top: 10px;
     perspective: 1200px;
+    content-visibility: auto;
+    contain-intrinsic-size: 190px 310px;
   }
   .pin{
     position: absolute;
-    top: -10px;
+    top: 0;
     left: 50%;
     transform: translateX(-50%);
     width: 16px;
@@ -1983,6 +2089,12 @@
 <body>
 
 <div class="pass-gate" id="passGate">
+  <span class="pass-gate-sparkle">✦</span>
+  <span class="pass-gate-sparkle">♥</span>
+  <span class="pass-gate-sparkle">✦</span>
+  <span class="pass-gate-sparkle">✧</span>
+  <span class="pass-gate-sparkle">♥</span>
+  <span class="pass-gate-sparkle">✦</span>
   <form class="pass-card" id="passForm">
     <div class="vault-celebration" id="vaultCelebration" aria-hidden="true"></div>
     <p class="vault-message" id="vaultMessage">our little universe is waiting for you</p>
@@ -1991,10 +2103,33 @@
     <p>this space is just for the two of us 🤍</p>
     <div class="moon-arc" id="moonArc" aria-label="Password progress shown as moon phases"><span class="moon-phase"></span><span class="moon-phase"></span><span class="moon-phase"></span><span class="moon-phase"></span><span class="moon-phase"></span><span class="moon-phase"></span><span class="moon-phase"></span></div>
     <div class="vault-stars" id="vaultStars" aria-hidden="true"><span class="vault-star">✦</span><span class="vault-star">✦</span><span class="vault-star">✦</span><span class="vault-star">✦</span><span class="vault-star">✦</span><span class="vault-star">✦</span></div>
-    <input type="password" id="passInput" placeholder="Enter the password" autocomplete="off">
+    <div class="pass-input-wrap"><input type="password" id="passInput" placeholder="Enter the password" autocomplete="off"></div>
     <button type="submit">Unlock</button>
     <div class="pass-error" id="passError"></div>
     <p class="pass-footer">Made for just the two of us</p>
+    <div class="corner-thread tl" aria-hidden="true">
+      <svg viewBox="0 0 40 36" width="30" height="27">
+        <path class="thread-heart-path" d="M20 32 C 6 22, 2 12, 10 6 C 15 2.5, 20 6, 20 11 C 20 6, 25 2.5, 30 6 C 38 12, 34 22, 20 32 Z"></path>
+      </svg>
+    </div>
+    <div class="corner-thread tr" aria-hidden="true">
+      <svg viewBox="0 0 40 36" width="30" height="27">
+        <path class="thread-heart-path" d="M20 32 C 6 22, 2 12, 10 6 C 15 2.5, 20 6, 20 11 C 20 6, 25 2.5, 30 6 C 38 12, 34 22, 20 32 Z"></path>
+      </svg>
+    </div>
+    <div class="corner-candle bl" aria-hidden="true">
+      <span class="candle-flame"></span>
+      <span class="candle-wick"></span>
+      <span class="candle-body"></span>
+    </div>
+    <div class="corner-candle br" aria-hidden="true">
+      <span class="candle-flame"></span>
+      <span class="candle-wick"></span>
+      <span class="candle-body"></span>
+    </div>
+  </form>
+  </div>
+
   </form>
 </div>
 
@@ -2030,6 +2165,10 @@
     <span>Seasonal magic</span>
     <button type="button" data-season="none" class="active">✦ None</button>
     <button type="button" data-season="rain">🌧️ Monsoon</button>
+    <button type="button" data-season="snow">❄️ Snowfall</button>
+    <button type="button" data-season="blossom">🌸 Cherry blossom</button>
+    <button type="button" data-season="fireworks">🎆 Fireworks</button>
+    <button type="button" data-season="autumn">🍂 Autumn drizzle</button>
     <button type="button" data-season="stars">🎈 Birthday stars</button>
     <button type="button" data-season="night">🌙 Night sky</button>
     <button type="button" data-season="festival">🪔 Festival</button>
@@ -2351,6 +2490,16 @@
   const vaultStars = document.querySelectorAll('.vault-star');
   const moonPhases = document.querySelectorAll('.moon-phase');
   const vaultLock = document.getElementById('vaultLock');
+  const threadHeartPaths = Array.from(document.querySelectorAll('.thread-heart-path'));
+  const candleFlames = Array.from(document.querySelectorAll('.candle-flame'));
+  // Use each path's real rendered length so the stitching finishes exactly
+  // at 100% progress, instead of guessing a dash length that might be off.
+  const threadHeartLengths = threadHeartPaths.map(p => {
+    const len = p.getTotalLength();
+    p.style.strokeDasharray = len;
+    p.style.strokeDashoffset = len;
+    return len;
+  });
   const vaultCelebration = document.getElementById('vaultCelebration');
 
   const lightbox = document.getElementById('lightbox');
@@ -2421,6 +2570,18 @@ async function sha256Hex(text){
   ];
   vaultMessage.textContent = VAULT_WELCOMES[Math.floor(Math.random() * VAULT_WELCOMES.length)];
 
+  let prevMoonFilled = 0;
+  function spawnVaultEffect(){
+    if (prefersReducedMotion) return;
+    const spark = document.createElement('span');
+    spark.className = 'energy-spark';
+    vaultLock.appendChild(spark);
+    setTimeout(() => spark.remove(), 700);
+    const ripple = document.createElement('span');
+    ripple.className = 'lock-ripple';
+    vaultLock.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 750);
+  }
   function lightVaultStars(){
     const entered = Math.min(passInput.value.length, PASSWORD_LENGTH);
     const progress = entered / PASSWORD_LENGTH;
@@ -2430,17 +2591,38 @@ async function sha256Hex(text){
     vaultStars.forEach((star, index) => star.classList.toggle('lit', index < filled));
     moonPhases.forEach((moon, index) => moon.classList.toggle('lit', index < moonFilled));
     vaultLock.style.setProperty('--key-progress', (progress * 151) + 'px');
+    threadHeartPaths.forEach((p, i) => {
+      p.style.strokeDashoffset = (threadHeartLengths[i] * (1 - progress)).toFixed(1);
+    });
+    candleFlames.forEach(f => f.style.setProperty('--lit', progress.toFixed(3)));
+    passForm.style.setProperty('--unlock-pct', progress);
+    if (moonFilled > prevMoonFilled) spawnVaultEffect();
+    prevMoonFilled = moonFilled;
   }
   passInput.addEventListener('input', lightVaultStars);
   const initialGateViewportHeight=window.innerHeight;
+  let keyboardCollapseTimer=null;
+  function setPassKeyboardOpen(isOpen){
+    clearTimeout(keyboardCollapseTimer);
+    if(isOpen){
+      document.body.classList.add('pass-keyboard-open');
+    }else{
+      // Don't collapse the compact layout immediately: on mobile, tapping
+      // the Unlock button blurs the input a beat before the click/submit
+      // fires. If we shrink the layout right away, the button moves out
+      // from under the finger and the tap is lost, forcing a second tap.
+      // Waiting lets the click land first.
+      keyboardCollapseTimer=setTimeout(()=>document.body.classList.remove('pass-keyboard-open'),350);
+    }
+  }
   function updatePassKeyboardState(){
     const viewport=window.visualViewport;
     const visibleHeight=viewport ? viewport.height : window.innerHeight;
     const keyboardVisible=document.activeElement===passInput && (window.innerHeight-visibleHeight>120 || initialGateViewportHeight-visibleHeight>120);
-    document.body.classList.toggle('pass-keyboard-open',Boolean(keyboardVisible));
+    setPassKeyboardOpen(Boolean(keyboardVisible));
   }
   passInput.addEventListener('focus',()=>setTimeout(updatePassKeyboardState,80));
-  passInput.addEventListener('blur',()=>document.body.classList.remove('pass-keyboard-open'));
+  passInput.addEventListener('blur',()=>setPassKeyboardOpen(false));
   if(window.visualViewport) window.visualViewport.addEventListener('resize',updatePassKeyboardState);
 
   function celebrateVaultUnlock(){
@@ -2461,7 +2643,18 @@ async function sha256Hex(text){
     passForm.classList.add('unlocked');
     setTimeout(celebrateVaultUnlock, 520);
     setTimeout(() => passGate.classList.add('unlocking'), 720);
-    setTimeout(() => passGate.classList.add('hidden'), 1300);
+    setTimeout(() => {
+      passGate.classList.add('hidden');
+      // nudge a tiny synthetic scroll so the browser promotes the fixed
+      // background layers to their own GPU layer now, ahead of the
+      // person's first real scroll gesture, instead of doing that
+      // promotion work mid-gesture (which is what causes a brief
+      // stutter right at the top of the page).
+      requestAnimationFrame(() => {
+        window.scrollBy(0, 1);
+        requestAnimationFrame(() => window.scrollBy(0, -1));
+      });
+    }, 1300);
   }
 
   passForm.addEventListener('submit', async (e) => {
@@ -3294,10 +3487,13 @@ async function sha256Hex(text){
   async function loadDoodles(){ if(!supabase)return; try{ const {data,error}=await supabase.from(DOODLES_TABLE).select('*').order('created_at',{ascending:false}); if(error)throw error; allDoodles=data||[]; renderDoodlesFiltered(); }catch(err){ console.error('Could not load doodles:',err); showToast('Could not load doodles. Run the doodles setup SQL first.',{type:'error'}); } }
   function renderDoodlesFiltered(){ let items=doodlesFavoritesOnly?allDoodles.filter(d=>d.favorite):allDoodles.slice(); const q=doodlesSearchQuery.trim().toLowerCase(); if(q)items=items.filter(d=>`${d.caption||''} ${d.reply||''}`.toLowerCase().includes(q)); if(doodlesSortMode==='oldest')items.reverse(); if(doodlesSortMode==='shuffle')items.sort(()=>Math.random()-.5); renderDoodles(items); }
   async function updateDoodle(d, patch){ const {error}=await supabase.from(DOODLES_TABLE).update(patch).eq('id',d.id); if(error){ console.error(error); showToast('Could not save that doodle change.',{type:'error'}); } }
+  let knownDoodleIds=null;
   function renderDoodles(items){
-    doodlesGrid.innerHTML=''; if(!items.length){ const p=document.createElement('p'); p.className='empty-note'; p.style.display='block'; p.textContent=qOrEmptyDoodles(); doodlesGrid.appendChild(p); return; }
-    items.forEach(d=>{ const wrap=document.createElement('div'); wrap.className='doodle-wrap'; wrap.style.setProperty('--nt',(Math.random()*6-3).toFixed(1)+'deg'); const author=String(d.author||1), date=d.created_at?new Date(d.created_at).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'';
-      wrap.innerHTML=`<div class="doodle-flip" tabindex="0" role="button" aria-label="Flip doodle"><div class="doodle-face doodle-front"><button class="doodle-fav" type="button">${d.favorite?'♥':'♡'}</button><button class="doodle-remove" type="button">✕</button><img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption?`: ${escapeHtml(d.caption)}`:''}">${d.caption?`<div class="doodle-caption-preview">${escapeHtml(d.caption)}</div>`:''}${d.reaction?`<span class="doodle-reaction-badge">${d.reaction}</span>`:''}<span class="doodle-author-badge author-${author}">By ${author==='2'?'M':'J'}</span><span class="doodle-date">${date}</span></div><div class="doodle-face doodle-back"><div class="doodle-text">${escapeHtml(d.caption||'A little doodle ✨')}</div><textarea class="doodle-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(d.reply||'')}</textarea><div class="doodle-reaction-picker">${DOODLE_REACTIONS.map(r=>`<button type="button" data-reaction="${r}" class="${d.reaction===r?'active':''}">${r}</button>`).join('')}</div><div class="doodle-back-actions"><button class="note-flip-back-btn" type="button">‹ back</button><button class="doodle-download" type="button">⇩ PNG</button></div></div></div>`;
+    doodlesGrid.innerHTML=''; if(!items.length){ const p=document.createElement('p'); p.className='empty-note'; p.style.display='block'; p.textContent=qOrEmptyDoodles(); doodlesGrid.appendChild(p); knownDoodleIds=new Set(); return; }
+    const isFirstRender=knownDoodleIds===null;
+    const currentIds=new Set();
+    items.forEach(d=>{ currentIds.add(d.id); const wrap=document.createElement('div'); wrap.className='doodle-wrap'+((!isFirstRender && !knownDoodleIds.has(d.id))?' doodle-wrap-enter':''); wrap.style.setProperty('--nt',(Math.random()*6-3).toFixed(1)+'deg'); const author=String(d.author||1), date=d.created_at?new Date(d.created_at).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'';
+      wrap.innerHTML=`<div class="doodle-flip" tabindex="0" role="button" aria-label="Flip doodle"><div class="doodle-face doodle-front"><button class="doodle-fav" type="button">${d.favorite?'♥':'♡'}</button><button class="doodle-remove" type="button">✕</button><img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption?`: ${escapeHtml(d.caption)}`:''}" loading="lazy" decoding="async">${d.caption?`<div class="doodle-caption-preview">${escapeHtml(d.caption)}</div>`:''}${d.reaction?`<span class="doodle-reaction-badge">${d.reaction}</span>`:''}<span class="doodle-author-badge author-${author}">By ${author==='2'?'M':'J'}</span><span class="doodle-date">${date}</span></div><div class="doodle-face doodle-back"><div class="doodle-text">${escapeHtml(d.caption||'A little doodle ✨')}</div><textarea class="doodle-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(d.reply||'')}</textarea><div class="doodle-reaction-picker">${DOODLE_REACTIONS.map(r=>`<button type="button" data-reaction="${r}" class="${d.reaction===r?'active':''}">${r}</button>`).join('')}</div><div class="doodle-back-actions"><button class="note-flip-back-btn" type="button">‹ back</button><button class="doodle-download" type="button">⇩ PNG</button></div></div></div>`;
       const flip=wrap.querySelector('.doodle-flip'), image=wrap.querySelector('.doodle-image'), fav=wrap.querySelector('.doodle-fav'), remove=wrap.querySelector('.doodle-remove'), reply=wrap.querySelector('.doodle-reply-input'), back=wrap.querySelector('.note-flip-back-btn'), download=wrap.querySelector('.doodle-download');
       flip.addEventListener('click',e=>{ if(e.target.closest('button,textarea,img'))return; flip.classList.toggle('flipped'); }); flip.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===flip){e.preventDefault();flip.classList.toggle('flipped');}}); back.addEventListener('click',()=>flip.classList.remove('flipped'));
       image.addEventListener('click',()=>{ currentList=items.map(x=>({src:x.image_url,caption:x.caption||'A little doodle'})); lightboxIndex=items.findIndex(x=>x.id===d.id); openLightbox(lightboxIndex,'doodle'); });
@@ -3308,6 +3504,7 @@ async function sha256Hex(text){
       remove.addEventListener('click',()=>{ const i=allDoodles.findIndex(x=>x.id===d.id); allDoodles.splice(i,1); renderDoodlesFiltered(); const timer=setTimeout(async()=>{ try{ if(d.storage_path)await supabase.storage.from(DOODLES_BUCKET).remove([d.storage_path]); await supabase.from(DOODLES_TABLE).delete().eq('id',d.id); }catch(err){showToast('Could not remove doodle.',{type:'error'});} },5000); showToast('Doodle removed.',{actionLabel:'Undo',duration:5000,onAction:()=>{clearTimeout(timer);allDoodles.splice(i,0,d);renderDoodlesFiltered();}}); });
       doodlesGrid.appendChild(wrap);
     });
+    knownDoodleIds=currentIds;
   }
   function qOrEmptyDoodles(){ return doodlesSearchQuery.trim()?'no doodles match that search':'no doodles yet — draw one!'; }
   function exportDoodleBlob(){
@@ -3868,23 +4065,78 @@ async function sha256Hex(text){
   function applySeason(season){
     seasonalLayer.className = 'seasonal-layer' + (season === 'none' ? '' : ` ${season}`);
     seasonalLayer.innerHTML = '';
+    const isSmallScreen = window.innerWidth <= 480;
+    const scale = n => isSmallScreen ? Math.round(n * 0.4) : n;
     const settings = {
-      rain: { count: 28, symbols: [''] },
-      stars: { count: 34, symbols: ['✦','✧','⋆'] },
-      festival: { count: 18, symbols: ['🪔','🌸','🎊','✨'] },
-      night: { count: 52, symbols: ['·','✦','⋆'] }
+      rain: { count: scale(22), symbols: [''] },
+      snow: { count: scale(20), symbols: ['❄','❅','❆'] },
+      blossom: { count: scale(18), symbols: [''] },
+      autumn: { count: scale(16), symbols: [''] },
+      stars: { count: scale(28), symbols: ['✦','✧','⋆'] },
+      festival: { count: scale(14), symbols: ['🪔','🌸','🎊','✨'] },
+      night: { count: scale(40), symbols: ['·','✦','⋆'] }
     }[season];
     if (settings){
       for(let i=0;i<settings.count;i++){
         const piece=document.createElement('span');
-        piece.textContent=settings.symbols[i%settings.symbols.length];
-        if(season==='night') piece.className='night-star';
+        const symbol=settings.symbols[i%settings.symbols.length];
+        piece.textContent=symbol;
+        if(season==='night'){
+          piece.className='night-star'+(Math.random()<.16?' bright':'');
+        }
+        if(season==='festival'){
+          piece.className=symbol==='🪔'?'diya':(symbol==='✨'?'sparkle':'');
+        }
+        if(season==='autumn'){
+          piece.className='leaf';
+        }
         piece.style.left=`${Math.random()*100}%`;
-        piece.style.top=season === 'rain' ? `${-20-Math.random()*90}px` : `${Math.random()*90}%`;
-        piece.style.fontSize=season === 'rain' ? '1px' : `${.65+Math.random()*1.05}rem`;
-        piece.style.animationDuration=`${season === 'rain' ? 1.3+Math.random()*1.4 : 1.4+Math.random()*2.6}s`;
+        if(season === 'rain' || season === 'snow' || season === 'blossom' || season === 'autumn'){
+          piece.style.top=`${-15-Math.random()*90}px`;
+        } else {
+          piece.style.top=`${Math.random()*90}%`;
+        }
+        piece.style.fontSize = (season === 'rain' || season === 'blossom') ? '1px'
+          : season === 'snow' ? `${.55+Math.random()*.85}rem`
+          : `${.65+Math.random()*1.05}rem`;
+        piece.style.animationDuration = season === 'rain' ? `${1.3+Math.random()*1.4}s`
+          : season === 'snow' ? `${7+Math.random()*7}s`
+          : season === 'blossom' ? `${8+Math.random()*8}s`
+          : season === 'autumn' ? `${9+Math.random()*8}s`
+          : `${1.4+Math.random()*2.6}s`;
         piece.style.animationDelay=`${-Math.random()*3}s`;
+        if(season==='rain'){
+          piece.style.opacity=`${.4+Math.random()*.55}`;
+          piece.style.filter=(!isSmallScreen && Math.random()<.4)?'blur(.6px)':'none';
+        }
+        if(season==='snow'){
+          piece.style.opacity=`${.5+Math.random()*.5}`;
+        }
+        if(season==='blossom'){
+          const size=8+Math.random()*7;
+          piece.style.width=`${size}px`;
+          piece.style.height=`${size}px`;
+        }
+        if(season==='autumn'){
+          const leafColors=['#c9622b','#d98a3d','#a83e28','#e0a63e','#8c4a2b'];
+          const size=9+Math.random()*7;
+          piece.style.width=`${size}px`;
+          piece.style.height=`${size*1.25}px`;
+          piece.style.background=leafColors[i%leafColors.length];
+          piece.style.opacity=`${.75+Math.random()*.25}`;
+        }
         seasonalLayer.appendChild(piece);
+      }
+      if(season==='autumn'){
+        for(let i=0;i<scale(14);i++){
+          const drop=document.createElement('span');
+          drop.className='drizzle';
+          drop.style.left=`${Math.random()*100}%`;
+          drop.style.top=`${-20-Math.random()*90}px`;
+          drop.style.animationDuration=`${1.6+Math.random()*1.3}s`;
+          drop.style.animationDelay=`${-Math.random()*3}s`;
+          seasonalLayer.appendChild(drop);
+        }
       }
       if(season==='stars'){
         ['🎈','🎈','🎈','🎁','🎁'].forEach((symbol,index)=>{
@@ -3898,6 +4150,21 @@ async function sha256Hex(text){
           piece.style.animationDelay=`${-Math.random()*2}s`;
           seasonalLayer.appendChild(piece);
         });
+        const confettiColors=['#ff6f91','#ffc75f','#82e0aa','#7fd8ff','#c39bff','#ff9f68'];
+        for(let i=0;i<scale(18);i++){
+          const piece=document.createElement('span');
+          piece.className='confetti';
+          const color=confettiColors[i%confettiColors.length];
+          piece.style.left=`${Math.random()*100}%`;
+          piece.style.top=`${-10-Math.random()*40}px`;
+          const w=4+Math.random()*4;
+          piece.style.width=`${w}px`;
+          piece.style.height=`${w*.4+2}px`;
+          piece.style.background=color;
+          piece.style.animationDuration=`${3.5+Math.random()*3}s`;
+          piece.style.animationDelay=`${-Math.random()*6}s`;
+          seasonalLayer.appendChild(piece);
+        }
       }
       if(season==='night'){
         const moon=document.createElement('span');
@@ -3912,17 +4179,43 @@ async function sha256Hex(text){
         moon.title=`${moonNames[phase]} — updates daily`;
         moon.setAttribute('aria-label',moon.title);
         seasonalLayer.appendChild(moon);
-        for(let i=0;i<3;i++){
+        for(let i=0;i<(isSmallScreen?2:4);i++){
           const shooting=document.createElement('span');
           shooting.className='shooting-star';
-          shooting.style.left=`${45+Math.random()*46}%`;
-          shooting.style.top=`${8+Math.random()*45}%`;
-          shooting.style.setProperty('--shoot-duration',`${13+Math.random()*9}s`);
-          shooting.style.setProperty('--shoot-delay',`${-Math.random()*16}s`);
-          shooting.style.setProperty('--shoot-x',`${-150-Math.random()*190}px`);
-          shooting.style.setProperty('--shoot-y',`${110+Math.random()*130}px`);
+          shooting.style.left=`${5+Math.random()*70}%`;
+          shooting.style.top=`${4+Math.random()*48}%`;
+          const angle=-24-Math.random()*22;
+          const dist=180+Math.random()*220;
+          const tail=90+Math.random()*90;
+          shooting.style.setProperty('--angle',`${angle}deg`);
+          shooting.style.setProperty('--shoot-dist',`${dist}px`);
+          shooting.style.setProperty('--tail-len',`${tail}px`);
+          shooting.style.setProperty('--shoot-duration',`${7+Math.random()*8}s`);
+          shooting.style.setProperty('--shoot-delay',`${-Math.random()*15}s`);
           seasonalLayer.appendChild(shooting);
         }
+      }
+    }
+    if(season==='fireworks'){
+      const palettes=[
+        { core:'#fff6d8', colors:['#ff9ebb','#ffd873','#8fe3ff','#caa8ff','#9be6b0','#ffb37a'] },
+        { core:'#ffe9f2', colors:['#ff6f91','#ffe28a','#7fd8ff','#c9a6ff','#8be0a6','#ffb3a0'] },
+        { core:'#fff2c9', colors:['#ffd1e0','#fff1a8','#a7e8ff','#d8bbff','#b6f0c6','#ffc9a3'] },
+        { core:'#e8f7ff', colors:['#ff5d8f','#43e6c2','#5eb3ff','#ffb84d','#c084fc','#4ade80'] },
+        { core:'#fff0f5', colors:['#f472b6','#facc15','#38bdf8','#a78bfa','#34d399','#fb923c'] },
+        { core:'#fef3e2', colors:['#e11d48','#f59e0b','#0ea5e9','#8b5cf6','#10b981','#ec4899'] }
+      ];
+      const shuffled=[...palettes].sort(()=>Math.random()-.5);
+      for(let i=0;i<(isSmallScreen?4:7);i++){
+        const fw=document.createElement('span');
+        const palette=shuffled[i%shuffled.length];
+        fw.style.left=`${12+Math.random()*76}%`;
+        fw.style.setProperty('--rise',`${-(28+Math.random()*26)}vh`);
+        fw.style.setProperty('--core',palette.core);
+        palette.colors.forEach((c,ci)=>fw.style.setProperty(`--c${ci+1}`,c));
+        fw.style.animationDuration=`${3.2+Math.random()*2.4}s`;
+        fw.style.animationDelay=`${-Math.random()*6}s`;
+        seasonalLayer.appendChild(fw);
       }
     }
     seasonButtons.forEach(button=>button.classList.toggle('active',button.dataset.season===season));
@@ -4347,7 +4640,7 @@ async function sha256Hex(text){
         <div class="face front">
           <button class="fav-heart" type="button" aria-label="Toggle favorite">${photo.favorite ? '♥' : '♡'}</button>
           <div class="photo-frame">
-            <img src="${photo.src}" alt="A memory">
+            <img src="${photo.src}" alt="A memory" loading="lazy" decoding="async">
             ${(photo.surprise && !photo.revealed) ? '' : `<button class="expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>`}
             ${photo.mood ? `<span class="mood-badge">${photo.mood}</span>` : ''}
             ${(photo.surprise && !photo.revealed) ? `<canvas class="scratch-layer" aria-label="Scratch to reveal the surprise"></canvas><div class="scratch-hint"><span class="scratch-hint-emoji">🎁</span><span>${escapeHtml(photo.hintText || 'scratch to reveal')}</span></div>` : ''}
@@ -4557,7 +4850,7 @@ async function sha256Hex(text){
   function buildAmbientHearts(){
     const el = document.getElementById('ambient');
     const symbols = ['♥', '✿', '♡'];
-    for (let i = 0; i < 10; i++){
+    for (let i = 0; i < 8; i++){
       const s = document.createElement('span');
       s.textContent = symbols[i % symbols.length];
       s.style.left = (Math.random() * 100) + 'vw';
@@ -4566,19 +4859,6 @@ async function sha256Hex(text){
       s.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
       el.appendChild(s);
     }
-
-    // Pausing this animation while the page is actively being scrolled
-    // avoids the stutter some mobile browsers show when repainting an
-    // animated fixed-position layer during a scroll gesture. It resumes
-    // smoothly once scrolling settles. Only applied on mobile widths —
-    // desktop scrolling was already smooth without it.
-    let scrollPauseTimer = null;
-    window.addEventListener('scroll', () => {
-      if (window.innerWidth > 480) return;
-      el.classList.add('scroll-pause');
-      clearTimeout(scrollPauseTimer);
-      scrollPauseTimer = setTimeout(() => el.classList.remove('scroll-pause'), 150);
-    }, { passive: true });
   }
 
   /* ---------- live presence ----------
