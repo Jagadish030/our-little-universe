@@ -69,12 +69,7 @@
     transition: background 0.2s ease, color 0.2s ease;
   }
 
-  *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body{ overscroll-behavior-y: contain; }
-  .pull-reveal{ position:fixed; top:0; left:0; right:0; z-index:60; display:flex; align-items:center; justify-content:center; text-align:center; padding:1.3rem 1.6rem; background:linear-gradient(135deg,var(--rose),var(--gold)); color:#fff; font:1.25rem/1.4 'Caveat',cursive; transform:translateY(calc(-100% + 0px)); box-shadow:0 6px 18px rgba(0,0,0,.18); }
-  .pull-reveal p{ margin:0; max-width:420px; }
-  body.dark-mode .pull-reveal{ background:linear-gradient(135deg,var(--rose-deep),var(--gold)); color:#2c2432; }
-  button, a, input, textarea, select, [role="button"]{ -webkit-tap-highlight-color: transparent; outline: none; }
+  *{ box-sizing: border-box; }
 
   ::view-transition-old(root),
   ::view-transition-new(root){
@@ -1140,19 +1135,20 @@
   .author-toggle-row{ flex:0 0 100%; display:flex; justify-content:center; }
   .bucket-add .extra-author,.extras-form .extra-author{ width:auto; margin:0; }
   .date-field{ flex:1; min-width:150px; }
-  .date-input-wrap{ position:relative; flex:1; min-width:150px; }
-  .date-field input[type="date"]::-webkit-calendar-picker-indicator{ margin-left:-6px; padding:4px; }
-  .date-field input[type="date"]{ color:transparent; -webkit-text-fill-color:transparent; padding-right:.45rem; }
+  .date-field input[type="date"]{ color:var(--ink); -webkit-text-fill-color:var(--ink); }
   .date-field input[type="date"]::-webkit-datetime-edit,
   .date-field input[type="date"]::-webkit-datetime-edit-fields-wrapper,
   .date-field input[type="date"]::-webkit-datetime-edit-text,
   .date-field input[type="date"]::-webkit-datetime-edit-day-field,
   .date-field input[type="date"]::-webkit-datetime-edit-month-field,
-  .date-field input[type="date"]::-webkit-datetime-edit-year-field{ color:transparent !important; -webkit-text-fill-color:transparent !important; }
-  .date-display{ position:absolute; left:.75rem; top:50%; transform:translateY(-50%); pointer-events:none; font:1rem 'Quicksand',sans-serif; color:#8B7784; }
-  .date-display.has-value{ color:var(--ink); font-weight:600; }
-  body.dark-mode .date-display{ color:#746b78; }
-  body.dark-mode .date-display.has-value{ color:#302735; }
+  .date-field input[type="date"]::-webkit-datetime-edit-year-field{ color:var(--ink) !important; -webkit-text-fill-color:var(--ink) !important; opacity:1; }
+  body.dark-mode .date-field input[type="date"]{ color:#302735; -webkit-text-fill-color:#302735; }
+  body.dark-mode .date-field input[type="date"]::-webkit-datetime-edit,
+  body.dark-mode .date-field input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+  body.dark-mode .date-field input[type="date"]::-webkit-datetime-edit-text,
+  body.dark-mode .date-field input[type="date"]::-webkit-datetime-edit-day-field,
+  body.dark-mode .date-field input[type="date"]::-webkit-datetime-edit-month-field,
+  body.dark-mode .date-field input[type="date"]::-webkit-datetime-edit-year-field{ color:#302735 !important; -webkit-text-fill-color:#302735 !important; }
   .capsule-date-label{ display:block; margin:0 0 .28rem .15rem; color:var(--ink-soft); font:600 .72rem 'Quicksand',sans-serif; }
   .date-field input{ width:100%; min-width:0; }
   .bucket-add input{ flex:1; min-width:180px; }.bucket-item{ display:flex; align-items:center; gap:.55rem; font-family:'Caveat',cursive; font-size:1.15rem; }.bucket-item small{ font:600 .6rem 'Quicksand',sans-serif; color:var(--ink-soft); white-space:nowrap; }.bucket-item.done{ text-decoration:line-through; opacity:.55; }.bucket-remove{ margin-left:auto; border:0; background:none; color:var(--ink-soft); cursor:pointer; }
@@ -1182,9 +1178,6 @@
   .glass-pane{ position:relative; height:220px; border-radius:14px; margin-bottom:1rem; cursor:pointer; overflow:hidden; background:linear-gradient(135deg,rgba(255,255,255,.55),rgba(200,220,235,.35)); border:2px solid rgba(180,200,215,.6); box-shadow:inset 0 0 30px rgba(255,255,255,.5),0 4px 18px rgba(60,70,90,.18); display:flex; align-items:center; justify-content:center; transition:background .6s ease,border-color .6s ease; }
   .glass-pane.broken{ background:linear-gradient(135deg,rgba(255,214,228,.4),rgba(255,247,214,.32)); border-color:rgba(217,138,147,.4); cursor:default; }
   .glass-hint{ position:relative; z-index:1; color:#5b6b78; font:600 .85rem 'Quicksand',sans-serif; padding:0 1rem; text-align:center; transition:opacity .15s ease; }
-  .glass-tap-counter{ position:absolute; bottom:7px; right:9px; z-index:2; font:600 .62rem 'Quicksand',sans-serif; color:rgba(80,90,105,.8); background:rgba(255,255,255,.55); padding:1px 6px; border-radius:8px; pointer-events:none; opacity:0; transition:opacity .2s ease; }
-  .glass-tap-counter.visible{ opacity:1; }
-  body.dark-mode .glass-tap-counter{ color:rgba(230,225,235,.85); background:rgba(0,0,0,.28); }
   .glass-crack{ position:absolute; inset:0; width:100%; height:100%; }
   .glass-crack path{ fill:none; stroke:rgba(90,100,115,.85); stroke-width:2; stroke-linecap:round; }
   .glass-pane.cracking{ animation:glassShake .3s ease; }
@@ -1582,8 +1575,8 @@
 
   /* ---------- season dropdown (mobile only) ---------- */
   .season-menu{ display:none; position:relative; z-index:20; width:min(360px,92vw); margin:.9rem auto 0; }
-  .season-menu-trigger{ position:relative; width:100%; display:flex; align-items:center; justify-content:center; }
-  .season-menu-trigger .menu-caret{ position:absolute; right:1rem; font-size:.7rem; transition:transform .2s ease; }
+  .season-menu-trigger{ width:100%; justify-content:center; display:flex; align-items:center; gap:.4rem; }
+  .season-menu-trigger .menu-caret{ font-size:.7rem; transition:transform .2s ease; }
   .season-menu-trigger[aria-expanded="true"] .menu-caret{ transform:rotate(180deg); }
   .season-menu-popover{ display:grid; grid-template-columns:1fr 1fr; gap:.32rem; max-height:0; opacity:0; overflow:hidden; padding:0 .55rem; margin-top:0; border:1px solid transparent; border-radius:14px; background:var(--glass-bg-strong); backdrop-filter:blur(18px); box-shadow:0 14px 30px var(--shadow); transition:max-height .32s ease, opacity .26s ease, padding .32s ease, margin-top .32s ease; }
   .season-menu-popover.open{ max-height:70vh; opacity:1; padding:.55rem; margin-top:.55rem; border-color:var(--glass-border); overflow-y:auto; }
@@ -2216,10 +2209,6 @@
 </head>
 <body>
 
-<div class="pull-reveal" id="pullReveal" aria-hidden="true">
-  <p id="pullRevealText"></p>
-</div>
-
 <div class="pass-gate" id="passGate">
   <span class="pass-gate-sparkle">✦</span>
   <span class="pass-gate-sparkle">♥</span>
@@ -2308,7 +2297,7 @@
   </div>
   <div class="season-menu" id="seasonMenu">
     <button type="button" class="fav-filter-btn season-menu-trigger" id="seasonMenuBtn" aria-expanded="false" aria-controls="seasonMenuPopover" aria-haspopup="true">
-      <span id="seasonMenuLabel">✦ Themes</span><span class="menu-caret">⌄</span>
+      <span id="seasonMenuLabel">✦ Seasonal magic</span><span class="menu-caret">⌄</span>
     </button>
     <div class="season-menu-popover" id="seasonMenuPopover" role="menu">
       <button type="button" data-season="none">✦ None</button>
@@ -2430,7 +2419,7 @@
 </section>
 
 <section class="extras-wall hidden" id="moodsWall"><div class="notes-header"><h2>Mood Calendar</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Choose who is pinning, choose a mood, then tap a day. Tap your own pinned mood again to unpin it.</p><div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="moodAuthorToggle" aria-label="Choose mood author"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div><div class="mood-picker-row" id="calendarMoodPicker"></div><div class="calendar-nav"><button id="calendarPrev" type="button" aria-label="Previous month">‹</button><div class="calendar-title" id="calendarTitle"></div><button id="calendarNext" type="button" aria-label="Next month">›</button></div><div class="mood-calendar" id="moodCalendar"></div></div></section>
-<section class="extras-wall hidden" id="capsulesWall"><div class="notes-header"><h2>Time Capsules</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Leave something sweet for future you.</p><form class="extras-form" id="capsuleForm"><div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="capsuleAuthorToggle" aria-label="Choose capsule author"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div><div class="date-field"><label class="capsule-date-label" for="capsuleDate">Unlock date (DD-MM-YYYY)</label><div class="date-input-wrap"><input id="capsuleDate" type="date" required><span class="date-display" id="capsuleDateDisplay">dd - mm - yyyy</span></div></div><textarea id="capsuleMessage" maxlength="500" placeholder="A message for the future..." required></textarea><button type="submit">Seal capsule</button></form><ul class="capsule-list" id="capsuleList"></ul></div></section>
+<section class="extras-wall hidden" id="capsulesWall"><div class="notes-header"><h2>Time Capsules</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Leave something sweet for future you.</p><form class="extras-form" id="capsuleForm"><div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="capsuleAuthorToggle" aria-label="Choose capsule author"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div><div class="date-field"><label class="capsule-date-label" for="capsuleDate">Unlock date (DD-MM-YYYY)</label><input id="capsuleDate" type="date" required></div><textarea id="capsuleMessage" maxlength="500" placeholder="A message for the future..." required></textarea><button type="submit">Seal capsule</button></form><ul class="capsule-list" id="capsuleList"></ul></div></section>
 <section class="extras-wall hidden" id="bucketWall"><div class="notes-header"><h2>Our Bucket List</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Little dreams, big adventures, all in one place.</p><form class="bucket-add" id="bucketForm"><div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="bucketAuthorToggle" aria-label="Choose bucket list author"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div><input id="bucketInput" maxlength="180" placeholder="Add something to do together..." required><button type="submit">Add wish</button></form><ul class="bucket-list" id="bucketList"></ul></div></section>
 <section class="extras-wall hidden" id="constellationWall"><div class="notes-header"><h2>Our Memory Constellation</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Every star is a memory — tap one to revisit it.</p><div class="constellation-sky" id="constellationSky"></div></div></section>
 <section class="extras-wall hidden" id="gamesWall">
@@ -2541,7 +2530,6 @@
     <div class="glass-pane hidden" id="glassPane">
       <svg class="glass-crack" id="glassCrack" viewBox="0 0 300 220" preserveAspectRatio="none" aria-hidden="true"></svg>
       <p class="glass-hint" id="glassHint">tap the glass to break it</p>
-      <span class="glass-tap-counter" id="glassTapCounter"></span>
       <div class="glass-bloom" id="glassBloom" aria-hidden="true">
         <span>🤍</span><span>✦</span><span>💗</span><span>✧</span><span>🤍</span><span>💗</span><span>✦</span>
       </div>
@@ -2577,21 +2565,6 @@
   if (localStorage.getItem(THEME_KEY) === 'dark'){
     document.body.classList.add('dark-mode');
   }
-
-  /* ---------- pull-to-reveal compliments ----------
-     Add, remove, or rewrite any of these — one is shown at random each time
-     the compliment panel is pulled down. Keep them short so they fit nicely. */
-  const PULL_COMPLIMENTS = [
-    //"You make ordinary days feel like plot twists in the best story.",
-    "Your smile is my favorite notification.",
-    "I fall for you a little more every single day.",
-    "You're the best thing I never knew I needed.",
-    "Home isn't a place, it's wherever you are.",
-    "You make hard days feel a lot lighter.",
-    "Every memory in here is better because you're in it.",
-    "Ela puttesave intha andam ga.",
-    "Choopultho guchi guchi champake."
-  ];
 
   /* ---------- toast notifications ----------
      showToast(message) — simple info/error message, auto-dismisses.
@@ -3059,54 +3032,7 @@ async function sha256Hex(text){
     }
   }
 
-  /* ---------- glass crack sound ----------
-     A short filtered-noise crack plus a couple of high glassy tings,
-     generated the same way as the pin chime (no audio file needed). */
-  let glassNoiseBuffer = null;
-  function getGlassNoiseBuffer(){
-    if (glassNoiseBuffer) return glassNoiseBuffer;
-    const bufferSize = audioCtx.sampleRate * 0.25;
-    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i=0;i<bufferSize;i++){ data[i] = Math.random()*2-1; }
-    glassNoiseBuffer = buffer;
-    return buffer;
-  }
-  function playGlassTapSound(intensity){
-    try{
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      const now = audioCtx.currentTime;
-      const noise = audioCtx.createBufferSource();
-      noise.buffer = getGlassNoiseBuffer();
-      const bp = audioCtx.createBiquadFilter();
-      bp.type = 'bandpass';
-      bp.frequency.value = 2600 + Math.random()*1800;
-      bp.Q.value = 1.1;
-      const ng = audioCtx.createGain();
-      ng.gain.value = 0;
-      noise.connect(bp); bp.connect(ng); ng.connect(audioCtx.destination);
-      ng.gain.linearRampToValueAtTime(0.16 * Math.min(1.4, intensity), now + 0.005);
-      ng.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
-      noise.start(now); noise.stop(now + 0.13);
-      [1600 + Math.random()*900, 2500 + Math.random()*1200].forEach((freq, i) => {
-        const osc = audioCtx.createOscillator();
-        osc.type = 'triangle';
-        osc.frequency.value = freq;
-        const g = audioCtx.createGain();
-        g.gain.value = 0;
-        osc.connect(g); g.connect(audioCtx.destination);
-        const start = now + i * 0.012;
-        g.gain.linearRampToValueAtTime(0.05, start + 0.004);
-        g.gain.exponentialRampToValueAtTime(0.0001, start + 0.18);
-        osc.start(start); osc.stop(start + 0.2);
-      });
-    }catch(err){
-      console.error('Could not play glass tap sound:', err);
-    }
-  }
-
-
+  /* ---------- data layer ---------- */
   async function loadPhotos(){
     if (!supabase){ render(); return; }
     try{
@@ -3838,20 +3764,6 @@ async function sha256Hex(text){
   const moodAuthorToggle=document.getElementById('moodAuthorToggle'), capsuleAuthorToggle=document.getElementById('capsuleAuthorToggle'), bucketAuthorToggle=document.getElementById('bucketAuthorToggle'), calendarPrev=document.getElementById('calendarPrev'), calendarNext=document.getElementById('calendarNext');
   const featureMenu=document.getElementById('featureMenu'), featureMenuBtn=document.getElementById('featureMenuBtn');
   const capsuleForm=document.getElementById('capsuleForm'), capsuleDate=document.getElementById('capsuleDate'), capsuleMessage=document.getElementById('capsuleMessage'), capsuleList=document.getElementById('capsuleList');
-  const capsuleDateDisplay=document.getElementById('capsuleDateDisplay');
-  function updateCapsuleDateDisplay(){
-    if(capsuleDate.value){
-      const [y,m,d]=capsuleDate.value.split('-');
-      capsuleDateDisplay.textContent=`${d}-${m}-${y}`;
-      capsuleDateDisplay.classList.add('has-value');
-    }else{
-      capsuleDateDisplay.textContent='dd - mm - yyyy';
-      capsuleDateDisplay.classList.remove('has-value');
-    }
-  }
-  capsuleDate.addEventListener('input',updateCapsuleDateDisplay);
-  capsuleDate.addEventListener('change',updateCapsuleDateDisplay);
-  updateCapsuleDateDisplay();
   const bucketForm=document.getElementById('bucketForm'), bucketInput=document.getElementById('bucketInput'), bucketList=document.getElementById('bucketList'), constellationSky=document.getElementById('constellationSky');
   let selectedCalendarMood=CALENDAR_MOODS[0], allMoods=[], allCapsules=[], allBucketItems=[], extrasRealtimeStarted=false;
   let moodAuthor=localStorage.getItem('ourLittleUniverseMoodAuthor')==='2'?'2':'1', capsuleAuthor=localStorage.getItem('ourLittleUniverseCapsuleAuthor')==='2'?'2':'1', bucketAuthor=localStorage.getItem('ourLittleUniverseBucketAuthor')==='2'?'2':'1';
@@ -3916,7 +3828,7 @@ async function sha256Hex(text){
   calendarPrev.addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()-1,1);renderMoodCalendar();});calendarNext.addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+1,1);renderMoodCalendar();});
   function renderCapsules(){capsuleList.innerHTML='';if(!allCapsules.length){capsuleList.innerHTML='<li class="capsule-item locked">No time capsules yet — seal the first one.</li>';return;}const today=dateKey(new Date());allCapsules.forEach(c=>{const unlocked=c.unlock_date<=today,li=document.createElement('li');li.className='capsule-item'+(unlocked?'':' locked');const by=`By ${String(c.author||1)==='2'?'M':'J'}`;li.innerHTML=`${unlocked?`${escapeHtml(c.message)}<span class="capsule-date">${by} · Opened ${new Date(c.unlock_date+'T00:00:00').toLocaleDateString()}</span>`:`🔒 ${by}'s capsule · sealed until ${new Date(c.unlock_date+'T00:00:00').toLocaleDateString()}`}<button class="capsule-remove" type="button" aria-label="Delete this time capsule" title="Delete capsule">✕</button>`;li.querySelector('.capsule-remove').addEventListener('click',async()=>{if(!confirm('Delete this time capsule? This cannot be undone.'))return;const {error}=await supabase.from(CAPSULES_TABLE).delete().eq('id',c.id);if(error){console.error(error);showToast('Could not delete that capsule.',{type:'error'});return;}allCapsules=allCapsules.filter(item=>item.id!==c.id);renderCapsules();showToast('Time capsule deleted.');});capsuleList.appendChild(li);});}
   async function loadCapsules(){if(!supabase)return;try{const {data,error}=await supabase.from(CAPSULES_TABLE).select('*').order('unlock_date',{ascending:true});if(error)throw error;allCapsules=data||[];renderCapsules();}catch(e){console.error(e);showToast('Could not load time capsules.',{type:'error'});}}
-  capsuleForm.addEventListener('submit',async e=>{e.preventDefault();if(!supabase)return;const {data,error}=await supabase.from(CAPSULES_TABLE).insert({unlock_date:capsuleDate.value,message:capsuleMessage.value.trim(),author:Number(capsuleAuthor)}).select().single();if(error){showToast('Could not seal that capsule.',{type:'error'});return;}allCapsules.push(data);capsuleMessage.value='';capsuleDate.value='';updateCapsuleDateDisplay();renderCapsules();showToast('Time capsule sealed ✨');});
+  capsuleForm.addEventListener('submit',async e=>{e.preventDefault();if(!supabase)return;const {data,error}=await supabase.from(CAPSULES_TABLE).insert({unlock_date:capsuleDate.value,message:capsuleMessage.value.trim(),author:Number(capsuleAuthor)}).select().single();if(error){showToast('Could not seal that capsule.',{type:'error'});return;}allCapsules.push(data);capsuleMessage.value='';renderCapsules();showToast('Time capsule sealed ✨');});
   function renderBucket(){bucketList.innerHTML='';if(!allBucketItems.length){bucketList.innerHTML='<li class="bucket-item">No wishes yet — add one above.</li>';return;}allBucketItems.forEach(item=>{const li=document.createElement('li');li.className='bucket-item'+(item.completed?' done':'');li.innerHTML=`<input type="checkbox" ${item.completed?'checked':''} aria-label="Mark completed"><span>${escapeHtml(item.item)}</span><small>By ${String(item.author||1)==='2'?'M':'J'}</small><button class="bucket-remove" type="button" aria-label="Remove wish">✕</button>`;li.querySelector('input').addEventListener('change',async e=>{item.completed=e.target.checked;await supabase.from(BUCKET_LIST_TABLE).update({completed:item.completed}).eq('id',item.id);renderBucket();});li.querySelector('.bucket-remove').addEventListener('click',async()=>{await supabase.from(BUCKET_LIST_TABLE).delete().eq('id',item.id);allBucketItems=allBucketItems.filter(x=>x.id!==item.id);renderBucket();});bucketList.appendChild(li);});}
   async function loadBucket(){if(!supabase)return;try{const {data,error}=await supabase.from(BUCKET_LIST_TABLE).select('*').order('created_at',{ascending:false});if(error)throw error;allBucketItems=data||[];renderBucket();}catch(e){console.error(e);showToast('Could not load your bucket list.',{type:'error'});}}
   bucketForm.addEventListener('submit',async e=>{e.preventDefault();if(!supabase)return;const {data,error}=await supabase.from(BUCKET_LIST_TABLE).insert({item:bucketInput.value.trim(),author:Number(bucketAuthor)}).select().single();if(error){showToast('Could not add that wish.',{type:'error'});return;}allBucketItems.unshift(data);bucketInput.value='';renderBucket();});
@@ -4085,7 +3997,7 @@ async function sha256Hex(text){
   }
 
   /* ---------- break glass ---------- */
-  const breakGlassBtn=document.getElementById('breakGlassBtn'), glassModal=document.getElementById('glassModal'), glassModalClose=document.getElementById('glassModalClose'), glassAngerChoice=document.getElementById('glassAngerChoice'), glassPane=document.getElementById('glassPane'), glassCrackSvg=document.getElementById('glassCrack'), glassHint=document.getElementById('glassHint'), glassTapCounter=document.getElementById('glassTapCounter'), glassNote=document.getElementById('glassNote'), glassNoteText=document.getElementById('glassNoteText'), glassEditBtn=document.getElementById('glassEditBtn'), glassEditForm=document.getElementById('glassEditForm'), glassNoteInput=document.getElementById('glassNoteInput'), glassEditCancel=document.getElementById('glassEditCancel');
+  const breakGlassBtn=document.getElementById('breakGlassBtn'), glassModal=document.getElementById('glassModal'), glassModalClose=document.getElementById('glassModalClose'), glassAngerChoice=document.getElementById('glassAngerChoice'), glassPane=document.getElementById('glassPane'), glassCrackSvg=document.getElementById('glassCrack'), glassHint=document.getElementById('glassHint'), glassNote=document.getElementById('glassNote'), glassNoteText=document.getElementById('glassNoteText'), glassEditBtn=document.getElementById('glassEditBtn'), glassEditForm=document.getElementById('glassEditForm'), glassNoteInput=document.getElementById('glassNoteInput'), glassEditCancel=document.getElementById('glassEditCancel');
   const DEFAULT_GLASS_NOTE="Hey love. Whatever just happened, it doesn't change us. Let's breathe for a second — I love you more than I'm upset right now, and I'd rather work this out together than win it. Come find me when you're ready? 🤍";
   const ANGER_LEVELS = [
     { label: '😑 Mehh', taps: 10, intensity: 1 },
@@ -4104,8 +4016,6 @@ async function sha256Hex(text){
     glassPane.style.removeProperty('--shake-amt');
     glassHint.style.display='';
     glassHint.textContent='tap the glass to break it';
-    glassTapCounter.textContent='';
-    glassTapCounter.classList.remove('visible');
     glassNote.classList.add('hidden');
     glassEditForm.classList.add('hidden');
     glassAngerChoice.classList.remove('hidden');
@@ -4122,21 +4032,18 @@ async function sha256Hex(text){
       glassPane.style.setProperty('--shake-amt', glassLevel.intensity);
       glassHint.style.display = '';
       glassHint.textContent = 'tap the glass to break it';
-      glassTapCounter.textContent = '';
-      glassTapCounter.classList.remove('visible');
       glassAngerChoice.classList.add('hidden');
       glassPane.classList.remove('hidden');
     });
   });
 
   // Draws a small burst of jagged crack lines radiating from the exact spot tapped.
-  // Bigger/more branches for higher anger levels, and cracks grow larger as taps
-  // progress toward the total needed, so most of the glass looks shattered right at the end.
+  // Bigger/more branches for higher anger levels, and shorter individual cracks the
+  // more taps a level needs (so the glass still ends up fully shattered right on cue).
   function addGlassImpact(x, y){
     const level = glassLevel;
-    const progress = glassTapCount / level.taps;
-    const branches = Math.min(8, 2 + Math.round(level.intensity) + Math.round(progress*2) + (Math.random()<0.5?1:0));
-    const baseLen = Math.max(8, 280 / level.taps) * (0.85 + level.intensity*0.4) * (0.55 + progress*1.7);
+    const branches = Math.min(7, 2 + Math.round(level.intensity) + (Math.random()<0.5?1:0));
+    const baseLen = Math.max(8, 280 / level.taps) * (0.85 + level.intensity*0.4);
     for(let i=0;i<branches;i++){
       const angle = Math.random()*Math.PI*2;
       const len = baseLen*0.6 + Math.random()*baseLen*0.9;
@@ -4153,10 +4060,10 @@ async function sha256Hex(text){
       path.style.animation = `crackDraw ${Math.max(.16,.32/Math.sqrt(level.intensity))}s ease forwards`;
       path.style.animationDelay = (i*0.025)+'s';
     }
-    // extra hairline cracks nearby for angrier levels and later taps, for a denser shattered look
-    const extras = Math.round((level.intensity > 1.5 ? 1.2 : 0.6) + progress*2.2);
+    // extra hairline cracks nearby for angrier levels, for a denser shattered look
+    const extras = level.intensity > 1.5 ? (Math.random()<0.7?2:1) : (Math.random()<0.45?1:0);
     for(let j=0;j<extras;j++){
-      const a2 = Math.random()*Math.PI*2, len2 = (8+Math.random()*12) * (0.8+level.intensity*0.3) * (0.6+progress*1.4);
+      const a2 = Math.random()*Math.PI*2, len2 = (8+Math.random()*12) * (0.8+level.intensity*0.3);
       const path2 = document.createElementNS('http://www.w3.org/2000/svg','path');
       path2.setAttribute('d', `M${x.toFixed(1)} ${y.toFixed(1)} L${(x+Math.cos(a2)*len2).toFixed(1)} ${(y+Math.sin(a2)*len2).toFixed(1)}`);
       glassCrackSvg.appendChild(path2);
@@ -4175,14 +4082,12 @@ async function sha256Hex(text){
     const vbY = ((e.clientY - rect.top) / rect.height) * 220;
     glassTapCount++;
     addGlassImpact(vbX, vbY);
-    playGlassTapSound(glassLevel.intensity);
     glassPane.classList.remove('cracking'); void glassPane.offsetWidth; glassPane.classList.add('cracking');
-    glassHint.style.display='none';
-    glassTapCounter.textContent = `${glassTapCount}/${glassLevel.taps}`;
-    glassTapCounter.classList.add('visible');
-    if(glassTapCount >= glassLevel.taps){
+    if(glassTapCount < glassLevel.taps){
+      glassHint.textContent = `cracking... keep tapping (${glassTapCount}/${glassLevel.taps})`;
+    }else{
       glassBroken=true;
-      glassTapCounter.classList.remove('visible');
+      glassHint.style.display='none';
       setTimeout(()=>{ glassPane.classList.add('broken'); glassNote.classList.remove('hidden'); },450);
     }
   });
@@ -4816,7 +4721,7 @@ async function sha256Hex(text){
     }
     seasonButtons.forEach(button=>button.classList.toggle('active',button.dataset.season===season));
     const activeBtn = document.querySelector(`.season-picker [data-season="${season}"]`);
-    if (seasonMenuLabel) seasonMenuLabel.textContent = (season === 'none' || !activeBtn) ? '✦ Themes' : activeBtn.textContent;
+    if (seasonMenuLabel) seasonMenuLabel.textContent = activeBtn ? activeBtn.textContent : '✦ Seasonal magic';
     localStorage.setItem(SEASON_KEY,season);
   }
   seasonButtons.forEach(button=>button.addEventListener('click',()=>{ applySeason(button.dataset.season); seasonMenuPopover.classList.remove('open'); seasonMenuBtn.setAttribute('aria-expanded','false'); }));
@@ -4905,93 +4810,6 @@ async function sha256Hex(text){
     const idx = eligibleIndexes[Math.floor(Math.random() * eligibleIndexes.length)];
     openLightbox(idx);
   });
-
-  /* ---------- shake to shuffle ----------
-     Shaking the phone triggers the same "Surprise me" action as the button.
-     The button itself always stays on the page too. */
-  (function setupShakeToShuffle(){
-    let lastX=null, lastY=null, lastZ=null, lastShakeTime=0;
-    const SHAKE_THRESHOLD = 18, SHAKE_COOLDOWN = 1500;
-    function handleMotion(e){
-      if (!passGate.classList.contains('hidden')) return; // only once unlocked
-      const acc = e.accelerationIncludingGravity || e.acceleration;
-      if (!acc || acc.x === null) return;
-      const { x, y, z } = acc;
-      if (lastX === null){ lastX=x; lastY=y; lastZ=z; return; }
-      const delta = Math.abs(x-lastX) + Math.abs(y-lastY) + Math.abs(z-lastZ);
-      lastX=x; lastY=y; lastZ=z;
-      const now = Date.now();
-      if (delta > SHAKE_THRESHOLD && now - lastShakeTime > SHAKE_COOLDOWN){
-        lastShakeTime = now;
-        surpriseBtn.click();
-      }
-    }
-    if (typeof DeviceMotionEvent === 'undefined') return;
-    if (typeof DeviceMotionEvent.requestPermission === 'function'){
-      // iOS requires a user gesture before it will grant motion access
-      document.addEventListener('click', function requestOnce(){
-        DeviceMotionEvent.requestPermission().then(state => {
-          if (state === 'granted') window.addEventListener('devicemotion', handleMotion);
-        }).catch(() => {});
-        document.removeEventListener('click', requestOnce);
-      }, { once: true });
-    }else{
-      window.addEventListener('devicemotion', handleMotion);
-    }
-  })();
-
-  /* ---------- pull-to-reveal compliment ----------
-     Pulling down past the very top of the page (like pull-to-refresh)
-     peeks a random line from PULL_COMPLIMENTS above, then snaps back.
-     Edit that list near the top of this script to add your own. */
-  (function setupPullToReveal(){
-    const pullReveal = document.getElementById('pullReveal');
-    const pullRevealText = document.getElementById('pullRevealText');
-    let pullStartY = null, currentPullPx = 0, pullPanelHeight = 90, pullSnapTimeout = null;
-
-    function pickCompliment(){
-      return PULL_COMPLIMENTS[Math.floor(Math.random() * PULL_COMPLIMENTS.length)];
-    }
-    function setPullPosition(px, animate){
-      pullReveal.style.transition = animate ? 'transform .3s ease' : 'none';
-      pullReveal.style.transform = `translateY(calc(-100% + ${px}px))`;
-    }
-    function preparePullReveal(){
-      pullRevealText.textContent = pickCompliment();
-      setPullPosition(0, false);
-      pullPanelHeight = pullReveal.offsetHeight || 90;
-    }
-
-    document.addEventListener('touchstart', (e) => {
-      if (!passGate.classList.contains('hidden')) { pullStartY = null; return; }
-      if (window.scrollY > 0 || e.touches.length !== 1){ pullStartY = null; return; }
-      clearTimeout(pullSnapTimeout);
-      pullStartY = e.touches[0].clientY;
-      currentPullPx = 0;
-      preparePullReveal();
-    }, { passive: true });
-
-    document.addEventListener('touchmove', (e) => {
-      if (pullStartY === null) return;
-      if (window.scrollY > 0){ pullStartY = null; setPullPosition(0, true); return; }
-      const dy = e.touches[0].clientY - pullStartY;
-      if (dy <= 0){ currentPullPx = 0; setPullPosition(0, false); return; }
-      currentPullPx = Math.min(pullPanelHeight, dy * 0.55);
-      setPullPosition(currentPullPx, false);
-    }, { passive: true });
-
-    document.addEventListener('touchend', () => {
-      if (pullStartY === null) return;
-      if (currentPullPx >= pullPanelHeight * 0.6){
-        setPullPosition(pullPanelHeight, true);
-        pullSnapTimeout = setTimeout(() => setPullPosition(0, true), 2400);
-      }else{
-        setPullPosition(0, true);
-      }
-      pullStartY = null;
-      currentPullPx = 0;
-    }, { passive: true });
-  })();
 
   /* ---------- upload filters (opt-in per upload) ----------
      Each filter is just a CSS filter string applied via the canvas's
