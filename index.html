@@ -330,6 +330,19 @@
     100%{ transform: translate(var(--dx,0px), -110px) scale(1.3); opacity: 0; }
   }
 
+  .confetti-piece{
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 500;
+    pointer-events: none;
+    border-radius: 2px;
+    animation: confettiBurst 1.5s cubic-bezier(.15,.7,.3,1) forwards;
+  }
+  @keyframes confettiBurst{
+    0%{ transform: translate(0,0) rotate(0deg); opacity: 1; }
+    100%{ transform: translate(var(--cx,0px), var(--cy,140px)) rotate(var(--crot,360deg)); opacity: 0; }
+  }
+
   .cursor-trail-heart{
     position: fixed;
     z-index: 500;
@@ -1122,6 +1135,20 @@
   .author-toggle-row{ flex:0 0 100%; display:flex; justify-content:center; }
   .bucket-add .extra-author,.extras-form .extra-author{ width:auto; margin:0; }
   .date-field{ flex:1; min-width:150px; }
+  .date-field input[type="date"]{ color:var(--ink); -webkit-text-fill-color:var(--ink); }
+  .date-field input[type="date"]::-webkit-datetime-edit,
+  .date-field input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+  .date-field input[type="date"]::-webkit-datetime-edit-text,
+  .date-field input[type="date"]::-webkit-datetime-edit-day-field,
+  .date-field input[type="date"]::-webkit-datetime-edit-month-field,
+  .date-field input[type="date"]::-webkit-datetime-edit-year-field{ color:var(--ink) !important; -webkit-text-fill-color:var(--ink) !important; opacity:1; }
+  body.dark-mode .date-field input[type="date"]{ color:#302735; -webkit-text-fill-color:#302735; }
+  body.dark-mode .date-field input[type="date"]::-webkit-datetime-edit,
+  body.dark-mode .date-field input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+  body.dark-mode .date-field input[type="date"]::-webkit-datetime-edit-text,
+  body.dark-mode .date-field input[type="date"]::-webkit-datetime-edit-day-field,
+  body.dark-mode .date-field input[type="date"]::-webkit-datetime-edit-month-field,
+  body.dark-mode .date-field input[type="date"]::-webkit-datetime-edit-year-field{ color:#302735 !important; -webkit-text-fill-color:#302735 !important; }
   .capsule-date-label{ display:block; margin:0 0 .28rem .15rem; color:var(--ink-soft); font:600 .72rem 'Quicksand',sans-serif; }
   .date-field input{ width:100%; min-width:0; }
   .bucket-add input{ flex:1; min-width:180px; }.bucket-item{ display:flex; align-items:center; gap:.55rem; font-family:'Caveat',cursive; font-size:1.15rem; }.bucket-item small{ font:600 .6rem 'Quicksand',sans-serif; color:var(--ink-soft); white-space:nowrap; }.bucket-item.done{ text-decoration:line-through; opacity:.55; }.bucket-remove{ margin-left:auto; border:0; background:none; color:var(--ink-soft); cursor:pointer; }
@@ -1135,6 +1162,83 @@
   body.dark-mode .doodle-back .doodle-text, body.dark-mode .doodle-back .doodle-reply-input, body.dark-mode .doodle-back .note-flip-back-btn{ color:#3b2d38; } body.dark-mode .doodle-back .doodle-reply-input::placeholder{ color:#786575; }
   body.dark-mode .notes-close-btn{ background:#e3dce3; color:#241d28; border:1px solid #f7eaf5; box-shadow:0 2px 8px rgba(0,0,0,.35); font-weight:800; } body.dark-mode .notes-close-btn:hover{ background:#d9758b; color:white; }
   body.dark-mode .extra-author .toggle-letter{ color:#eaddea; opacity:.7; } body.dark-mode .bucket-item small{ color:#6f4e60; font-weight:800; }
+
+  /* ---------- break glass ---------- */
+  .break-glass-btn{ background:rgba(217,138,147,.12); }
+  .glass-modal{ position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; padding:1.2rem; background:rgba(20,14,18,.6); backdrop-filter:blur(4px); }
+  .glass-modal.hidden{ display:none; }
+  .glass-card{ position:relative; width:min(420px,100%); background:var(--white); border-radius:18px; padding:1.7rem 1.4rem 1.4rem; box-shadow:0 24px 60px rgba(0,0,0,.35); text-align:center; }
+  .glass-anger-choice.hidden{ display:none; }
+  .glass-anger-title{ font:1.25rem/1.4 'Caveat',cursive; color:var(--ink); margin:0 0 1rem; }
+  .glass-anger-options{ display:flex; flex-direction:column; gap:.55rem; }
+  .glass-anger-options button{ border:1px solid var(--glass-border); background:rgba(255,255,255,.55); border-radius:12px; padding:.65rem .8rem; font:600 .8rem 'Quicksand',sans-serif; color:var(--ink); cursor:pointer; text-align:left; line-height:1.3; transition:transform .15s ease,border-color .15s ease; }
+  .glass-anger-options button:hover{ border-color:var(--rose-deep); transform:translateY(-1px); }
+  body.dark-mode .glass-anger-options button{ background:rgba(255,255,255,.08); color:#f6eaf3; }
+  .glass-pane.hidden{ display:none; }
+  .glass-pane{ position:relative; height:220px; border-radius:14px; margin-bottom:1rem; cursor:pointer; overflow:hidden; background:linear-gradient(135deg,rgba(255,255,255,.55),rgba(200,220,235,.35)); border:2px solid rgba(180,200,215,.6); box-shadow:inset 0 0 30px rgba(255,255,255,.5),0 4px 18px rgba(60,70,90,.18); display:flex; align-items:center; justify-content:center; transition:background .6s ease,border-color .6s ease; }
+  .glass-pane.broken{ background:linear-gradient(135deg,rgba(255,214,228,.4),rgba(255,247,214,.32)); border-color:rgba(217,138,147,.4); cursor:default; }
+  .glass-hint{ position:relative; z-index:1; color:#5b6b78; font:600 .85rem 'Quicksand',sans-serif; padding:0 1rem; text-align:center; transition:opacity .15s ease; }
+  .glass-crack{ position:absolute; inset:0; width:100%; height:100%; }
+  .glass-crack path{ fill:none; stroke:rgba(90,100,115,.85); stroke-width:2; stroke-linecap:round; }
+  .glass-pane.cracking{ animation:glassShake .3s ease; }
+  @keyframes glassShake{ 0%,100%{ transform:translateX(0); } 20%{ transform:translateX(calc(-4px * var(--shake-amt,1))); } 40%{ transform:translateX(calc(4px * var(--shake-amt,1))); } 60%{ transform:translateX(calc(-3px * var(--shake-amt,1))); } 80%{ transform:translateX(calc(3px * var(--shake-amt,1))); } }
+  @keyframes crackDraw{ to{ stroke-dashoffset:0; } }
+  .glass-pane.broken .glass-crack{ opacity:0; transition:opacity .5s ease; }
+  .glass-bloom{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:.5rem .6rem; padding:0 1.6rem; opacity:0; pointer-events:none; }
+  .glass-bloom span{ font-size:1.5rem; color:var(--rose-deep); animation:glassFloat 3s ease-in-out infinite; }
+  .glass-bloom span:nth-child(2n){ animation-delay:.4s; font-size:1.2rem; }
+  .glass-bloom span:nth-child(3n){ animation-delay:.8s; font-size:1.7rem; }
+  .glass-bloom span:nth-child(5n){ animation-duration:3.6s; }
+  .glass-pane.broken .glass-bloom{ opacity:1; animation:glassBloomIn .6s ease forwards; }
+  @keyframes glassBloomIn{ from{ opacity:0; transform:scale(.8); } to{ opacity:1; transform:scale(1); } }
+  @keyframes glassFloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-10px); } }
+  .glass-note{ text-align:left; }
+  .glass-note.hidden{ display:none; }
+  .glass-note p{ font:1.25rem/1.4 'Caveat',cursive; color:var(--ink); margin:0 0 .8rem; white-space:pre-wrap; }
+  .glass-edit-btn{ border:0; background:none; color:var(--ink-soft); cursor:pointer; font:600 .72rem 'Quicksand',sans-serif; padding:0; }
+  .glass-edit-form{ margin-top:.6rem; }
+  .glass-edit-form.hidden{ display:none; }
+  .glass-edit-form textarea{ width:100%; box-sizing:border-box; min-height:100px; border:1px solid #E3D3C2; border-radius:10px; padding:.6rem .7rem; font:1rem 'Caveat',cursive; color:var(--ink); resize:vertical; color-scheme:light; }
+  body.dark-mode .glass-card{ background:#2c2432; }
+  body.dark-mode .glass-pane{ background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(140,160,180,.12)); border-color:rgba(200,200,220,.25); }
+  body.dark-mode .glass-pane.broken{ background:linear-gradient(135deg,rgba(227,145,159,.22),rgba(221,189,142,.18)); border-color:rgba(227,145,159,.35); }
+  body.dark-mode .glass-hint{ color:#cfd7dd; }
+  body.dark-mode .glass-edit-form textarea{ color:#302735; background:#dedbe0; }
+
+  /* ---------- mini games ---------- */
+  .game-hub p{ margin-bottom:.4rem; }
+  .game-choice-row{ display:flex; gap:.8rem; justify-content:center; flex-wrap:wrap; margin-top:.7rem; }
+  .game-choice-btn{ display:flex; flex-direction:column; align-items:center; gap:.25rem; width:150px; padding:1.1rem .8rem; border:1px solid var(--glass-border); border-radius:14px; background:rgba(255,255,255,.6); cursor:pointer; font-size:2rem; color:var(--ink); transition:transform .18s ease,border-color .18s ease; }
+  .game-choice-btn span{ font:700 .85rem 'Quicksand',sans-serif; }
+  .game-choice-btn small{ font:600 .68rem 'Quicksand',sans-serif; color:var(--ink-soft); }
+  .game-choice-btn:hover{ border-color:var(--rose-deep); transform:translateY(-2px); }
+  .game-view.hidden{ display:none; }
+  .game-back-btn{ border:0; background:none; color:var(--ink-soft); cursor:pointer; font:700 .78rem 'Quicksand',sans-serif; margin-bottom:.6rem; padding:0; }
+  .game-view-header{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.7rem; }
+  .game-view-header .author-toggle-row{ flex:0 0 auto; }
+  .memory-stats{ display:flex; gap:.7rem; font:700 .78rem 'Quicksand',sans-serif; color:var(--ink-soft); }
+  .memory-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:.5rem; }
+  .memory-card{ aspect-ratio:1; border-radius:10px; cursor:pointer; position:relative; perspective:600px; }
+  .memory-card-inner{ position:relative; width:100%; height:100%; transition:transform .4s cubic-bezier(.2,.9,.3,1); transform-style:preserve-3d; }
+  .memory-card.flipped .memory-card-inner,.memory-card.matched .memory-card-inner{ transform:rotateY(180deg); }
+  .memory-card-face{ position:absolute; inset:0; backface-visibility:hidden; border-radius:10px; display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:1.6rem; }
+  .memory-card-back{ background:linear-gradient(135deg,var(--rose),var(--gold)); color:white; font-size:1.4rem; }
+  .memory-card-front{ transform:rotateY(180deg); background:#fff; }
+  .memory-card-front img{ width:100%; height:100%; object-fit:cover; }
+  .memory-card.matched{ opacity:.55; }
+  .memory-leaderboard{ margin-top:1rem; font:600 .78rem 'Quicksand',sans-serif; color:var(--ink-soft); text-align:center; line-height:1.7; }
+  .memory-leaderboard b{ color:var(--ink); }
+  .ttt-status{ text-align:center; font:700 .85rem 'Quicksand',sans-serif; color:var(--ink); margin:0 0 .8rem; }
+  .ttt-board{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; width:min(260px,80vw); margin:0 auto .9rem; }
+  .ttt-cell{ aspect-ratio:1; border:1px solid rgba(138,101,78,.25); border-radius:10px; background:rgba(255,255,255,.65); font-size:2rem; font-weight:800; cursor:pointer; color:var(--rose-deep); display:flex; align-items:center; justify-content:center; }
+  .ttt-cell[data-v="2"]{ color:var(--sage); }
+  .ttt-cell:disabled{ cursor:default; }
+  .ttt-board + .author-toggle-row{ margin-bottom:.7rem; }
+  body.dark-mode .game-choice-btn{ background:rgba(255,255,255,.08); color:#f6eaf3; }
+  body.dark-mode .memory-card-back{ background:linear-gradient(135deg,var(--rose-deep),var(--gold)); }
+  body.dark-mode .ttt-cell{ background:rgba(255,255,255,.08); }
+  body.dark-mode .memory-leaderboard{ color:#c6b4c2; } body.dark-mode .memory-leaderboard b{ color:#f6eaf3; }
+
   .feature-menu{ position:relative; z-index:20; }.feature-menu-trigger{ display:inline-flex; align-items:center; gap:.4rem; }.feature-menu-trigger .menu-caret{ transition:transform .25s ease; }.feature-menu.open .menu-caret{ transform:rotate(180deg); }
   .feature-menu-popover{ position:absolute; top:calc(100% + .55rem); left:50%; width:min(275px, calc(100vw - 2rem)); transform:translate(-50%,-8px) scale(.96); opacity:0; visibility:hidden; pointer-events:none; padding:.5rem; border:1px solid var(--glass-border); border-radius:14px; background:var(--glass-bg-strong); backdrop-filter:blur(18px); box-shadow:0 14px 30px var(--shadow); transition:opacity .22s ease, transform .22s cubic-bezier(.2,.9,.3,1), visibility .22s; }
   .feature-menu.open .feature-menu-popover{ opacity:1; visibility:visible; pointer-events:auto; transform:translate(-50%,0) scale(1); }.feature-menu-popover button{ width:100%; border:0; border-radius:9px; background:transparent; color:var(--ink); text-align:left; padding:.65rem .75rem; cursor:pointer; font:600 .82rem 'Quicksand',sans-serif; }.feature-menu-popover button:hover,.feature-menu-popover button:focus-visible{ background:rgba(219,125,143,.16); outline:none; }.feature-menu-popover button + button{ margin-top:2px; } body.dark-mode .feature-menu-popover button{ color:#f6eaf3; } body.dark-mode .feature-menu-popover button:hover{ background:rgba(242,154,174,.2); }
@@ -1468,6 +1572,23 @@
   .season-picker span{ color:var(--ink-soft); font:600 .72rem 'Quicksand',sans-serif; margin-right:.15rem; }
   .season-picker button{ border:1px solid var(--glass-border); border-radius:999px; padding:.38rem .62rem; color:var(--ink); background:var(--glass-bg); font:600 .7rem 'Quicksand',sans-serif; cursor:pointer; }
   .season-picker button.active{ background:var(--rose-deep); color:var(--white); border-color:var(--rose-deep); }
+
+  /* ---------- season dropdown (mobile only) ---------- */
+  .season-menu{ display:none; position:relative; z-index:20; width:min(360px,92vw); margin:.9rem auto 0; }
+  .season-menu-trigger{ width:100%; justify-content:center; display:flex; align-items:center; gap:.4rem; }
+  .season-menu-trigger .menu-caret{ font-size:.7rem; transition:transform .2s ease; }
+  .season-menu-trigger[aria-expanded="true"] .menu-caret{ transform:rotate(180deg); }
+  .season-menu-popover{ display:grid; grid-template-columns:1fr 1fr; gap:.32rem; max-height:0; opacity:0; overflow:hidden; padding:0 .55rem; margin-top:0; border:1px solid transparent; border-radius:14px; background:var(--glass-bg-strong); backdrop-filter:blur(18px); box-shadow:0 14px 30px var(--shadow); transition:max-height .32s ease, opacity .26s ease, padding .32s ease, margin-top .32s ease; }
+  .season-menu-popover.open{ max-height:70vh; opacity:1; padding:.55rem; margin-top:.55rem; border-color:var(--glass-border); overflow-y:auto; }
+  .season-menu-popover button{ border:0; background:transparent; padding:.6rem .5rem; border-radius:9px; font:600 .74rem 'Quicksand',sans-serif; color:var(--ink); cursor:pointer; text-align:left; line-height:1.25; }
+  .season-menu-popover button:hover,.season-menu-popover button:focus-visible{ background:rgba(219,125,143,.16); outline:none; }
+  .season-menu-popover button.active{ background:var(--rose-deep); color:var(--white); }
+  body.dark-mode .season-menu-popover button{ color:#f6eaf3; }
+  body.dark-mode .season-menu-popover button:hover{ background:rgba(242,154,174,.2); }
+  @media (max-width:720px){
+    .season-picker{ display:none; }
+    .season-menu{ display:block; }
+  }
   .seasonal-layer{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; transform:translateZ(0); will-change:transform; contain:layout style paint; }
   .seasonal-layer span{ position:absolute; user-select:none; }
   .seasonal-layer.rain{ background:linear-gradient(180deg,rgba(30,42,58,.16),transparent 40%); }
@@ -2158,6 +2279,7 @@
     <button class="add-btn" id="heroAddBtn">+ Pin a new memory</button>
     <button class="fav-filter-btn" id="favFilterBtn" type="button">♡ Favorites only</button>
     <button class="fav-filter-btn" id="surpriseBtn" type="button">Surprise me 🎲</button>
+    <button class="fav-filter-btn break-glass-btn" id="breakGlassBtn" type="button">🔨 In case of a fight</button>
     <button class="music-btn" id="musicBtn" type="button" aria-label="Turn on music">🎵</button>
     <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">🌙</button>
   </div>
@@ -2172,6 +2294,22 @@
     <button type="button" data-season="stars">🎈 Birthday stars</button>
     <button type="button" data-season="night">🌙 Night sky</button>
     <button type="button" data-season="festival">🪔 Festival</button>
+  </div>
+  <div class="season-menu" id="seasonMenu">
+    <button type="button" class="fav-filter-btn season-menu-trigger" id="seasonMenuBtn" aria-expanded="false" aria-controls="seasonMenuPopover" aria-haspopup="true">
+      <span id="seasonMenuLabel">✦ Seasonal magic</span><span class="menu-caret">⌄</span>
+    </button>
+    <div class="season-menu-popover" id="seasonMenuPopover" role="menu">
+      <button type="button" data-season="none">✦ None</button>
+      <button type="button" data-season="rain">🌧️ Monsoon</button>
+      <button type="button" data-season="snow">❄️ Snowfall</button>
+      <button type="button" data-season="blossom">🌸 Cherry blossom</button>
+      <button type="button" data-season="fireworks">🎆 Fireworks</button>
+      <button type="button" data-season="autumn">🍂 Autumn drizzle</button>
+      <button type="button" data-season="stars">🎈 Birthday stars</button>
+      <button type="button" data-season="night">🌙 Night sky</button>
+      <button type="button" data-season="festival">🪔 Festival</button>
+    </div>
   </div>
   <div class="hero-actions secondary-row">
     <input type="text" id="searchInput" class="search-input" placeholder="🔍 search captions...">
@@ -2194,6 +2332,7 @@
         <button id="capsulesToggleBtn" type="button">⏳ Time Capsules</button>
         <button id="bucketToggleBtn" type="button">✨ Our Bucket List</button>
         <button id="constellationToggleBtn" type="button">✦ Memory Constellation</button>
+        <button id="gamesToggleBtn" type="button">🎮 Mini Games</button>
       </div>
     </div>
     <button class="fav-filter-btn" id="backupBtn" type="button">⬇ Backup everything</button>
@@ -2283,6 +2422,35 @@
 <section class="extras-wall hidden" id="capsulesWall"><div class="notes-header"><h2>Time Capsules</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Leave something sweet for future you.</p><form class="extras-form" id="capsuleForm"><div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="capsuleAuthorToggle" aria-label="Choose capsule author"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div><div class="date-field"><label class="capsule-date-label" for="capsuleDate">Unlock date (DD-MM-YYYY)</label><input id="capsuleDate" type="date" required></div><textarea id="capsuleMessage" maxlength="500" placeholder="A message for the future..." required></textarea><button type="submit">Seal capsule</button></form><ul class="capsule-list" id="capsuleList"></ul></div></section>
 <section class="extras-wall hidden" id="bucketWall"><div class="notes-header"><h2>Our Bucket List</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Little dreams, big adventures, all in one place.</p><form class="bucket-add" id="bucketForm"><div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="bucketAuthorToggle" aria-label="Choose bucket list author"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div><input id="bucketInput" maxlength="180" placeholder="Add something to do together..." required><button type="submit">Add wish</button></form><ul class="bucket-list" id="bucketList"></ul></div></section>
 <section class="extras-wall hidden" id="constellationWall"><div class="notes-header"><h2>Our Memory Constellation</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Every star is a memory — tap one to revisit it.</p><div class="constellation-sky" id="constellationSky"></div></div></section>
+<section class="extras-wall hidden" id="gamesWall">
+  <div class="notes-header"><h2>Mini Games</h2><button class="notes-close-btn extras-close" type="button">✕</button></div>
+  <div class="extras-card game-hub">
+    <div class="game-chooser" id="gameChooser">
+      <p>Pick something to play together — moves are saved, so you can each take a turn whenever you're free.</p>
+      <div class="game-choice-row">
+        <button type="button" class="game-choice-btn" id="chooseMemoryMatch">🧠<span>Memory Match</span><small>flip your own photos</small></button>
+        <button type="button" class="game-choice-btn" id="chooseTicTacToe">⭕<span>Tic Tac Toe</span><small>take turns, any time</small></button>
+      </div>
+    </div>
+    <div class="game-view hidden" id="memoryMatchView">
+      <button type="button" class="game-back-btn">‹ back to games</button>
+      <div class="game-view-header">
+        <div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="memoryAuthorToggle" aria-label="Choose who is playing"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div>
+        <div class="memory-stats"><span id="memoryMoves">0 moves</span><span id="memoryTimer">0:00</span></div>
+        <button type="button" class="fav-filter-btn" id="memoryRestartBtn">🔀 New shuffle</button>
+      </div>
+      <div class="memory-grid" id="memoryGrid"></div>
+      <div class="memory-leaderboard" id="memoryLeaderboard"></div>
+    </div>
+    <div class="game-view hidden" id="tictactoeView">
+      <button type="button" class="game-back-btn">‹ back to games</button>
+      <p class="ttt-status" id="tttStatus">Loading board...</p>
+      <div class="ttt-board" id="tttBoard"></div>
+      <div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="tttAuthorToggle" aria-label="Choose who is playing"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div>
+      <button type="button" class="fav-filter-btn" id="tttResetBtn">🔄 New game</button>
+    </div>
+  </div>
+</section>
 
 <div class="setup-banner" id="setupBanner">
 
@@ -2343,6 +2511,40 @@
     <label class="surprise-field-label" for="surpriseTextInput">Caption shown once it's revealed</label>
     <textarea id="surpriseTextInput" maxlength="150" placeholder="Surpriseeee !!!"></textarea>
     <button type="button" id="surpriseTextDone" class="add-btn">Save & back</button>
+  </div>
+</div>
+
+<div class="glass-modal hidden" id="glassModal">
+  <div class="glass-card">
+    <button class="style-modal-close" id="glassModalClose" type="button" aria-label="Close">✕</button>
+    <div class="glass-anger-choice" id="glassAngerChoice">
+      <p class="glass-anger-title">How angry are you right now?</p>
+      <div class="glass-anger-options">
+        <button type="button" data-level="0">😑 Mehh</button>
+        <button type="button" data-level="1">😕 Not that much</button>
+        <button type="button" data-level="2">😠 Angry</button>
+        <button type="button" data-level="3">🤬 Pichi lestundi nee meeda</button>
+        <button type="button" data-level="4">💥 Ayipoyindi nee bratuku ayipoyindi kutha chekkesta le neeku</button>
+      </div>
+    </div>
+    <div class="glass-pane hidden" id="glassPane">
+      <svg class="glass-crack" id="glassCrack" viewBox="0 0 300 220" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <p class="glass-hint" id="glassHint">tap the glass to break it</p>
+      <div class="glass-bloom" id="glassBloom" aria-hidden="true">
+        <span>🤍</span><span>✦</span><span>💗</span><span>✧</span><span>🤍</span><span>💗</span><span>✦</span>
+      </div>
+    </div>
+    <div class="glass-note hidden" id="glassNote">
+      <p id="glassNoteText"></p>
+      <button class="glass-edit-btn" id="glassEditBtn" type="button">✏️ Edit this note</button>
+      <form class="glass-edit-form hidden" id="glassEditForm">
+        <textarea id="glassNoteInput" maxlength="500" placeholder="Write something to read each other in the heat of the moment..."></textarea>
+        <div class="title-edit-actions">
+          <button type="submit" class="save-title-btn">Save</button>
+          <button type="button" class="cancel-title-btn" id="glassEditCancel">Cancel</button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -2425,6 +2627,10 @@
   const otdDismiss = document.getElementById('otdDismiss');
   const seasonalLayer = document.getElementById('seasonalLayer');
   const seasonButtons = document.querySelectorAll('[data-season]');
+  const seasonMenu = document.getElementById('seasonMenu');
+  const seasonMenuBtn = document.getElementById('seasonMenuBtn');
+  const seasonMenuPopover = document.getElementById('seasonMenuPopover');
+  const seasonMenuLabel = document.getElementById('seasonMenuLabel');
 
   const siteTitle = document.getElementById('siteTitle');
   const siteSubtitle = document.getElementById('siteSubtitle');
@@ -2728,7 +2934,34 @@ async function sha256Hex(text){
     }
   }
 
-  /* ---------- cursor trail of hearts (desktop only) ---------- */
+  // A colorful confetti burst — used for game wins (tic tac toe, etc).
+  function burstConfetti(originEl){
+    const rect = originEl.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const colors = ['#ff6f91','#ffc75f','#82e0aa','#7fd8ff','#c39bff','#ff9f68','#ff5d8f'];
+    for (let i = 0; i < 40; i++){
+      const p = document.createElement('span');
+      p.className = 'confetti-piece';
+      const color = colors[i % colors.length];
+      p.style.background = color;
+      const w = 5 + Math.random() * 5;
+      p.style.width = w + 'px';
+      p.style.height = (w * .5 + 3) + 'px';
+      p.style.left = cx + 'px';
+      p.style.top = cy + 'px';
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 60 + Math.random() * 140;
+      p.style.setProperty('--cx', (Math.cos(angle) * dist) + 'px');
+      p.style.setProperty('--cy', (Math.sin(angle) * dist + 60 + Math.random() * 60) + 'px');
+      p.style.setProperty('--crot', (Math.random() * 720 - 360) + 'deg');
+      p.style.animationDelay = (Math.random() * 0.2) + 's';
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 1900);
+    }
+  }
+
+
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const supportsHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
@@ -3525,8 +3758,8 @@ async function sha256Hex(text){
   /* ---------- mood calendar, capsules, bucket list & constellation ---------- */
   const MOODS_TABLE = 'daily_moods', CAPSULES_TABLE = 'time_capsules', BUCKET_LIST_TABLE = 'bucket_list';
   const CALENDAR_MOODS = ['😊','🥰','🥴','😢','😤','🎉','😴','🫩'];
-  const moodsToggleBtn=document.getElementById('moodsToggleBtn'), capsulesToggleBtn=document.getElementById('capsulesToggleBtn'), bucketToggleBtn=document.getElementById('bucketToggleBtn'), constellationToggleBtn=document.getElementById('constellationToggleBtn');
-  const moodsWall=document.getElementById('moodsWall'), capsulesWall=document.getElementById('capsulesWall'), bucketWall=document.getElementById('bucketWall'), constellationWall=document.getElementById('constellationWall');
+  const moodsToggleBtn=document.getElementById('moodsToggleBtn'), capsulesToggleBtn=document.getElementById('capsulesToggleBtn'), bucketToggleBtn=document.getElementById('bucketToggleBtn'), constellationToggleBtn=document.getElementById('constellationToggleBtn'), gamesToggleBtn=document.getElementById('gamesToggleBtn');
+  const moodsWall=document.getElementById('moodsWall'), capsulesWall=document.getElementById('capsulesWall'), bucketWall=document.getElementById('bucketWall'), constellationWall=document.getElementById('constellationWall'), gamesWall=document.getElementById('gamesWall');
   const calendarMoodPicker=document.getElementById('calendarMoodPicker'), moodCalendar=document.getElementById('moodCalendar'), calendarTitle=document.getElementById('calendarTitle');
   const moodAuthorToggle=document.getElementById('moodAuthorToggle'), capsuleAuthorToggle=document.getElementById('capsuleAuthorToggle'), bucketAuthorToggle=document.getElementById('bucketAuthorToggle'), calendarPrev=document.getElementById('calendarPrev'), calendarNext=document.getElementById('calendarNext');
   const featureMenu=document.getElementById('featureMenu'), featureMenuBtn=document.getElementById('featureMenuBtn');
@@ -3535,7 +3768,7 @@ async function sha256Hex(text){
   let selectedCalendarMood=CALENDAR_MOODS[0], allMoods=[], allCapsules=[], allBucketItems=[], extrasRealtimeStarted=false;
   let moodAuthor=localStorage.getItem('ourLittleUniverseMoodAuthor')==='2'?'2':'1', capsuleAuthor=localStorage.getItem('ourLittleUniverseCapsuleAuthor')==='2'?'2':'1', bucketAuthor=localStorage.getItem('ourLittleUniverseBucketAuthor')==='2'?'2':'1';
   let calendarCursor=new Date(new Date().getFullYear(),new Date().getMonth(),1);
-  const extrasWalls=[moodsWall,capsulesWall,bucketWall,constellationWall];
+  const extrasWalls=[moodsWall,capsulesWall,bucketWall,constellationWall,gamesWall];
   function closeFeatureMenu(){ featureMenu.classList.remove('open'); featureMenuBtn.setAttribute('aria-expanded','false'); }
   featureMenuBtn.addEventListener('click',()=>{ const opening=!featureMenu.classList.contains('open'); featureMenu.classList.toggle('open',opening); featureMenuBtn.setAttribute('aria-expanded',String(opening)); });
   featureMenu.addEventListener('click',(e)=>{ if(e.target.closest('#featureMenuPopover button')) closeFeatureMenu(); });
@@ -3543,7 +3776,7 @@ async function sha256Hex(text){
   document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeFeatureMenu(); });
   function closeExtras(){ extrasWalls.forEach(w=>w.classList.add('hidden')); }
   function openExtra(wall){ closeExtras(); notesWall.classList.add('hidden'); doodlesWall.classList.add('hidden'); wall.classList.remove('hidden'); }
-  const littleThingsWalls=[doodlesWall,moodsWall,capsulesWall,bucketWall,constellationWall];
+  const littleThingsWalls=[doodlesWall,moodsWall,capsulesWall,bucketWall,constellationWall,gamesWall];
   function openLittleThing(index){
     const wall=littleThingsWalls[(index+littleThingsWalls.length)%littleThingsWalls.length];
     if(wall===doodlesWall){
@@ -3555,6 +3788,7 @@ async function sha256Hex(text){
       if(wall===capsulesWall) loadCapsules();
       if(wall===bucketWall) loadBucket();
       if(wall===constellationWall) renderConstellation();
+      if(wall===gamesWall) showGameChooser();
     }
   }
   littleThingsWalls.forEach((wall,index)=>{
@@ -3599,9 +3833,275 @@ async function sha256Hex(text){
   async function loadBucket(){if(!supabase)return;try{const {data,error}=await supabase.from(BUCKET_LIST_TABLE).select('*').order('created_at',{ascending:false});if(error)throw error;allBucketItems=data||[];renderBucket();}catch(e){console.error(e);showToast('Could not load your bucket list.',{type:'error'});}}
   bucketForm.addEventListener('submit',async e=>{e.preventDefault();if(!supabase)return;const {data,error}=await supabase.from(BUCKET_LIST_TABLE).insert({item:bucketInput.value.trim(),author:Number(bucketAuthor)}).select().single();if(error){showToast('Could not add that wish.',{type:'error'});return;}allBucketItems.unshift(data);bucketInput.value='';renderBucket();});
   function renderConstellation(){constellationSky.innerHTML='';if(!photos.length){const p=document.createElement('p');p.className='constellation-empty';p.textContent='Pin some memories first, then your sky will fill with stars ✦';constellationSky.appendChild(p);return;}photos.forEach((p,i)=>{const star=document.createElement('button');star.type='button';star.className='constellation-star';star.style.left=`${15+((i*37)%70)}%`;star.style.top=`${20+((i*53)%65)}%`;star.dataset.label=(p.caption||'A memory').slice(0,32);star.setAttribute('aria-label',`Open memory ${i+1}`);star.addEventListener('click',()=>{currentList=photos;openLightbox(i);});constellationSky.appendChild(star);});}
-  moodsToggleBtn.addEventListener('click',()=>{openExtra(moodsWall);loadMoods();});capsulesToggleBtn.addEventListener('click',()=>{openExtra(capsulesWall);loadCapsules();});bucketToggleBtn.addEventListener('click',()=>{openExtra(bucketWall);loadBucket();});constellationToggleBtn.addEventListener('click',()=>{openExtra(constellationWall);renderConstellation();});document.querySelectorAll('.extras-close').forEach(b=>b.addEventListener('click',closeExtras));notesToggleBtn.addEventListener('click',closeExtras);doodlesToggleBtn.addEventListener('click',closeExtras);
+  moodsToggleBtn.addEventListener('click',()=>{openExtra(moodsWall);loadMoods();});capsulesToggleBtn.addEventListener('click',()=>{openExtra(capsulesWall);loadCapsules();});bucketToggleBtn.addEventListener('click',()=>{openExtra(bucketWall);loadBucket();});constellationToggleBtn.addEventListener('click',()=>{openExtra(constellationWall);renderConstellation();});gamesToggleBtn.addEventListener('click',()=>{openExtra(gamesWall);showGameChooser();});document.querySelectorAll('.extras-close').forEach(b=>b.addEventListener('click',closeExtras));notesToggleBtn.addEventListener('click',closeExtras);doodlesToggleBtn.addEventListener('click',closeExtras);
   function startExtrasRealtime(){if(!supabase||extrasRealtimeStarted)return;extrasRealtimeStarted=true;[MOODS_TABLE,CAPSULES_TABLE,BUCKET_LIST_TABLE].forEach(table=>supabase.channel(`extras-${table}`).on('postgres_changes',{event:'*',schema:'public',table},()=>{if(!moodsWall.classList.contains('hidden')&&table===MOODS_TABLE)loadMoods();if(!capsulesWall.classList.contains('hidden')&&table===CAPSULES_TABLE)loadCapsules();if(!bucketWall.classList.contains('hidden')&&table===BUCKET_LIST_TABLE)loadBucket();}).subscribe());}
   startExtrasRealtime();
+
+  /* ---------- mini games ---------- */
+  const GAME_SCORES_TABLE='game_scores', TTT_TABLE='tictactoe_game';
+  const gameChooser=document.getElementById('gameChooser'), memoryMatchView=document.getElementById('memoryMatchView'), tictactoeView=document.getElementById('tictactoeView');
+  const chooseMemoryMatch=document.getElementById('chooseMemoryMatch'), chooseTicTacToe=document.getElementById('chooseTicTacToe');
+  const memoryGrid=document.getElementById('memoryGrid'), memoryMovesEl=document.getElementById('memoryMoves'), memoryTimerEl=document.getElementById('memoryTimer'), memoryRestartBtn=document.getElementById('memoryRestartBtn'), memoryLeaderboard=document.getElementById('memoryLeaderboard'), memoryAuthorToggle=document.getElementById('memoryAuthorToggle');
+  const tttBoard=document.getElementById('tttBoard'), tttStatus=document.getElementById('tttStatus'), tttResetBtn=document.getElementById('tttResetBtn'), tttAuthorToggle=document.getElementById('tttAuthorToggle');
+
+  function showGameChooser(){ gameChooser.classList.remove('hidden'); memoryMatchView.classList.add('hidden'); tictactoeView.classList.add('hidden'); }
+  function openMemoryMatch(){ gameChooser.classList.add('hidden'); tictactoeView.classList.add('hidden'); memoryMatchView.classList.remove('hidden'); startNewMemoryGame(); loadMemoryLeaderboard(); }
+  function openTicTacToe(){ gameChooser.classList.add('hidden'); memoryMatchView.classList.add('hidden'); tictactoeView.classList.remove('hidden'); loadTicTacToe(); startTttRealtime(); }
+  chooseMemoryMatch.addEventListener('click',openMemoryMatch);
+  chooseTicTacToe.addEventListener('click',openTicTacToe);
+  document.querySelectorAll('.game-back-btn').forEach(b=>b.addEventListener('click',()=>{ clearInterval(memoryTimerInterval); showGameChooser(); }));
+
+  /* memory match */
+  let memoryAuthor=localStorage.getItem('ourLittleUniverseMemoryAuthor')==='2'?'2':'1';
+  function setMemoryAuthor(v){ memoryAuthor=v; localStorage.setItem('ourLittleUniverseMemoryAuthor',v); memoryAuthorToggle.dataset.author=v; memoryAuthorToggle.setAttribute('aria-label',`Currently playing as By ${v==='2'?'M':'J'} — tap to switch`); }
+  memoryAuthorToggle.addEventListener('click',()=>setMemoryAuthor(memoryAuthor==='1'?'2':'1'));
+  setMemoryAuthor(memoryAuthor);
+  let memoryDeck=[], memoryFlippedCards=[], memoryBusy=false, memoryMoves=0, memoryStartTime=0, memoryTimerInterval=null;
+  function buildMemoryDeck(){
+    const shuffledPhotos=[...photos].sort(()=>Math.random()-.5).slice(0,8);
+    let pairSources;
+    if(shuffledPhotos.length>=3){ pairSources=shuffledPhotos.map(p=>({key:'p'+p.id,img:p.src})); }
+    else{ const fallback=['🌸','🌙','⭐','🍓','🎈','🦋']; pairSources=fallback.map((e,i)=>({key:'f'+i,emoji:e})); }
+    const deck=[...pairSources,...pairSources].map((c,i)=>({...c,uid:i,flipped:false,matched:false}));
+    for(let i=deck.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [deck[i],deck[j]]=[deck[j],deck[i]]; }
+    return deck;
+  }
+  function renderMemoryGrid(){
+    memoryGrid.innerHTML='';
+    memoryDeck.forEach(card=>{
+      const el=document.createElement('div');
+      el.className='memory-card'; el.dataset.uid=card.uid;
+      el.innerHTML=`<div class="memory-card-inner"><div class="memory-card-face memory-card-back">?</div><div class="memory-card-face memory-card-front">${card.img?`<img src="${escapeHtml(card.img)}" alt="">`:card.emoji}</div></div>`;
+      el.addEventListener('click',()=>flipMemoryCard(card.uid));
+      memoryGrid.appendChild(el);
+    });
+  }
+  function updateMemoryCardEl(card){
+    const el=memoryGrid.querySelector(`.memory-card[data-uid="${card.uid}"]`);
+    if(!el) return;
+    el.classList.toggle('flipped',card.flipped);
+    el.classList.toggle('matched',card.matched);
+  }
+  function startMemoryTimer(){
+    memoryStartTime=Date.now();
+    clearInterval(memoryTimerInterval);
+    memoryTimerInterval=setInterval(()=>{
+      const s=Math.floor((Date.now()-memoryStartTime)/1000);
+      memoryTimerEl.textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+    },500);
+  }
+  function startNewMemoryGame(){
+    memoryDeck=buildMemoryDeck();
+    memoryFlippedCards=[]; memoryBusy=false; memoryMoves=0;
+    memoryMovesEl.textContent='0 moves';
+    renderMemoryGrid();
+    startMemoryTimer();
+  }
+  function flipMemoryCard(uid){
+    if(memoryBusy) return;
+    const card=memoryDeck.find(c=>c.uid===uid);
+    if(!card||card.flipped||card.matched) return;
+    card.flipped=true; updateMemoryCardEl(card);
+    memoryFlippedCards.push(card);
+    if(memoryFlippedCards.length===2){
+      memoryMoves++; memoryMovesEl.textContent=`${memoryMoves} move${memoryMoves===1?'':'s'}`;
+      memoryBusy=true;
+      const [a,b]=memoryFlippedCards;
+      const isMatch=a.key===b.key;
+      setTimeout(()=>{
+        if(isMatch){ a.matched=true; b.matched=true; }
+        else{ a.flipped=false; b.flipped=false; }
+        updateMemoryCardEl(a); updateMemoryCardEl(b);
+        memoryFlippedCards=[]; memoryBusy=false;
+        if(memoryDeck.every(c=>c.matched)) finishMemoryGame();
+      }, isMatch?450:800);
+    }
+  }
+  async function finishMemoryGame(){
+    clearInterval(memoryTimerInterval);
+    const seconds=Math.floor((Date.now()-memoryStartTime)/1000);
+    showToast(`Cleared the board in ${memoryMoves} moves — nice! 🎉`);
+    if(!supabase) return;
+    try{ await supabase.from(GAME_SCORES_TABLE).insert({game:'memory',author:Number(memoryAuthor),moves:memoryMoves,seconds}); loadMemoryLeaderboard(); }
+    catch(err){ console.error('Could not save score:',err); }
+  }
+  async function loadMemoryLeaderboard(){
+    if(!supabase) return;
+    try{
+      const {data,error}=await supabase.from(GAME_SCORES_TABLE).select('*').eq('game','memory').order('seconds',{ascending:true}).limit(5);
+      if(error) throw error;
+      if(!data||!data.length){ memoryLeaderboard.innerHTML='No best times yet — be the first!'; return; }
+      memoryLeaderboard.innerHTML='<b>Best times</b><br>'+data.map((s,i)=>`${i+1}. By ${Number(s.author)===2?'M':'J'} — ${s.moves} moves, ${Math.floor(s.seconds/60)}:${String(s.seconds%60).padStart(2,'0')}`).join('<br>');
+    }catch(e){ console.error('Could not load leaderboard. Run the games SQL setup first.',e); }
+  }
+  memoryRestartBtn.addEventListener('click',startNewMemoryGame);
+
+  /* tic tac toe (async, turn-based) */
+  let tttAuthor=localStorage.getItem('ourLittleUniverseTttAuthor')==='2'?'2':'1', tttBoardState=Array(9).fill(null), tttTurn=1, tttWinner=null, tttRealtimeStarted=false;
+  function setTttAuthor(v){ tttAuthor=v; localStorage.setItem('ourLittleUniverseTttAuthor',v); tttAuthorToggle.dataset.author=v; tttAuthorToggle.setAttribute('aria-label',`Currently playing as By ${v==='2'?'M':'J'} — tap to switch`); renderTicTacToe(); }
+  tttAuthorToggle.addEventListener('click',()=>setTttAuthor(tttAuthor==='1'?'2':'1'));
+  setTttAuthor(tttAuthor);
+  function checkTttWinner(board){
+    const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for(const [a,b,c] of lines){ if(board[a]&&String(board[a])===String(board[b])&&String(board[a])===String(board[c])) return board[a]; }
+    if(board.every(v=>v)) return 'draw';
+    return null;
+  }
+  async function loadTicTacToe(){
+    if(!supabase) return;
+    tttStatus.textContent='Loading board...';
+    try{
+      const {data,error}=await supabase.from(TTT_TABLE).select('*').eq('id',1).maybeSingle();
+      if(error) throw error;
+      if(data){ tttBoardState=data.board||Array(9).fill(null); tttTurn=data.turn||1; tttWinner=data.winner||null; }
+      else{ tttBoardState=Array(9).fill(null); tttTurn=1; tttWinner=null; }
+      renderTicTacToe();
+    }catch(e){ console.error(e); showToast('Could not load the game. Run the games SQL setup first.',{type:'error'}); }
+  }
+  function renderTicTacToe(){
+    tttBoard.innerHTML='';
+    tttBoardState.forEach((v,i)=>{
+      const cell=document.createElement('button');
+      cell.type='button'; cell.className='ttt-cell'; cell.dataset.v=v||'';
+      cell.textContent=String(v)==='1'?'♥':String(v)==='2'?'✦':'';
+      cell.disabled=!!v||!!tttWinner||Number(tttAuthor)!==Number(tttTurn);
+      cell.addEventListener('click',()=>playTttMove(i));
+      tttBoard.appendChild(cell);
+    });
+    if(tttWinner==='draw') tttStatus.textContent="It's a draw! Tap New game to play again.";
+    else if(tttWinner) tttStatus.textContent=`${Number(tttWinner)===2?'M':'J'} wins! 🎉`;
+    else tttStatus.textContent = Number(tttAuthor)===Number(tttTurn) ? 'Your move ✦' : `Waiting for ${Number(tttTurn)===2?'M':'J'}'s move...`;
+  }
+  async function playTttMove(i){
+    if(!supabase||tttBoardState[i]||tttWinner||Number(tttAuthor)!==Number(tttTurn)) return;
+    const board=[...tttBoardState]; board[i]=tttAuthor;
+    const winner=checkTttWinner(board);
+    const nextTurn=Number(tttTurn)===1?2:1;
+    const {error}=await supabase.from(TTT_TABLE).upsert({id:1,board,turn:winner?tttTurn:nextTurn,winner:winner||null,updated_at:new Date().toISOString()});
+    if(error){ console.error(error); showToast('Could not save your move.',{type:'error'}); return; }
+    tttBoardState=board; tttWinner=winner; tttTurn=winner?tttTurn:nextTurn;
+    renderTicTacToe();
+    if(winner && winner!=='draw') burstConfetti(tttBoard);
+  }
+  tttResetBtn.addEventListener('click', async ()=>{
+    if(!supabase) return;
+    const board=Array(9).fill(null);
+    const {error}=await supabase.from(TTT_TABLE).upsert({id:1,board,turn:1,winner:null,updated_at:new Date().toISOString()});
+    if(error){ showToast('Could not start a new game.',{type:'error'}); return; }
+    tttBoardState=board; tttTurn=1; tttWinner=null; renderTicTacToe();
+  });
+  function startTttRealtime(){
+    if(!supabase||tttRealtimeStarted) return;
+    tttRealtimeStarted=true;
+    supabase.channel('tictactoe-game').on('postgres_changes',{event:'*',schema:'public',table:TTT_TABLE},()=>{ if(!gamesWall.classList.contains('hidden')&&!tictactoeView.classList.contains('hidden')) loadTicTacToe(); }).subscribe();
+  }
+
+  /* ---------- break glass ---------- */
+  const breakGlassBtn=document.getElementById('breakGlassBtn'), glassModal=document.getElementById('glassModal'), glassModalClose=document.getElementById('glassModalClose'), glassAngerChoice=document.getElementById('glassAngerChoice'), glassPane=document.getElementById('glassPane'), glassCrackSvg=document.getElementById('glassCrack'), glassHint=document.getElementById('glassHint'), glassNote=document.getElementById('glassNote'), glassNoteText=document.getElementById('glassNoteText'), glassEditBtn=document.getElementById('glassEditBtn'), glassEditForm=document.getElementById('glassEditForm'), glassNoteInput=document.getElementById('glassNoteInput'), glassEditCancel=document.getElementById('glassEditCancel');
+  const DEFAULT_GLASS_NOTE="Hey love. Whatever just happened, it doesn't change us. Let's breathe for a second — I love you more than I'm upset right now, and I'd rather work this out together than win it. Come find me when you're ready? 🤍";
+  const ANGER_LEVELS = [
+    { label: '😑 Mehh', taps: 10, intensity: 1 },
+    { label: '😕 Not that much', taps: 20, intensity: 1.35 },
+    { label: '😠 Angry', taps: 30, intensity: 1.7 },
+    { label: '🤬 Pichi lestundi nee meeda', taps: 40, intensity: 2.2 },
+    { label: '💥 Ayipoyindi nee bratuku ayipoyindi kutha chekkesta le neeku', taps: 50, intensity: 2.8 }
+  ];
+  let breakGlassMessage=DEFAULT_GLASS_NOTE, glassBroken=false, glassTapCount=0, glassLevel=ANGER_LEVELS[0];
+  function resetGlass(){
+    glassBroken=false;
+    glassTapCount=0;
+    glassCrackSvg.innerHTML='';
+    glassPane.classList.remove('cracking','broken');
+    glassPane.classList.add('hidden');
+    glassPane.style.removeProperty('--shake-amt');
+    glassHint.style.display='';
+    glassHint.textContent='tap the glass to break it';
+    glassNote.classList.add('hidden');
+    glassEditForm.classList.add('hidden');
+    glassAngerChoice.classList.remove('hidden');
+  }
+  breakGlassBtn.addEventListener('click',()=>{ resetGlass(); glassNoteText.textContent=breakGlassMessage; glassModal.classList.remove('hidden'); });
+  glassModalClose.addEventListener('click',()=>glassModal.classList.add('hidden'));
+  glassModal.addEventListener('click',e=>{ if(e.target===glassModal) glassModal.classList.add('hidden'); });
+  glassAngerChoice.querySelectorAll('button[data-level]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      glassLevel = ANGER_LEVELS[Number(btn.dataset.level)] || ANGER_LEVELS[0];
+      glassTapCount = 0;
+      glassCrackSvg.innerHTML = '';
+      glassPane.classList.remove('cracking','broken');
+      glassPane.style.setProperty('--shake-amt', glassLevel.intensity);
+      glassHint.style.display = '';
+      glassHint.textContent = 'tap the glass to break it';
+      glassAngerChoice.classList.add('hidden');
+      glassPane.classList.remove('hidden');
+    });
+  });
+
+  // Draws a small burst of jagged crack lines radiating from the exact spot tapped.
+  // Bigger/more branches for higher anger levels, and shorter individual cracks the
+  // more taps a level needs (so the glass still ends up fully shattered right on cue).
+  function addGlassImpact(x, y){
+    const level = glassLevel;
+    const branches = Math.min(7, 2 + Math.round(level.intensity) + (Math.random()<0.5?1:0));
+    const baseLen = Math.max(8, 280 / level.taps) * (0.85 + level.intensity*0.4);
+    for(let i=0;i<branches;i++){
+      const angle = Math.random()*Math.PI*2;
+      const len = baseLen*0.6 + Math.random()*baseLen*0.9;
+      const midAngle = angle + (Math.random()*0.6-0.3);
+      const midLen = len*0.55;
+      const mx = x + Math.cos(midAngle)*midLen, my = y + Math.sin(midAngle)*midLen;
+      const ex = x + Math.cos(angle)*len, ey = y + Math.sin(angle)*len;
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', `M${x.toFixed(1)} ${y.toFixed(1)} L${mx.toFixed(1)} ${my.toFixed(1)} L${ex.toFixed(1)} ${ey.toFixed(1)}`);
+      glassCrackSvg.appendChild(path);
+      const totalLen = path.getTotalLength();
+      path.style.strokeDasharray = totalLen;
+      path.style.strokeDashoffset = totalLen;
+      path.style.animation = `crackDraw ${Math.max(.16,.32/Math.sqrt(level.intensity))}s ease forwards`;
+      path.style.animationDelay = (i*0.025)+'s';
+    }
+    // extra hairline cracks nearby for angrier levels, for a denser shattered look
+    const extras = level.intensity > 1.5 ? (Math.random()<0.7?2:1) : (Math.random()<0.45?1:0);
+    for(let j=0;j<extras;j++){
+      const a2 = Math.random()*Math.PI*2, len2 = (8+Math.random()*12) * (0.8+level.intensity*0.3);
+      const path2 = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path2.setAttribute('d', `M${x.toFixed(1)} ${y.toFixed(1)} L${(x+Math.cos(a2)*len2).toFixed(1)} ${(y+Math.sin(a2)*len2).toFixed(1)}`);
+      glassCrackSvg.appendChild(path2);
+      const totalLen2 = path2.getTotalLength();
+      path2.style.strokeDasharray = totalLen2;
+      path2.style.strokeDashoffset = totalLen2;
+      path2.style.animation = 'crackDraw .2s ease forwards';
+      path2.style.animationDelay = (0.06+j*0.03)+'s';
+    }
+  }
+
+  glassPane.addEventListener('click',(e)=>{
+    if(glassBroken) return;
+    const rect = glassPane.getBoundingClientRect();
+    const vbX = ((e.clientX - rect.left) / rect.width) * 300;
+    const vbY = ((e.clientY - rect.top) / rect.height) * 220;
+    glassTapCount++;
+    addGlassImpact(vbX, vbY);
+    glassPane.classList.remove('cracking'); void glassPane.offsetWidth; glassPane.classList.add('cracking');
+    if(glassTapCount < glassLevel.taps){
+      glassHint.textContent = `cracking... keep tapping (${glassTapCount}/${glassLevel.taps})`;
+    }else{
+      glassBroken=true;
+      glassHint.style.display='none';
+      setTimeout(()=>{ glassPane.classList.add('broken'); glassNote.classList.remove('hidden'); },450);
+    }
+  });
+  glassEditBtn.addEventListener('click',()=>{ glassNoteInput.value=breakGlassMessage; glassEditForm.classList.remove('hidden'); });
+  glassEditCancel.addEventListener('click',()=>glassEditForm.classList.add('hidden'));
+  glassEditForm.addEventListener('submit', async e=>{
+    e.preventDefault();
+    breakGlassMessage=glassNoteInput.value.trim()||DEFAULT_GLASS_NOTE;
+    glassNoteText.textContent=breakGlassMessage;
+    glassEditForm.classList.add('hidden');
+    if(!supabase) return;
+    try{ await supabase.from(SETTINGS_TABLE).upsert({id:1,break_glass_message:breakGlassMessage}); showToast('Saved for next time 🤍'); }
+    catch(err){ console.error(err); showToast('Could not save that note.',{type:'error'}); }
+  });
 
   /* ---------- voice notes recording ---------- */
   const MAX_RECORDING_SECONDS = 120;
@@ -3796,6 +4296,7 @@ async function sha256Hex(text){
       if (data){
         if (data.title) siteTitle.textContent = data.title;
         if (data.subtitle) siteSubtitle.textContent = data.subtitle;
+        if (data.break_glass_message) breakGlassMessage = data.break_glass_message;
       }
     }catch(err){
       console.error('Could not load site settings:', err);
@@ -4219,9 +4720,18 @@ async function sha256Hex(text){
       }
     }
     seasonButtons.forEach(button=>button.classList.toggle('active',button.dataset.season===season));
+    const activeBtn = document.querySelector(`.season-picker [data-season="${season}"]`);
+    if (seasonMenuLabel) seasonMenuLabel.textContent = activeBtn ? activeBtn.textContent : '✦ Seasonal magic';
     localStorage.setItem(SEASON_KEY,season);
   }
-  seasonButtons.forEach(button=>button.addEventListener('click',()=>applySeason(button.dataset.season)));
+  seasonButtons.forEach(button=>button.addEventListener('click',()=>{ applySeason(button.dataset.season); seasonMenuPopover.classList.remove('open'); seasonMenuBtn.setAttribute('aria-expanded','false'); }));
+  seasonMenuBtn.addEventListener('click', () => {
+    const open = seasonMenuPopover.classList.toggle('open');
+    seasonMenuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  document.addEventListener('click', (e) => {
+    if (!seasonMenu.contains(e.target)) { seasonMenuPopover.classList.remove('open'); seasonMenuBtn.setAttribute('aria-expanded','false'); }
+  });
   applySeason(localStorage.getItem(SEASON_KEY) || 'none');
 
   heroAddBtn.addEventListener('click', () => {
