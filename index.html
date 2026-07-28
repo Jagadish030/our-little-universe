@@ -88,10 +88,20 @@
   body.dark-mode .envelope-note{ background:#2c2432; border-color:rgba(255,255,255,.14); }
   body.dark-mode .envelope-note::before{ background:linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,0)); }
   body.dark-mode .envelope-note p{ color:#f6eaf3; }
+
+  /* ---------- shake compliment (mobile) ---------- */
+  .shake-compliment-modal{ position:fixed; inset:0; z-index:70; display:flex; align-items:center; justify-content:center; padding:1.4rem; background:rgba(20,14,18,.4); backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px); }
+  .shake-compliment-modal.hidden{ display:none; }
+  .shake-compliment-card{ position:relative; width:min(360px,88vw); background:var(--white); border:1px solid rgba(255,255,255,.6); border-radius:20px; padding:2.1rem 1.7rem; box-shadow:0 4px 14px rgba(0,0,0,.22),0 26px 50px rgba(0,0,0,.3); overflow:hidden; animation:notePopIn .35s ease; text-align:center; }
+  .shake-compliment-card::before{ content:''; position:absolute; top:0; left:0; right:0; height:46%; background:linear-gradient(180deg, rgba(255,255,255,.4), rgba(255,255,255,0)); pointer-events:none; }
+  .shake-compliment-card p{ position:relative; z-index:1; margin:0; font:1.6rem/1.55 'Caveat',cursive; color:var(--ink); }
+  body.dark-mode .shake-compliment-card{ background:#2c2432; border-color:rgba(255,255,255,.14); }
+  body.dark-mode .shake-compliment-card::before{ background:linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,0)); }
+  body.dark-mode .shake-compliment-card p{ color:#f6eaf3; }
+
   @media (max-width:600px){
-    .love-envelope{ top:auto; bottom:120px; right:-20px; }
-    .envelope-note{ top:auto; bottom:184px; right:12px; left:12px; width:auto; transform:translateY(8px); }
-    @keyframes notePopIn{ from{ opacity:0; transform:translateY(16px) scale(.9); } to{ opacity:1; transform:translateY(0) scale(1); } }
+    .love-envelope{ display:none; }
+    .envelope-note{ display:none; }
   }
   button, a, input, textarea, select, [role="button"]{ -webkit-tap-highlight-color: transparent; outline: none; }
 
@@ -1271,21 +1281,6 @@
   @keyframes c4Drop{ from{ transform:translateY(-160%); } to{ transform:translateY(0); } }
   body.dark-mode .c4-cell{ background:rgba(255,255,255,.14); }
 
-  /* ---------- love language quiz ---------- */
-  .ll-progress{ font:700 .75rem 'Quicksand',sans-serif; color:var(--ink-soft); }
-  .ll-quiz.hidden{ display:none; }
-  .ll-question{ font:1.3rem/1.4 'Caveat',cursive; color:var(--ink); margin:0 0 .9rem; text-align:center; }
-  .ll-options{ display:flex; flex-direction:column; gap:.5rem; }
-  .ll-options button{ border:1px solid var(--glass-border); background:rgba(255,255,255,.55); border-radius:12px; padding:.65rem .8rem; font:600 .82rem 'Quicksand',sans-serif; color:var(--ink); cursor:pointer; text-align:left; transition:transform .15s ease,border-color .15s ease; }
-  .ll-options button:hover{ border-color:var(--rose-deep); transform:translateY(-1px); }
-  .ll-result.hidden{ display:none; }
-  .ll-result{ text-align:center; }
-  .ll-result-emoji{ font-size:2.6rem; margin:.2rem 0; }
-  .ll-result-label{ font:1.4rem 'Caveat',cursive; color:var(--rose-deep); margin:0; font-weight:700; }
-  .ll-result-desc{ font:600 .82rem/1.5 'Quicksand',sans-serif; color:var(--ink-soft); margin:.4rem 0 1rem; }
-  .ll-compare{ margin-top:1rem; font:600 .78rem 'Quicksand',sans-serif; color:var(--ink-soft); text-align:left; line-height:1.7; border-top:1px dashed var(--glass-border); padding-top:.8rem; }
-  .ll-compare b{ color:var(--ink); }
-  body.dark-mode .ll-options button{ background:rgba(255,255,255,.08); color:#f6eaf3; }
 
   /* ---------- truth or dare jar ---------- */
   .td-jar{ text-align:center; padding:1.6rem 1rem; cursor:pointer; }
@@ -1300,14 +1295,30 @@
   .td-card p{ font:1.2rem/1.4 'Caveat',cursive; color:var(--ink); margin:0; }
   body.dark-mode .td-card{ background:rgba(255,255,255,.08); }
 
-  /* ---------- reaction duel ---------- */
-  .reaction-pad{ height:190px; border-radius:16px; background:linear-gradient(135deg,var(--rose),var(--gold)); display:flex; align-items:center; justify-content:center; text-align:center; cursor:pointer; margin-bottom:.8rem; transition:background .15s ease; user-select:none; }
-  .reaction-pad.waiting{ background:linear-gradient(135deg,#c98b8f,#b58a63); }
-  .reaction-pad.go{ background:linear-gradient(135deg,#6fbf8b,#4fae7a); }
-  .reaction-pad.early{ background:linear-gradient(135deg,#c96060,#a84545); }
-  .reaction-pad p{ margin:0; padding:0 1.2rem; font:700 1.05rem 'Quicksand',sans-serif; color:#fff; }
-  .reaction-leaderboard{ font:600 .78rem 'Quicksand',sans-serif; color:var(--ink-soft); text-align:center; line-height:1.7; }
-  .reaction-leaderboard b{ color:var(--ink); }
+  /* ---------- memory match size picker ---------- */
+  .memory-size-picker.hidden{ display:none; }
+  .memory-size-picker p{ text-align:center; margin:0 0 .8rem; }
+  .memory-size-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:.6rem; }
+  .memory-size-btn{ display:flex; flex-direction:column; align-items:center; gap:.15rem; width:88px; padding:.8rem .5rem; border:1px solid var(--glass-border); border-radius:12px; background:rgba(255,255,255,.6); cursor:pointer; font:700 1rem 'Quicksand',sans-serif; color:var(--ink); transition:transform .15s ease,border-color .15s ease; }
+  .memory-size-btn small{ font:600 .65rem 'Quicksand',sans-serif; color:var(--ink-soft); }
+  .memory-size-btn:hover:not(:disabled){ border-color:var(--rose-deep); transform:translateY(-1px); }
+  .memory-size-btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .memory-play-area.hidden{ display:none; }
+  body.dark-mode .memory-size-btn{ background:rgba(255,255,255,.08); color:#f6eaf3; }
+
+  /* ---------- odd one out (color game) ---------- */
+  .oc-hint{ text-align:center; font:600 .78rem 'Quicksand',sans-serif; color:var(--ink-soft); margin:0 0 .5rem; }
+  .oc-score{ font:700 .78rem 'Quicksand',sans-serif; color:var(--ink-soft); }
+  .oc-timerbar{ height:6px; border-radius:999px; background:rgba(0,0,0,.08); overflow:hidden; margin-bottom:.8rem; }
+  .oc-timerbar-fill{ height:100%; width:100%; background:linear-gradient(90deg,var(--rose-deep),var(--gold)); border-radius:999px; }
+  .oc-grid{ display:grid; gap:6px; margin:0 auto 1rem; width:min(320px,90vw); }
+  .oc-tile{ aspect-ratio:1; border:0; border-radius:9px; cursor:pointer; padding:0; }
+  .oc-gameover.hidden{ display:none; }
+  .oc-gameover{ text-align:center; }
+  .oc-gameover p{ font:1.3rem 'Caveat',cursive; color:var(--ink); margin:0 0 .8rem; }
+  .oc-leaderboard{ margin-top:1rem; font:600 .78rem 'Quicksand',sans-serif; color:var(--ink-soft); text-align:center; line-height:1.7; }
+  .oc-leaderboard b{ color:var(--ink); }
+  body.dark-mode .oc-timerbar{ background:rgba(255,255,255,.1); }
 
   .feature-menu{ position:relative; z-index:20; }.feature-menu-trigger{ display:inline-flex; align-items:center; gap:.4rem; }.feature-menu-trigger .menu-caret{ transition:transform .25s ease; }.feature-menu.open .menu-caret{ transform:rotate(180deg); }
   .feature-menu-popover{ position:absolute; top:calc(100% + .55rem); left:50%; width:min(275px, calc(100vw - 2rem)); transform:translate(-50%,-8px) scale(.96); opacity:0; visibility:hidden; pointer-events:none; padding:.5rem; border:1px solid var(--glass-border); border-radius:14px; background:var(--glass-bg-strong); backdrop-filter:blur(18px); box-shadow:0 14px 30px var(--shadow); transition:opacity .22s ease, transform .22s cubic-bezier(.2,.9,.3,1), visibility .22s; }
@@ -2339,6 +2350,12 @@
   <p id="envelopeNoteText"></p>
 </div>
 
+<div class="shake-compliment-modal hidden" id="shakeComplimentModal">
+  <div class="shake-compliment-card">
+    <p id="shakeComplimentText"></p>
+  </div>
+</div>
+
 <header class="hero">
   <div class="eyebrow">a scrapbook for us</div>
   <div class="title-block" id="titleBlock">
@@ -2513,20 +2530,26 @@
         <button type="button" class="game-choice-btn" id="chooseMemoryMatch">🧠<span>Memory Match</span><small>flip your own photos</small></button>
         <button type="button" class="game-choice-btn" id="chooseTicTacToe">⭕<span>Tic Tac Toe</span><small>take turns, any time</small></button>
         <button type="button" class="game-choice-btn" id="chooseConnect4">🔴<span>Connect 4</span><small>take turns, any time</small></button>
-        <button type="button" class="game-choice-btn" id="chooseLoveLanguage">💞<span>Love Language Quiz</span><small>find out & compare</small></button>
         <button type="button" class="game-choice-btn" id="chooseTruthDare">🫙<span>Truth or Dare Jar</span><small>pull a prompt</small></button>
-        <button type="button" class="game-choice-btn" id="chooseReaction">⚡<span>Reaction Duel</span><small>test your reflexes</small></button>
+        <button type="button" class="game-choice-btn" id="chooseOddColor">🎨<span>Odd One Out</span><small>spot the different color</small></button>
       </div>
     </div>
     <div class="game-view hidden" id="memoryMatchView">
       <button type="button" class="game-back-btn">‹ back to games</button>
-      <div class="game-view-header">
-        <div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="memoryAuthorToggle" aria-label="Choose who is playing"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div>
-        <div class="memory-stats"><span id="memoryMoves">0 moves</span><span id="memoryTimer">0:00</span></div>
-        <button type="button" class="fav-filter-btn" id="memoryRestartBtn">🔀 New shuffle</button>
+      <div class="memory-size-picker" id="memorySizePicker">
+        <p>Pick a board size</p>
+        <div class="memory-size-row" id="memorySizeRow"></div>
       </div>
-      <div class="memory-grid" id="memoryGrid"></div>
-      <div class="memory-leaderboard" id="memoryLeaderboard"></div>
+      <div class="memory-play-area hidden" id="memoryPlayArea">
+        <div class="game-view-header">
+          <div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="memoryAuthorToggle" aria-label="Choose who is playing"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div>
+          <div class="memory-stats"><span id="memoryMoves">0 moves</span><span id="memoryTimer">0:00</span></div>
+          <button type="button" class="fav-filter-btn" id="memoryChangeSizeBtn">📐 Change size</button>
+          <button type="button" class="fav-filter-btn" id="memoryRestartBtn">🔀 New shuffle</button>
+        </div>
+        <div class="memory-grid" id="memoryGrid"></div>
+        <div class="memory-leaderboard" id="memoryLeaderboard"></div>
+      </div>
     </div>
     <div class="game-view hidden" id="tictactoeView">
       <button type="button" class="game-back-btn">‹ back to games</button>
@@ -2542,24 +2565,6 @@
       <div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="c4AuthorToggle" aria-label="Choose who is playing"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div>
       <button type="button" class="fav-filter-btn" id="c4ResetBtn">🔄 New game</button>
     </div>
-    <div class="game-view hidden" id="loveLanguageView">
-      <button type="button" class="game-back-btn">‹ back to games</button>
-      <div class="game-view-header">
-        <div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="llAuthorToggle" aria-label="Choose who is playing"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div>
-        <span class="ll-progress" id="llProgress">Question 1/10</span>
-      </div>
-      <div class="ll-quiz" id="llQuiz">
-        <p class="ll-question" id="llQuestion"></p>
-        <div class="ll-options" id="llOptions"></div>
-      </div>
-      <div class="ll-result hidden" id="llResult">
-        <p class="ll-result-emoji" id="llResultEmoji"></p>
-        <p class="ll-result-label" id="llResultLabel"></p>
-        <p class="ll-result-desc" id="llResultDesc"></p>
-        <button type="button" class="fav-filter-btn" id="llRetakeBtn">🔁 Retake quiz</button>
-        <div class="ll-compare" id="llCompare"></div>
-      </div>
-    </div>
     <div class="game-view hidden" id="truthDareView">
       <button type="button" class="game-back-btn">‹ back to games</button>
       <div class="td-jar" id="tdJar">
@@ -2572,15 +2577,20 @@
       </div>
       <button type="button" class="fav-filter-btn" id="tdPullBtn">🎲 Pull a prompt</button>
     </div>
-    <div class="game-view hidden" id="reactionView">
+    <div class="game-view hidden" id="oddColorView">
       <button type="button" class="game-back-btn">‹ back to games</button>
       <div class="game-view-header">
-        <div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="reactionAuthorToggle" aria-label="Choose who is playing"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div>
+        <div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="oddColorAuthorToggle" aria-label="Choose who is playing"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div>
+        <span class="oc-score" id="ocScore">Score: 0</span>
       </div>
-      <div class="reaction-pad" id="reactionPad">
-        <p id="reactionPadText">Tap to start</p>
+      <p class="oc-hint" id="ocHint">Tap the tile that's a different color</p>
+      <div class="oc-timerbar"><div class="oc-timerbar-fill" id="ocTimerFill"></div></div>
+      <div class="oc-grid" id="ocGrid"></div>
+      <div class="oc-gameover hidden" id="ocGameOver">
+        <p id="ocFinalScore"></p>
+        <button type="button" class="fav-filter-btn" id="ocPlayAgainBtn">🔁 Play again</button>
+        <div class="oc-leaderboard" id="ocLeaderboard"></div>
       </div>
-      <div class="reaction-leaderboard" id="reactionLeaderboard"></div>
     </div>
   </div>
 </section>
@@ -4048,44 +4058,77 @@ async function sha256Hex(text){
   startExtrasRealtime();
 
   /* ---------- mini games ---------- */
-  const GAME_SCORES_TABLE='game_scores', TTT_TABLE='tictactoe_game', CONNECT4_TABLE='connect4_game', LOVE_LANGUAGE_TABLE='love_language_results';
-  const gameChooser=document.getElementById('gameChooser'), memoryMatchView=document.getElementById('memoryMatchView'), tictactoeView=document.getElementById('tictactoeView'), connect4View=document.getElementById('connect4View'), loveLanguageView=document.getElementById('loveLanguageView'), truthDareView=document.getElementById('truthDareView'), reactionView=document.getElementById('reactionView');
-  const allGameViews=[memoryMatchView,tictactoeView,connect4View,loveLanguageView,truthDareView,reactionView];
-  const chooseMemoryMatch=document.getElementById('chooseMemoryMatch'), chooseTicTacToe=document.getElementById('chooseTicTacToe'), chooseConnect4=document.getElementById('chooseConnect4'), chooseLoveLanguage=document.getElementById('chooseLoveLanguage'), chooseTruthDare=document.getElementById('chooseTruthDare'), chooseReaction=document.getElementById('chooseReaction');
+  const GAME_SCORES_TABLE='game_scores', TTT_TABLE='tictactoe_game', CONNECT4_TABLE='connect4_game';
+  const gameChooser=document.getElementById('gameChooser'), memoryMatchView=document.getElementById('memoryMatchView'), tictactoeView=document.getElementById('tictactoeView'), connect4View=document.getElementById('connect4View'), truthDareView=document.getElementById('truthDareView'), oddColorView=document.getElementById('oddColorView');
+  const allGameViews=[memoryMatchView,tictactoeView,connect4View,truthDareView,oddColorView];
+  const chooseMemoryMatch=document.getElementById('chooseMemoryMatch'), chooseTicTacToe=document.getElementById('chooseTicTacToe'), chooseConnect4=document.getElementById('chooseConnect4'), chooseTruthDare=document.getElementById('chooseTruthDare'), chooseOddColor=document.getElementById('chooseOddColor');
   const memoryGrid=document.getElementById('memoryGrid'), memoryMovesEl=document.getElementById('memoryMoves'), memoryTimerEl=document.getElementById('memoryTimer'), memoryRestartBtn=document.getElementById('memoryRestartBtn'), memoryLeaderboard=document.getElementById('memoryLeaderboard'), memoryAuthorToggle=document.getElementById('memoryAuthorToggle');
+  const memorySizePicker=document.getElementById('memorySizePicker'), memorySizeRow=document.getElementById('memorySizeRow'), memoryPlayArea=document.getElementById('memoryPlayArea'), memoryChangeSizeBtn=document.getElementById('memoryChangeSizeBtn');
   const tttBoard=document.getElementById('tttBoard'), tttStatus=document.getElementById('tttStatus'), tttResetBtn=document.getElementById('tttResetBtn'), tttAuthorToggle=document.getElementById('tttAuthorToggle');
 
   function showGameChooser(){ gameChooser.classList.remove('hidden'); allGameViews.forEach(v=>v.classList.add('hidden')); }
-  function openMemoryMatch(){ gameChooser.classList.add('hidden'); allGameViews.forEach(v=>v.classList.add('hidden')); memoryMatchView.classList.remove('hidden'); startNewMemoryGame(); loadMemoryLeaderboard(); }
+  function openMemoryMatch(){ gameChooser.classList.add('hidden'); allGameViews.forEach(v=>v.classList.add('hidden')); memoryMatchView.classList.remove('hidden'); showMemorySizePicker(); }
   function openTicTacToe(){ gameChooser.classList.add('hidden'); allGameViews.forEach(v=>v.classList.add('hidden')); tictactoeView.classList.remove('hidden'); loadTicTacToe(); startTttRealtime(); }
   function openConnect4(){ gameChooser.classList.add('hidden'); allGameViews.forEach(v=>v.classList.add('hidden')); connect4View.classList.remove('hidden'); loadConnect4(); startConnect4Realtime(); }
-  function openLoveLanguage(){ gameChooser.classList.add('hidden'); allGameViews.forEach(v=>v.classList.add('hidden')); loveLanguageView.classList.remove('hidden'); startLoveLanguageQuiz(); }
   function openTruthDare(){ gameChooser.classList.add('hidden'); allGameViews.forEach(v=>v.classList.add('hidden')); truthDareView.classList.remove('hidden'); resetTruthDare(); }
-  function openReaction(){ gameChooser.classList.add('hidden'); allGameViews.forEach(v=>v.classList.add('hidden')); reactionView.classList.remove('hidden'); resetReactionPad(); loadReactionLeaderboard(); }
+  function openOddColor(){ gameChooser.classList.add('hidden'); allGameViews.forEach(v=>v.classList.add('hidden')); oddColorView.classList.remove('hidden'); startOddColorGame(); }
   chooseMemoryMatch.addEventListener('click',openMemoryMatch);
   chooseTicTacToe.addEventListener('click',openTicTacToe);
   chooseConnect4.addEventListener('click',openConnect4);
-  chooseLoveLanguage.addEventListener('click',openLoveLanguage);
   chooseTruthDare.addEventListener('click',openTruthDare);
-  chooseReaction.addEventListener('click',openReaction);
-  document.querySelectorAll('.game-back-btn').forEach(b=>b.addEventListener('click',()=>{ clearInterval(memoryTimerInterval); clearTimeout(reactionTimeout); showGameChooser(); }));
+  chooseOddColor.addEventListener('click',openOddColor);
+  document.querySelectorAll('.game-back-btn').forEach(b=>b.addEventListener('click',()=>{ clearInterval(memoryTimerInterval); clearTimeout(ocTimeout); showGameChooser(); }));
 
   /* memory match */
   let memoryAuthor=localStorage.getItem('ourLittleUniverseMemoryAuthor')==='2'?'2':'1';
   function setMemoryAuthor(v){ memoryAuthor=v; localStorage.setItem('ourLittleUniverseMemoryAuthor',v); memoryAuthorToggle.dataset.author=v; memoryAuthorToggle.setAttribute('aria-label',`Currently playing as By ${v==='2'?'M':'J'} — tap to switch`); }
   memoryAuthorToggle.addEventListener('click',()=>setMemoryAuthor(memoryAuthor==='1'?'2':'1'));
   setMemoryAuthor(memoryAuthor);
-  let memoryDeck=[], memoryFlippedCards=[], memoryBusy=false, memoryMoves=0, memoryStartTime=0, memoryTimerInterval=null;
+  const MEMORY_SIZES=[2,4,6,8];
+  let memoryDeck=[], memoryFlippedCards=[], memoryBusy=false, memoryMoves=0, memoryStartTime=0, memoryTimerInterval=null, memoryGridSize=4, memoryTimerStarted=false;
+
+  function showMemorySizePicker(){
+    memorySizePicker.classList.remove('hidden');
+    memoryPlayArea.classList.add('hidden');
+    clearInterval(memoryTimerInterval);
+    renderMemorySizePicker();
+  }
+  function renderMemorySizePicker(){
+    const isDesktop = window.innerWidth > 900;
+    const sizes = isDesktop ? MEMORY_SIZES : MEMORY_SIZES.filter(s=>s<=6);
+    memorySizeRow.innerHTML='';
+    sizes.forEach(size=>{
+      const pairsNeeded=(size*size)/2;
+      const enough = size===2 || photos.length>=pairsNeeded;
+      const btn=document.createElement('button');
+      btn.type='button'; btn.className='memory-size-btn';
+      btn.innerHTML=`${size}×${size}<small>${pairsNeeded} pairs</small>`;
+      if(!enough) btn.disabled=true;
+      btn.addEventListener('click',()=>{
+        if(!enough){ showToast(`You don't have enough memories pinned yet for a ${size}×${size} board — pin a few more or pick a smaller size.`,{type:'error'}); return; }
+        memoryGridSize=size;
+        memorySizePicker.classList.add('hidden');
+        memoryPlayArea.classList.remove('hidden');
+        startNewMemoryGame();
+        loadMemoryLeaderboard();
+      });
+      memorySizeRow.appendChild(btn);
+    });
+  }
+  memoryChangeSizeBtn.addEventListener('click',showMemorySizePicker);
+
   function buildMemoryDeck(){
-    const shuffledPhotos=[...photos].sort(()=>Math.random()-.5).slice(0,8);
+    const pairsNeeded=(memoryGridSize*memoryGridSize)/2;
+    const shuffledPhotos=[...photos].sort(()=>Math.random()-.5).slice(0,pairsNeeded);
     let pairSources;
-    if(shuffledPhotos.length>=3){ pairSources=shuffledPhotos.map(p=>({key:'p'+p.id,img:p.src})); }
-    else{ const fallback=['🌸','🌙','⭐','🍓','🎈','🦋']; pairSources=fallback.map((e,i)=>({key:'f'+i,emoji:e})); }
+    if(shuffledPhotos.length>=pairsNeeded){ pairSources=shuffledPhotos.map(p=>({key:'p'+p.id,img:p.src})); }
+    else{ const fallback=['🌸','🌙','⭐','🍓','🎈','🦋']; pairSources=fallback.slice(0,pairsNeeded).map((e,i)=>({key:'f'+i,emoji:e})); }
     const deck=[...pairSources,...pairSources].map((c,i)=>({...c,uid:i,flipped:false,matched:false}));
     for(let i=deck.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [deck[i],deck[j]]=[deck[j],deck[i]]; }
     return deck;
   }
   function renderMemoryGrid(){
+    memoryGrid.style.gridTemplateColumns=`repeat(${memoryGridSize},1fr)`;
     memoryGrid.innerHTML='';
     memoryDeck.forEach(card=>{
       const el=document.createElement('div');
@@ -4111,15 +4154,17 @@ async function sha256Hex(text){
   }
   function startNewMemoryGame(){
     memoryDeck=buildMemoryDeck();
-    memoryFlippedCards=[]; memoryBusy=false; memoryMoves=0;
+    memoryFlippedCards=[]; memoryBusy=false; memoryMoves=0; memoryTimerStarted=false;
     memoryMovesEl.textContent='0 moves';
+    memoryTimerEl.textContent='0:00';
+    clearInterval(memoryTimerInterval);
     renderMemoryGrid();
-    startMemoryTimer();
   }
   function flipMemoryCard(uid){
     if(memoryBusy) return;
     const card=memoryDeck.find(c=>c.uid===uid);
     if(!card||card.flipped||card.matched) return;
+    if(!memoryTimerStarted){ memoryTimerStarted=true; startMemoryTimer(); }
     card.flipped=true; updateMemoryCardEl(card);
     memoryFlippedCards.push(card);
     if(memoryFlippedCards.length===2){
@@ -4136,21 +4181,36 @@ async function sha256Hex(text){
       }, isMatch?450:800);
     }
   }
+  // Keeps only the best 5 scores stored per board size — called after every new score.
+  async function trimLeaderboard(gameKey, orderColumn, ascending){
+    if(!supabase) return;
+    try{
+      const {data,error}=await supabase.from(GAME_SCORES_TABLE).select('id').eq('game',gameKey).order(orderColumn,{ascending}).range(5,999);
+      if(error) throw error;
+      if(data && data.length){ await supabase.from(GAME_SCORES_TABLE).delete().in('id',data.map(r=>r.id)); }
+    }catch(e){ console.error('Could not trim leaderboard:',e); }
+  }
   async function finishMemoryGame(){
     clearInterval(memoryTimerInterval);
     const seconds=Math.floor((Date.now()-memoryStartTime)/1000);
     showToast(`Cleared the board in ${memoryMoves} moves — nice! 🎉`);
     if(!supabase) return;
-    try{ await supabase.from(GAME_SCORES_TABLE).insert({game:'memory',author:Number(memoryAuthor),moves:memoryMoves,seconds}); loadMemoryLeaderboard(); }
+    const gameKey=`memory-${memoryGridSize}x${memoryGridSize}`;
+    try{
+      await supabase.from(GAME_SCORES_TABLE).insert({game:gameKey,author:Number(memoryAuthor),moves:memoryMoves,seconds});
+      await trimLeaderboard(gameKey,'seconds',true);
+      loadMemoryLeaderboard();
+    }
     catch(err){ console.error('Could not save score:',err); }
   }
   async function loadMemoryLeaderboard(){
     if(!supabase) return;
+    const gameKey=`memory-${memoryGridSize}x${memoryGridSize}`;
     try{
-      const {data,error}=await supabase.from(GAME_SCORES_TABLE).select('*').eq('game','memory').order('seconds',{ascending:true}).limit(5);
+      const {data,error}=await supabase.from(GAME_SCORES_TABLE).select('*').eq('game',gameKey).order('seconds',{ascending:true}).limit(5);
       if(error) throw error;
-      if(!data||!data.length){ memoryLeaderboard.innerHTML='No best times yet — be the first!'; return; }
-      memoryLeaderboard.innerHTML='<b>Best times</b><br>'+data.map((s,i)=>`${i+1}. By ${Number(s.author)===2?'M':'J'} — ${s.moves} moves, ${Math.floor(s.seconds/60)}:${String(s.seconds%60).padStart(2,'0')}`).join('<br>');
+      if(!data||!data.length){ memoryLeaderboard.innerHTML=`No best times yet for ${memoryGridSize}×${memoryGridSize} — be the first!`; return; }
+      memoryLeaderboard.innerHTML=`<b>Best times (${memoryGridSize}×${memoryGridSize})</b><br>`+data.map((s,i)=>`${i+1}. By ${Number(s.author)===2?'M':'J'} — ${s.moves} moves, ${Math.floor(s.seconds/60)}:${String(s.seconds%60).padStart(2,'0')}`).join('<br>');
     }catch(e){ console.error('Could not load leaderboard. Run the games SQL setup first.',e); }
   }
   memoryRestartBtn.addEventListener('click',startNewMemoryGame);
@@ -4298,148 +4358,6 @@ async function sha256Hex(text){
     supabase.channel('connect4-game').on('postgres_changes',{event:'*',schema:'public',table:CONNECT4_TABLE},()=>{ if(!gamesWall.classList.contains('hidden')&&!connect4View.classList.contains('hidden')) loadConnect4(); }).subscribe();
   }
 
-  /* love language quiz */
-  const LOVE_LANGUAGE_QUESTIONS=[
-    { q:"When you've had a rough day, what would help most?", options:[
-      {text:'A long hug, no words needed',lang:'touch'},
-      {text:'Them saying something comforting',lang:'words'},
-      {text:'Them handling dinner so you can rest',lang:'acts'},
-      {text:'Just sitting together, phones away',lang:'time'},
-      {text:'A small treat waiting for you',lang:'gifts'}
-    ]},
-    { q:"What's your favorite way to spend a free evening together?", options:[
-      {text:'Cuddled up, no distractions',lang:'touch'},
-      {text:'Talking for hours about everything',lang:'words'},
-      {text:'Cooking or fixing something together',lang:'acts'},
-      {text:'Just being in the same room, doing our own thing',lang:'time'},
-      {text:'Surprising each other with something small',lang:'gifts'}
-    ]},
-    { q:"What makes you feel most appreciated?", options:[
-      {text:'A genuine compliment out of nowhere',lang:'words'},
-      {text:'Someone remembering the little things I like',lang:'gifts'},
-      {text:'Someone taking a task off my plate',lang:'acts'},
-      {text:'Getting undivided attention',lang:'time'},
-      {text:'A hand on my back, a hug, closeness',lang:'touch'}
-    ]},
-    { q:"You're stressed about something big — what helps?", options:[
-      {text:'Them saying "we will figure it out together"',lang:'words'},
-      {text:'Them quietly taking care of the small stuff',lang:'acts'},
-      {text:'Sitting close, holding hands',lang:'touch'},
-      {text:'Their full attention while you vent',lang:'time'},
-      {text:'A little something that makes you smile',lang:'gifts'}
-    ]},
-    { q:"What's a small gesture that means a lot to you?", options:[
-      {text:'"I am proud of you" texts',lang:'words'},
-      {text:'Them saving you the last bite of something',lang:'gifts'},
-      {text:'Them doing a chore you were dreading',lang:'acts'},
-      {text:'A random hand squeeze or forehead kiss',lang:'touch'},
-      {text:'Them putting the phone down when you talk',lang:'time'}
-    ]},
-    { q:"How do you like to celebrate a win together?", options:[
-      {text:'Hearing how proud they are of you',lang:'words'},
-      {text:'A little gift to mark the moment',lang:'gifts'},
-      {text:'A big hug and celebration dance',lang:'touch'},
-      {text:'A whole evening just celebrating together',lang:'time'},
-      {text:'Them helping you prep for the next thing',lang:'acts'}
-    ]},
-    { q:"What do you notice yourself doing for your partner most?", options:[
-      {text:'Telling them how much they mean to me',lang:'words'},
-      {text:'Picking up little things that remind me of them',lang:'gifts'},
-      {text:'Doing things to make their day easier',lang:'acts'},
-      {text:'Making time just for us',lang:'time'},
-      {text:'Reaching for their hand, staying close',lang:'touch'}
-    ]},
-    { q:"On a lazy Sunday, what sounds best?", options:[
-      {text:'Deep conversation over breakfast',lang:'words'},
-      {text:'Slow cuddles, no rush to get up',lang:'touch'},
-      {text:'Making pancakes together',lang:'acts'},
-      {text:'A whole day with no plans, just us',lang:'time'},
-      {text:'Them bringing home your favorite snack',lang:'gifts'}
-    ]},
-    { q:"What would hurt most if it were missing?", options:[
-      {text:'Never hearing "I love you"',lang:'words'},
-      {text:'Never being thought of with a small gift',lang:'gifts'},
-      {text:'Never getting help when you need it',lang:'acts'},
-      {text:'Never getting real, focused time together',lang:'time'},
-      {text:'Never being touched or held',lang:'touch'}
-    ]},
-    { q:"What's the most 'you' way to say I love you?", options:[
-      {text:'Actually saying it, often',lang:'words'},
-      {text:'Showing up and doing something useful',lang:'acts'},
-      {text:'Pulling them in for a hug',lang:'touch'},
-      {text:'Making space in your day for them',lang:'time'},
-      {text:'Bringing home something that says "I thought of you"',lang:'gifts'}
-    ]}
-  ];
-  const LOVE_LANGUAGE_INFO={
-    words:{label:'Words of Affirmation',emoji:'💬',desc:'Kind words, compliments, and hearing it out loud mean the most to you.'},
-    time:{label:'Quality Time',emoji:'⏳',desc:'Undivided attention and shared moments are what make you feel loved.'},
-    gifts:{label:'Receiving Gifts',emoji:'🎁',desc:'Thoughtful little tokens that say "I was thinking of you" mean the world.'},
-    acts:{label:'Acts of Service',emoji:'🤝',desc:'Actions speak loudest to you — someone lightening your load feels like love.'},
-    touch:{label:'Physical Touch',emoji:'🤗',desc:'Closeness, hugs, and touch make you feel most connected and cared for.'}
-  };
-  const llAuthorToggle=document.getElementById('llAuthorToggle'), llProgress=document.getElementById('llProgress'), llQuiz=document.getElementById('llQuiz'), llQuestion=document.getElementById('llQuestion'), llOptions=document.getElementById('llOptions'), llResult=document.getElementById('llResult'), llResultEmoji=document.getElementById('llResultEmoji'), llResultLabel=document.getElementById('llResultLabel'), llResultDesc=document.getElementById('llResultDesc'), llRetakeBtn=document.getElementById('llRetakeBtn'), llCompare=document.getElementById('llCompare');
-  let llAuthor=localStorage.getItem('ourLittleUniverseLlAuthor')==='2'?'2':'1', llQuestionIndex=0, llScores={};
-  function setLlAuthor(v){ llAuthor=v; localStorage.setItem('ourLittleUniverseLlAuthor',v); llAuthorToggle.dataset.author=v; llAuthorToggle.setAttribute('aria-label',`Currently playing as By ${v==='2'?'M':'J'} — tap to switch`); }
-  llAuthorToggle.addEventListener('click',()=>setLlAuthor(llAuthor==='1'?'2':'1'));
-  setLlAuthor(llAuthor);
-  function startLoveLanguageQuiz(){
-    llQuestionIndex=0;
-    llScores={words:0,time:0,gifts:0,acts:0,touch:0};
-    llResult.classList.add('hidden');
-    llQuiz.classList.remove('hidden');
-    renderLlQuestion();
-  }
-  function renderLlQuestion(){
-    const q=LOVE_LANGUAGE_QUESTIONS[llQuestionIndex];
-    llProgress.textContent=`Question ${llQuestionIndex+1}/${LOVE_LANGUAGE_QUESTIONS.length}`;
-    llQuestion.textContent=q.q;
-    llOptions.innerHTML='';
-    q.options.forEach(opt=>{
-      const btn=document.createElement('button');
-      btn.type='button'; btn.textContent=opt.text;
-      btn.addEventListener('click',()=>{
-        llScores[opt.lang]++;
-        llQuestionIndex++;
-        if(llQuestionIndex<LOVE_LANGUAGE_QUESTIONS.length) renderLlQuestion();
-        else finishLoveLanguageQuiz();
-      });
-      llOptions.appendChild(btn);
-    });
-  }
-  async function finishLoveLanguageQuiz(){
-    const top=Object.entries(llScores).sort((a,b)=>b[1]-a[1])[0][0];
-    const info=LOVE_LANGUAGE_INFO[top];
-    llQuiz.classList.add('hidden');
-    llResult.classList.remove('hidden');
-    llResultEmoji.textContent=info.emoji;
-    llResultLabel.textContent=info.label;
-    llResultDesc.textContent=info.desc;
-    llCompare.textContent='';
-    if(supabase){
-      try{
-        await supabase.from(LOVE_LANGUAGE_TABLE).insert({author:Number(llAuthor),top_language:top,scores:llScores});
-        loadLoveLanguageCompare();
-      }catch(err){ console.error('Could not save quiz result:',err); }
-    }
-  }
-  async function loadLoveLanguageCompare(){
-    if(!supabase) return;
-    try{
-      const {data,error}=await supabase.from(LOVE_LANGUAGE_TABLE).select('*').order('created_at',{ascending:false}).limit(10);
-      if(error) throw error;
-      if(!data||!data.length) return;
-      const latestByAuthor={};
-      data.forEach(row=>{ if(!latestByAuthor[row.author]) latestByAuthor[row.author]=row; });
-      const lines=Object.values(latestByAuthor).map(row=>{
-        const info=LOVE_LANGUAGE_INFO[row.top_language];
-        return `<b>By ${Number(row.author)===2?'M':'J'}</b>: ${info?`${info.emoji} ${info.label}`:row.top_language}`;
-      });
-      if(lines.length>1) llCompare.innerHTML='<b>So far:</b><br>'+lines.join('<br>');
-    }catch(e){ console.error('Could not load comparison:',e); }
-  }
-  llRetakeBtn.addEventListener('click',startLoveLanguageQuiz);
-
   /* truth or dare jar */
   const TRUTH_PROMPTS=[
     "What's a small thing I do that always makes you smile?",
@@ -4452,15 +4370,14 @@ async function sha256Hex(text){
     "What's a silly fear you've never told me?"
   ];
   const DARE_PROMPTS=[
-    "Send your partner a voice note telling them why you love them.",
+    "Send the other a voice note telling them why you love them.",
     "Give your partner a genuine compliment right now, out loud.",
     "Recreate your first photo together's pose.",
     "Write a two-line poem about your partner, right now.",
     "Text your partner a memory that always makes you laugh.",
     "Do your best impression of your partner for 10 seconds.",
-    "Send your partner a spicy selfie",
-    "Give a genuine, specific compliment about something non-physical.",
-    "Show Boobs 😂."
+    "Plan a mini date idea for this week and tell them now.",
+    "Give a genuine, specific compliment about something non-physical."
   ];
   const tdJar=document.getElementById('tdJar'), tdJarIcon=document.getElementById('tdJarIcon'), tdHint=document.getElementById('tdHint'), tdCard=document.getElementById('tdCard'), tdType=document.getElementById('tdType'), tdPromptText=document.getElementById('tdPromptText'), tdPullBtn=document.getElementById('tdPullBtn');
   let tdLastPrompt=null;
@@ -4487,60 +4404,88 @@ async function sha256Hex(text){
   tdJar.addEventListener('click',pullTruthOrDare);
   tdPullBtn.addEventListener('click',pullTruthOrDare);
 
-  /* reaction time duel */
-  const reactionPad=document.getElementById('reactionPad'), reactionPadText=document.getElementById('reactionPadText'), reactionAuthorToggle=document.getElementById('reactionAuthorToggle'), reactionLeaderboard=document.getElementById('reactionLeaderboard');
-  let reactionAuthor=localStorage.getItem('ourLittleUniverseReactionAuthor')==='2'?'2':'1', reactionState='idle', reactionTimeout=null, reactionStartTime=0;
-  function setReactionAuthor(v){ reactionAuthor=v; localStorage.setItem('ourLittleUniverseReactionAuthor',v); reactionAuthorToggle.dataset.author=v; reactionAuthorToggle.setAttribute('aria-label',`Currently playing as By ${v==='2'?'M':'J'} — tap to switch`); }
-  reactionAuthorToggle.addEventListener('click',()=>setReactionAuthor(reactionAuthor==='1'?'2':'1'));
-  setReactionAuthor(reactionAuthor);
-  function resetReactionPad(){
-    clearTimeout(reactionTimeout);
-    reactionState='idle';
-    reactionPad.className='reaction-pad';
-    reactionPadText.textContent='Tap to start';
+  /* odd one out (color spotting game) */
+  const ocGrid=document.getElementById('ocGrid'), ocScoreEl=document.getElementById('ocScore'), ocHint=document.getElementById('ocHint'), ocTimerFill=document.getElementById('ocTimerFill'), ocGameOver=document.getElementById('ocGameOver'), ocFinalScore=document.getElementById('ocFinalScore'), ocPlayAgainBtn=document.getElementById('ocPlayAgainBtn'), ocLeaderboard=document.getElementById('ocLeaderboard'), oddColorAuthorToggle=document.getElementById('oddColorAuthorToggle');
+  let oddColorAuthor=localStorage.getItem('ourLittleUniverseOddColorAuthor')==='2'?'2':'1', ocRound=0, ocScore=0, ocOddIndex=-1, ocTimeout=null, ocPlaying=false;
+  function setOddColorAuthor(v){ oddColorAuthor=v; localStorage.setItem('ourLittleUniverseOddColorAuthor',v); oddColorAuthorToggle.dataset.author=v; oddColorAuthorToggle.setAttribute('aria-label',`Currently playing as By ${v==='2'?'M':'J'} — tap to switch`); }
+  oddColorAuthorToggle.addEventListener('click',()=>setOddColorAuthor(oddColorAuthor==='1'?'2':'1'));
+  setOddColorAuthor(oddColorAuthor);
+
+  function oddColorGridSize(round){ return Math.min(2+Math.floor((round-1)/2), 6); }
+  function oddColorLightnessDiff(round){ return Math.max(5, 20-round); }
+  function oddColorTimeLimit(round){ return Math.max(900, 3000-round*130); }
+
+  function startOddColorGame(){
+    ocRound=0; ocScore=0; ocPlaying=true;
+    ocGameOver.classList.add('hidden');
+    ocGrid.classList.remove('hidden'); ocHint.classList.remove('hidden'); ocTimerFill.parentElement.classList.remove('hidden');
+    ocScoreEl.textContent='Score: 0';
+    nextOddColorRound();
   }
-  async function finishReaction(ms){
-    reactionState='idle';
-    reactionPad.className='reaction-pad';
-    reactionPadText.textContent=`${ms}ms — tap to try again`;
-    showToast(`${ms}ms — nice reflexes! ⚡`);
-    if(supabase){
-      try{ await supabase.from(GAME_SCORES_TABLE).insert({game:'reaction',author:Number(reactionAuthor),moves:0,seconds:0,ms}); loadReactionLeaderboard(); }
-      catch(err){ console.error('Could not save reaction score:',err); }
+  function nextOddColorRound(){
+    ocRound++;
+    ocScoreEl.textContent=`Score: ${ocScore}`;
+    const size=oddColorGridSize(ocRound);
+    const diff=oddColorLightnessDiff(ocRound);
+    const timeLimit=oddColorTimeLimit(ocRound);
+    const hue=Math.floor(Math.random()*360);
+    const baseLightness=42+Math.random()*16;
+    const direction=Math.random()<0.5?1:-1;
+    const oddLightness=Math.max(14,Math.min(86,baseLightness+direction*diff));
+    const total=size*size;
+    ocOddIndex=Math.floor(Math.random()*total);
+    ocGrid.style.gridTemplateColumns=`repeat(${size},1fr)`;
+    ocGrid.innerHTML='';
+    for(let i=0;i<total;i++){
+      const tile=document.createElement('button');
+      tile.type='button'; tile.className='oc-tile';
+      const lightness=i===ocOddIndex?oddLightness:baseLightness;
+      tile.style.background=`hsl(${hue},62%,${lightness}%)`;
+      tile.addEventListener('click',()=>handleOddColorTap(i));
+      ocGrid.appendChild(tile);
+    }
+    ocTimerFill.style.transition='none';
+    ocTimerFill.style.width='100%';
+    void ocTimerFill.offsetWidth;
+    ocTimerFill.style.transition=`width ${timeLimit}ms linear`;
+    requestAnimationFrame(()=>{ ocTimerFill.style.width='0%'; });
+    clearTimeout(ocTimeout);
+    ocTimeout=setTimeout(()=>endOddColorGame(),timeLimit);
+  }
+  function handleOddColorTap(i){
+    if(!ocPlaying) return;
+    if(i===ocOddIndex){
+      ocScore++;
+      clearTimeout(ocTimeout);
+      nextOddColorRound();
+    }else{
+      endOddColorGame();
     }
   }
-  async function loadReactionLeaderboard(){
+  async function endOddColorGame(){
+    if(!ocPlaying) return;
+    ocPlaying=false;
+    clearTimeout(ocTimeout);
+    ocGrid.classList.add('hidden'); ocHint.classList.add('hidden'); ocTimerFill.parentElement.classList.add('hidden');
+    ocGameOver.classList.remove('hidden');
+    ocFinalScore.textContent = ocScore===0 ? "Didn't quite get one — tap Play again!" : `You scored ${ocScore}! 🎉`;
     if(!supabase) return;
     try{
-      const {data,error}=await supabase.from(GAME_SCORES_TABLE).select('*').eq('game','reaction').order('ms',{ascending:true}).limit(5);
-      if(error) throw error;
-      if(!data||!data.length){ reactionLeaderboard.innerHTML='No best times yet — be the first!'; return; }
-      reactionLeaderboard.innerHTML='<b>Fastest reflexes</b><br>'+data.map((s,i)=>`${i+1}. By ${Number(s.author)===2?'M':'J'} — ${s.ms}ms`).join('<br>');
-    }catch(e){ console.error('Could not load reaction leaderboard. Run the games SQL setup first.',e); }
+      await supabase.from(GAME_SCORES_TABLE).insert({game:'oddcolor',author:Number(oddColorAuthor),moves:ocScore,seconds:0});
+      await trimLeaderboard('oddcolor','moves',false);
+      loadOddColorLeaderboard();
+    }catch(err){ console.error('Could not save odd-color score:',err); }
   }
-  reactionPad.addEventListener('click',()=>{
-    if(reactionState==='idle'){
-      reactionState='waiting';
-      reactionPad.className='reaction-pad waiting';
-      reactionPadText.textContent='Wait for green...';
-      const delay=1200+Math.random()*2500;
-      reactionTimeout=setTimeout(()=>{
-        reactionState='go';
-        reactionPad.className='reaction-pad go';
-        reactionPadText.textContent='Tap now!';
-        reactionStartTime=performance.now();
-      },delay);
-    }else if(reactionState==='waiting'){
-      clearTimeout(reactionTimeout);
-      reactionState='idle';
-      reactionPad.className='reaction-pad early';
-      reactionPadText.textContent='Too soon! Tap to try again';
-      setTimeout(()=>{ if(reactionState==='idle') reactionPad.className='reaction-pad'; },900);
-    }else if(reactionState==='go'){
-      const ms=Math.round(performance.now()-reactionStartTime);
-      finishReaction(ms);
-    }
-  });
+  async function loadOddColorLeaderboard(){
+    if(!supabase) return;
+    try{
+      const {data,error}=await supabase.from(GAME_SCORES_TABLE).select('*').eq('game','oddcolor').order('moves',{ascending:false}).limit(5);
+      if(error) throw error;
+      if(!data||!data.length){ ocLeaderboard.innerHTML='No scores yet — be the first!'; return; }
+      ocLeaderboard.innerHTML='<b>Best scores</b><br>'+data.map((s,i)=>`${i+1}. By ${Number(s.author)===2?'M':'J'} — ${s.moves}`).join('<br>');
+    }catch(e){ console.error('Could not load odd-color leaderboard. Run the games SQL setup first.',e); }
+  }
+  ocPlayAgainBtn.addEventListener('click',startOddColorGame);
 
   /* ---------- break glass ---------- */
   const breakGlassBtn=document.getElementById('breakGlassBtn'), glassModal=document.getElementById('glassModal'), glassModalClose=document.getElementById('glassModalClose'), glassAngerChoice=document.getElementById('glassAngerChoice'), glassPane=document.getElementById('glassPane'), glassCrackSvg=document.getElementById('glassCrack'), glassHint=document.getElementById('glassHint'), glassTapCounter=document.getElementById('glassTapCounter'), glassNote=document.getElementById('glassNote'), glassNoteText=document.getElementById('glassNoteText'), glassEditBtn=document.getElementById('glassEditBtn'), glassEditForm=document.getElementById('glassEditForm'), glassNoteInput=document.getElementById('glassNoteInput'), glassEditCancel=document.getElementById('glassEditCancel');
@@ -5438,8 +5383,10 @@ async function sha256Hex(text){
   });
 
   /* ---------- shake to shuffle ----------
-     Shaking the phone triggers the same "Surprise me" action as the button.
-     The button itself always stays on the page too.
+     On desktop/laptop, shaking (if the device supports it) still triggers
+     "Surprise me", same as before. On mobile, shaking instead reveals a
+     centered compliment card (since the lurking envelope is hidden there) —
+     the envelope on mobile is retired in favor of this.
      Note: browsers only allow motion-sensor access on secure origins
      (https:// or localhost). If this file is opened directly from local
      storage or a content:// link instead of the deployed https:// site,
@@ -5447,10 +5394,17 @@ async function sha256Hex(text){
      not a bug here. It works once the site is hosted over https. */
   (function setupShakeToShuffle(){
     let lastX=null, lastY=null, lastZ=null, lastShakeTime=0;
-    const SHAKE_THRESHOLD = 13, SHAKE_COOLDOWN = 1300;
+    const SHAKE_THRESHOLD = 10, SHAKE_COOLDOWN = 1300;
     if (typeof window.isSecureContext !== 'undefined' && !window.isSecureContext){
       console.warn('Shake to shuffle needs a secure (https://) origin to access motion sensors — it will be inactive on this preview.');
     }
+    const shakeComplimentModal = document.getElementById('shakeComplimentModal');
+    const shakeComplimentText = document.getElementById('shakeComplimentText');
+    function showShakeCompliment(){
+      shakeComplimentText.textContent = COMPLIMENT_LINES[Math.floor(Math.random() * COMPLIMENT_LINES.length)];
+      shakeComplimentModal.classList.remove('hidden');
+    }
+    shakeComplimentModal.addEventListener('click', () => shakeComplimentModal.classList.add('hidden'));
     function handleMotion(e){
       if (!passGate.classList.contains('hidden')) return; // only once unlocked
       const acc = e.accelerationIncludingGravity || e.acceleration;
@@ -5462,7 +5416,8 @@ async function sha256Hex(text){
       const now = Date.now();
       if (delta > SHAKE_THRESHOLD && now - lastShakeTime > SHAKE_COOLDOWN){
         lastShakeTime = now;
-        surpriseBtn.click();
+        if (window.innerWidth <= 600) showShakeCompliment();
+        else surpriseBtn.click();
       }
     }
     if (typeof DeviceMotionEvent === 'undefined') return;
