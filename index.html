@@ -92,7 +92,8 @@
   /* ---------- shake compliment (mobile) ---------- */
   .shake-compliment-modal{ position:fixed; inset:0; z-index:70; display:flex; align-items:center; justify-content:center; padding:1.4rem; background:rgba(20,14,18,.4); backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px); }
   .shake-compliment-modal.hidden{ display:none; }
-  .shake-compliment-card{ position:relative; width:min(360px,88vw); background:var(--white); border:1px solid rgba(255,255,255,.6); border-radius:20px; padding:2.1rem 1.7rem; box-shadow:0 4px 14px rgba(0,0,0,.22),0 26px 50px rgba(0,0,0,.3); overflow:hidden; animation:notePopIn .35s ease; text-align:center; }
+  .shake-compliment-card{ position:relative; width:min(360px,88vw); background:var(--white); border:1px solid rgba(255,255,255,.6); border-radius:20px; padding:2.1rem 1.7rem; box-shadow:0 4px 14px rgba(0,0,0,.22),0 26px 50px rgba(0,0,0,.3); overflow:hidden; animation:shakeComplimentIn .5s cubic-bezier(.25,.85,.35,1.15); text-align:center; }
+  @keyframes shakeComplimentIn{ 0%{ opacity:0; transform:translateY(26px) scale(.88); filter:blur(7px); } 60%{ opacity:1; transform:translateY(-6px) scale(1.02); filter:blur(1px); } 100%{ opacity:1; transform:translateY(0) scale(1); filter:blur(0); } }
   .shake-compliment-card::before{ content:''; position:absolute; top:0; left:0; right:0; height:46%; background:linear-gradient(180deg, rgba(255,255,255,.4), rgba(255,255,255,0)); pointer-events:none; }
   .shake-compliment-card p{ position:relative; z-index:1; margin:0; font:1.6rem/1.55 'Caveat',cursive; color:var(--ink); }
   body.dark-mode .shake-compliment-card{ background:#2c2432; border-color:rgba(255,255,255,.14); }
@@ -1117,7 +1118,8 @@
   .doodle-image{ width:100%; aspect-ratio:1 / 1; object-fit:contain; background:#fffdf7; display:block; cursor:zoom-in; }
   .doodle-caption-preview{ position:static; margin-top:7px; color:#6B5344; text-align:center; font:600 .85rem/1.2 'Caveat',cursive; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .doodle-back{ position:absolute; inset:0; padding:.9rem; display:flex; flex-direction:column; justify-content:space-between; background:#FFF3D6; transform:rotateY(180deg); }
-  .doodle-text{ font:1.18rem 'Caveat',cursive; color:var(--ink); overflow-wrap:anywhere; }
+  .doodle-caption-edit{ resize:none; min-height:44px; max-height:64px; border:0; outline:0; background:transparent; color:var(--ink); font:1.18rem 'Caveat',cursive; overflow-wrap:anywhere; padding:0; }
+  .doodle-caption-edit::placeholder{ color:#9C8776; }
   .doodle-author-badge{ position:absolute; bottom:7px; left:9px; padding:.18rem .42rem; border-radius:999px; color:var(--white); font:700 .62rem 'Quicksand',sans-serif; }
   .doodle-author-badge.author-1{ background:var(--rose-deep); } .doodle-author-badge.author-2{ background:var(--sage); }
   .doodle-date{ position:absolute; right:10px; bottom:10px; color:var(--ink-soft); font:.62rem 'Quicksand',sans-serif; }
@@ -1129,7 +1131,7 @@
   .doodle-reaction-picker button{ border:1px solid transparent; background:none; border-radius:50%; cursor:pointer; opacity:.6; }
   .doodle-reaction-picker button.active{ opacity:1; border-color:var(--rose-deep); }
   .doodle-back-actions{ display:flex; justify-content:space-between; align-items:center; }
-  @media (max-width:480px){ .doodles-wall{ padding:0 1rem; } .doodle-studio{ padding:.75rem; } .doodle-tools button{ padding:.32rem .5rem; } .doodles-grid{ display:flex; flex-wrap:wrap; justify-content:center; gap:.7rem; } .doodle-wrap{ width:calc(50% - .35rem); min-width:0; contain-intrinsic-size:0 250px; } .doodle-flip,.doodle-front{ min-height:0; } .doodle-front{ padding:6px 6px 24px; } .doodle-caption-preview{ margin-top:5px; font-size:.75rem; } .doodle-author-badge{ left:6px; bottom:6px; font-size:.55rem; } .doodle-date{ right:6px; bottom:7px; font-size:.52rem; } .doodle-fav,.doodle-remove{ top:4px; font-size:.75rem; } .doodle-fav{left:4px}.doodle-remove{right:4px}.doodle-reaction-badge{ top:4px; font-size:.95rem; } .doodle-back{ padding:.65rem; } .doodle-text{ font-size:1rem; line-height:1.15; max-height:2.4em; overflow:hidden; } .doodle-reply-input{ min-height:56px; font-size:.9rem; } .doodle-reaction-picker{ gap:4px; } .doodle-reaction-picker button{ font-size:.85rem; } }
+  @media (max-width:480px){ .doodles-wall{ padding:0 1rem; } .doodle-studio{ padding:.75rem; } .doodle-tools button{ padding:.32rem .5rem; } .doodles-grid{ display:flex; flex-wrap:wrap; justify-content:center; gap:.7rem; } .doodle-wrap{ width:calc(50% - .35rem); min-width:0; contain-intrinsic-size:0 250px; } .doodle-flip,.doodle-front{ min-height:0; } .doodle-front{ padding:6px 6px 24px; } .doodle-caption-preview{ margin-top:5px; font-size:.75rem; } .doodle-author-badge{ left:6px; bottom:6px; font-size:.55rem; } .doodle-date{ right:6px; bottom:7px; font-size:.52rem; } .doodle-fav,.doodle-remove{ top:4px; font-size:.75rem; } .doodle-fav{left:4px}.doodle-remove{right:4px}.doodle-reaction-badge{ top:4px; font-size:.95rem; } .doodle-back{ padding:.65rem; } .doodle-caption-edit{ font-size:1rem; min-height:34px; max-height:48px; } .doodle-reply-input{ min-height:56px; font-size:.9rem; } .doodle-reaction-picker{ gap:4px; } .doodle-reaction-picker button{ font-size:.85rem; } }
 
   /* ---------- little universe extras ---------- */
   .extras-wall{ max-width:720px; margin:0 auto 3rem; padding:0 1.5rem; position:relative; z-index:1; }
@@ -1186,7 +1188,7 @@
   body.dark-mode .extras-card{ background:#342b39; } body.dark-mode .calendar-day{ background:#4a3e4d; color:#fff; }
   body.dark-mode .calendar-nav button{ color:#17121a; background:#d9d2da; }
   body.dark-mode .bucket-item, body.dark-mode .capsule-item{ background:#d2cdc3; color:#302735; } body.dark-mode .capsule-item.locked{ color:#604868; } body.dark-mode .capsule-date{ color:#6f4e60; font-weight:800; } body.dark-mode .capsule-remove{ color:#6f4e60; background:rgba(48,39,53,.1); } body.dark-mode .bucket-remove{ color:#6f4e60; } body.dark-mode .extras-form input, body.dark-mode .extras-form textarea, body.dark-mode .bucket-add input{ color:#302735; background:#dedbe0; } body.dark-mode .extras-form input::placeholder, body.dark-mode .extras-form textarea::placeholder, body.dark-mode .bucket-add input::placeholder{ color:#746b78; }
-  body.dark-mode .doodle-back .doodle-text, body.dark-mode .doodle-back .doodle-reply-input, body.dark-mode .doodle-back .note-flip-back-btn{ color:#3b2d38; } body.dark-mode .doodle-back .doodle-reply-input::placeholder{ color:#786575; }
+  body.dark-mode .doodle-back .doodle-caption-edit, body.dark-mode .doodle-back .doodle-reply-input, body.dark-mode .doodle-back .note-flip-back-btn{ color:#3b2d38; } body.dark-mode .doodle-back .doodle-reply-input::placeholder, body.dark-mode .doodle-back .doodle-caption-edit::placeholder{ color:#786575; }
   body.dark-mode .notes-close-btn{ background:#e3dce3; color:#241d28; border:1px solid #f7eaf5; box-shadow:0 2px 8px rgba(0,0,0,.35); font-weight:800; } body.dark-mode .notes-close-btn:hover{ background:#d9758b; color:white; }
   body.dark-mode .extra-author .toggle-letter{ color:#eaddea; opacity:.7; } body.dark-mode .bucket-item small{ color:#6f4e60; font-weight:800; }
 
@@ -1288,7 +1290,8 @@
   .td-jar:hover span{ transform:scale(1.08) rotate(-4deg); }
   .td-jar.shaking span{ animation:envelopeShake .35s ease; }
   .td-hint{ font:600 .78rem 'Quicksand',sans-serif; color:var(--ink-soft); margin:.5rem 0 0; }
-  .td-card{ text-align:center; padding:1.1rem 1.2rem; border-radius:14px; background:rgba(255,255,255,.6); border:1px solid var(--glass-border); animation:notePopIn .3s ease; margin-bottom:1rem; }
+  .td-card{ text-align:center; padding:1.1rem 1.2rem; border-radius:14px; background:rgba(255,255,255,.6); border:1px solid var(--glass-border); animation:cardPopIn .3s ease; margin-bottom:1rem; }
+  @keyframes cardPopIn{ from{ opacity:0; transform:scale(.85); } to{ opacity:1; transform:scale(1); } }
   .td-card.hidden{ display:none; }
   .td-type{ display:inline-block; padding:.2rem .7rem; border-radius:999px; font:800 .68rem 'Quicksand',sans-serif; letter-spacing:.05em; text-transform:uppercase; margin-bottom:.5rem; background:var(--rose-deep); color:#fff; }
   .td-type.dare{ background:var(--gold); }
@@ -1313,8 +1316,11 @@
   .oc-timerbar-fill{ height:100%; width:100%; background:linear-gradient(90deg,var(--rose-deep),var(--gold)); border-radius:999px; }
   .oc-grid{ display:grid; gap:6px; margin:0 auto 1rem; width:min(320px,90vw); }
   .oc-tile{ aspect-ratio:1; border:0; border-radius:9px; cursor:pointer; padding:0; }
+  .oc-tile:disabled{ cursor:default; }
+  .oc-tile.oc-reveal{ box-shadow:0 0 0 3px #fff, 0 0 0 6px var(--rose-deep); animation:ocRevealPulse 1s ease-in-out infinite; }
+  @keyframes ocRevealPulse{ 0%,100%{ box-shadow:0 0 0 3px #fff,0 0 0 6px var(--rose-deep); } 50%{ box-shadow:0 0 0 3px #fff,0 0 0 9px var(--rose-deep); } }
   .oc-gameover.hidden{ display:none; }
-  .oc-gameover{ text-align:center; }
+  .oc-gameover{ text-align:center; margin-top:.9rem; }
   .oc-gameover p{ font:1.3rem 'Caveat',cursive; color:var(--ink); margin:0 0 .8rem; }
   .oc-leaderboard{ margin-top:1rem; font:600 .78rem 'Quicksand',sans-serif; color:var(--ink-soft); text-align:center; line-height:1.7; }
   .oc-leaderboard b{ color:var(--ink); }
@@ -1672,6 +1678,10 @@
   }
   .seasonal-layer{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; transform:translateZ(0); will-change:transform; contain:layout style paint; }
   .seasonal-layer.weather{ background:radial-gradient(circle at 30% 15%, rgba(255,214,150,.05), transparent 55%); }
+  .seasonal-layer.candlelight{ background:radial-gradient(ellipse at center, rgba(255,170,60,0) 38%, rgba(120,55,10,.32) 100%); animation:candleFlicker 3.4s ease-in-out infinite; }
+  @keyframes candleFlicker{ 0%,100%{ opacity:1; } 18%{ opacity:.9; } 34%{ opacity:1; } 52%{ opacity:.86; } 68%{ opacity:1; } 84%{ opacity:.93; } }
+  .seasonal-layer.candlelight span.ember{ color:#ffb454; text-shadow:0 0 6px rgba(255,170,60,.9), 0 0 13px rgba(255,110,20,.55); animation-name:emberFloat; animation-timing-function:ease-in-out; animation-iteration-count:infinite; }
+  @keyframes emberFloat{ 0%{ transform:translateY(0) translateX(0); opacity:0; } 12%{ opacity:1; } 55%{ transform:translateY(-55vh) translateX(8px); } 90%{ opacity:.55; } 100%{ transform:translateY(-85vh) translateX(-6px); opacity:0; } }
   .seasonal-layer span{ position:absolute; user-select:none; }
   .seasonal-layer.rain{ background:linear-gradient(180deg,rgba(30,42,58,.16),transparent 40%); }
   .seasonal-layer.rain::before{ content:''; position:absolute; inset:0; background:#dbe7ff; opacity:0; animation:lightningFlash 7s ease-in-out infinite; mix-blend-mode:screen; }
@@ -1680,6 +1690,12 @@
   .seasonal-layer.snow span{ top:-8vh; color:#f3f8ff; text-shadow:0 0 5px rgba(255,255,255,.85); animation:snowFall linear infinite; }
   .seasonal-layer.blossom{ background:linear-gradient(180deg,rgba(255,214,228,.14),transparent 45%); }
   .seasonal-layer.blossom span{ top:-8vh; width:11px; height:11px; background:linear-gradient(135deg,#ffd9e6,#ff9dbe); border-radius:150px 0 150px 0; box-shadow:0 0 6px rgba(255,175,205,.5); animation:blossomFall linear infinite; }
+
+  /* ---------- cursor-reactive theme effects (desktop only) ---------- */
+  .cursor-ripple{ position:fixed; z-index:5; border-radius:50%; border:1.5px solid rgba(160,211,235,.85); pointer-events:none; animation:cursorRippleAnim .9s ease-out forwards; }
+  @keyframes cursorRippleAnim{ 0%{ width:6px; height:6px; margin:-3px 0 0 -3px; opacity:.8; border-width:2px; } 100%{ width:46px; height:46px; margin:-23px 0 0 -23px; opacity:0; border-width:.5px; } }
+  .cursor-petal{ position:fixed; z-index:5; width:10px; height:10px; margin:-5px 0 0 -5px; background:linear-gradient(135deg,#ffd9e6,#ff9dbe); border-radius:150px 0 150px 0; box-shadow:0 0 6px rgba(255,175,205,.5); pointer-events:none; animation:cursorPetalAnim 1.6s ease-out forwards; }
+  @keyframes cursorPetalAnim{ 0%{ opacity:.95; transform:translate(0,0) rotate(0deg); } 100%{ opacity:0; transform:translate(var(--drift,10px), 46px) rotate(160deg); } }
   .seasonal-layer.fireworks{ background:linear-gradient(180deg,rgba(10,8,24,.32),transparent 55%); }
   .seasonal-layer.fireworks span{ bottom:8%; width:4px; height:4px; border-radius:50%; background:transparent; animation:fireworkPop ease-out infinite; }
   .seasonal-layer.autumn{ background:linear-gradient(180deg,rgba(120,72,38,.10),transparent 45%); }
@@ -2392,6 +2408,7 @@
     <button type="button" data-season="night">🌙 Night sky</button>
     <button type="button" data-season="festival">🪔 Festival</button>
     <button type="button" data-season="weather">🌦️ My weather</button>
+    <button type="button" data-season="candlelight">🕯️ Candlelight</button>
   </div>
   <div class="season-menu" id="seasonMenu">
     <button type="button" class="fav-filter-btn season-menu-trigger" id="seasonMenuBtn" aria-expanded="false" aria-controls="seasonMenuPopover" aria-haspopup="true">
@@ -2408,6 +2425,7 @@
       <button type="button" data-season="night">🌙 Night sky</button>
       <button type="button" data-season="festival">🪔 Festival</button>
       <button type="button" data-season="weather">🌦️ My weather</button>
+      <button type="button" data-season="candlelight">🕯️ Candlelight</button>
     </div>
   </div>
   <div class="hero-actions secondary-row">
@@ -3929,17 +3947,24 @@ async function sha256Hex(text){
   function renderDoodlesFiltered(){ let items=doodlesFavoritesOnly?allDoodles.filter(d=>d.favorite):allDoodles.slice(); const q=doodlesSearchQuery.trim().toLowerCase(); if(q)items=items.filter(d=>`${d.caption||''} ${d.reply||''}`.toLowerCase().includes(q)); if(doodlesSortMode==='oldest')items.reverse(); if(doodlesSortMode==='shuffle')items.sort(()=>Math.random()-.5); renderDoodles(items); }
   async function updateDoodle(d, patch){ const {error}=await supabase.from(DOODLES_TABLE).update(patch).eq('id',d.id); if(error){ console.error(error); showToast('Could not save that doodle change.',{type:'error'}); } }
   let knownDoodleIds=null;
+  function isDoodleFieldFocused(){
+    const active=document.activeElement;
+    return !!(active && active.closest && active.closest('.doodle-wrap') && (active.tagName==='TEXTAREA' || active.tagName==='INPUT'));
+  }
   function renderDoodles(items){
     doodlesGrid.innerHTML=''; if(!items.length){ const p=document.createElement('p'); p.className='empty-note'; p.style.display='block'; p.textContent=qOrEmptyDoodles(); doodlesGrid.appendChild(p); knownDoodleIds=new Set(); return; }
     const isFirstRender=knownDoodleIds===null;
     const currentIds=new Set();
     items.forEach(d=>{ currentIds.add(d.id); const wrap=document.createElement('div'); wrap.className='doodle-wrap'+((!isFirstRender && !knownDoodleIds.has(d.id))?' doodle-wrap-enter':''); wrap.style.setProperty('--nt',(Math.random()*6-3).toFixed(1)+'deg'); const author=String(d.author||1), date=d.created_at?new Date(d.created_at).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'';
-      wrap.innerHTML=`<div class="doodle-flip" tabindex="0" role="button" aria-label="Flip doodle"><div class="doodle-face doodle-front"><button class="doodle-fav" type="button">${d.favorite?'♥':'♡'}</button><button class="doodle-remove" type="button">✕</button><img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption?`: ${escapeHtml(d.caption)}`:''}" loading="lazy" decoding="async">${d.caption?`<div class="doodle-caption-preview">${escapeHtml(d.caption)}</div>`:''}${d.reaction?`<span class="doodle-reaction-badge">${d.reaction}</span>`:''}<span class="doodle-author-badge author-${author}">By ${author==='2'?'M':'J'}</span><span class="doodle-date">${date}</span></div><div class="doodle-face doodle-back"><div class="doodle-text">${escapeHtml(d.caption||'A little doodle ✨')}</div><textarea class="doodle-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(d.reply||'')}</textarea><div class="doodle-reaction-picker">${DOODLE_REACTIONS.map(r=>`<button type="button" data-reaction="${r}" class="${d.reaction===r?'active':''}">${r}</button>`).join('')}</div><div class="doodle-back-actions"><button class="note-flip-back-btn" type="button">‹ back</button><button class="doodle-download" type="button">⇩ PNG</button></div></div></div>`;
-      const flip=wrap.querySelector('.doodle-flip'), image=wrap.querySelector('.doodle-image'), fav=wrap.querySelector('.doodle-fav'), remove=wrap.querySelector('.doodle-remove'), reply=wrap.querySelector('.doodle-reply-input'), back=wrap.querySelector('.note-flip-back-btn'), download=wrap.querySelector('.doodle-download');
+      wrap.innerHTML=`<div class="doodle-flip" tabindex="0" role="button" aria-label="Flip doodle"><div class="doodle-face doodle-front"><button class="doodle-fav" type="button">${d.favorite?'♥':'♡'}</button><button class="doodle-remove" type="button">✕</button><img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption?`: ${escapeHtml(d.caption)}`:''}" loading="lazy" decoding="async"><div class="doodle-caption-preview">${escapeHtml(d.caption||'A little doodle ✨')}</div>${d.reaction?`<span class="doodle-reaction-badge">${d.reaction}</span>`:''}<span class="doodle-author-badge author-${author}">By ${author==='2'?'M':'J'}</span><span class="doodle-date">${date}</span></div><div class="doodle-face doodle-back"><textarea class="doodle-caption-edit" maxlength="120" placeholder="Add a caption...">${escapeHtml(d.caption||'')}</textarea><textarea class="doodle-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(d.reply||'')}</textarea><div class="doodle-reaction-picker">${DOODLE_REACTIONS.map(r=>`<button type="button" data-reaction="${r}" class="${d.reaction===r?'active':''}">${r}</button>`).join('')}</div><div class="doodle-back-actions"><button class="note-flip-back-btn" type="button">‹ back</button><button class="doodle-download" type="button">⇩ PNG</button></div></div></div>`;
+      const flip=wrap.querySelector('.doodle-flip'), image=wrap.querySelector('.doodle-image'), fav=wrap.querySelector('.doodle-fav'), remove=wrap.querySelector('.doodle-remove'), reply=wrap.querySelector('.doodle-reply-input'), captionEdit=wrap.querySelector('.doodle-caption-edit'), back=wrap.querySelector('.note-flip-back-btn'), download=wrap.querySelector('.doodle-download');
       flip.addEventListener('click',e=>{ if(e.target.closest('button,textarea,img'))return; flip.classList.toggle('flipped'); }); flip.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===flip){e.preventDefault();flip.classList.toggle('flipped');}}); back.addEventListener('click',()=>flip.classList.remove('flipped'));
       image.addEventListener('click',()=>{ currentList=items.map(x=>({src:x.image_url,caption:x.caption||'A little doodle'})); lightboxIndex=items.findIndex(x=>x.id===d.id); openLightbox(lightboxIndex,'doodle'); });
       fav.addEventListener('click',async()=>{ d.favorite=!d.favorite; fav.textContent=d.favorite?'♥':'♡'; await updateDoodle(d,{favorite:d.favorite}); if(doodlesFavoritesOnly)renderDoodlesFiltered(); });
       let replyTimer; reply.addEventListener('input',()=>{ d.reply=reply.value; clearTimeout(replyTimer); replyTimer=setTimeout(()=>updateDoodle(d,{reply:d.reply}),400); });
+      reply.addEventListener('blur',flushPendingDoodleReload);
+      let captionTimer; captionEdit.addEventListener('input',()=>{ d.caption=captionEdit.value; clearTimeout(captionTimer); captionTimer=setTimeout(()=>updateDoodle(d,{caption:d.caption||null}),400); });
+      captionEdit.addEventListener('blur',flushPendingDoodleReload);
       wrap.querySelectorAll('[data-reaction]').forEach(b=>b.addEventListener('click',async()=>{ d.reaction=d.reaction===b.dataset.reaction?null:b.dataset.reaction; await updateDoodle(d,{reaction:d.reaction}); renderDoodlesFiltered(); }));
       download.addEventListener('click',async()=>{ try{ const blob=await fetch(d.image_url).then(r=>r.blob()), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`doodle-${d.id}.png`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500); }catch(err){ window.open(d.image_url,'_blank','noopener'); } });
       remove.addEventListener('click',()=>{ const i=allDoodles.findIndex(x=>x.id===d.id); allDoodles.splice(i,1); renderDoodlesFiltered(); const timer=setTimeout(async()=>{ try{ if(d.storage_path)await supabase.storage.from(DOODLES_BUCKET).remove([d.storage_path]); await supabase.from(DOODLES_TABLE).delete().eq('id',d.id); }catch(err){showToast('Could not remove doodle.',{type:'error'});} },5000); showToast('Doodle removed.',{actionLabel:'Undo',duration:5000,onAction:()=>{clearTimeout(timer);allDoodles.splice(i,0,d);renderDoodlesFiltered();}}); });
@@ -3960,7 +3985,13 @@ async function sha256Hex(text){
   notesToggleBtn.addEventListener('click',()=>doodlesWall.classList.add('hidden'));
   doodlesFavFilterBtn.addEventListener('click',()=>{doodlesFavoritesOnly=!doodlesFavoritesOnly; doodlesFavFilterBtn.classList.toggle('active',doodlesFavoritesOnly); doodlesFavFilterBtn.textContent=doodlesFavoritesOnly?'♥ Showing favorites':'♡ Favorites only'; renderDoodlesFiltered();});
   let doodleSearchTimer; doodlesSearchInput.addEventListener('input',()=>{clearTimeout(doodleSearchTimer);doodleSearchTimer=setTimeout(()=>{doodlesSearchQuery=doodlesSearchInput.value;renderDoodlesFiltered();},250);}); doodlesSortSelect.addEventListener('change',()=>{doodlesSortMode=doodlesSortSelect.value;renderDoodlesFiltered();});
-  function startDoodlesRealtime(){ if(!supabase||doodlesRealtimeStarted)return; doodlesRealtimeStarted=true; supabase.channel('doodles-wall').on('postgres_changes',{event:'*',schema:'public',table:DOODLES_TABLE},()=>{if(doodlesLoaded)loadDoodles();}).subscribe(); }
+  // Typing a reply or caption saves in the background, which echoes back through
+  // this realtime subscription — reloading mid-keystroke would destroy the very
+  // textarea being typed into and close the on-screen keyboard. So while any
+  // doodle text field has focus, a reload is deferred until it loses focus.
+  let doodlesReloadPending=false;
+  function flushPendingDoodleReload(){ if(doodlesReloadPending){ doodlesReloadPending=false; setTimeout(()=>{ if(!isDoodleFieldFocused()) loadDoodles(); },150); } }
+  function startDoodlesRealtime(){ if(!supabase||doodlesRealtimeStarted)return; doodlesRealtimeStarted=true; supabase.channel('doodles-wall').on('postgres_changes',{event:'*',schema:'public',table:DOODLES_TABLE},()=>{ if(!doodlesLoaded) return; if(isDoodleFieldFocused()){ doodlesReloadPending=true; return; } loadDoodles(); }).subscribe(); }
   startDoodlesRealtime();
 
   /* ---------- mood calendar, capsules, bucket list & constellation ---------- */
@@ -4308,8 +4339,18 @@ async function sha256Hex(text){
     try{
       const {data,error}=await supabase.from(CONNECT4_TABLE).select('*').eq('id',1).maybeSingle();
       if(error) throw error;
-      if(data){ c4BoardState=data.board||Array(C4_COLS*C4_ROWS).fill(null); c4Turn=data.turn||1; c4Winner=data.winner||null; }
-      else{ c4BoardState=Array(C4_COLS*C4_ROWS).fill(null); c4Turn=1; c4Winner=null; }
+      const total=C4_COLS*C4_ROWS;
+      if(data && Array.isArray(data.board) && data.board.length===total){
+        c4BoardState=data.board; c4Turn=data.turn||1; c4Winner=data.winner||null;
+      }else{
+        // the stored board is missing or the wrong size (e.g. a fresh row still
+        // holding its empty default) — start clean and repair it in the database
+        c4BoardState=Array(total).fill(null); c4Turn=1; c4Winner=null;
+        if(data){
+          try{ await supabase.from(CONNECT4_TABLE).upsert({id:1,board:c4BoardState,turn:1,winner:null,updated_at:new Date().toISOString()}); }
+          catch(repairErr){ console.error('Could not repair board:',repairErr); }
+        }
+      }
       c4LastDropIndex=null;
       renderConnect4();
     }catch(e){ console.error(e); showToast('Could not load the game. Run the games SQL setup first.',{type:'error'}); }
@@ -4372,14 +4413,14 @@ async function sha256Hex(text){
     "What's a silly fear you've never told me?"
   ];
   const DARE_PROMPTS=[
-    "Send the other a voice note telling them why you love them.",
-    "Give your partner a genuine compliment right now, out loud.",
+    "Send your partner a voice note telling them why you love them.",
+    "Give your partner a genuine compliment right now.",
     "Recreate your first photo together's pose.",
     "Write a two-line poem about your partner, right now.",
     "Text your partner a memory that always makes you laugh.",
     "Do your best impression of your partner for 10 seconds.",
-    "Plan a mini date idea for this week and tell them now.",
-    "Give a genuine, specific compliment about something non-physical."
+    "Show Boobs 😂😙",
+    "Tell I love you 20 times to your partner."
   ];
   const tdJar=document.getElementById('tdJar'), tdJarIcon=document.getElementById('tdJarIcon'), tdHint=document.getElementById('tdHint'), tdCard=document.getElementById('tdCard'), tdType=document.getElementById('tdType'), tdPromptText=document.getElementById('tdPromptText'), tdPullBtn=document.getElementById('tdPullBtn');
   let tdLastPrompt=null;
@@ -4468,7 +4509,10 @@ async function sha256Hex(text){
     if(!ocPlaying) return;
     ocPlaying=false;
     clearTimeout(ocTimeout);
-    ocGrid.classList.add('hidden'); ocHint.classList.add('hidden'); ocTimerFill.parentElement.classList.add('hidden');
+    ocHint.classList.add('hidden'); ocTimerFill.parentElement.classList.add('hidden');
+    Array.from(ocGrid.children).forEach(tile=>{ tile.disabled=true; });
+    const correctTile=ocGrid.children[ocOddIndex];
+    if(correctTile) correctTile.classList.add('oc-reveal');
     ocGameOver.classList.remove('hidden');
     ocFinalScore.textContent = ocScore===0 ? "Didn't quite get one — tap Play again!" : `You scored ${ocScore}! 🎉`;
     if(!supabase) return;
@@ -5085,7 +5129,8 @@ async function sha256Hex(text){
       autumn: { count: scale(16), symbols: [''] },
       stars: { count: scale(28), symbols: ['✦','✧','⋆'] },
       festival: { count: scale(14), symbols: ['🪔','🌸','🎊','✨'] },
-      night: { count: scale(40), symbols: ['·','✦','⋆'] }
+      night: { count: scale(40), symbols: ['·','✦','⋆'] },
+      candlelight: { count: scale(16), symbols: ['•','✧','·'] }
     }[renderKey];
     if (settings){
       for(let i=0;i<settings.count;i++){
@@ -5101,9 +5146,14 @@ async function sha256Hex(text){
         if(renderKey==='autumn'){
           piece.className='leaf';
         }
+        if(renderKey==='candlelight'){
+          piece.className='ember';
+        }
         piece.style.left=`${Math.random()*100}%`;
         if(renderKey === 'rain' || renderKey === 'snow' || renderKey === 'blossom' || renderKey === 'autumn'){
           piece.style.top=`${-15-Math.random()*90}px`;
+        } else if(renderKey === 'candlelight'){
+          piece.style.top=`${40+Math.random()*55}%`;
         } else {
           piece.style.top=`${Math.random()*90}%`;
         }
@@ -5114,6 +5164,7 @@ async function sha256Hex(text){
           : renderKey === 'snow' ? `${7+Math.random()*7}s`
           : renderKey === 'blossom' ? `${8+Math.random()*8}s`
           : renderKey === 'autumn' ? `${9+Math.random()*8}s`
+          : renderKey === 'candlelight' ? `${4.5+Math.random()*5}s`
           : `${1.4+Math.random()*2.6}s`;
         piece.style.animationDelay=`${-Math.random()*3}s`;
         if(renderKey==='rain'){
@@ -5384,11 +5435,47 @@ async function sha256Hex(text){
     openLightbox(idx);
   });
 
+  /* ---------- cursor-reactive theme effects (desktop only) ----------
+     Moving the mouse during the Monsoon theme leaves little water ripples;
+     during Cherry Blossom it brushes off small petals. Only runs on
+     devices with a real mouse (hover+fine pointer), so it does nothing
+     on touchscreens — there's no persistent cursor there to react to. */
+  (function setupCursorSeasonalEffects(){
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    let lastSpawn = 0;
+    const SPAWN_INTERVAL = 130;
+    function spawnRipple(x,y){
+      const ripple=document.createElement('span');
+      ripple.className='cursor-ripple';
+      ripple.style.left=x+'px'; ripple.style.top=y+'px';
+      document.body.appendChild(ripple);
+      setTimeout(()=>ripple.remove(),900);
+    }
+    function spawnCursorPetal(x,y){
+      const petal=document.createElement('span');
+      petal.className='cursor-petal';
+      petal.style.left=x+'px'; petal.style.top=y+'px';
+      petal.style.setProperty('--drift', (Math.random()*40-20)+'px');
+      petal.style.transform=`rotate(${Math.random()*60-30}deg)`;
+      document.body.appendChild(petal);
+      setTimeout(()=>petal.remove(),1700);
+    }
+    document.addEventListener('mousemove', (e) => {
+      if (!passGate.classList.contains('hidden')) return;
+      const now = Date.now();
+      if (now - lastSpawn < SPAWN_INTERVAL) return;
+      const currentSeason = localStorage.getItem(SEASON_KEY) || 'none';
+      if (currentSeason !== 'rain' && currentSeason !== 'blossom') return;
+      lastSpawn = now;
+      if (currentSeason === 'rain') spawnRipple(e.clientX, e.clientY);
+      else spawnCursorPetal(e.clientX, e.clientY);
+    });
+  })();
+
   /* ---------- shake to shuffle ----------
      On desktop/laptop, shaking (if the device supports it) still triggers
      "Surprise me", same as before. On mobile, shaking instead reveals a
-     centered compliment card (since the lurking envelope is hidden there) —
-     the envelope on mobile is retired in favor of this.
+     centered compliment card (since the lurking envelope is hidden there).
      Note: browsers only allow motion-sensor access on secure origins
      (https:// or localhost). If this file is opened directly from local
      storage or a content:// link instead of the deployed https:// site,
