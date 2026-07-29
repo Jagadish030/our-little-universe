@@ -1281,7 +1281,7 @@
   .c4-cell[data-v="2"]{ background:var(--gold); }
   .c4-cell.drop{ animation:c4Drop .35s cubic-bezier(.5,0,.7,.4); }
   @keyframes c4Drop{ from{ transform:translateY(-160%); } to{ transform:translateY(0); } }
-  body.dark-mode .c4-cell{ background:rgba(255,255,255,.14); }
+  body.dark-mode .c4-cell:not([data-v="1"]):not([data-v="2"]){ background:rgba(255,255,255,.14); }
 
 
   /* ---------- truth or dare jar ---------- */
@@ -1678,10 +1678,23 @@
   }
   .seasonal-layer{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; transform:translateZ(0); will-change:transform; contain:layout style paint; }
   .seasonal-layer.weather{ background:radial-gradient(circle at 30% 15%, rgba(255,214,150,.05), transparent 55%); }
-  .seasonal-layer.candlelight{ background:radial-gradient(ellipse at center, rgba(255,170,60,0) 38%, rgba(120,55,10,.32) 100%); animation:candleFlicker 3.4s ease-in-out infinite; }
-  @keyframes candleFlicker{ 0%,100%{ opacity:1; } 18%{ opacity:.9; } 34%{ opacity:1; } 52%{ opacity:.86; } 68%{ opacity:1; } 84%{ opacity:.93; } }
-  .seasonal-layer.candlelight span.ember{ color:#ffb454; text-shadow:0 0 6px rgba(255,170,60,.9), 0 0 13px rgba(255,110,20,.55); animation-name:emberFloat; animation-timing-function:ease-in-out; animation-iteration-count:infinite; }
-  @keyframes emberFloat{ 0%{ transform:translateY(0) translateX(0); opacity:0; } 12%{ opacity:1; } 55%{ transform:translateY(-55vh) translateX(8px); } 90%{ opacity:.55; } 100%{ transform:translateY(-85vh) translateX(-6px); opacity:0; } }
+  .seasonal-layer.fireflies{ background:radial-gradient(ellipse at center, rgba(60,95,40,0) 38%, rgba(12,26,14,.34) 100%); }
+  .seasonal-layer.fireflies span.firefly{ color:#eaff9e; text-shadow:0 0 6px rgba(220,255,140,.9), 0 0 14px rgba(190,255,110,.6); animation-name:fireflyRoam; animation-timing-function:ease-in-out; animation-iteration-count:infinite; }
+  @keyframes fireflyRoam{
+    0%{ transform:translate(0,0); opacity:0; }
+    5%{ opacity:.85; }
+    12%{ opacity:.15; }
+    20%{ transform:translate(16px,-12vh); opacity:.9; }
+    28%{ opacity:.2; }
+    38%{ transform:translate(-15px,-27vh); opacity:1; }
+    46%{ opacity:.15; }
+    56%{ transform:translate(18px,-42vh); opacity:.9; }
+    64%{ opacity:.2; }
+    74%{ transform:translate(-13px,-58vh); opacity:.85; }
+    84%{ opacity:.15; }
+    94%{ transform:translate(10px,-74vh); opacity:.55; }
+    100%{ transform:translate(4px,-86vh); opacity:0; }
+  }
   .seasonal-layer span{ position:absolute; user-select:none; }
   .seasonal-layer.rain{ background:linear-gradient(180deg,rgba(30,42,58,.16),transparent 40%); }
   .seasonal-layer.rain::before{ content:''; position:absolute; inset:0; background:#dbe7ff; opacity:0; animation:lightningFlash 7s ease-in-out infinite; mix-blend-mode:screen; }
@@ -1696,6 +1709,14 @@
   @keyframes cursorRippleAnim{ 0%{ width:6px; height:6px; margin:-3px 0 0 -3px; opacity:.8; border-width:2px; } 100%{ width:46px; height:46px; margin:-23px 0 0 -23px; opacity:0; border-width:.5px; } }
   .cursor-petal{ position:fixed; z-index:5; width:10px; height:10px; margin:-5px 0 0 -5px; background:linear-gradient(135deg,#ffd9e6,#ff9dbe); border-radius:150px 0 150px 0; box-shadow:0 0 6px rgba(255,175,205,.5); pointer-events:none; animation:cursorPetalAnim 1.6s ease-out forwards; }
   @keyframes cursorPetalAnim{ 0%{ opacity:.95; transform:translate(0,0) rotate(0deg); } 100%{ opacity:0; transform:translate(var(--drift,10px), 46px) rotate(160deg); } }
+  .cursor-snow{ position:fixed; z-index:5; pointer-events:none; color:#f3f8ff; text-shadow:0 0 5px rgba(255,255,255,.85); animation:cursorSnowAnim 1.8s ease-in forwards; }
+  @keyframes cursorSnowAnim{ 0%{ opacity:.95; transform:translate(0,0) rotate(0deg); } 100%{ opacity:0; transform:translate(var(--drift,12px), 48px) rotate(110deg); } }
+  .cursor-leaf{ position:fixed; z-index:5; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:0 70% 0 70%; box-shadow:inset 0 0 3px rgba(60,30,10,.25); pointer-events:none; animation:cursorLeafAnim 1.8s ease-in forwards; }
+  @keyframes cursorLeafAnim{ 0%{ opacity:.95; transform:translate(0,0) rotate(0deg); } 100%{ opacity:0; transform:translate(var(--drift,14px), 50px) rotate(230deg); } }
+  .cursor-star{ position:fixed; z-index:5; pointer-events:none; color:#fff4b6; text-shadow:0 0 8px #fff0a5; animation:cursorStarAnim 1.1s ease-out forwards; }
+  @keyframes cursorStarAnim{ 0%{ opacity:0; transform:scale(.4) rotate(0deg) translateY(0); } 30%{ opacity:1; } 100%{ opacity:0; transform:scale(1.15) rotate(35deg) translateY(-18px); } }
+  .cursor-firefly{ position:fixed; z-index:5; width:5px; height:5px; margin:-2.5px 0 0 -2.5px; border-radius:50%; background:#e9ff9e; box-shadow:0 0 6px 2px rgba(233,255,158,.9), 0 0 14px 4px rgba(196,255,120,.5); pointer-events:none; animation:cursorFireflyAnim 1.6s ease-in-out forwards; }
+  @keyframes cursorFireflyAnim{ 0%{ opacity:0; transform:translate(0,0) scale(.6); } 20%{ opacity:1; } 50%{ opacity:.5; transform:translate(var(--drift,10px), -10px) scale(1); } 80%{ opacity:.9; } 100%{ opacity:0; transform:translate(calc(var(--drift,10px) * -1), -22px) scale(.7); } }
   .seasonal-layer.fireworks{ background:linear-gradient(180deg,rgba(10,8,24,.32),transparent 55%); }
   .seasonal-layer.fireworks span{ bottom:8%; width:4px; height:4px; border-radius:50%; background:transparent; animation:fireworkPop ease-out infinite; }
   .seasonal-layer.autumn{ background:linear-gradient(180deg,rgba(120,72,38,.10),transparent 45%); }
@@ -2393,6 +2414,7 @@
     <button class="fav-filter-btn" id="favFilterBtn" type="button">♡ Favorites only</button>
     <button class="fav-filter-btn" id="surpriseBtn" type="button">Surprise me 🎲</button>
     <button class="fav-filter-btn break-glass-btn" id="breakGlassBtn" type="button">🔨 In case of a fight</button>
+    <a class="fav-filter-btn" id="specialDayBtn" href="for-you.html" target="_blank" rel="noopener">🎀 Something special</a>
     <button class="music-btn" id="musicBtn" type="button" aria-label="Turn on music">🎵</button>
     <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">🌙</button>
   </div>
@@ -2408,7 +2430,7 @@
     <button type="button" data-season="night">🌙 Night sky</button>
     <button type="button" data-season="festival">🪔 Festival</button>
     <button type="button" data-season="weather">🌦️ My weather</button>
-    <button type="button" data-season="candlelight">🕯️ Candlelight</button>
+    <button type="button" data-season="fireflies">🌟 Fireflies</button>
   </div>
   <div class="season-menu" id="seasonMenu">
     <button type="button" class="fav-filter-btn season-menu-trigger" id="seasonMenuBtn" aria-expanded="false" aria-controls="seasonMenuPopover" aria-haspopup="true">
@@ -2425,7 +2447,7 @@
       <button type="button" data-season="night">🌙 Night sky</button>
       <button type="button" data-season="festival">🪔 Festival</button>
       <button type="button" data-season="weather">🌦️ My weather</button>
-      <button type="button" data-season="candlelight">🕯️ Candlelight</button>
+      <button type="button" data-season="fireflies">🌟 Fireflies</button>
     </div>
   </div>
   <div class="hero-actions secondary-row">
@@ -5130,7 +5152,7 @@ async function sha256Hex(text){
       stars: { count: scale(28), symbols: ['✦','✧','⋆'] },
       festival: { count: scale(14), symbols: ['🪔','🌸','🎊','✨'] },
       night: { count: scale(40), symbols: ['·','✦','⋆'] },
-      candlelight: { count: scale(16), symbols: ['•','✧','·'] }
+      fireflies: { count: scale(32), symbols: ['•','◦','·'] }
     }[renderKey];
     if (settings){
       for(let i=0;i<settings.count;i++){
@@ -5146,14 +5168,14 @@ async function sha256Hex(text){
         if(renderKey==='autumn'){
           piece.className='leaf';
         }
-        if(renderKey==='candlelight'){
-          piece.className='ember';
+        if(renderKey==='fireflies'){
+          piece.className='firefly';
         }
         piece.style.left=`${Math.random()*100}%`;
         if(renderKey === 'rain' || renderKey === 'snow' || renderKey === 'blossom' || renderKey === 'autumn'){
           piece.style.top=`${-15-Math.random()*90}px`;
-        } else if(renderKey === 'candlelight'){
-          piece.style.top=`${40+Math.random()*55}%`;
+        } else if(renderKey === 'fireflies'){
+          piece.style.top=`${12+Math.random()*76}%`;
         } else {
           piece.style.top=`${Math.random()*90}%`;
         }
@@ -5164,7 +5186,7 @@ async function sha256Hex(text){
           : renderKey === 'snow' ? `${7+Math.random()*7}s`
           : renderKey === 'blossom' ? `${8+Math.random()*8}s`
           : renderKey === 'autumn' ? `${9+Math.random()*8}s`
-          : renderKey === 'candlelight' ? `${4.5+Math.random()*5}s`
+          : renderKey === 'fireflies' ? `${5+Math.random()*6}s`
           : `${1.4+Math.random()*2.6}s`;
         piece.style.animationDelay=`${-Math.random()*3}s`;
         if(renderKey==='rain'){
@@ -5437,9 +5459,12 @@ async function sha256Hex(text){
 
   /* ---------- cursor-reactive theme effects (desktop only) ----------
      Moving the mouse during the Monsoon theme leaves little water ripples;
-     during Cherry Blossom it brushes off small petals. Only runs on
-     devices with a real mouse (hover+fine pointer), so it does nothing
-     on touchscreens — there's no persistent cursor there to react to. */
+     during Cherry Blossom it brushes off small petals; Snowfall trails tiny
+     snowflakes; Autumn drizzle brushes off small leaves; Night sky and
+     Birthday stars leave a trail of tiny stars; Fireflies leaves a trail of
+     tiny glowing fireflies. Only runs on devices with a real mouse
+     (hover+fine pointer), so it does nothing on touchscreens — there's no
+     persistent cursor there to react to. */
   (function setupCursorSeasonalEffects(){
     if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
     let lastSpawn = 0;
@@ -5460,15 +5485,57 @@ async function sha256Hex(text){
       document.body.appendChild(petal);
       setTimeout(()=>petal.remove(),1700);
     }
+    function spawnCursorSnow(x,y){
+      const flake=document.createElement('span');
+      flake.className='cursor-snow';
+      flake.textContent=['❄','❅','❆'][Math.floor(Math.random()*3)];
+      flake.style.left=x+'px'; flake.style.top=y+'px';
+      flake.style.fontSize=`${.55+Math.random()*.4}rem`;
+      flake.style.setProperty('--drift', (Math.random()*30-15)+'px');
+      document.body.appendChild(flake);
+      setTimeout(()=>flake.remove(),1800);
+    }
+    function spawnCursorLeaf(x,y){
+      const leaf=document.createElement('span');
+      leaf.className='cursor-leaf';
+      const leafColors=['#c9622b','#d98a3d','#a83e28','#e0a63e','#8c4a2b'];
+      leaf.style.background=leafColors[Math.floor(Math.random()*leafColors.length)];
+      leaf.style.left=x+'px'; leaf.style.top=y+'px';
+      leaf.style.setProperty('--drift', (Math.random()*40-20)+'px');
+      document.body.appendChild(leaf);
+      setTimeout(()=>leaf.remove(),1800);
+    }
+    function spawnCursorStar(x,y){
+      const star=document.createElement('span');
+      star.className='cursor-star';
+      star.textContent=['✦','✧','⋆'][Math.floor(Math.random()*3)];
+      star.style.left=x+'px'; star.style.top=y+'px';
+      star.style.fontSize=`${.6+Math.random()*.5}rem`;
+      document.body.appendChild(star);
+      setTimeout(()=>star.remove(),1100);
+    }
+    function spawnCursorFirefly(x,y){
+      const fly=document.createElement('span');
+      fly.className='cursor-firefly';
+      fly.style.left=x+'px'; fly.style.top=y+'px';
+      fly.style.setProperty('--drift', (Math.random()*24-12)+'px');
+      document.body.appendChild(fly);
+      setTimeout(()=>fly.remove(),1600);
+    }
     document.addEventListener('mousemove', (e) => {
       if (!passGate.classList.contains('hidden')) return;
       const now = Date.now();
       if (now - lastSpawn < SPAWN_INTERVAL) return;
       const currentSeason = localStorage.getItem(SEASON_KEY) || 'none';
-      if (currentSeason !== 'rain' && currentSeason !== 'blossom') return;
+      const cursorSeasons = ['rain','blossom','snow','autumn','night','stars','fireflies'];
+      if (!cursorSeasons.includes(currentSeason)) return;
       lastSpawn = now;
       if (currentSeason === 'rain') spawnRipple(e.clientX, e.clientY);
-      else spawnCursorPetal(e.clientX, e.clientY);
+      else if (currentSeason === 'blossom') spawnCursorPetal(e.clientX, e.clientY);
+      else if (currentSeason === 'snow') spawnCursorSnow(e.clientX, e.clientY);
+      else if (currentSeason === 'autumn') spawnCursorLeaf(e.clientX, e.clientY);
+      else if (currentSeason === 'night' || currentSeason === 'stars') spawnCursorStar(e.clientX, e.clientY);
+      else if (currentSeason === 'fireflies') spawnCursorFirefly(e.clientX, e.clientY);
     });
   })();
 
