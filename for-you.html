@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For You 💌</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!--
+  ══════════════════════════════════════════════════════════════════
+  HOW TO PERSONALIZE THIS PAGE — everything to change lives in two spots:
+
+  1. Down in the <script> at the bottom, edit the CONFIG object:
+     - HER_NAME, YOUR_NAME
+     - LETTER: the sentimental paragraph(s)
+     - REASONS: the "reasons I love you" list. Each one is
+       { text: "...", photo: "assets/1.jpeg" } — the text shows first;
+       tapping the card flips it to reveal the photo on the back. Any image
+       size or shape works, it's auto-cropped to fit the frame like a
+       Polaroid. Leave photo: "" for a plain card on the back instead.
+     - FINALE_LINE: the big closing line
+     - (optional) SONG_EMBED_URL: paste a Spotify/YouTube embed link to add a song
+
+     IMPORTANT ABOUT PHOTO PATHS: photo paths must be relative to this html
+     file (or a full https:// URL) — never a path like "C:\Users\...\1.jpeg".
+     A path to a file on your own computer only works on your own computer;
+     it will be a broken image (and can throw the card layout out of shape)
+     on any other device, including hers, and once this is hosted online.
+     The fix: make a folder named "assets" right next to this html file,
+     put your photos in it named 1.jpeg, 2.jpeg, 3.jpeg... and reference
+     them as photo: "assets/1.jpeg" — that's exactly how this file is
+     already set up below, so just drop your real photos into that folder.
+
+  2. Swap the placeholder photo in .memory-frame (search "memory-frame img")
+     for one of your own, or delete that block if you'd rather not.
+
+  Everything else (the wax seal, the flip cards, the finale burst) just works.
+  ══════════════════════════════════════════════════════════════════
+-->
+<style>
+  :root{
+    --paper: #FBF3EA;
+    --paper-deep: #F4E9DC;
+    --rose: #E8B4B8;
+    --rose-deep: #D98A93;
+    --ink: #6B5344;
+    --ink-soft: #9C8776;
+    --sage: #A8B89C;
+    --gold: #D4A574;
+    --white: #FFFDF9;
+    --shadow: rgba(107,83,68,0.22);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  button, a, input, .reason-card, .catch-heart, .wax-seal{ -webkit-tap-highlight-color:transparent; }
+  button:focus-visible, a:focus-visible, input:focus-visible{ outline:2px solid var(--rose-deep); outline-offset:2px; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0; min-height:100vh; background:
+      radial-gradient(ellipse at 20% 0%, rgba(232,180,184,.25), transparent 55%),
+      radial-gradient(ellipse at 85% 100%, rgba(212,165,116,.18), transparent 50%),
+      var(--paper);
+    font-family:'Quicksand',sans-serif; color:var(--ink);
+    overflow-x:hidden;
+  }
+  /* subtle paper-grain texture — a tiny tiled noise pattern, very low
+     opacity, blended into the cream background for tactile warmth */
+  body::before{
+    content:'';
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    opacity:.05; mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-size:150px 150px;
+  }
+  h1,h2{ font-family:'Caveat',cursive; font-weight:700; margin:0; }
+  .ambient-heart{ position:fixed; z-index:0; color:var(--rose); opacity:.16; pointer-events:none; animation:driftUp linear infinite; }
+  @keyframes driftUp{ from{ transform:translateY(10vh) rotate(0deg); } to{ transform:translateY(-110vh) rotate(25deg); } }
+
+  /* ---------- envelope scene ---------- */
+  .envelope-scene{ position:relative; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.4rem; padding:2rem 1rem; transition:opacity .5s ease; }
+  .envelope-scene.gone{ opacity:0; pointer-events:none; position:absolute; inset:0; }
+  .envelope-scene .eyebrow{ font:700 .78rem/1 'Quicksand',sans-serif; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); }
+  .envelope{ position:relative; width:min(300px,78vw); height:190px; perspective:900px; }
+  .envelope-body{ position:absolute; inset:0; border-radius:8px; background:linear-gradient(160deg,var(--white),var(--paper-deep)); box-shadow:0 22px 44px var(--shadow), 0 2px 0 rgba(255,255,255,.6) inset; overflow:hidden; }
+  .envelope-body::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:60%; background:
+      linear-gradient(135deg, transparent 49.3%, rgba(107,83,68,.09) 50%, transparent 50.7%),
+      linear-gradient(45deg, transparent 49.3%, rgba(107,83,68,.09) 50%, transparent 50.7%); }
+  .envelope-flap{ position:absolute; top:0; left:0; width:100%; height:56%; background:linear-gradient(150deg,var(--rose),var(--rose-deep)); clip-path:polygon(0 0,100% 0,50% 100%); transform-origin:top center; transition:transform 1s cubic-bezier(.5,-0.35,.4,1.25); z-index:3; box-shadow:0 8px 18px rgba(107,83,68,.18); }
+  .envelope.opened .envelope-flap{ transform:rotateX(-172deg); }
+  .wax-seal{ position:absolute; top:34%; left:50%; width:58px; height:58px; margin:-29px 0 0 -29px; border-radius:50%; background:radial-gradient(circle at 34% 28%, #e17b83, var(--rose-deep) 72%); box-shadow:0 4px 10px rgba(107,83,68,.4), inset 0 -4px 7px rgba(0,0,0,.22); display:flex; align-items:center; justify-content:center; font-size:1.35rem; cursor:pointer; z-index:5; border:0; transition:transform .3s cubic-bezier(.34,1.56,.64,1), opacity .5s ease; color:#fff5f0; }
+  .wax-seal:hover{ transform:scale(1.08); }
+  .wax-seal.cracked{ transform:scale(.6) rotate(25deg); opacity:0; }
+  .tap-hint{ font:600 .82rem/1.4 'Quicksand',sans-serif; color:var(--ink-soft); text-align:center; animation:hintPulse 2.2s ease-in-out infinite; }
+  @keyframes hintPulse{ 0%,100%{ opacity:.65; } 50%{ opacity:1; } }
+  .seal-heart{ position:absolute; z-index:6; color:var(--rose-deep); pointer-events:none; animation:sealHeartPop .8s ease-out forwards; }
+  @keyframes sealHeartPop{ 0%{ transform:translate(0,0) scale(.4); opacity:1; } 100%{ transform:translate(var(--hx),var(--hy)) scale(1); opacity:0; } }
+
+  /* ---------- letter content ---------- */
+  .letter{ position:relative; z-index:1; max-width:640px; margin:0 auto; padding:4vh 1.25rem 6rem; opacity:0; transform:translateY(18px); transition:opacity .7s ease, transform .7s ease; }
+  .letter.shown{ opacity:1; transform:translateY(0); }
+  .act{ margin:0 0 2.4rem; }
+  .chapter-divider{ display:flex; align-items:center; gap:.85rem; max-width:280px; margin:0 auto 2.4rem; color:var(--rose-deep); opacity:.5; }
+  .chapter-divider::before, .chapter-divider::after{ content:''; flex:1; border-top:1px dashed currentColor; }
+  .chapter-divider span{ font-size:.85rem; line-height:1; }
+  .act-hero{ text-align:center; padding-top:2vh; }
+  .act-hero .eyebrow{ display:block; font:700 .8rem/1 'Quicksand',sans-serif; letter-spacing:.16em; text-transform:uppercase; margin-bottom:.7rem; }
+  .shimmer-text{
+    background:linear-gradient(90deg, var(--rose-deep) 0%, var(--gold) 25%, var(--rose) 50%, var(--gold) 75%, var(--rose-deep) 100%);
+    background-size:250% 100%;
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent; color:transparent;
+    animation:shimmerMove 4.5s linear infinite;
+  }
+  @keyframes shimmerMove{ 0%{ background-position:0% 50%; } 100%{ background-position:250% 50%; } }
+  @media (prefers-reduced-motion:reduce){ .shimmer-text{ animation:none; -webkit-text-fill-color:var(--rose-deep); color:var(--rose-deep); background:none; } }
+  .act-hero h1{ font-size:clamp(2.4rem,8vw,3.6rem); color:var(--ink); }
+  .act-hero .lead{ margin:.6rem auto 0; max-width:38ch; font:600 1.05rem/1.6 'Quicksand',sans-serif; color:var(--ink-soft); }
+
+  .paper-card{ background:var(--white); border-radius:16px; padding:1.9rem 1.7rem; box-shadow:0 16px 34px var(--shadow); position:relative; }
+  .paper-card::before{ content:''; position:absolute; inset:8px; border:1px solid rgba(107,83,68,.12); border-radius:11px; pointer-events:none; }
+  .paper-card p{ font:1.35rem/1.7 'Caveat',cursive; color:var(--ink); margin:0 0 .9rem; }
+  .paper-card p:last-child{ margin-bottom:0; }
+  .sign-off{ text-align:right; color:var(--rose-deep)!important; }
+
+  .memory-frame{ margin:1.6rem auto 0; max-width:280px; padding:.7rem .7rem 1.6rem; background:var(--white); border-radius:4px; box-shadow:0 14px 28px var(--shadow); transform:rotate(-2deg); }
+  .memory-frame img{ display:block; width:100%; border-radius:2px; aspect-ratio:4/5; object-fit:cover; background:var(--paper-deep); }
+  .memory-frame figcaption{ text-align:center; font:600 1.1rem 'Caveat',cursive; color:var(--ink-soft); margin-top:.5rem; }
+
+  .act-reasons h2, .act-finale h2, .act-wish h2{ text-align:center; font-size:clamp(1.7rem,5vw,2.2rem); margin-bottom:1.4rem; }
+  .reason-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:1.1rem 1rem; padding:0 .2rem; }
+  .reason-card{ perspective:800px; height:180px; cursor:pointer; transform:rotate(var(--tilt,0deg)); transition:transform .25s ease; }
+  .reason-card:hover{ transform:rotate(0deg) translateY(-2px); }
+  .reason-card-inner{ position:relative; width:100%; height:100%; transition:transform .55s cubic-bezier(.3,.8,.3,1); transform-style:preserve-3d; }
+  .reason-card.flipped .reason-card-inner{ transform:rotateY(180deg); }
+  .reason-face{ position:absolute; inset:0; border-radius:6px; text-align:center; backface-visibility:hidden; overflow:hidden; }
+  /* Polaroid-style photo front: consistent frame no matter the source image's
+     size or shape — the image fills the frame and gets cropped to fit,
+     exactly like a real Polaroid. */
+  /* Text shows first; tapping flips the card to reveal a Polaroid-style
+     photo on the back — consistent frame no matter the source image's
+     size or shape, it's cropped to fit exactly like a real Polaroid. */
+  .reason-front{ background:var(--white); color:var(--ink); font:600 .92rem/1.35 'Quicksand',sans-serif; box-shadow:inset 0 0 0 1px rgba(107,83,68,.1); display:flex; align-items:center; justify-content:center; padding:.9rem; }
+  .reason-back{ background:var(--white); padding:8px 8px 24px; box-shadow:0 10px 22px rgba(107,83,68,.28); display:flex; flex-direction:column; transform:rotateY(180deg); }
+  .reason-back .polaroid-photo{ flex:1; width:100%; min-height:0; border-radius:2px; object-fit:cover; display:block; background:linear-gradient(150deg,var(--rose),var(--rose-deep)); }
+  .reason-back .polaroid-fallback{ flex:1; width:100%; min-height:0; border-radius:2px; background:linear-gradient(150deg,var(--rose),var(--rose-deep)); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.7rem; }
+  .ghost-btn{ display:block; margin:1.6rem auto 0; border:1.5px solid var(--rose-deep); background:transparent; color:var(--rose-deep); font:700 .85rem 'Quicksand',sans-serif; padding:.7rem 1.4rem; border-radius:999px; cursor:pointer; transition:background .2s ease, color .2s ease, transform .15s ease; }
+  .ghost-btn:hover{ background:var(--rose-deep); color:#fff; transform:translateY(-1px); }
+  .ghost-btn:disabled{ opacity:.4; cursor:default; transform:none; background:transparent; color:var(--rose-deep); }
+
+  .act-finale{ text-align:center; }
+  .song-embed{ max-width:360px; margin:1.5rem auto 0; border-radius:14px; overflow:hidden; box-shadow:0 12px 26px var(--shadow); opacity:0; max-height:0; transition:opacity .7s ease, max-height .7s ease; }
+  .song-embed.shown{ opacity:1; max-height:120px; }
+  .song-embed iframe{ display:block; width:100%; height:80px; border:0; }
+  .finale-line{ font:600 1.6rem/1.55 'Caveat',cursive; color:var(--ink); max-width:34ch; margin:0 auto 1.6rem; }
+  .back-link{ display:inline-block; margin-top:2.4rem; font:700 .85rem 'Quicksand',sans-serif; color:var(--ink-soft); text-decoration:none; border-bottom:1px dashed var(--ink-soft); padding-bottom:2px; }
+  .back-link:hover{ color:var(--rose-deep); border-color:var(--rose-deep); }
+
+  .burst-piece{ position:fixed; z-index:9; pointer-events:none; font-size:1.3rem; color:var(--rose-deep); animation:burstFly 1.4s ease-out forwards; }
+  @keyframes burstFly{ 0%{ transform:translate(0,0) scale(.5) rotate(0deg); opacity:1; } 100%{ transform:translate(var(--bx),var(--by)) scale(1.1) rotate(var(--br)); opacity:0; } }
+
+  /* ---------- tap-the-hearts mini-game ---------- */
+  .heart-counter{ position:fixed; top:14px; right:14px; z-index:20; background:var(--white); border:1px solid var(--rose-deep); color:var(--rose-deep); font:700 .74rem 'Quicksand',sans-serif; padding:.45rem .85rem; border-radius:999px; box-shadow:0 6px 14px var(--shadow); white-space:nowrap; }
+  .catch-heart{ position:fixed; left:0; bottom:-40px; z-index:6; cursor:pointer; color:var(--rose-deep); text-shadow:0 0 6px rgba(217,138,147,.45); animation-name:catchFloat; animation-timing-function:linear; animation-fill-mode:forwards; user-select:none; }
+  @keyframes catchFloat{ from{ transform:translateY(0) scale(1); opacity:.92; } to{ transform:translateY(-112vh) scale(1.05); opacity:0; } }
+  .catch-heart.popped{ animation:catchPop .4s ease-out forwards; pointer-events:none; }
+  @keyframes catchPop{ to{ transform:scale(1.9); opacity:0; } }
+
+  /* ---------- sound toggle ---------- */
+  .sound-toggle{ position:fixed; top:14px; left:14px; z-index:20; width:38px; height:38px; border-radius:50%; background:var(--white); border:1px solid var(--rose-deep); color:var(--rose-deep); font-size:1rem; cursor:pointer; box-shadow:0 6px 14px var(--shadow); display:flex; align-items:center; justify-content:center; }
+
+  /* ---------- scroll progress dot trail ---------- */
+  .progress-dots{ position:fixed; left:16px; top:50%; transform:translateY(-50%); z-index:15; display:flex; flex-direction:column; gap:11px; opacity:0; pointer-events:none; transition:opacity .5s ease; }
+  .progress-dots.visible{ opacity:1; pointer-events:auto; }
+  .progress-dots button{ width:7px; height:7px; padding:0; border-radius:50%; border:none; background:rgba(107,83,68,.22); cursor:pointer; transition:background .25s ease, transform .25s ease; }
+  .progress-dots button.active{ background:var(--rose-deep); transform:scale(1.5); }
+  @media (max-width:560px){ .progress-dots{ left:8px; } }
+
+  /* ---------- make a wish ---------- */
+  .act-wish{ text-align:center; }
+  .wish-hint{ font:500 .85rem/1.5 'Quicksand',sans-serif; color:var(--ink-soft); max-width:34ch; margin:0 auto 1.3rem; }
+  .wish-row{ display:flex; gap:.6rem; max-width:440px; margin:0 auto; flex-wrap:wrap; justify-content:center; }
+  .wish-row input{ flex:1; min-width:190px; font:600 1rem 'Quicksand',sans-serif; color:var(--ink); background:var(--white); border:1.5px solid rgba(107,83,68,.18); border-radius:999px; padding:.75rem 1.15rem; outline:none; }
+  .wish-row input:focus{ border-color:var(--rose-deep); }
+  .wish-row .ghost-btn{ margin:0; white-space:nowrap; }
+  .wish-sent{ text-align:center; font:600 .88rem 'Quicksand',sans-serif; color:var(--rose-deep); min-height:1.4em; margin:1rem 0 0; opacity:0; transition:opacity .4s ease; }
+  .wish-sent.shown{ opacity:1; }
+  .wish-list{ list-style:none; padding:0; margin:1.5rem auto 0; max-width:460px; text-align:left; display:flex; flex-direction:column; gap:.55rem; }
+  .wish-item{ display:flex; align-items:center; gap:.7rem; background:var(--white); border-radius:12px; padding:.65rem .8rem .65rem 1rem; box-shadow:0 6px 14px var(--shadow); transition:opacity .2s ease; }
+  .wish-item.done{ opacity:.65; }
+  .wish-item.done .wish-text{ text-decoration:line-through; color:var(--ink-soft); }
+  .wish-check{ appearance:none; -webkit-appearance:none; width:22px; height:22px; min-width:22px; border-radius:50%; border:2px solid var(--rose-deep); background:var(--white); cursor:pointer; position:relative; transition:background .2s ease; }
+  .wish-check:checked{ background:var(--rose-deep); }
+  .wish-check:checked::after{ content:'✓'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:.78rem; font-weight:700; }
+  .wish-text{ flex:1; font:600 .92rem/1.4 'Quicksand',sans-serif; color:var(--ink); word-break:break-word; text-align:left; }
+  .wish-delete{ background:none; border:none; color:var(--ink-soft); font-size:1rem; line-height:1; cursor:pointer; padding:.2rem .3rem; flex-shrink:0; }
+  .wish-delete:hover{ color:var(--rose-deep); }
+  .wish-empty{ text-align:center; font:500 .85rem 'Quicksand',sans-serif; color:var(--ink-soft); margin-top:1.3rem; }
+  .wish-flyer{ position:fixed; z-index:12; pointer-events:none; font-size:1.5rem; animation:wishFly 1.7s cubic-bezier(.3,.6,.4,1) forwards; }
+  @keyframes wishFly{ 0%{ transform:translate(0,0) rotate(0deg) scale(1); opacity:1; } 100%{ transform:translate(70vw,-72vh) rotate(340deg) scale(.6); opacity:0; } }
+
+  @media (max-width:480px){ .paper-card{ padding:1.5rem 1.2rem; } .reason-card{ height:160px; } }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none!important; transition:none!important; } }
+</style>
+</head>
+<body>
+
+<button type="button" class="sound-toggle" id="soundToggle" aria-label="Toggle sound">🔊</button>
+<div class="heart-counter" id="heartCounter">you've caught 0 hearts</div>
+<nav class="progress-dots" id="progressDots" aria-hidden="true"></nav>
+
+<main class="envelope-scene" id="envelopeScene">
+  <span class="eyebrow" id="topEyebrow">Happy Girlfriend's Day</span>
+  <div class="envelope" id="envelope">
+    <div class="envelope-body"></div>
+    <div class="envelope-flap"></div>
+    <button type="button" class="wax-seal" id="waxSeal" aria-label="Break the seal to open your letter">💌</button>
+  </div>
+  <p class="tap-hint">tap the seal to open it</p>
+</main>
+
+<div class="letter" id="letterContent">
+  <section class="act act-hero">
+    <span class="eyebrow shimmer-text" id="heroEyebrow">Happy Girlfriend's Day</span>
+    <h1 id="heroName">Hey you,</h1>
+    <p class="lead" id="heroLead">I made you a little something. Scroll down.</p>
+  </section>
+
+  <div class="chapter-divider" aria-hidden="true"><span>♡</span></div>
+
+  <section class="act act-letter">
+    <div class="paper-card" id="letterCard"></div>
+    <figure class="memory-frame" id="memoryFrame" style="display:none;">
+      <img id="memoryFrameImg" alt="A favorite memory">
+      <figcaption id="memoryFrameCaption"></figcaption>
+    </figure>
+  </section>
+
+  <div class="chapter-divider" aria-hidden="true"><span>♡</span></div>
+
+  <section class="act act-reasons">
+    <h2>a few reasons, out of infinite</h2>
+    <div class="reason-grid" id="reasonGrid"></div>
+    <button type="button" class="ghost-btn" id="moreReasonBtn">one more reason ↻</button>
+  </section>
+
+  <div class="chapter-divider" aria-hidden="true"><span>♡</span></div>
+
+  <section class="act act-wish">
+    <h2>make a wish</h2>
+    <p class="wish-hint">type something and send it off — it's saved right here on this device, like a little shared wishlist. Tick one off whenever it comes true.</p>
+    <div class="wish-row">
+      <input type="text" id="wishInput" maxlength="140" placeholder="something you're hoping for...">
+      <button type="button" class="ghost-btn" id="wishSendBtn">send ✈️</button>
+    </div>
+    <p class="wish-sent" id="wishSentMsg"></p>
+    <ul class="wish-list" id="wishList"></ul>
+  </section>
+
+  <div class="chapter-divider" aria-hidden="true"><span>♡</span></div>
+
+  <section class="act act-finale">
+    <h2>and just so it's said out loud</h2>
+    <p class="finale-line" id="finaleLine"></p>
+    <button type="button" class="ghost-btn" id="fireBtn">Tap me 🌸</button>
+    <div class="song-embed" id="songEmbed"><iframe id="songEmbedFrame" title="A song for you" loading="lazy" allow="autoplay; encrypted-media"></iframe></div>
+    <br>
+    <a class="back-link" id="backLink" href="index.html">‹ back to our little universe</a>
+  </section>
+</div>
+
+<script>
+  /* ══════════════════ EDIT ME ══════════════════ */
+  const CONFIG = {
+    HER_NAME: "Malavika Bangaram",           // e.g. "Meera" — shown as "Hey Meera,"
+    YOUR_NAME: "Nee Jagadish",           // e.g. "Jagadish" — used in the letter sign-off
+
+    LETTER: [
+      "Every day since I met you has quietly become part of a collection I never meant to start — the little universe of us. This is just a page from it, made for today.",
+      "You make ordinary Tuesdays feel worth remembering. That's rarer than it sounds."
+    ],
+
+    // Add, remove, or rewrite as many as you like.
+    // "photo" is optional — put a filename (if it sits next to this html file,
+    // e.g. on GitHub Pages) or a full image URL. Leave it "" for a plain card.
+    // Any photo, any shape or size, gets cropped to fit the frame automatically —
+    // like a Polaroid.
+    REASONS: [
+      { text:"Starting with the OG photo I always love", photo:"assets/1.jpeg" },
+      { text:"How I named you Saroja and expressed my love for you", photo:"assets/2.jpeg" },
+      { text:"Your wonderful personality when you dress like this", photo:"assets/3.jpeg" },
+      { text:"The first time I saw you in dresses like this made my heart skip a beat", photo:"assets/4.jpeg" },
+      { text:"How you looked so cute when you were a child", photo:"assets/5.jpeg" },
+      { text:"How could i forget those beautiful eyes and gorgeous smile", photo:"assets/6.jpeg" },
+      { text:"Choopltho guchi guchi champakee....", photo:"assets/7.jpeg" },
+      { text:"All those smiles and faces you make in a videocall", photo:"assets/8.jpeg" },
+      { text:"How you can turn into an amazing person after wearing those spects", photo:"assets/9.jpeg" },
+      { text:"That cute cute snaps always bring up a smile on my face", photo:"assets/10.jpeg" },
+      { text:"Your korean pichi and theeta panulu", photo:"assets/11.jpeg" },
+      { text:"How sexy you are with a perfect shape always make me go wowww and my mouth wode open", photo:"assets/12.jpeg" },
+      { text:"It's just you with all that charisma and charm and my LadyLuck, I Love You with all my heart", photo:"assets/13.jpeg" },
+      { text:"How you are always there for me and how you make me feel special and loved", photo:"assets/14.jpeg" },
+    ],
+
+    FINALE_LINE: "Out of every universe I can imagine, I can say that I always choose you as mine and you make me the most happiest person in the world. Happy Girlfriend's Day. 💛",
+
+    // Optional: set to true and add a photo at the path below to show a framed memory.
+    SHOW_MEMORY_PHOTO: true,
+    MEMORY_PHOTO_SRC: "assets/15.jpeg",
+    MEMORY_PHOTO_CAPTION: "The picture where it all started, where i fell for you and definitely one of my most favourites.",
+
+    // Optional: a song that plays once she taps "Tap me 🌸" at the end.
+    // Leave "" for no song. Two supported formats:
+    //   Spotify — open the track/playlist in Spotify, "Share" → "Embed track",
+    //     copy the src="..." URL from the embed code, e.g.
+    //     "https://open.spotify.com/embed/track/XXXXXXXXXXXX"
+    //   YouTube — use the embed URL with a loop trick so a single video repeats:
+    //     "https://www.youtube.com/embed/VIDEO_ID?loop=1&playlist=VIDEO_ID"
+    // Note: some browsers/platforms still require one tap on the embedded
+    // player's own play button — autoplay-with-sound isn't 100% guaranteed
+    // by any site, this just gives it the best shot.
+    SONG_EMBED_URL: "",
+  };
+  /* ═════════════════ END EDIT ME ═════════════════ */
+
+  document.getElementById('heroName').textContent = `Hey ${CONFIG.HER_NAME},`;
+  document.getElementById('heroLead').textContent = "I made you a little something. Scroll down.";
+  const letterCard = document.getElementById('letterCard');
+  CONFIG.LETTER.forEach(p=>{ const el=document.createElement('p'); el.textContent=p; letterCard.appendChild(el); });
+  const signOff = document.createElement('p');
+  signOff.className='sign-off';
+  signOff.textContent = `— always, ${CONFIG.YOUR_NAME}`;
+  letterCard.appendChild(signOff);
+  if (CONFIG.SHOW_MEMORY_PHOTO){
+    const frameEl = document.getElementById('memoryFrame');
+    const imgEl = document.getElementById('memoryFrameImg');
+    imgEl.onerror = () => { frameEl.style.display='none'; };
+    frameEl.style.display='';
+    imgEl.src = CONFIG.MEMORY_PHOTO_SRC;
+    document.getElementById('memoryFrameCaption').textContent = CONFIG.MEMORY_PHOTO_CAPTION;
+  }
+
+  /* ---------- typewriter effect ---------- */
+  const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const TYPE_SPEED = 34; // ms per character — raise this number to type slower, lower it to type faster
+  function typeText(el, text, onDone){
+    el.textContent='';
+    let i=0;
+    (function step(){
+      el.textContent=text.slice(0,i);
+      i++;
+      if(i<=text.length){ setTimeout(step, TYPE_SPEED); }
+      else if(onDone){ onDone(); }
+    })();
+  }
+  function typeLetter(){
+    const paras=[...letterCard.querySelectorAll('p:not(.sign-off)')];
+    const signOffEl=letterCard.querySelector('.sign-off');
+    if(signOffEl) signOffEl.style.opacity='0';
+    if(reducedMotion){
+      if(signOffEl) signOffEl.style.opacity='1';
+      return; // text is already fully set — nothing more to do
+    }
+    // capture each paragraph's real text, THEN blank all of them out up front —
+    // otherwise paragraphs further down still show their full text while an
+    // earlier paragraph is still mid-type.
+    const fullTexts=paras.map(el=>el.textContent);
+    paras.forEach(el=>{ el.textContent=''; });
+    let pIndex=0;
+    function next(){
+      if(pIndex>=paras.length){
+        if(signOffEl){ signOffEl.style.transition='opacity .6s ease'; signOffEl.style.opacity='1'; }
+        return;
+      }
+      typeText(paras[pIndex], fullTexts[pIndex], ()=>{ pIndex++; setTimeout(next,300); });
+    }
+    next();
+  }
+  const finaleLineEl=document.getElementById('finaleLine');
+  let finaleTyped=false;
+  function typeFinaleLine(){
+    if(finaleTyped) return;
+    finaleTyped=true;
+    if(reducedMotion){ finaleLineEl.textContent=CONFIG.FINALE_LINE; return; }
+    typeText(finaleLineEl, CONFIG.FINALE_LINE);
+  }
+  function setupFinaleTypewriter(){
+    const finaleSection=document.querySelector('.act-finale');
+    if(!finaleSection || !('IntersectionObserver' in window)){ typeFinaleLine(); return; }
+    const observer=new IntersectionObserver((entries)=>{
+      entries.forEach(entry=>{
+        if(entry.isIntersecting){ typeFinaleLine(); observer.disconnect(); }
+      });
+    }, { threshold:0.4 });
+    observer.observe(finaleSection);
+  }
+
+
+  /* ambient floating hearts */
+  for(let i=0;i<10;i++){
+    const h=document.createElement('span');
+    h.className='ambient-heart';
+    h.textContent='♡';
+    h.style.left=`${Math.random()*100}%`;
+    h.style.fontSize=`${1+Math.random()*1.6}rem`;
+    h.style.animationDuration=`${10+Math.random()*10}s`;
+    h.style.animationDelay=`${-Math.random()*12}s`;
+    document.body.appendChild(h);
+  }
+
+  /* ---------- subtle sound effects (synthesized, no audio files needed) ---------- */
+  let soundOn = true;
+  let audioCtx = null;
+  function getAudioCtx(){
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+  function playPop(){
+    if(!soundOn) return;
+    try{
+      const ctx=getAudioCtx(), t0=ctx.currentTime;
+      const osc=ctx.createOscillator(), gain=ctx.createGain();
+      osc.type='sine';
+      osc.frequency.setValueAtTime(340,t0);
+      osc.frequency.exponentialRampToValueAtTime(620,t0+0.09);
+      gain.gain.setValueAtTime(0.0001,t0);
+      gain.gain.exponentialRampToValueAtTime(0.22,t0+0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001,t0+0.16);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(t0); osc.stop(t0+0.18);
+    }catch(e){}
+  }
+  function playRustle(){
+    if(!soundOn) return;
+    try{
+      const ctx=getAudioCtx(), dur=0.55, t0=ctx.currentTime;
+      const bufferSize=Math.floor(ctx.sampleRate*dur);
+      const buffer=ctx.createBuffer(1,bufferSize,ctx.sampleRate);
+      const data=buffer.getChannelData(0);
+      for(let i=0;i<bufferSize;i++) data[i]=Math.random()*2-1;
+      const noise=ctx.createBufferSource(); noise.buffer=buffer;
+      const bandpass=ctx.createBiquadFilter();
+      bandpass.type='bandpass'; bandpass.frequency.value=2200; bandpass.Q.value=0.7;
+      const gain=ctx.createGain();
+      gain.gain.setValueAtTime(0.0001,t0);
+      gain.gain.exponentialRampToValueAtTime(0.16,t0+0.08);
+      gain.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+      noise.connect(bandpass); bandpass.connect(gain); gain.connect(ctx.destination);
+      noise.start(t0); noise.stop(t0+dur);
+    }catch(e){}
+  }
+  const soundToggle=document.getElementById('soundToggle');
+  soundToggle.addEventListener('click',()=>{
+    soundOn=!soundOn;
+    soundToggle.textContent = soundOn ? '🔊' : '🔇';
+  });
+
+  /* ---------- tap-the-hearts mini-game ---------- */
+  const heartCounterEl=document.getElementById('heartCounter');
+  let heartsCaught=0;
+  function spawnCatchHeart(){
+    const h=document.createElement('span');
+    h.className='catch-heart';
+    h.textContent='♥';
+    const size=1.3+Math.random()*1.1;
+    h.style.fontSize=size+'rem';
+    h.style.left=(4+Math.random()*88)+'vw';
+    const dur=7+Math.random()*4;
+    h.style.animationDuration=dur+'s';
+    h.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      if(h.classList.contains('popped')) return;
+      heartsCaught++;
+      heartCounterEl.textContent=`you've caught ${heartsCaught} heart${heartsCaught===1?'':'s'}`;
+      h.classList.add('popped');
+      playPop();
+      setTimeout(()=>h.remove(),420);
+    });
+    document.body.appendChild(h);
+    setTimeout(()=>{ if(document.body.contains(h)) h.remove(); }, dur*1000+300);
+  }
+  setInterval(spawnCatchHeart, 1800);
+  spawnCatchHeart();
+
+  /* wax seal → envelope opens → letter reveals */
+  const envelope=document.getElementById('envelope'), waxSeal=document.getElementById('waxSeal'), envelopeScene=document.getElementById('envelopeScene'), letterContent=document.getElementById('letterContent');
+  function spawnBurst(container,x,y,count,chars,color){
+    for(let i=0;i<count;i++){
+      const piece=document.createElement('span');
+      piece.className='burst-piece';
+      piece.textContent=chars[Math.floor(Math.random()*chars.length)];
+      piece.style.left=x+'px'; piece.style.top=y+'px';
+      if(color) piece.style.color=color;
+      const angle=Math.random()*Math.PI*2, dist=60+Math.random()*140;
+      piece.style.setProperty('--bx',`${Math.cos(angle)*dist}px`);
+      piece.style.setProperty('--by',`${Math.sin(angle)*dist}px`);
+      piece.style.setProperty('--br',`${Math.random()*360}deg`);
+      piece.style.animationDelay=`${Math.random()*.15}s`;
+      container.appendChild(piece);
+      setTimeout(()=>piece.remove(),1600);
+    }
+  }
+  /* samples an average color from a loaded reason-card photo so the finale
+     burst feels tied to your actual photos instead of a fixed palette */
+  function sampleImageColor(img){
+    try{
+      const size=16;
+      const canvas=document.createElement('canvas');
+      canvas.width=size; canvas.height=size;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,size,size);
+      const data=ctx.getImageData(0,0,size,size).data;
+      let r=0,g=0,b=0,n=0;
+      for(let i=0;i<data.length;i+=4){ r+=data[i]; g+=data[i+1]; b+=data[i+2]; n++; }
+      return `rgb(${Math.round(r/n)},${Math.round(g/n)},${Math.round(b/n)})`;
+    }catch(e){ return null; } // e.g. a cross-origin photo URL without CORS — fall back gracefully
+  }
+  function pickPhotoThemeColor(){
+    const loaded=[...document.querySelectorAll('.polaroid-photo')].filter(im=>im.complete && im.naturalWidth>0);
+    if(!loaded.length) return null;
+    return sampleImageColor(loaded[Math.floor(Math.random()*loaded.length)]);
+  }
+  let opened=false;
+  waxSeal.addEventListener('click',()=>{
+    if(opened) return;
+    opened=true;
+    const rect=waxSeal.getBoundingClientRect();
+    spawnBurst(document.body, rect.left+rect.width/2, rect.top+rect.height/2, 10, ['♡','✧']);
+    waxSeal.classList.add('cracked');
+    envelope.classList.add('opened');
+    playPop();
+    setTimeout(()=>{ playRustle(); }, 120);
+    setTimeout(()=>{
+      envelopeScene.classList.add('gone');
+      letterContent.classList.add('shown');
+      setupProgressDots();
+      typeLetter();
+      setupFinaleTypewriter();
+    },750);
+  });
+
+  /* ---------- scroll progress dot trail ---------- */
+  function setupProgressDots(){
+    const dotsNav=document.getElementById('progressDots');
+    const sections=[...letterContent.querySelectorAll('.act')];
+    if(!sections.length) return;
+    sections.forEach((sec,i)=>{
+      const dot=document.createElement('button');
+      dot.type='button';
+      dot.setAttribute('aria-label', `Jump to chapter ${i+1}`);
+      dot.addEventListener('click',()=>sec.scrollIntoView({behavior:'smooth',block:'center'}));
+      dotsNav.appendChild(dot);
+    });
+    const dots=[...dotsNav.children];
+    const observer=new IntersectionObserver((entries)=>{
+      entries.forEach(entry=>{
+        const idx=sections.indexOf(entry.target);
+        if(idx===-1) return;
+        if(entry.isIntersecting) dots[idx].classList.add('active');
+        else dots[idx].classList.remove('active');
+      });
+      if(!dots.some(d=>d.classList.contains('active')) && dots.length) dots[0].classList.add('active');
+    }, { threshold:0.4 });
+    sections.forEach(sec=>observer.observe(sec));
+    dotsNav.classList.add('visible');
+  }
+
+  /* reasons — flip cards, with a few more waiting in reserve */
+  const reasonGrid=document.getElementById('reasonGrid'), moreBtn=document.getElementById('moreReasonBtn');
+  const pool=[...CONFIG.REASONS];
+  const INITIAL=Math.min(6,pool.length);
+  function makeCard(reason){
+    const card=document.createElement('div');
+    card.className='reason-card';
+    card.style.setProperty('--tilt', `${(Math.random()*5-2.5).toFixed(1)}deg`);
+    const backInner = reason.photo
+      ? `<img class="polaroid-photo" src="${reason.photo}" alt="" onerror="this.outerHTML='&lt;div class=&quot;polaroid-fallback&quot;&gt;♡&lt;/div&gt;';">`
+      : `<div class="polaroid-fallback">♡</div>`;
+    card.innerHTML=`<div class="reason-card-inner">
+        <div class="reason-face reason-front">${reason.text}</div>
+        <div class="reason-face reason-back">${backInner}</div>
+      </div>`;
+    card.addEventListener('click',()=>card.classList.toggle('flipped'));
+    return card;
+  }
+  for(let i=0;i<INITIAL;i++) reasonGrid.appendChild(makeCard(pool.shift()));
+  function updateMoreBtn(){
+    if(!pool.length){ moreBtn.disabled=true; moreBtn.textContent='you need more? text me'; }
+  }
+  updateMoreBtn();
+  moreBtn.addEventListener('click',()=>{
+    if(!pool.length) return;
+    const card=makeCard(pool.shift());
+    reasonGrid.appendChild(card);
+    card.scrollIntoView({behavior:'smooth',block:'center'});
+    updateMoreBtn();
+  });
+
+  /* finale burst */
+  let songStarted=false;
+  document.getElementById('fireBtn').addEventListener('click',(e)=>{
+    const rect=e.target.getBoundingClientRect();
+    const themeColor=pickPhotoThemeColor();
+    spawnBurst(document.body, rect.left+rect.width/2, rect.top, 28, ['♡','✦','✧','❊','●'], themeColor);
+    if(CONFIG.SONG_EMBED_URL && !songStarted){
+      songStarted=true;
+      const wrap=document.getElementById('songEmbed'), frame=document.getElementById('songEmbedFrame');
+      let src=CONFIG.SONG_EMBED_URL;
+      src += (src.includes('?') ? '&' : '?') + 'autoplay=1';
+      frame.src=src;
+      setTimeout(()=>wrap.classList.add('shown'), 200);
+    }
+  });
+
+  /* make a wish — saved locally on this device (localStorage), shown as a
+     tickable list below. Nothing goes to any server or database. */
+  const WISH_KEY = 'olu_wishes_v1';
+  function loadWishes(){
+    try{ return JSON.parse(localStorage.getItem(WISH_KEY) || '[]'); }
+    catch(e){ return []; }
+  }
+  function saveWishes(list){
+    try{ localStorage.setItem(WISH_KEY, JSON.stringify(list)); }catch(e){}
+  }
+  let wishes = loadWishes();
+  const wishInput=document.getElementById('wishInput'), wishSendBtn=document.getElementById('wishSendBtn'), wishSentMsg=document.getElementById('wishSentMsg'), wishListEl=document.getElementById('wishList');
+
+  function renderWishes(){
+    wishListEl.innerHTML='';
+    if(!wishes.length){
+      const empty=document.createElement('p');
+      empty.className='wish-empty';
+      empty.textContent='nothing here yet — type one above.';
+      wishListEl.appendChild(empty);
+      return;
+    }
+    wishes.forEach(w=>{
+      const li=document.createElement('li');
+      li.className='wish-item'+(w.done?' done':'');
+      const check=document.createElement('input');
+      check.type='checkbox'; check.className='wish-check'; check.checked=!!w.done;
+      check.setAttribute('aria-label','Mark this wish as come true');
+      const text=document.createElement('span');
+      text.className='wish-text'; text.textContent=w.text;
+      const del=document.createElement('button');
+      del.type='button'; del.className='wish-delete'; del.setAttribute('aria-label','Remove this wish'); del.textContent='✕';
+      check.addEventListener('change',()=>{
+        w.done=check.checked;
+        li.classList.toggle('done', w.done);
+        saveWishes(wishes);
+      });
+      del.addEventListener('click',()=>{
+        wishes = wishes.filter(x=>x.id!==w.id);
+        saveWishes(wishes);
+        renderWishes();
+      });
+      li.append(check, text, del);
+      wishListEl.appendChild(li);
+    });
+  }
+  renderWishes();
+
+  function sendWish(){
+    const val=wishInput.value.trim();
+    if(!val) return;
+    const rect=wishSendBtn.getBoundingClientRect();
+    const flyer=document.createElement('span');
+    flyer.className='wish-flyer';
+    flyer.textContent='💌';
+    flyer.style.left=(rect.left+rect.width/2)+'px';
+    flyer.style.top=(rect.top+rect.height/2)+'px';
+    document.body.appendChild(flyer);
+    setTimeout(()=>flyer.remove(),1800);
+    wishes.unshift({ id: Date.now()+'-'+Math.random().toString(36).slice(2), text: val, done: false });
+    saveWishes(wishes);
+    renderWishes();
+    wishInput.value='';
+    wishSentMsg.textContent='sent into the universe 🌌';
+    wishSentMsg.classList.add('shown');
+    setTimeout(()=>wishSentMsg.classList.remove('shown'),2600);
+  }
+  wishSendBtn.addEventListener('click', sendWish);
+  wishInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendWish(); });
+</script>
+</body>
+</html>
