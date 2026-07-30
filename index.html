@@ -475,6 +475,10 @@
     background: var(--rose-deep);
     color: var(--white);
   }
+  a.fav-filter-btn{
+    text-decoration: none;
+    display: inline-block;
+  }
   .music-btn{
     width: 44px;
     height: 44px;
@@ -1157,6 +1161,19 @@
   .extras-form textarea{ width:100%; height:86px; resize:none; font-family:'Caveat',cursive; font-size:1.1rem; }.extras-form input{ flex:1; min-width:150px; }
   .extras-form button,.bucket-add button{ border:0; border-radius:999px; padding:.55rem 1rem; background:var(--rose-deep); color:white; cursor:pointer; font:600 .78rem 'Quicksand',sans-serif; }
   .capsule-list,.bucket-list{ list-style:none; padding:0; margin:1rem 0 0; display:grid; gap:.55rem; }
+  .special-day-list{ list-style:none; padding:0; margin:1rem 0 0; display:grid; gap:.6rem; }
+  .special-day-item{ display:flex; align-items:center; gap:.75rem; padding:.75rem .9rem; border-radius:12px; background:rgba(255,249,232,.72); color:var(--ink); box-shadow:0 2px 5px rgba(64,40,25,.08); }
+  .special-day-item .sd-emoji{ font-size:1.4rem; flex-shrink:0; }
+  .special-day-item .sd-info{ flex:1; min-width:0; }
+  .special-day-item .sd-title{ font:700 1rem 'Quicksand',sans-serif; margin:0 0 .15rem; }
+  .special-day-item .sd-blurb{ font:500 .78rem/1.4 'Quicksand',sans-serif; color:var(--ink-soft); margin:0; }
+  .special-day-item .sd-open{ border:1.5px solid var(--rose-deep); background:transparent; color:var(--rose-deep); font:700 .78rem 'Quicksand',sans-serif; padding:.5rem .9rem; border-radius:999px; cursor:pointer; white-space:nowrap; text-decoration:none; flex-shrink:0; }
+  .special-day-item .sd-open:hover{ background:var(--rose-deep); color:#fff; }
+  .special-day-item.locked{ opacity:.7; }
+  .special-day-item.locked .sd-open{ border-color:var(--ink-soft); color:var(--ink-soft); pointer-events:none; }
+  body.dark-mode .special-day-item{ background:#d2cdc3; color:#302735; }
+  body.dark-mode .special-day-item .sd-blurb{ color:#6f4e60; }
+  body.dark-mode .special-day-item.locked .sd-open{ border-color:#6f4e60; color:#6f4e60; }
   .capsule-item,.bucket-item{ padding:.7rem .8rem; border-radius:10px; background:rgba(255,249,232,.72); color:var(--ink); box-shadow:0 2px 5px rgba(64,40,25,.08); }
   .capsule-item{ position:relative; padding-right:2.5rem; }
   .capsule-remove{ position:absolute; top:.42rem; right:.45rem; width:24px; height:24px; border:0; border-radius:50%; background:rgba(107,83,68,.1); color:var(--ink-soft); cursor:pointer; font:700 1rem/1 Arial,sans-serif; }
@@ -2414,7 +2431,6 @@
     <button class="fav-filter-btn" id="favFilterBtn" type="button">♡ Favorites only</button>
     <button class="fav-filter-btn" id="surpriseBtn" type="button">Surprise me 🎲</button>
     <button class="fav-filter-btn break-glass-btn" id="breakGlassBtn" type="button">🔨 In case of a fight</button>
-    <a class="fav-filter-btn" id="specialDayBtn" href="for-you.html" target="_blank" rel="noopener">🎀 Something special</a>
     <button class="music-btn" id="musicBtn" type="button" aria-label="Turn on music">🎵</button>
     <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">🌙</button>
   </div>
@@ -2472,6 +2488,7 @@
         <button id="bucketToggleBtn" type="button">✨ Our Bucket List</button>
         <button id="constellationToggleBtn" type="button">✦ Memory Constellation</button>
         <button id="gamesToggleBtn" type="button">🎮 Mini Games</button>
+        <button id="specialDaysToggleBtn" type="button">🎀 Special Days</button>
       </div>
     </div>
     <button class="fav-filter-btn" id="backupBtn" type="button">⬇ Backup everything</button>
@@ -2634,6 +2651,8 @@
     </div>
   </div>
 </section>
+
+<section class="extras-wall hidden" id="specialDaysWall"><div class="notes-header"><h2>Special Days</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Little surprises tied to specific days — each one unlocks on its date and stays unlocked for good after that.</p><ul class="special-day-list" id="specialDayList"></ul></div></section>
 
 <div class="setup-banner" id="setupBanner">
 
@@ -4040,10 +4059,11 @@ async function sha256Hex(text){
   capsuleDate.addEventListener('change',updateCapsuleDateDisplay);
   updateCapsuleDateDisplay();
   const bucketForm=document.getElementById('bucketForm'), bucketInput=document.getElementById('bucketInput'), bucketList=document.getElementById('bucketList'), constellationSky=document.getElementById('constellationSky');
+  const specialDaysWall=document.getElementById('specialDaysWall'), specialDaysToggleBtn=document.getElementById('specialDaysToggleBtn'), specialDayList=document.getElementById('specialDayList');
   let selectedCalendarMood=CALENDAR_MOODS[0], allMoods=[], allCapsules=[], allBucketItems=[], extrasRealtimeStarted=false;
   let moodAuthor=localStorage.getItem('ourLittleUniverseMoodAuthor')==='2'?'2':'1', capsuleAuthor=localStorage.getItem('ourLittleUniverseCapsuleAuthor')==='2'?'2':'1', bucketAuthor=localStorage.getItem('ourLittleUniverseBucketAuthor')==='2'?'2':'1';
   let calendarCursor=new Date(new Date().getFullYear(),new Date().getMonth(),1);
-  const extrasWalls=[moodsWall,capsulesWall,bucketWall,constellationWall,gamesWall];
+  const extrasWalls=[moodsWall,capsulesWall,bucketWall,constellationWall,gamesWall,specialDaysWall];
   function closeFeatureMenu(){ featureMenu.classList.remove('open'); featureMenuBtn.setAttribute('aria-expanded','false'); }
   featureMenuBtn.addEventListener('click',()=>{ const opening=!featureMenu.classList.contains('open'); featureMenu.classList.toggle('open',opening); featureMenuBtn.setAttribute('aria-expanded',String(opening)); });
   featureMenu.addEventListener('click',(e)=>{ if(e.target.closest('#featureMenuPopover button')) closeFeatureMenu(); });
@@ -4051,7 +4071,7 @@ async function sha256Hex(text){
   document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeFeatureMenu(); });
   function closeExtras(){ extrasWalls.forEach(w=>w.classList.add('hidden')); }
   function openExtra(wall){ closeExtras(); notesWall.classList.add('hidden'); doodlesWall.classList.add('hidden'); wall.classList.remove('hidden'); }
-  const littleThingsWalls=[doodlesWall,moodsWall,capsulesWall,bucketWall,constellationWall,gamesWall];
+  const littleThingsWalls=[doodlesWall,moodsWall,capsulesWall,bucketWall,constellationWall,gamesWall,specialDaysWall];
   function openLittleThing(index){
     const wall=littleThingsWalls[(index+littleThingsWalls.length)%littleThingsWalls.length];
     if(wall===doodlesWall){
@@ -4064,6 +4084,7 @@ async function sha256Hex(text){
       if(wall===bucketWall) loadBucket();
       if(wall===constellationWall) renderConstellation();
       if(wall===gamesWall) showGameChooser();
+      if(wall===specialDaysWall) renderSpecialDays();
     }
   }
   littleThingsWalls.forEach((wall,index)=>{
@@ -4108,7 +4129,34 @@ async function sha256Hex(text){
   async function loadBucket(){if(!supabase)return;try{const {data,error}=await supabase.from(BUCKET_LIST_TABLE).select('*').order('created_at',{ascending:false});if(error)throw error;allBucketItems=data||[];renderBucket();}catch(e){console.error(e);showToast('Could not load your bucket list.',{type:'error'});}}
   bucketForm.addEventListener('submit',async e=>{e.preventDefault();if(!supabase)return;const {data,error}=await supabase.from(BUCKET_LIST_TABLE).insert({item:bucketInput.value.trim(),author:Number(bucketAuthor)}).select().single();if(error){showToast('Could not add that wish.',{type:'error'});return;}allBucketItems.unshift(data);bucketInput.value='';renderBucket();});
   function renderConstellation(){constellationSky.innerHTML='';if(!photos.length){const p=document.createElement('p');p.className='constellation-empty';p.textContent='Pin some memories first, then your sky will fill with stars ✦';constellationSky.appendChild(p);return;}photos.forEach((p,i)=>{const star=document.createElement('button');star.type='button';star.className='constellation-star';star.style.left=`${15+((i*37)%70)}%`;star.style.top=`${20+((i*53)%65)}%`;star.dataset.label=(p.caption||'A memory').slice(0,32);star.setAttribute('aria-label',`Open memory ${i+1}`);star.addEventListener('click',()=>{currentList=photos;openLightbox(i);});constellationSky.appendChild(star);});}
-  moodsToggleBtn.addEventListener('click',()=>{openExtra(moodsWall);loadMoods();});capsulesToggleBtn.addEventListener('click',()=>{openExtra(capsulesWall);loadCapsules();});bucketToggleBtn.addEventListener('click',()=>{openExtra(bucketWall);loadBucket();});constellationToggleBtn.addEventListener('click',()=>{openExtra(constellationWall);renderConstellation();});gamesToggleBtn.addEventListener('click',()=>{openExtra(gamesWall);showGameChooser();});document.querySelectorAll('.extras-close').forEach(b=>b.addEventListener('click',closeExtras));notesToggleBtn.addEventListener('click',closeExtras);doodlesToggleBtn.addEventListener('click',closeExtras);
+  moodsToggleBtn.addEventListener('click',()=>{openExtra(moodsWall);loadMoods();});capsulesToggleBtn.addEventListener('click',()=>{openExtra(capsulesWall);loadCapsules();});bucketToggleBtn.addEventListener('click',()=>{openExtra(bucketWall);loadBucket();});constellationToggleBtn.addEventListener('click',()=>{openExtra(constellationWall);renderConstellation();});gamesToggleBtn.addEventListener('click',()=>{openExtra(gamesWall);showGameChooser();});specialDaysToggleBtn.addEventListener('click',()=>{openExtra(specialDaysWall);renderSpecialDays();});document.querySelectorAll('.extras-close').forEach(b=>b.addEventListener('click',closeExtras));notesToggleBtn.addEventListener('click',closeExtras);doodlesToggleBtn.addEventListener('click',closeExtras);
+
+  /* ═══════════════════════════════════════════════════════════════════
+     SPECIAL DAYS — add a new entry any time you want a new surprise page
+     to unlock on a specific date and stay unlocked for good after that.
+     Each entry needs: emoji, title, blurb, unlockDate ("YYYY-MM-DD"), href.
+     That's it — nothing else in the code needs to change.
+  ═══════════════════════════════════════════════════════════════════ */
+  const SPECIAL_DAYS = [
+    { emoji:'🎀', title:"National Girlfriend's Day", blurb:"A little something made just for this day.", unlockDate:'2026-08-01', href:'for-you.html' }
+    // { emoji:'💍', title:"Our Anniversary", blurb:"...", unlockDate:'2026-XX-XX', href:'anniversary.html' },
+  ];
+  function renderSpecialDays(){
+    specialDayList.innerHTML='';
+    const today=new Date(); today.setHours(0,0,0,0);
+    SPECIAL_DAYS.forEach(day=>{
+      const unlocked = today >= new Date(day.unlockDate+'T00:00:00');
+      const li=document.createElement('li');
+      li.className='special-day-item'+(unlocked?'':' locked');
+      if(unlocked){
+        li.innerHTML=`<span class="sd-emoji">${day.emoji}</span><span class="sd-info"><span class="sd-title">${day.title}</span><p class="sd-blurb">${day.blurb}</p></span><a class="sd-open" href="${day.href}" target="_blank" rel="noopener">open ✨</a>`;
+      }else{
+        const dateLabel=new Date(day.unlockDate+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'});
+        li.innerHTML=`<span class="sd-emoji">🔒</span><span class="sd-info"><span class="sd-title">a surprise is coming</span></span><span class="sd-open">${dateLabel}</span>`;
+      }
+      specialDayList.appendChild(li);
+    });
+  }
   function startExtrasRealtime(){if(!supabase||extrasRealtimeStarted)return;extrasRealtimeStarted=true;[MOODS_TABLE,CAPSULES_TABLE,BUCKET_LIST_TABLE].forEach(table=>supabase.channel(`extras-${table}`).on('postgres_changes',{event:'*',schema:'public',table},()=>{if(!moodsWall.classList.contains('hidden')&&table===MOODS_TABLE)loadMoods();if(!capsulesWall.classList.contains('hidden')&&table===CAPSULES_TABLE)loadCapsules();if(!bucketWall.classList.contains('hidden')&&table===BUCKET_LIST_TABLE)loadBucket();}).subscribe());}
   startExtrasRealtime();
 
