@@ -557,9 +557,10 @@
     align-items: center;
     transition: margin-bottom .22s ease;
   }
-  /* Keep an open menu clear of the memories below instead of layering over them. */
+  /* Keep an open menu clear of the memories below instead of layering over them.
+     (feature-menu's spacing is set dynamically in JS from the popover's real
+     height, so it never falls out of sync again as items are added/removed.) */
   .secondary-row:has(.photo-sort-menu.open){ margin-bottom: 172px; }
-  .secondary-row:has(.feature-menu.open){ margin-bottom: 286px; }
   .search-input, .sort-select{
     font-family: 'Quicksand', sans-serif;
     font-size: 0.85rem;
@@ -1086,7 +1087,7 @@
   .doodle-author-toggle[data-author="2"] .toggle-glow{ transform:translateX(66px); }
   .doodle-author-toggle .toggle-letter{ font-size:.78rem; }
   .doodle-canvas-wrap{ margin:.7rem 0; border:1px solid #E3D3C2; border-radius:10px; overflow:hidden; background:#FFFDF7; aspect-ratio: 4 / 3; }
-  #doodleCanvas{ display:block; width:100%; height:100%; touch-action:none; cursor:crosshair; }
+  #doodleCanvas, #duetDoodleCanvas{ display:block; width:100%; height:100%; touch-action:none; cursor:crosshair; }
   .doodle-toolbar,.doodle-tools,.doodle-size-row,.doodle-submit-row{ display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:.45rem; }
   .doodle-toolbar{ margin-bottom:.5rem; }
   .doodle-swatches{ display:flex; align-items:center; gap:.32rem; flex-wrap:wrap; justify-content:center; }
@@ -1143,6 +1144,22 @@
   .extras-card{ max-width:540px; margin:0 auto; padding:1rem; border:1px solid var(--glass-border); border-radius:16px; background:var(--glass-bg-strong); box-shadow:0 10px 28px var(--shadow); }
   .extras-card p{ text-align:center; color:var(--ink-soft); font-size:.8rem; margin:.1rem 0 .8rem; }
   .mood-picker-row,.extras-form,.bucket-add{ display:flex; flex-wrap:wrap; gap:.5rem; justify-content:center; align-items:center; }
+  /* "+" button that opens the device's own emoji keyboard, so any emoji can
+     be picked as a reaction instead of only the fixed set above it. */
+  .reaction-plus-wrap{ position:relative; display:inline-flex; align-items:center; justify-content:center; width:var(--plus-size,28px); height:var(--plus-size,28px); flex-shrink:0; }
+  .reaction-plus-btn{ width:100%; height:100%; border-radius:50%; border:1px dashed var(--ink-soft); background:rgba(255,255,255,.5); color:var(--ink-soft); font-size:.85rem; line-height:1; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+  .reaction-plus-input{ position:absolute; inset:0; opacity:0; border:0; padding:0; margin:0; cursor:pointer; font-size:16px; background:transparent; }
+  /* While a custom emoji is showing, the button itself (not the hidden input)
+     becomes the click target, so tapping it again removes the reaction
+     instead of re-opening the emoji keyboard. */
+  .reaction-plus-wrap.active .reaction-plus-input{ pointer-events:none; }
+  .reaction-plus-wrap.active .reaction-plus-btn{ pointer-events:auto; cursor:pointer; border-style:solid; border-color:var(--rose-deep); background:#FCE5E9; color:var(--ink); font-size:.9rem; }
+  body.dark-mode .reaction-plus-btn{ border-color:#a1909c; background:rgba(255,255,255,.08); color:#d8c9d4; }
+  body.dark-mode .reaction-plus-wrap.active .reaction-plus-btn{ border-color:var(--rose-deep); background:rgba(217,138,147,.28); color:#fff; }
+  .note-reaction-picker{ --plus-size:22px; align-items:center; }
+  .mood-picker{ --plus-size:28px; align-items:center; }
+  .doodle-reaction-picker{ --plus-size:22px; align-items:center; }
+  .mood-picker-row{ --plus-size:34px; }
   .extra-author{ display:flex; justify-content:center; gap:.3rem; margin:0 0 .7rem; }
   .extra-author button{ border:1px solid #E3D3C2; border-radius:999px; background:rgba(255,255,255,.65); color:var(--ink-soft); padding:.32rem .72rem; cursor:pointer; font:700 .72rem 'Quicksand',sans-serif; }
   .extra-author button.active[data-author="1"]{ background:var(--rose-deep); color:var(--white); }.extra-author button.active[data-author="2"]{ background:var(--sage); color:var(--white);}
@@ -1265,6 +1282,11 @@
   .game-chooser.hidden{ display:none; }
   .game-view.hidden{ display:none; }
   .game-back-btn{ border:0; background:none; color:var(--ink-soft); cursor:pointer; font:700 .92rem 'Quicksand',sans-serif; margin-bottom:.8rem; padding:.3rem 0; }
+  .doodle-mode-view.hidden{ display:none; }
+  .duet-hint{ font:600 .82rem/1.4 'Quicksand',sans-serif; color:var(--ink-soft); text-align:center; margin:0 0 .8rem; }
+  .duet-hint.live{ color:var(--sage); }
+  .doodles-grid-label{ text-align:center; font:700 .85rem 'Quicksand',sans-serif; color:var(--ink-soft); letter-spacing:.03em; text-transform:uppercase; margin:.6rem 0 -.2rem; }
+  #doodlesGalleryArea.hidden{ display:none; }
   .game-view-header{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.7rem; }
   .game-view-header .author-toggle-row{ flex:0 0 auto; }
   .memory-stats{ display:flex; gap:.7rem; font:700 .78rem 'Quicksand',sans-serif; color:var(--ink-soft); }
@@ -2550,28 +2572,65 @@
     <h2>Doodles Wall</h2>
     <button class="notes-close-btn" id="doodlesCloseBtn" type="button" aria-label="Close doodles">✕</button>
   </div>
-  <form class="doodle-studio" id="doodleForm">
-    <button type="button" class="note-author-toggle doodle-author-toggle" data-author="1" id="doodleAuthorToggle" aria-label="Currently drawing as By J — tap to switch">
-      <span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span>
-    </button>
-    <div class="doodle-canvas-wrap"><canvas id="doodleCanvas" aria-label="Draw your doodle"></canvas></div>
-    <div class="doodle-toolbar">
-      <div class="doodle-swatches" id="doodleSwatches" aria-label="Colour palette"></div>
-      <input class="doodle-color-picker" id="doodleColorPicker" type="color" value="#C96A7A" aria-label="Choose any colour">
+
+  <div class="game-chooser" id="doodleModeChooser">
+    <p>Draw on your own, or live together on the same canvas at the same time.</p>
+    <div class="game-choice-row">
+      <button type="button" class="game-choice-btn" id="chooseDoodleSolo">🎨<span>Solo</span><small>draw on your own</small></button>
+      <button type="button" class="game-choice-btn" id="chooseDoodleDuet">👥<span>Duet</span><small>draw together, live</small></button>
     </div>
-    <div class="doodle-tools" id="doodleTools">
-      <button type="button" class="active" data-tool="pen">✏️ Pen</button><button type="button" data-tool="line">╱ Line</button><button type="button" data-tool="fill">🪣 Fill</button><button type="button" data-tool="spray">💨 Spray</button><button type="button" data-tool="eraser">🧼 Eraser</button><button type="button" id="doodleUndo">↶ Undo</button><button type="button" id="doodleClear">♜ Clear</button>
-    </div>
-    <div class="doodle-size-row"><label class="doodle-size">Brush size <input id="doodleBrushSize" type="range" min="1" max="30" value="4"><span id="doodleBrushValue">4</span></label></div>
-    <input class="doodle-caption" id="doodleCaption" maxlength="200" placeholder="Add a caption (optional)">
-    <div class="doodle-submit-row"><button class="doodle-submit" id="doodleSubmitBtn" type="submit">Leave a doodle</button></div>
-  </form>
-  <div class="doodles-controls">
-    <input type="text" id="doodlesSearchInput" class="search-input" placeholder="🔍 search captions...">
-    <select id="doodlesSortSelect" class="sort-select" aria-label="Sort doodles"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="shuffle">Shuffle</option></select>
-    <button class="fav-filter-btn" id="doodlesFavFilterBtn" type="button">♡ Favorites only</button>
   </div>
-  <div class="doodles-grid" id="doodlesGrid"></div>
+
+  <div id="doodleSoloView" class="doodle-mode-view hidden">
+    <button type="button" class="game-back-btn doodle-mode-back">‹ back to doodles</button>
+    <form class="doodle-studio" id="doodleForm">
+      <button type="button" class="note-author-toggle doodle-author-toggle" data-author="1" id="doodleAuthorToggle" aria-label="Currently drawing as By J — tap to switch">
+        <span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span>
+      </button>
+      <div class="doodle-canvas-wrap"><canvas id="doodleCanvas" aria-label="Draw your doodle"></canvas></div>
+      <div class="doodle-toolbar">
+        <div class="doodle-swatches" id="doodleSwatches" aria-label="Colour palette"></div>
+        <input class="doodle-color-picker" id="doodleColorPicker" type="color" value="#C96A7A" aria-label="Choose any colour">
+      </div>
+      <div class="doodle-tools" id="doodleTools">
+        <button type="button" class="active" data-tool="pen">✏️ Pen</button><button type="button" data-tool="line">╱ Line</button><button type="button" data-tool="fill">🪣 Fill</button><button type="button" data-tool="spray">💨 Spray</button><button type="button" data-tool="eraser">🧼 Eraser</button><button type="button" id="doodleUndo">↶ Undo</button><button type="button" id="doodleClear">♜ Clear</button>
+      </div>
+      <div class="doodle-size-row"><label class="doodle-size">Brush size <input id="doodleBrushSize" type="range" min="1" max="30" value="4"><span id="doodleBrushValue">4</span></label></div>
+      <input class="doodle-caption" id="doodleCaption" maxlength="200" placeholder="Add a caption (optional)">
+      <div class="doodle-submit-row"><button class="doodle-submit" id="doodleSubmitBtn" type="submit">Leave a doodle</button></div>
+    </form>
+  </div>
+
+  <div id="doodleDuetView" class="doodle-mode-view hidden">
+    <button type="button" class="game-back-btn doodle-mode-back">‹ back to doodles</button>
+    <p class="duet-hint" id="duetPresenceHint">Drawing together, live — anything either of you draws shows up instantly for both.</p>
+    <form class="doodle-studio" id="duetDoodleForm">
+      <button type="button" class="note-author-toggle doodle-author-toggle" data-author="1" id="duetDoodleAuthorToggle" aria-label="Currently drawing as By J — tap to switch">
+        <span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span>
+      </button>
+      <div class="doodle-canvas-wrap"><canvas id="duetDoodleCanvas" aria-label="Draw together, live"></canvas></div>
+      <div class="doodle-toolbar">
+        <div class="doodle-swatches" id="duetDoodleSwatches" aria-label="Colour palette"></div>
+        <input class="doodle-color-picker" id="duetDoodleColorPicker" type="color" value="#C96A7A" aria-label="Choose any colour">
+      </div>
+      <div class="doodle-tools" id="duetDoodleTools">
+        <button type="button" class="active" data-tool="pen">✏️ Pen</button><button type="button" data-tool="line">╱ Line</button><button type="button" data-tool="fill">🪣 Fill</button><button type="button" data-tool="spray">💨 Spray</button><button type="button" data-tool="eraser">🧼 Eraser</button><button type="button" id="duetDoodleUndo">↶ Undo</button><button type="button" id="duetDoodleClear">♜ Clear</button>
+      </div>
+      <div class="doodle-size-row"><label class="doodle-size">Brush size <input id="duetDoodleBrushSize" type="range" min="1" max="30" value="4"><span id="duetDoodleBrushValue">4</span></label></div>
+      <input class="doodle-caption" id="duetDoodleCaption" maxlength="200" placeholder="Add a caption (optional)">
+      <div class="doodle-submit-row"><button class="doodle-submit" id="duetDoodleSubmitBtn" type="submit">Leave a doodle</button></div>
+    </form>
+  </div>
+
+  <div id="doodlesGalleryArea" class="hidden">
+    <div class="doodles-controls">
+      <input type="text" id="doodlesSearchInput" class="search-input" placeholder="🔍 search captions...">
+      <select id="doodlesSortSelect" class="sort-select" aria-label="Sort doodles"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="shuffle">Shuffle</option></select>
+      <button class="fav-filter-btn" id="doodlesFavFilterBtn" type="button">♡ Favorites only</button>
+    </div>
+    <p class="doodles-grid-label" id="doodlesGridLabel">Solo doodles</p>
+    <div class="doodles-grid" id="doodlesGrid"></div>
+  </div>
 </section>
 
 <section class="extras-wall hidden" id="moodsWall"><div class="notes-header"><h2>Mood Calendar</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Choose who is pinning, choose a mood, then tap a day. Tap your own pinned mood again to unpin it.</p><div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="moodAuthorToggle" aria-label="Choose mood author"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div><div class="mood-picker-row" id="calendarMoodPicker"></div><div class="calendar-nav"><button id="calendarPrev" type="button" aria-label="Previous month">‹</button><div class="calendar-title" id="calendarTitle"></div><button id="calendarNext" type="button" aria-label="Next month">›</button></div><div class="mood-calendar" id="moodCalendar"></div></div></section>
@@ -2823,7 +2882,24 @@
   }
 
   let photos = []; // {id, src, caption, date, path, favorite, mood}
-  const MOODS = ['😂', '💕', '😙', '🎉', '😢'];
+  // Appended to every reaction/mood picker so any emoji can be picked, not
+  // just the fixed set — tapping it opens the device's normal keyboard,
+  // where the emoji tab can be used to choose anything.
+  function customEmojiPickerHtml(currentValue, fixedList){
+    const isCustom = !!currentValue && !fixedList.includes(currentValue);
+    const display = isCustom ? escapeHtml(currentValue) : '+';
+    const hint = 'Tap to focus, then use your emoji keyboard. On a computer: press Win + . (Windows) or Control + Command + Space (Mac) once this is focused.';
+    return `<span class="reaction-plus-wrap${isCustom ? ' active' : ''}"><span class="reaction-plus-btn" aria-hidden="true">${display}</span><input type="text" class="reaction-plus-input" maxlength="8" aria-label="Pick your own emoji" title="${hint}"></span>`;
+  }
+  function refreshCustomEmojiVisual(containerEl, fixedList, currentValue){
+    const wrap = containerEl && containerEl.querySelector('.reaction-plus-wrap');
+    if (!wrap) return;
+    const btn = wrap.querySelector('.reaction-plus-btn');
+    const isCustom = !!currentValue && !fixedList.includes(currentValue);
+    btn.textContent = isCustom ? currentValue : '+';
+    wrap.classList.toggle('active', isCustom);
+  }
+  const MOODS = ['😂', '💕', '😙', '😢'];
   let currentList = [];
   let showFavoritesOnly = false;
   let searchQuery = '';
@@ -3587,7 +3663,7 @@ async function sha256Hex(text){
   /* ---------- love notes wall ---------- */
   const NOTES_TABLE = 'love_notes';
   const VOICE_BUCKET = 'voice-notes';
-  const NOTE_REACTIONS = ['😂', '💕', '😙', '🎉', '😢'];
+  const NOTE_REACTIONS = ['😂', '💕', '😙', '😢'];
   let notesLoaded = false;
   let allNotes = [];
   let notesSearchQuery = '';
@@ -3732,6 +3808,7 @@ async function sha256Hex(text){
             <textarea class="note-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(note.reply || '')}</textarea>
             <div class="note-reaction-picker">
               ${NOTE_REACTIONS.map(r => `<button type="button" data-reaction="${r}" class="${note.reaction === r ? 'active' : ''}" aria-label="React ${r}">${r}</button>`).join('')}
+              ${customEmojiPickerHtml(note.reaction, NOTE_REACTIONS)}
             </div>
             <button class="note-flip-back-btn" type="button">‹ back</button>
           </div>
@@ -3824,26 +3901,49 @@ async function sha256Hex(text){
         replyTimer = setTimeout(() => saveNoteReply(note), 400);
       });
 
+      async function applyNoteReaction(r){
+        note.reaction = (note.reaction === r) ? null : r;
+        reactionBtns.forEach(b => b.classList.toggle('active', b.dataset.reaction === note.reaction));
+        refreshCustomEmojiVisual(wrap.querySelector('.note-reaction-picker'), NOTE_REACTIONS, note.reaction);
+        let badge = wrap.querySelector('.note-reaction-badge');
+        if (note.reaction){
+          if (!badge){
+            badge = document.createElement('span');
+            badge.className = 'note-reaction-badge';
+            wrap.querySelector('.note-front').appendChild(badge);
+          }
+          badge.textContent = note.reaction;
+        }else if (badge){
+          badge.remove();
+        }
+        await saveNoteReaction(note);
+      }
       reactionBtns.forEach(btn => {
         btn.addEventListener('click', async (e) => {
           e.stopPropagation();
-          const r = btn.dataset.reaction;
-          note.reaction = (note.reaction === r) ? null : r;
-          reactionBtns.forEach(b => b.classList.toggle('active', b.dataset.reaction === note.reaction));
-          let badge = wrap.querySelector('.note-reaction-badge');
-          if (note.reaction){
-            if (!badge){
-              badge = document.createElement('span');
-              badge.className = 'note-reaction-badge';
-              wrap.querySelector('.note-front').appendChild(badge);
-            }
-            badge.textContent = note.reaction;
-          }else if (badge){
-            badge.remove();
-          }
-          await saveNoteReaction(note);
+          await applyNoteReaction(btn.dataset.reaction);
         });
       });
+      const noteCustomEmojiInput = wrap.querySelector('.note-reaction-picker .reaction-plus-input');
+      const noteCustomEmojiBtn = wrap.querySelector('.note-reaction-picker .reaction-plus-btn');
+      if (noteCustomEmojiInput){
+        noteCustomEmojiInput.addEventListener('click', e => e.stopPropagation());
+        noteCustomEmojiInput.addEventListener('input', async () => {
+          const val = noteCustomEmojiInput.value.trim();
+          noteCustomEmojiInput.value = '';
+          noteCustomEmojiInput.blur();
+          if (val) await applyNoteReaction(val);
+        });
+      }
+      if (noteCustomEmojiBtn){
+        // Only does anything once a custom emoji is showing (the .active
+        // state) — that's when this button becomes the click target instead
+        // of the hidden input, so tapping the picked emoji removes it.
+        noteCustomEmojiBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          if (note.reaction) await applyNoteReaction(note.reaction);
+        });
+      }
 
       notesGrid.appendChild(wrap);
     });
@@ -3899,93 +3999,188 @@ async function sha256Hex(text){
   /* ---------- doodles wall & canvas ---------- */
   const DOODLES_TABLE = 'doodles';
   const DOODLES_BUCKET = 'doodles';
-  const DOODLE_REACTIONS = ['😂', '💕', '😙', '🎉', '😢'];
+  const DOODLE_REACTIONS = ['😂', '💕', '😙', '😢'];
+  const DOODLE_COLORS = ['#C96A7A','#F0A9B7','#6B5344','#8E7768','#D3A65A','#74A9C9','#487CA7','#8AAE87','#617A64','#C576E7','#FFB51B','#111111'];
   const doodlesToggleBtn = document.getElementById('doodlesToggleBtn');
   const doodlesWall = document.getElementById('doodlesWall');
   const doodlesCloseBtn = document.getElementById('doodlesCloseBtn');
-  const doodleForm = document.getElementById('doodleForm');
-  const doodleCanvas = document.getElementById('doodleCanvas');
-  const doodleCtx = doodleCanvas.getContext('2d', { willReadFrequently: true });
-  const doodleSwatches = document.getElementById('doodleSwatches');
-  const doodleColorPicker = document.getElementById('doodleColorPicker');
-  const doodleBrushSize = document.getElementById('doodleBrushSize');
-  const doodleBrushValue = document.getElementById('doodleBrushValue');
-  const doodleTools = document.getElementById('doodleTools');
-  const doodleUndo = document.getElementById('doodleUndo');
-  const doodleClear = document.getElementById('doodleClear');
+  const doodleModeChooser = document.getElementById('doodleModeChooser');
+  const doodleSoloView = document.getElementById('doodleSoloView');
+  const doodleDuetView = document.getElementById('doodleDuetView');
+  const doodlesGalleryArea = document.getElementById('doodlesGalleryArea');
+  const doodlesGridLabel = document.getElementById('doodlesGridLabel');
+  const chooseDoodleSolo = document.getElementById('chooseDoodleSolo');
+  const chooseDoodleDuet = document.getElementById('chooseDoodleDuet');
+  const duetPresenceHint = document.getElementById('duetPresenceHint');
   const doodleCaption = document.getElementById('doodleCaption');
   const doodleSubmitBtn = document.getElementById('doodleSubmitBtn');
   const doodleAuthorToggle = document.getElementById('doodleAuthorToggle');
+  const doodleForm = document.getElementById('doodleForm');
+  const duetDoodleCaption = document.getElementById('duetDoodleCaption');
+  const duetDoodleSubmitBtn = document.getElementById('duetDoodleSubmitBtn');
+  const duetDoodleAuthorToggle = document.getElementById('duetDoodleAuthorToggle');
+  const duetDoodleForm = document.getElementById('duetDoodleForm');
   const doodlesGrid = document.getElementById('doodlesGrid');
   const doodlesSearchInput = document.getElementById('doodlesSearchInput');
   const doodlesSortSelect = document.getElementById('doodlesSortSelect');
   const doodlesFavFilterBtn = document.getElementById('doodlesFavFilterBtn');
-  const DOODLE_COLORS = ['#C96A7A','#F0A9B7','#6B5344','#8E7768','#D3A65A','#74A9C9','#487CA7','#8AAE87','#617A64','#C576E7','#FFB51B','#111111'];
-  let doodleColor = DOODLE_COLORS[0], doodleTool = 'pen', doodleAuthor = localStorage.getItem('ourLittleUniverseDoodleAuthor') === '2' ? '2' : '1';
-  let doodleHistory = [], doodleDrawing = false, doodleLastPoint = null, doodleStartPoint = null;
+  let doodleAuthor = localStorage.getItem('ourLittleUniverseDoodleAuthor') === '2' ? '2' : '1';
+  let duetDoodleAuthor = doodleAuthor;
   let doodlesLoaded = false, allDoodles = [], doodlesSearchQuery = '', doodlesSortMode = 'newest', doodlesFavoritesOnly = false, doodlesRealtimeStarted = false;
+  let currentDoodleMode = 'solo';
 
-  function fillDoodleBackground(){
-    const r=doodleCanvas.getBoundingClientRect();
-    doodleCtx.save(); doodleCtx.setTransform(1,0,0,1,0,0); doodleCtx.fillStyle='#FFFDF7'; doodleCtx.fillRect(0,0,doodleCanvas.width,doodleCanvas.height); doodleCtx.restore();
+  /* ---------- reusable drawing-canvas engine, shared by solo + duet ----------
+     Each call makes an independent canvas with its own colour/tool/history
+     state. `hooks` lets duet mode piggyback on every draw action to also
+     broadcast it live, without solo mode needing to know anything about that. */
+  function createDoodleEngine(ids, hooks){
+    hooks = hooks || {};
+    const canvas = document.getElementById(ids.canvas);
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const swatches = document.getElementById(ids.swatches);
+    const colorPicker = document.getElementById(ids.colorPicker);
+    const brushSize = document.getElementById(ids.brushSize);
+    const brushValue = document.getElementById(ids.brushValue);
+    const tools = document.getElementById(ids.tools);
+    const undoBtn = document.getElementById(ids.undo);
+    const clearBtn = document.getElementById(ids.clear);
+    let color = DOODLE_COLORS[0], tool = 'pen', history = [], drawing = false, lastPoint = null, startPoint = null;
+
+    function fillBackground(){
+      ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle='#FFFDF7'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.restore();
+    }
+    function setupCanvas(){
+      const rect = canvas.getBoundingClientRect();
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      const previous = canvas.width ? canvas.toDataURL() : null;
+      canvas.width = Math.max(1, Math.round(rect.width * ratio));
+      canvas.height = Math.max(1, Math.round(rect.height * ratio));
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      fillBackground();
+      if (previous){ const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height); img.src = previous; }
+    }
+    function pointFor(event){ const r = canvas.getBoundingClientRect(); return { x:event.clientX-r.left, y:event.clientY-r.top }; }
+    // Points and sizes are normalized to 0..1 of the canvas's own CSS size
+    // before broadcasting, and scaled back up by the *receiving* canvas's own
+    // size on the other end — so a duet doodle lines up correctly even if
+    // the two of you are on very differently sized screens.
+    function normPoint(p){ const r = canvas.getBoundingClientRect(); return { x: r.width ? p.x/r.width : 0, y: r.height ? p.y/r.height : 0 }; }
+    function denormPoint(p){ const r = canvas.getBoundingClientRect(); return { x: p.x*r.width, y: p.y*r.height }; }
+    function normSize(px){ const r = canvas.getBoundingClientRect(); return r.width ? px/r.width : px; }
+    function denormSize(px){ const r = canvas.getBoundingClientRect(); return px*canvas.getBoundingClientRect().width; }
+    function snapshot(){
+      const pixels = ctx.getImageData(0,0,canvas.width,canvas.height);
+      history.push(new ImageData(new Uint8ClampedArray(pixels.data), pixels.width, pixels.height));
+      if (history.length > 500) history.shift();
+    }
+    function paintSegment(from, to, segColor, segTool, segSizePx){
+      ctx.save(); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.lineWidth = segSizePx!=null ? segSizePx : +brushSize.value;
+      if ((segTool||tool)==='eraser'){ ctx.globalCompositeOperation='destination-out'; } else { ctx.strokeStyle = segColor||color; }
+      ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(to.x, to.y); ctx.stroke(); ctx.restore();
+    }
+    function spray(point, sprayColor, sprayRadiusPx){
+      const radius = sprayRadiusPx!=null ? sprayRadiusPx : (+brushSize.value * 2);
+      ctx.save(); ctx.fillStyle = sprayColor||color;
+      for(let i=0;i<22;i++){ const a=Math.random()*Math.PI*2, d=Math.random()*radius; ctx.fillRect(point.x+Math.cos(a)*d, point.y+Math.sin(a)*d, 1.2, 1.2); }
+      ctx.restore();
+    }
+    function fill(point, fillColor){
+      const ratio = canvas.width / canvas.getBoundingClientRect().width, x=Math.floor(point.x*ratio), y=Math.floor(point.y*ratio);
+      const image=ctx.getImageData(0,0,canvas.width,canvas.height), data=image.data, width=image.width;
+      if (x<0||y<0||x>=width||y>=image.height) return;
+      const start=(y*width+x)*4;
+      const target=[data[start],data[start+1],data[start+2],data[start+3]];
+      const hex=(fillColor||color).replace('#',''); const fillRgba=[parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16),255];
+      if(target.every((v,i)=>v===fillRgba[i])) return;
+      const matches=(idx)=> data[idx]===target[0]&&data[idx+1]===target[1]&&data[idx+2]===target[2]&&data[idx+3]===target[3];
+      const stack=[[x,y]];
+      while(stack.length){ const [px,py]=stack.pop(); if(px<0||py<0||px>=width||py>=image.height) continue; const idx=(py*width+px)*4; if(!matches(idx)) continue; data[idx]=fillRgba[0];data[idx+1]=fillRgba[1];data[idx+2]=fillRgba[2];data[idx+3]=fillRgba[3]; stack.push([px+1,py],[px-1,py],[px,py+1],[px,py-1]); }
+      ctx.putImageData(image,0,0);
+    }
+    function setColor(c){ color=c; colorPicker.value=c; swatches.querySelectorAll('.doodle-swatch').forEach(b=>b.classList.toggle('active',b.dataset.color===c)); }
+    DOODLE_COLORS.forEach(c=>{ const b=document.createElement('button'); b.type='button'; b.className='doodle-swatch'; b.dataset.color=c; b.style.background=c; b.setAttribute('aria-label',`Use ${c}`); b.addEventListener('click',()=>setColor(c)); swatches.appendChild(b); });
+    setColor(color);
+    colorPicker.addEventListener('input',()=>setColor(colorPicker.value));
+    brushSize.addEventListener('input',()=>brushValue.textContent=brushSize.value);
+    tools.addEventListener('click',(e)=>{ const b=e.target.closest('[data-tool]'); if(!b)return; tool=b.dataset.tool; tools.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x===b)); canvas.style.cursor=tool==='fill'?'cell':'crosshair'; });
+
+    canvas.addEventListener('pointerdown',(e)=>{
+      e.preventDefault(); const p=pointFor(e); canvas.setPointerCapture(e.pointerId); drawing=true; startPoint=p; lastPoint=p;
+      if(tool==='fill'){ snapshot(); fill(p); if(hooks.onFill) hooks.onFill({ point:normPoint(p), color }); drawing=false; return; }
+      snapshot();
+      if(tool==='pen'||tool==='eraser'){ const to={x:p.x+.01,y:p.y+.01}; paintSegment(p,to); if(hooks.onSegment) hooks.onSegment({ from:normPoint(p), to:normPoint(to), color, tool, size:normSize(+brushSize.value) }); }
+      else if(tool==='spray'){ spray(p); if(hooks.onSpray) hooks.onSpray({ point:normPoint(p), color, radius:normSize(+brushSize.value*2) }); }
+    });
+    canvas.addEventListener('pointermove',(e)=>{
+      if(!drawing)return; const p=pointFor(e);
+      if(tool==='line'){ const saved=history[history.length-1]; if(saved) ctx.putImageData(saved,0,0); paintSegment(startPoint,p); }
+      else if(tool==='spray'){ spray(p); if(hooks.onSpray) hooks.onSpray({ point:normPoint(p), color, radius:normSize(+brushSize.value*2) }); }
+      else { paintSegment(lastPoint,p); if(hooks.onSegment) hooks.onSegment({ from:normPoint(lastPoint), to:normPoint(p), color, tool, size:normSize(+brushSize.value) }); }
+      lastPoint=p;
+    });
+    canvas.addEventListener('pointerup',()=>{
+      if(drawing && tool==='line' && hooks.onSegment) hooks.onSegment({ from:normPoint(startPoint), to:normPoint(lastPoint), color, tool, size:normSize(+brushSize.value) });
+      drawing=false; lastPoint=null;
+    });
+    canvas.addEventListener('pointercancel',()=>{ drawing=false; lastPoint=null; });
+    undoBtn.addEventListener('click',(e)=>{ e.preventDefault(); e.stopPropagation(); const prior=history.pop(); if(prior){ ctx.putImageData(prior,0,0); lastPoint=null; } });
+    clearBtn.addEventListener('click',()=>{ snapshot(); fillBackground(); if(hooks.onClear) hooks.onClear(); });
+
+    function exportBlob(){
+      const scale=3, exportCanvas=document.createElement('canvas');
+      exportCanvas.width=canvas.width*scale; exportCanvas.height=canvas.height*scale;
+      const c2=exportCanvas.getContext('2d'); c2.fillStyle='#FFFDF7'; c2.fillRect(0,0,exportCanvas.width,exportCanvas.height); c2.drawImage(canvas,0,0,exportCanvas.width,exportCanvas.height);
+      return new Promise(resolve=>exportCanvas.toBlob(resolve,'image/png'));
+    }
+    function reset(){ history=[]; fillBackground(); }
+
+    return {
+      setupCanvas, exportBlob, reset,
+      applyRemoteSegment(p){ paintSegment(denormPoint(p.from), denormPoint(p.to), p.color, p.tool, denormSize(p.size)); },
+      applyRemoteSpray(p){ spray(denormPoint(p.point), p.color, denormSize(p.radius)); },
+      applyRemoteFill(p){ fill(denormPoint(p.point), p.color); },
+      applyRemoteClear(){ fillBackground(); }
+    };
   }
-  function setupDoodleCanvas(){
-    const rect = doodleCanvas.getBoundingClientRect();
-    const ratio = Math.min(window.devicePixelRatio || 1, 2);
-    const previous = doodleCanvas.width ? doodleCanvas.toDataURL() : null;
-    doodleCanvas.width = Math.max(1, Math.round(rect.width * ratio));
-    doodleCanvas.height = Math.max(1, Math.round(rect.height * ratio));
-    doodleCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
-    fillDoodleBackground();
-    if (previous){ const img = new Image(); img.onload = () => doodleCtx.drawImage(img, 0, 0, rect.width, rect.height); img.src = previous; }
+
+  /* ---------- duet realtime channel ---------- */
+  let duetChannel = null, duetChannelReady = false;
+  function duetBroadcast(event, payload){ if (duetChannel && duetChannelReady) duetChannel.send({ type:'broadcast', event, payload }); }
+  const duetEngine = createDoodleEngine(
+    { canvas:'duetDoodleCanvas', swatches:'duetDoodleSwatches', colorPicker:'duetDoodleColorPicker', brushSize:'duetDoodleBrushSize', brushValue:'duetDoodleBrushValue', tools:'duetDoodleTools', undo:'duetDoodleUndo', clear:'duetDoodleClear' },
+    { onSegment:(p)=>duetBroadcast('segment',p), onSpray:(p)=>duetBroadcast('spray',p), onFill:(p)=>duetBroadcast('fill',p), onClear:()=>duetBroadcast('clear',{}) }
+  );
+  const soloEngine = createDoodleEngine(
+    { canvas:'doodleCanvas', swatches:'doodleSwatches', colorPicker:'doodleColorPicker', brushSize:'doodleBrushSize', brushValue:'doodleBrushValue', tools:'doodleTools', undo:'doodleUndo', clear:'doodleClear' },
+    {}
+  );
+  function startDuetChannel(){
+    if (!supabase || duetChannel) return;
+    duetChannel = supabase.channel('duet-doodle-live', { config: { broadcast: { self: false } } });
+    duetChannel.on('broadcast', { event:'segment' }, ({ payload }) => duetEngine.applyRemoteSegment(payload));
+    duetChannel.on('broadcast', { event:'spray' }, ({ payload }) => duetEngine.applyRemoteSpray(payload));
+    duetChannel.on('broadcast', { event:'fill' }, ({ payload }) => duetEngine.applyRemoteFill(payload));
+    duetChannel.on('broadcast', { event:'clear' }, () => duetEngine.applyRemoteClear());
+    duetChannel.subscribe((status) => {
+      duetChannelReady = status === 'SUBSCRIBED';
+      if (duetPresenceHint){
+        duetPresenceHint.textContent = duetChannelReady ? "Live — anything either of you draws shows up instantly for both." : "Connecting...";
+        duetPresenceHint.classList.toggle('live', duetChannelReady);
+      }
+    });
   }
-  function pointForDoodle(event){ const r = doodleCanvas.getBoundingClientRect(); return { x:event.clientX-r.left, y:event.clientY-r.top }; }
-  // Store one checkpoint before each completed action. For freehand tools,
-  // that means a whole pointer-down → pointer-up stroke is undone at once.
-  function snapshotDoodle(){
-    const pixels = doodleCtx.getImageData(0,0,doodleCanvas.width,doodleCanvas.height);
-    doodleHistory.push(new ImageData(new Uint8ClampedArray(pixels.data), pixels.width, pixels.height));
-    if (doodleHistory.length > 500) doodleHistory.shift();
-  }
-  function paintDoodleSegment(from, to){
-    doodleCtx.save(); doodleCtx.lineCap = 'round'; doodleCtx.lineJoin = 'round'; doodleCtx.lineWidth = +doodleBrushSize.value;
-    if (doodleTool === 'eraser'){ doodleCtx.globalCompositeOperation = 'destination-out'; } else { doodleCtx.strokeStyle = doodleColor; }
-    doodleCtx.beginPath(); doodleCtx.moveTo(from.x, from.y); doodleCtx.lineTo(to.x, to.y); doodleCtx.stroke(); doodleCtx.restore();
-  }
-  function sprayDoodle(point){
-    const radius = +doodleBrushSize.value * 2;
-    doodleCtx.save(); doodleCtx.fillStyle = doodleColor;
-    for(let i=0;i<22;i++){ const a=Math.random()*Math.PI*2, d=Math.random()*radius; doodleCtx.fillRect(point.x+Math.cos(a)*d, point.y+Math.sin(a)*d, 1.2, 1.2); }
-    doodleCtx.restore();
-  }
-  function floodFill(point){
-    const ratio = doodleCanvas.width / doodleCanvas.getBoundingClientRect().width, x=Math.floor(point.x*ratio), y=Math.floor(point.y*ratio);
-    const image=doodleCtx.getImageData(0,0,doodleCanvas.width,doodleCanvas.height), data=image.data, width=image.width, start=(y*width+x)*4;
-    const target=[data[start],data[start+1],data[start+2],data[start+3]];
-    const hex=doodleColor.replace('#',''); const fill=[parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16),255];
-    if(target.every((v,i)=>v===fill[i])) return;
-    const matches=(idx)=> data[idx]===target[0]&&data[idx+1]===target[1]&&data[idx+2]===target[2]&&data[idx+3]===target[3];
-    const stack=[[x,y]];
-    while(stack.length){ const [px,py]=stack.pop(); if(px<0||py<0||px>=width||py>=image.height) continue; const idx=(py*width+px)*4; if(!matches(idx)) continue; data[idx]=fill[0];data[idx+1]=fill[1];data[idx+2]=fill[2];data[idx+3]=fill[3]; stack.push([px+1,py],[px-1,py],[px,py+1],[px,py-1]); }
-    doodleCtx.putImageData(image,0,0);
-  }
-  function setDoodleColor(color){ doodleColor=color; doodleColorPicker.value=color; doodleSwatches.querySelectorAll('.doodle-swatch').forEach(b=>b.classList.toggle('active',b.dataset.color===color)); }
-  DOODLE_COLORS.forEach(color=>{ const b=document.createElement('button'); b.type='button'; b.className='doodle-swatch'; b.dataset.color=color; b.style.background=color; b.setAttribute('aria-label',`Use ${color}`); b.addEventListener('click',()=>setDoodleColor(color)); doodleSwatches.appendChild(b); });
-  setDoodleColor(doodleColor); setupDoodleCanvas();
-  doodleColorPicker.addEventListener('input',()=>setDoodleColor(doodleColorPicker.value));
-  doodleBrushSize.addEventListener('input',()=>doodleBrushValue.textContent=doodleBrushSize.value);
-  doodleTools.addEventListener('click',(e)=>{ const b=e.target.closest('[data-tool]'); if(!b)return; doodleTool=b.dataset.tool; doodleTools.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x===b)); doodleCanvas.style.cursor=doodleTool==='fill'?'cell':'crosshair'; });
-  doodleCanvas.addEventListener('pointerdown',(e)=>{ e.preventDefault(); const p=pointForDoodle(e); doodleCanvas.setPointerCapture(e.pointerId); doodleDrawing=true; doodleStartPoint=p; doodleLastPoint=p;
-    if(doodleTool==='fill'){ snapshotDoodle(); floodFill(p); doodleDrawing=false; return; } snapshotDoodle(); if(doodleTool==='pen'||doodleTool==='eraser') paintDoodleSegment(p,{x:p.x+.01,y:p.y+.01}); else if(doodleTool==='spray') sprayDoodle(p);
-  });
-  doodleCanvas.addEventListener('pointermove',(e)=>{ if(!doodleDrawing)return; const p=pointForDoodle(e); if(doodleTool==='line'){ const saved=doodleHistory[doodleHistory.length-1]; if(saved) doodleCtx.putImageData(saved,0,0); paintDoodleSegment(doodleStartPoint,p); } else if(doodleTool==='spray'){ sprayDoodle(p); } else { paintDoodleSegment(doodleLastPoint,p); } doodleLastPoint=p; });
-  doodleCanvas.addEventListener('pointerup',()=>{ doodleDrawing=false; doodleLastPoint=null; }); doodleCanvas.addEventListener('pointercancel',()=>{ doodleDrawing=false; doodleLastPoint=null; });
-  doodleUndo.addEventListener('click',(e)=>{ e.preventDefault(); e.stopPropagation(); const prior=doodleHistory.pop(); if(prior){ doodleCtx.putImageData(prior,0,0); doodleLastPoint=null; } });
-  doodleClear.addEventListener('click',()=>{ snapshotDoodle(); fillDoodleBackground(); });
+
   doodleAuthorToggle.addEventListener('click',()=>{ doodleAuthor=doodleAuthor==='1'?'2':'1'; localStorage.setItem('ourLittleUniverseDoodleAuthor',doodleAuthor); doodleAuthorToggle.dataset.author=doodleAuthor; doodleAuthorToggle.setAttribute('aria-label',`Currently drawing as By ${doodleAuthor==='1'?'J':'M'} — tap to switch`); });
+  duetDoodleAuthorToggle.addEventListener('click',()=>{ duetDoodleAuthor=duetDoodleAuthor==='1'?'2':'1'; localStorage.setItem('ourLittleUniverseDoodleAuthor',duetDoodleAuthor); duetDoodleAuthorToggle.dataset.author=duetDoodleAuthor; duetDoodleAuthorToggle.setAttribute('aria-label',`Currently drawing as By ${duetDoodleAuthor==='1'?'J':'M'} — tap to switch`); });
 
   async function loadDoodles(){ if(!supabase)return; try{ const {data,error}=await supabase.from(DOODLES_TABLE).select('*').order('created_at',{ascending:false}); if(error)throw error; allDoodles=data||[]; renderDoodlesFiltered(); }catch(err){ console.error('Could not load doodles:',err); showToast('Could not load doodles. Run the doodles setup SQL first.',{type:'error'}); } }
-  function renderDoodlesFiltered(){ let items=doodlesFavoritesOnly?allDoodles.filter(d=>d.favorite):allDoodles.slice(); const q=doodlesSearchQuery.trim().toLowerCase(); if(q)items=items.filter(d=>`${d.caption||''} ${d.reply||''}`.toLowerCase().includes(q)); if(doodlesSortMode==='oldest')items.reverse(); if(doodlesSortMode==='shuffle')items.sort(()=>Math.random()-.5); renderDoodles(items); }
+  function renderDoodlesFiltered(){
+    let items = allDoodles.filter(d => (d.mode||'solo') === currentDoodleMode);
+    if (doodlesFavoritesOnly) items = items.filter(d=>d.favorite);
+    const q=doodlesSearchQuery.trim().toLowerCase(); if(q)items=items.filter(d=>`${d.caption||''} ${d.reply||''}`.toLowerCase().includes(q));
+    if(doodlesSortMode==='oldest')items.reverse(); if(doodlesSortMode==='shuffle')items.sort(()=>Math.random()-.5);
+    renderDoodles(items);
+  }
   async function updateDoodle(d, patch){ const {error}=await supabase.from(DOODLES_TABLE).update(patch).eq('id',d.id); if(error){ console.error(error); showToast('Could not save that doodle change.',{type:'error'}); } }
   let knownDoodleIds=null;
   function isDoodleFieldFocused(){
@@ -3997,7 +4192,7 @@ async function sha256Hex(text){
     const isFirstRender=knownDoodleIds===null;
     const currentIds=new Set();
     items.forEach(d=>{ currentIds.add(d.id); const wrap=document.createElement('div'); wrap.className='doodle-wrap'+((!isFirstRender && !knownDoodleIds.has(d.id))?' doodle-wrap-enter':''); wrap.style.setProperty('--nt',(Math.random()*6-3).toFixed(1)+'deg'); const author=String(d.author||1), date=d.created_at?new Date(d.created_at).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'';
-      wrap.innerHTML=`<div class="doodle-flip" tabindex="0" role="button" aria-label="Flip doodle"><div class="doodle-face doodle-front"><button class="doodle-fav" type="button">${d.favorite?'♥':'♡'}</button><button class="doodle-remove" type="button">✕</button><img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption?`: ${escapeHtml(d.caption)}`:''}" loading="lazy" decoding="async"><div class="doodle-caption-preview">${escapeHtml(d.caption||'A little doodle ✨')}</div>${d.reaction?`<span class="doodle-reaction-badge">${d.reaction}</span>`:''}<span class="doodle-author-badge author-${author}">By ${author==='2'?'M':'J'}</span><span class="doodle-date">${date}</span></div><div class="doodle-face doodle-back"><textarea class="doodle-caption-edit" maxlength="120" placeholder="Add a caption...">${escapeHtml(d.caption||'')}</textarea><textarea class="doodle-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(d.reply||'')}</textarea><div class="doodle-reaction-picker">${DOODLE_REACTIONS.map(r=>`<button type="button" data-reaction="${r}" class="${d.reaction===r?'active':''}">${r}</button>`).join('')}</div><div class="doodle-back-actions"><button class="note-flip-back-btn" type="button">‹ back</button><button class="doodle-download" type="button">⇩ PNG</button></div></div></div>`;
+      wrap.innerHTML=`<div class="doodle-flip" tabindex="0" role="button" aria-label="Flip doodle"><div class="doodle-face doodle-front"><button class="doodle-fav" type="button">${d.favorite?'♥':'♡'}</button><button class="doodle-remove" type="button">✕</button><img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption?`: ${escapeHtml(d.caption)}`:''}" loading="lazy" decoding="async"><div class="doodle-caption-preview">${escapeHtml(d.caption||'A little doodle ✨')}</div>${d.reaction?`<span class="doodle-reaction-badge">${d.reaction}</span>`:''}<span class="doodle-author-badge author-${author}">By ${author==='2'?'M':'J'}</span><span class="doodle-date">${date}</span></div><div class="doodle-face doodle-back"><textarea class="doodle-caption-edit" maxlength="120" placeholder="Add a caption...">${escapeHtml(d.caption||'')}</textarea><textarea class="doodle-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(d.reply||'')}</textarea><div class="doodle-reaction-picker">${DOODLE_REACTIONS.map(r=>`<button type="button" data-reaction="${r}" class="${d.reaction===r?'active':''}">${r}</button>`).join('')}${customEmojiPickerHtml(d.reaction, DOODLE_REACTIONS)}</div><div class="doodle-back-actions"><button class="note-flip-back-btn" type="button">‹ back</button><button class="doodle-download" type="button">⇩ PNG</button></div></div></div>`;
       const flip=wrap.querySelector('.doodle-flip'), image=wrap.querySelector('.doodle-image'), fav=wrap.querySelector('.doodle-fav'), remove=wrap.querySelector('.doodle-remove'), reply=wrap.querySelector('.doodle-reply-input'), captionEdit=wrap.querySelector('.doodle-caption-edit'), back=wrap.querySelector('.note-flip-back-btn'), download=wrap.querySelector('.doodle-download');
       flip.addEventListener('click',e=>{ if(e.target.closest('button,textarea,img'))return; flip.classList.toggle('flipped'); }); flip.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===flip){e.preventDefault();flip.classList.toggle('flipped');}}); back.addEventListener('click',()=>flip.classList.remove('flipped'));
       image.addEventListener('click',()=>{ currentList=items.map(x=>({src:x.image_url,caption:x.caption||'A little doodle'})); lightboxIndex=items.findIndex(x=>x.id===d.id); openLightbox(lightboxIndex,'doodle'); });
@@ -4007,21 +4202,66 @@ async function sha256Hex(text){
       let captionTimer; captionEdit.addEventListener('input',()=>{ d.caption=captionEdit.value; clearTimeout(captionTimer); captionTimer=setTimeout(()=>updateDoodle(d,{caption:d.caption||null}),400); });
       captionEdit.addEventListener('blur',flushPendingDoodleReload);
       wrap.querySelectorAll('[data-reaction]').forEach(b=>b.addEventListener('click',async()=>{ d.reaction=d.reaction===b.dataset.reaction?null:b.dataset.reaction; await updateDoodle(d,{reaction:d.reaction}); renderDoodlesFiltered(); }));
+      const doodleCustomEmojiInput = wrap.querySelector('.doodle-reaction-picker .reaction-plus-input');
+      const doodleCustomEmojiBtn = wrap.querySelector('.doodle-reaction-picker .reaction-plus-btn');
+      if (doodleCustomEmojiInput){
+        doodleCustomEmojiInput.addEventListener('input', async () => {
+          const val = doodleCustomEmojiInput.value.trim();
+          doodleCustomEmojiInput.value = '';
+          doodleCustomEmojiInput.blur();
+          if (!val) return;
+          d.reaction = d.reaction === val ? null : val;
+          refreshCustomEmojiVisual(wrap.querySelector('.doodle-reaction-picker'), DOODLE_REACTIONS, d.reaction);
+          await updateDoodle(d, { reaction: d.reaction });
+          renderDoodlesFiltered();
+        });
+      }
+      if (doodleCustomEmojiBtn){
+        doodleCustomEmojiBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          if (!d.reaction) return;
+          d.reaction = null;
+          await updateDoodle(d, { reaction: d.reaction });
+          renderDoodlesFiltered();
+        });
+      }
       download.addEventListener('click',async()=>{ try{ const blob=await fetch(d.image_url).then(r=>r.blob()), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`doodle-${d.id}.png`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500); }catch(err){ window.open(d.image_url,'_blank','noopener'); } });
       remove.addEventListener('click',()=>{ const i=allDoodles.findIndex(x=>x.id===d.id); allDoodles.splice(i,1); renderDoodlesFiltered(); const timer=setTimeout(async()=>{ try{ if(d.storage_path)await supabase.storage.from(DOODLES_BUCKET).remove([d.storage_path]); await supabase.from(DOODLES_TABLE).delete().eq('id',d.id); }catch(err){showToast('Could not remove doodle.',{type:'error'});} },5000); showToast('Doodle removed.',{actionLabel:'Undo',duration:5000,onAction:()=>{clearTimeout(timer);allDoodles.splice(i,0,d);renderDoodlesFiltered();}}); });
       doodlesGrid.appendChild(wrap);
     });
     knownDoodleIds=currentIds;
   }
-  function qOrEmptyDoodles(){ return doodlesSearchQuery.trim()?'no doodles match that search':'no doodles yet — draw one!'; }
-  function exportDoodleBlob(){
-    const scale=3, exportCanvas=document.createElement('canvas');
-    exportCanvas.width=doodleCanvas.width*scale; exportCanvas.height=doodleCanvas.height*scale;
-    const ctx=exportCanvas.getContext('2d'); ctx.fillStyle='#FFFDF7'; ctx.fillRect(0,0,exportCanvas.width,exportCanvas.height); ctx.drawImage(doodleCanvas,0,0,exportCanvas.width,exportCanvas.height);
-    return new Promise(resolve=>exportCanvas.toBlob(resolve,'image/png'));
+  function qOrEmptyDoodles(){
+    if (doodlesSearchQuery.trim()) return 'no doodles match that search';
+    return currentDoodleMode==='duet' ? 'no duet doodles yet — draw one together!' : 'no doodles yet — draw one!';
   }
-  doodleForm.addEventListener('submit',async e=>{ e.preventDefault(); if(!supabase){showToast('Connect Supabase before saving doodles.',{type:'error'});return;} doodleSubmitBtn.disabled=true; try{ const blob=await exportDoodleBlob(); if(!blob)throw new Error('Could not create PNG'); const path=`${Date.now()}-${crypto.randomUUID()}.png`; const {error:uploadError}=await supabase.storage.from(DOODLES_BUCKET).upload(path,blob,{contentType:'image/png'}); if(uploadError)throw uploadError; const {data:urlData}=supabase.storage.from(DOODLES_BUCKET).getPublicUrl(path); const {error}=await supabase.from(DOODLES_TABLE).insert({image_url:urlData.publicUrl,storage_path:path,caption:doodleCaption.value.trim()||null,author:Number(doodleAuthor)}); if(error)throw error; doodleCaption.value=''; doodleHistory=[]; fillDoodleBackground(); showToast('Doodle pinned!'); loadDoodles(); }catch(err){console.error(err);showToast('Could not save doodle. Check the doodles bucket and SQL setup.',{type:'error'});}finally{doodleSubmitBtn.disabled=false;} });
-  doodlesToggleBtn.addEventListener('click',()=>{ const opening=doodlesWall.classList.contains('hidden'); doodlesWall.classList.toggle('hidden'); if(opening){notesWall.classList.add('hidden'); setupDoodleCanvas(); if(!doodlesLoaded){doodlesLoaded=true;loadDoodles();}} });
+  doodleForm.addEventListener('submit',async e=>{ e.preventDefault(); if(!supabase){showToast('Connect Supabase before saving doodles.',{type:'error'});return;} doodleSubmitBtn.disabled=true; try{ const blob=await soloEngine.exportBlob(); if(!blob)throw new Error('Could not create PNG'); const path=`${Date.now()}-${crypto.randomUUID()}.png`; const {error:uploadError}=await supabase.storage.from(DOODLES_BUCKET).upload(path,blob,{contentType:'image/png'}); if(uploadError)throw uploadError; const {data:urlData}=supabase.storage.from(DOODLES_BUCKET).getPublicUrl(path); const {error}=await supabase.from(DOODLES_TABLE).insert({image_url:urlData.publicUrl,storage_path:path,caption:doodleCaption.value.trim()||null,author:Number(doodleAuthor),mode:'solo'}); if(error)throw error; doodleCaption.value=''; soloEngine.reset(); showToast('Doodle pinned!'); loadDoodles(); }catch(err){console.error(err);showToast('Could not save doodle. Check the doodles bucket and SQL setup.',{type:'error'});}finally{doodleSubmitBtn.disabled=false;} });
+  duetDoodleForm.addEventListener('submit',async e=>{ e.preventDefault(); if(!supabase){showToast('Connect Supabase before saving doodles.',{type:'error'});return;} duetDoodleSubmitBtn.disabled=true; try{ const blob=await duetEngine.exportBlob(); if(!blob)throw new Error('Could not create PNG'); const path=`${Date.now()}-${crypto.randomUUID()}.png`; const {error:uploadError}=await supabase.storage.from(DOODLES_BUCKET).upload(path,blob,{contentType:'image/png'}); if(uploadError)throw uploadError; const {data:urlData}=supabase.storage.from(DOODLES_BUCKET).getPublicUrl(path); const {error}=await supabase.from(DOODLES_TABLE).insert({image_url:urlData.publicUrl,storage_path:path,caption:duetDoodleCaption.value.trim()||null,author:Number(duetDoodleAuthor),mode:'duet'}); if(error)throw error; duetDoodleCaption.value=''; duetEngine.reset(); duetBroadcast('clear',{}); showToast('Duet doodle pinned!'); loadDoodles(); }catch(err){console.error(err);showToast('Could not save doodle. Check the doodles bucket and SQL setup.',{type:'error'});}finally{duetDoodleSubmitBtn.disabled=false;} });
+
+  function showDoodleModeChooser(){
+    doodleModeChooser.classList.remove('hidden');
+    doodleSoloView.classList.add('hidden'); doodleDuetView.classList.add('hidden'); doodlesGalleryArea.classList.add('hidden');
+  }
+  function openDoodleSolo(){
+    doodleModeChooser.classList.add('hidden'); doodleDuetView.classList.add('hidden');
+    doodleSoloView.classList.remove('hidden'); doodlesGalleryArea.classList.remove('hidden');
+    currentDoodleMode='solo'; doodlesGridLabel.textContent='Solo doodles'; knownDoodleIds=null;
+    soloEngine.setupCanvas();
+    if(!doodlesLoaded){ doodlesLoaded=true; loadDoodles(); } else { renderDoodlesFiltered(); }
+  }
+  function openDoodleDuet(){
+    doodleModeChooser.classList.add('hidden'); doodleSoloView.classList.add('hidden');
+    doodleDuetView.classList.remove('hidden'); doodlesGalleryArea.classList.remove('hidden');
+    currentDoodleMode='duet'; doodlesGridLabel.textContent='Duet doodles'; knownDoodleIds=null;
+    duetEngine.setupCanvas();
+    startDuetChannel();
+    if(!doodlesLoaded){ doodlesLoaded=true; loadDoodles(); } else { renderDoodlesFiltered(); }
+  }
+  chooseDoodleSolo.addEventListener('click', openDoodleSolo);
+  chooseDoodleDuet.addEventListener('click', openDoodleDuet);
+  document.querySelectorAll('.doodle-mode-back').forEach(b=>b.addEventListener('click', showDoodleModeChooser));
+
+  doodlesToggleBtn.addEventListener('click',()=>{ const opening=doodlesWall.classList.contains('hidden'); doodlesWall.classList.toggle('hidden'); if(opening){notesWall.classList.add('hidden'); showDoodleModeChooser();} });
   doodlesCloseBtn.addEventListener('click',()=>doodlesWall.classList.add('hidden'));
   notesToggleBtn.addEventListener('click',()=>doodlesWall.classList.add('hidden'));
   doodlesFavFilterBtn.addEventListener('click',()=>{doodlesFavoritesOnly=!doodlesFavoritesOnly; doodlesFavFilterBtn.classList.toggle('active',doodlesFavoritesOnly); doodlesFavFilterBtn.textContent=doodlesFavoritesOnly?'♥ Showing favorites':'♡ Favorites only'; renderDoodlesFiltered();});
@@ -4037,12 +4277,22 @@ async function sha256Hex(text){
 
   /* ---------- mood calendar, capsules, bucket list & constellation ---------- */
   const MOODS_TABLE = 'daily_moods', CAPSULES_TABLE = 'time_capsules', BUCKET_LIST_TABLE = 'bucket_list';
-  const CALENDAR_MOODS = ['😊','🥰','🥴','😢','😤','🎉','😴','🫩'];
+  const CALENDAR_MOODS = ['😊','🥰','🥴','😢','😤','😴','🫩'];
   const moodsToggleBtn=document.getElementById('moodsToggleBtn'), capsulesToggleBtn=document.getElementById('capsulesToggleBtn'), bucketToggleBtn=document.getElementById('bucketToggleBtn'), constellationToggleBtn=document.getElementById('constellationToggleBtn'), gamesToggleBtn=document.getElementById('gamesToggleBtn');
   const moodsWall=document.getElementById('moodsWall'), capsulesWall=document.getElementById('capsulesWall'), bucketWall=document.getElementById('bucketWall'), constellationWall=document.getElementById('constellationWall'), gamesWall=document.getElementById('gamesWall');
   const calendarMoodPicker=document.getElementById('calendarMoodPicker'), moodCalendar=document.getElementById('moodCalendar'), calendarTitle=document.getElementById('calendarTitle');
   const moodAuthorToggle=document.getElementById('moodAuthorToggle'), capsuleAuthorToggle=document.getElementById('capsuleAuthorToggle'), bucketAuthorToggle=document.getElementById('bucketAuthorToggle'), calendarPrev=document.getElementById('calendarPrev'), calendarNext=document.getElementById('calendarNext');
-  const featureMenu=document.getElementById('featureMenu'), featureMenuBtn=document.getElementById('featureMenuBtn');
+  const featureMenu=document.getElementById('featureMenu'), featureMenuBtn=document.getElementById('featureMenuBtn'), featureMenuPopover=document.getElementById('featureMenuPopover');
+  const featureMenuRow=featureMenu.closest('.secondary-row');
+  function updateFeatureMenuSpacing(){
+    if(!featureMenuRow) return;
+    if(featureMenu.classList.contains('open')){
+      featureMenuRow.style.marginBottom = (featureMenuPopover.scrollHeight + 20) + 'px';
+    }else{
+      featureMenuRow.style.marginBottom = '';
+    }
+  }
+  window.addEventListener('resize',()=>{ if(featureMenu.classList.contains('open')) updateFeatureMenuSpacing(); });
   const capsuleForm=document.getElementById('capsuleForm'), capsuleDate=document.getElementById('capsuleDate'), capsuleMessage=document.getElementById('capsuleMessage'), capsuleList=document.getElementById('capsuleList');
   const capsuleDateDisplay=document.getElementById('capsuleDateDisplay');
   function updateCapsuleDateDisplay(){
@@ -4064,8 +4314,8 @@ async function sha256Hex(text){
   let moodAuthor=localStorage.getItem('ourLittleUniverseMoodAuthor')==='2'?'2':'1', capsuleAuthor=localStorage.getItem('ourLittleUniverseCapsuleAuthor')==='2'?'2':'1', bucketAuthor=localStorage.getItem('ourLittleUniverseBucketAuthor')==='2'?'2':'1';
   let calendarCursor=new Date(new Date().getFullYear(),new Date().getMonth(),1);
   const extrasWalls=[moodsWall,capsulesWall,bucketWall,constellationWall,gamesWall,specialDaysWall];
-  function closeFeatureMenu(){ featureMenu.classList.remove('open'); featureMenuBtn.setAttribute('aria-expanded','false'); }
-  featureMenuBtn.addEventListener('click',()=>{ const opening=!featureMenu.classList.contains('open'); featureMenu.classList.toggle('open',opening); featureMenuBtn.setAttribute('aria-expanded',String(opening)); });
+  function closeFeatureMenu(){ featureMenu.classList.remove('open'); featureMenuBtn.setAttribute('aria-expanded','false'); updateFeatureMenuSpacing(); }
+  featureMenuBtn.addEventListener('click',()=>{ const opening=!featureMenu.classList.contains('open'); featureMenu.classList.toggle('open',opening); featureMenuBtn.setAttribute('aria-expanded',String(opening)); updateFeatureMenuSpacing(); });
   featureMenu.addEventListener('click',(e)=>{ if(e.target.closest('#featureMenuPopover button')) closeFeatureMenu(); });
   document.addEventListener('click',(e)=>{ if(!featureMenu.contains(e.target)) closeFeatureMenu(); });
   document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeFeatureMenu(); });
@@ -4075,7 +4325,7 @@ async function sha256Hex(text){
   function openLittleThing(index){
     const wall=littleThingsWalls[(index+littleThingsWalls.length)%littleThingsWalls.length];
     if(wall===doodlesWall){
-      closeExtras(); notesWall.classList.add('hidden'); doodlesWall.classList.remove('hidden'); setupDoodleCanvas();
+      closeExtras(); notesWall.classList.add('hidden'); doodlesWall.classList.remove('hidden'); showDoodleModeChooser();
       if(!doodlesLoaded){ doodlesLoaded=true; loadDoodles(); }
     }else{
       openExtra(wall);
@@ -4098,6 +4348,33 @@ async function sha256Hex(text){
     header.appendChild(nav);
   });
   CALENDAR_MOODS.forEach(m=>{const b=document.createElement('button');b.type='button';b.textContent=m;b.classList.toggle('active',m===selectedCalendarMood);b.addEventListener('click',()=>{selectedCalendarMood=m;calendarMoodPicker.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x.textContent===m));});calendarMoodPicker.appendChild(b);});
+  calendarMoodPicker.insertAdjacentHTML('beforeend', customEmojiPickerHtml(null, CALENDAR_MOODS));
+  const calendarCustomEmojiInput = calendarMoodPicker.querySelector('.reaction-plus-input');
+  const calendarCustomEmojiBtn = calendarMoodPicker.querySelector('.reaction-plus-btn');
+  function resetCalendarMoodPicker(){
+    selectedCalendarMood = CALENDAR_MOODS[0];
+    calendarMoodPicker.querySelectorAll('button').forEach(x => x.classList.toggle('active', x.textContent === selectedCalendarMood));
+    refreshCustomEmojiVisual(calendarMoodPicker, CALENDAR_MOODS, null);
+  }
+  if (calendarCustomEmojiInput){
+    calendarCustomEmojiInput.addEventListener('input', () => {
+      const val = calendarCustomEmojiInput.value.trim();
+      calendarCustomEmojiInput.value = '';
+      calendarCustomEmojiInput.blur();
+      if (!val) return;
+      selectedCalendarMood = val;
+      calendarMoodPicker.querySelectorAll('button').forEach(x => x.classList.remove('active'));
+      refreshCustomEmojiVisual(calendarMoodPicker, CALENDAR_MOODS, selectedCalendarMood);
+    });
+  }
+  if (calendarCustomEmojiBtn){
+    // Only acts once a custom emoji is showing — tapping the picked emoji
+    // again clears it and goes back to "+", instead of reopening the keyboard.
+    calendarCustomEmojiBtn.addEventListener('click', () => {
+      const isCustom = selectedCalendarMood && !CALENDAR_MOODS.includes(selectedCalendarMood);
+      if (isCustom) resetCalendarMoodPicker();
+    });
+  }
   function setExtraAuthor(kind,value){ const toggle=kind==='mood'?moodAuthorToggle:kind==='capsule'?capsuleAuthorToggle:bucketAuthorToggle; if(kind==='mood'){moodAuthor=value;localStorage.setItem('ourLittleUniverseMoodAuthor',value);}if(kind==='capsule'){capsuleAuthor=value;localStorage.setItem('ourLittleUniverseCapsuleAuthor',value);}if(kind==='bucket'){bucketAuthor=value;localStorage.setItem('ourLittleUniverseBucketAuthor',value);}toggle.dataset.author=value;toggle.setAttribute('aria-label',`Currently posting as By ${value==='2'?'M':'J'} — tap to switch`); }
   [['mood',moodAuthorToggle],['capsule',capsuleAuthorToggle],['bucket',bucketAuthorToggle]].forEach(([kind,toggle])=>{toggle.addEventListener('click',()=>{const current=kind==='mood'?moodAuthor:kind==='capsule'?capsuleAuthor:bucketAuthor;setExtraAuthor(kind,current==='1'?'2':'1');});setExtraAuthor(kind,kind==='mood'?moodAuthor:kind==='capsule'?capsuleAuthor:bucketAuthor);});
   function dateKey(d){return d.toISOString().slice(0,10);}
@@ -4105,11 +4382,14 @@ async function sha256Hex(text){
   async function loadMoods(){if(!supabase)return;try{const {data,error}=await supabase.from(MOODS_TABLE).select('*');if(error)throw error;allMoods=data||[];renderMoodCalendar();}catch(e){console.error(e);showToast('Could not load moods. Run the extras SQL setup first.',{type:'error'});}}
   async function saveCalendarMood(mood_date){
     if(!supabase)return;
+    const usedCustomMood = selectedCalendarMood && !CALENDAR_MOODS.includes(selectedCalendarMood);
     const existing=allMoods.find(x=>x.mood_date===mood_date&&String(x.author||1)===moodAuthor);
     if(existing&&existing.mood===selectedCalendarMood){
       const {error}=await supabase.from(MOODS_TABLE).delete().eq('mood_date',mood_date).eq('author',Number(moodAuthor));
       if(error){console.error('Could not unpin mood:',error);showToast('Could not unpin that mood.',{type:'error'});return;}
-      allMoods=allMoods.filter(x=>x!==existing);renderMoodCalendar();return;
+      allMoods=allMoods.filter(x=>x!==existing);renderMoodCalendar();
+      if(usedCustomMood)resetCalendarMoodPicker();
+      return;
     }
     const item={mood_date,mood:selectedCalendarMood,author:Number(moodAuthor)};
     const request=existing
@@ -4120,6 +4400,7 @@ async function sha256Hex(text){
     const i=allMoods.findIndex(x=>x.mood_date===mood_date&&String(x.author||1)===moodAuthor);
     if(i>-1)allMoods[i]={...allMoods[i],...item};else allMoods.push(item);
     renderMoodCalendar();
+    if(usedCustomMood)resetCalendarMoodPicker();
   }
   calendarPrev.addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()-1,1);renderMoodCalendar();});calendarNext.addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+1,1);renderMoodCalendar();});
   function renderCapsules(){capsuleList.innerHTML='';if(!allCapsules.length){capsuleList.innerHTML='<li class="capsule-item locked">No time capsules yet — seal the first one.</li>';return;}const today=dateKey(new Date());allCapsules.forEach(c=>{const unlocked=c.unlock_date<=today,li=document.createElement('li');li.className='capsule-item'+(unlocked?'':' locked');const by=`By ${String(c.author||1)==='2'?'M':'J'}`;li.innerHTML=`${unlocked?`${escapeHtml(c.message)}<span class="capsule-date">${by} · Opened ${new Date(c.unlock_date+'T00:00:00').toLocaleDateString()}</span>`:`🔒 ${by}'s capsule · sealed until ${new Date(c.unlock_date+'T00:00:00').toLocaleDateString()}`}<button class="capsule-remove" type="button" aria-label="Delete this time capsule" title="Delete capsule">✕</button>`;li.querySelector('.capsule-remove').addEventListener('click',async()=>{if(!confirm('Delete this time capsule? This cannot be undone.'))return;const {error}=await supabase.from(CAPSULES_TABLE).delete().eq('id',c.id);if(error){console.error(error);showToast('Could not delete that capsule.',{type:'error'});return;}allCapsules=allCapsules.filter(item=>item.id!==c.id);renderCapsules();showToast('Time capsule deleted.');});capsuleList.appendChild(li);});}
@@ -6032,6 +6313,7 @@ async function sha256Hex(text){
           <button class="flip-back-btn" type="button" aria-label="Flip back to photo">‹ back to photo</button>
           <div class="mood-picker">
             ${MOODS.map(m => `<button type="button" data-mood="${m}" class="${photo.mood === m ? 'active' : ''}" aria-label="Tag mood ${m}">${m}</button>`).join('')}
+            ${customEmojiPickerHtml(photo.mood, MOODS)}
           </div>
           <div class="back-footer">
             <span>${photo.date}</span>
@@ -6155,27 +6437,47 @@ async function sha256Hex(text){
       if (showFavoritesOnly) render();
     });
 
+    async function applyPhotoMood(m){
+      photo.mood = (photo.mood === m) ? null : m;
+      moodBtns.forEach(b => b.classList.toggle('active', b.dataset.mood === photo.mood));
+      refreshCustomEmojiVisual(wrap.querySelector('.mood-picker'), MOODS, photo.mood);
+      const frame = wrap.querySelector('.photo-frame');
+      let badge = frame.querySelector('.mood-badge');
+      if (photo.mood){
+        if (!badge){
+          badge = document.createElement('span');
+          badge.className = 'mood-badge';
+          frame.appendChild(badge);
+        }
+        badge.textContent = photo.mood;
+      }else if (badge){
+        badge.remove();
+      }
+      await savePhotoMood(photo);
+    }
     moodBtns.forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        const m = btn.dataset.mood;
-        photo.mood = (photo.mood === m) ? null : m;
-        moodBtns.forEach(b => b.classList.toggle('active', b.dataset.mood === photo.mood));
-        const frame = wrap.querySelector('.photo-frame');
-        let badge = frame.querySelector('.mood-badge');
-        if (photo.mood){
-          if (!badge){
-            badge = document.createElement('span');
-            badge.className = 'mood-badge';
-            frame.appendChild(badge);
-          }
-          badge.textContent = photo.mood;
-        }else if (badge){
-          badge.remove();
-        }
-        await savePhotoMood(photo);
+        await applyPhotoMood(btn.dataset.mood);
       });
     });
+    const photoCustomEmojiInput = wrap.querySelector('.mood-picker .reaction-plus-input');
+    const photoCustomEmojiBtn = wrap.querySelector('.mood-picker .reaction-plus-btn');
+    if (photoCustomEmojiInput){
+      photoCustomEmojiInput.addEventListener('click', e => e.stopPropagation());
+      photoCustomEmojiInput.addEventListener('input', async () => {
+        const val = photoCustomEmojiInput.value.trim();
+        photoCustomEmojiInput.value = '';
+        photoCustomEmojiInput.blur();
+        if (val) await applyPhotoMood(val);
+      });
+    }
+    if (photoCustomEmojiBtn){
+      photoCustomEmojiBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (photo.mood) await applyPhotoMood(photo.mood);
+      });
+    }
 
     if (expandBtn){
       expandBtn.addEventListener('click', (e) => {
