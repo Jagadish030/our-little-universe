@@ -159,10 +159,12 @@
     transform: translateY(0) scale(1);
     pointer-events: auto;
   }
-  .back-to-top:hover {
-    background: var(--rose-deep);
-    color: var(--white);
-    transform: translateY(-2px) scale(1.05);
+  @media (hover: hover) and (pointer: fine) {
+    .back-to-top:hover {
+      background: var(--rose-deep);
+      color: var(--white);
+      transform: translateY(-2px) scale(1.05);
+    }
   }
 
   /* ─── Doodle canvas overlay (double tap to draw) ─── */
@@ -6217,6 +6219,31 @@ async function sha256Hex(text){
     });
   })();
 
+  // Add, remove, or rewrite any of these — one is shown at random each time
+  // the envelope is opened or the site is shaken.
+  const COMPLIMENT_LINES = [
+    "You make ordinary days feel like they're worth remembering.",
+    "I still get a little excited every time I see your name pop up.",
+    "You have the kind of laugh that makes a room feel warmer.",
+    "Somehow you make even chaos feel manageable.",
+    "You're the softest place I know how to land.",
+    "I like you more today than I did yesterday, and that's saying something.",
+    "You listen in a way that makes people feel important.",
+    "Your terrible jokes are somehow one of my favorite things about you.",
+    "You make it very easy to be a better person.",
+    "I'm convinced you don't know how rare you are.",
+    "You have impeccable taste — in snacks, in music, in me, apparently.",
+    "Being around you feels like exhaling after holding your breath.",
+    "You remember the small things, and that means more than you know.",
+    "You're the reason I check my phone more than I should.",
+    "You make being loved look effortless.",
+    "There's a version of every day that's better just because you're in it.",
+    "You have a talent for making people feel completely at ease.",
+    "I don't think you realize how much your presence changes a room.",
+    "You're proof that some people really are just good at heart.",
+    "If I had to pick you again, I'd pick you every single time."
+  ];
+
   (function setupShakeToShuffle(){
     let lastX=null, lastY=null, lastZ=null, lastShakeTime=0;
     const SHAKE_THRESHOLD = 18; // Increased from 10 to prevent accidental triggers
@@ -6290,9 +6317,7 @@ async function sha256Hex(text){
       void envelopeBtn.offsetWidth;
       envelopeBtn.classList.add('shaking');
       openEnvelope();
-      envelopeBtn.classList.add('used');
-      setTimeout(() => { envelopeBtn.style.display = 'none'; }, 400);
-    }, { once: true });
+    });
     envelopeNoteClose.addEventListener('click', closeEnvelope);
     document.addEventListener('click', (e) => {
       if (envelopeOpen && !envelopeNote.contains(e.target) && !envelopeBtn.contains(e.target)) closeEnvelope();
