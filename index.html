@@ -1113,6 +1113,7 @@
   .doodles-controls{ margin-bottom:1.4rem; }
   .doodle-wrap{ width:184px; position:relative; perspective:1000px; transform:none; content-visibility:auto; contain-intrinsic-size:184px 250px; }
   .doodle-wrap-enter{ animation:doodleEnter .55s cubic-bezier(.2,.8,.2,1); }
+
   @keyframes doodleEnter{ from{ opacity:0; transform:translateX(30px) scale(.9); } to{ opacity:1; transform:translateX(0) scale(1); } }
   .doodle-flip{ position:relative; min-height:230px; cursor:pointer; transform-style:preserve-3d; transition:transform .5s cubic-bezier(.2,.8,.2,1); }
   .doodle-flip.flipped{ transform:rotateY(180deg); }
@@ -1184,13 +1185,14 @@
   .special-day-item .sd-info{ flex:1; min-width:0; }
   .special-day-item .sd-title{ font:700 1rem 'Quicksand',sans-serif; margin:0 0 .15rem; }
   .special-day-item .sd-blurb{ font:500 .78rem/1.4 'Quicksand',sans-serif; color:var(--ink-soft); margin:0; }
-  .special-day-item .sd-open{ border:1.5px solid var(--rose-deep); background:transparent; color:var(--rose-deep); font:700 .78rem 'Quicksand',sans-serif; padding:.5rem .9rem; border-radius:999px; cursor:pointer; white-space:nowrap; text-decoration:none; flex-shrink:0; }
-  .special-day-item .sd-open:hover{ background:var(--rose-deep); color:#fff; }
+  .special-day-item .sd-open{ border:1.5px solid var(--rose-deep); background:var(--rose-deep); color:#fff; font:700 .78rem 'Quicksand',sans-serif; padding:.5rem .9rem; border-radius:999px; cursor:pointer; white-space:nowrap; text-decoration:none; flex-shrink:0; box-shadow:0 2px 6px rgba(217,138,147,.45); transition:transform .15s ease, box-shadow .15s ease; }
+  .special-day-item .sd-open:hover{ transform:translateY(-1px); box-shadow:0 4px 10px rgba(217,138,147,.55); }
   .special-day-item.locked{ opacity:.7; }
-  .special-day-item.locked .sd-open{ border-color:var(--ink-soft); color:var(--ink-soft); pointer-events:none; }
+  .special-day-item.locked .sd-open{ border-color:var(--ink-soft); background:transparent; color:var(--ink-soft); box-shadow:none; pointer-events:none; }
   body.dark-mode .special-day-item{ background:#d2cdc3; color:#302735; }
   body.dark-mode .special-day-item .sd-blurb{ color:#6f4e60; }
-  body.dark-mode .special-day-item.locked .sd-open{ border-color:#6f4e60; color:#6f4e60; }
+  body.dark-mode .special-day-item .sd-open{ background:var(--rose-deep); border-color:var(--rose-deep); color:#fff; }
+  body.dark-mode .special-day-item.locked .sd-open{ border-color:#6f4e60; background:transparent; color:#6f4e60; }
   .capsule-item,.bucket-item{ padding:.7rem .8rem; border-radius:10px; background:rgba(255,249,232,.72); color:var(--ink); box-shadow:0 2px 5px rgba(64,40,25,.08); }
   .capsule-item{ position:relative; padding-right:2.5rem; }
   .capsule-remove{ position:absolute; top:.42rem; right:.45rem; width:24px; height:24px; border:0; border-radius:50%; background:rgba(107,83,68,.1); color:var(--ink-soft); cursor:pointer; font:700 1rem/1 Arial,sans-serif; }
@@ -1285,7 +1287,7 @@
   .doodle-mode-view.hidden{ display:none; }
   .duet-hint{ font:600 .82rem/1.4 'Quicksand',sans-serif; color:var(--ink-soft); text-align:center; margin:0 0 .8rem; }
   .duet-hint.live{ color:var(--sage); }
-  .doodles-grid-label{ text-align:center; font:700 .85rem 'Quicksand',sans-serif; color:var(--ink-soft); letter-spacing:.03em; text-transform:uppercase; margin:.6rem 0 -.2rem; }
+  .doodles-grid-label{ text-align:center; font:700 .85rem 'Quicksand',sans-serif; color:var(--ink-soft); letter-spacing:.03em; text-transform:uppercase; margin:1.2rem 0 1rem; }
   #doodlesGalleryArea.hidden{ display:none; }
   .game-view-header{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.7rem; }
   .game-view-header .author-toggle-row{ flex:0 0 auto; }
@@ -2410,9 +2412,6 @@
   </form>
   </div>
 
-  </form>
-</div>
-
 <div id="siteContent" class="hidden">
 
 <div class="ambient" id="ambient" aria-hidden="true"></div>
@@ -2632,7 +2631,6 @@
     <div class="doodles-grid" id="doodlesGrid"></div>
   </div>
 </section>
-
 <section class="extras-wall hidden" id="moodsWall"><div class="notes-header"><h2>Mood Calendar</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Choose who is pinning, choose a mood, then tap a day. Tap your own pinned mood again to unpin it.</p><div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="moodAuthorToggle" aria-label="Choose mood author"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div><div class="mood-picker-row" id="calendarMoodPicker"></div><div class="calendar-nav"><button id="calendarPrev" type="button" aria-label="Previous month">‹</button><div class="calendar-title" id="calendarTitle"></div><button id="calendarNext" type="button" aria-label="Next month">›</button></div><div class="mood-calendar" id="moodCalendar"></div></div></section>
 <section class="extras-wall hidden" id="capsulesWall"><div class="notes-header"><h2>Time Capsules</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Leave something sweet for future you.</p><form class="extras-form" id="capsuleForm"><div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="capsuleAuthorToggle" aria-label="Choose capsule author"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div><div class="date-field"><label class="capsule-date-label" for="capsuleDate">Unlock date (DD-MM-YYYY)</label><div class="date-input-wrap"><input id="capsuleDate" type="date" required><span class="date-display" id="capsuleDateDisplay">dd - mm - yyyy</span></div></div><textarea id="capsuleMessage" maxlength="500" placeholder="A message for the future..." required></textarea><button type="submit">Seal capsule</button></form><ul class="capsule-list" id="capsuleList"></ul></div></section>
 <section class="extras-wall hidden" id="bucketWall"><div class="notes-header"><h2>Our Bucket List</h2><button class="notes-close-btn extras-close" type="button">✕</button></div><div class="extras-card"><p>Little dreams, big adventures, all in one place.</p><form class="bucket-add" id="bucketForm"><div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="bucketAuthorToggle" aria-label="Choose bucket list author"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div><input id="bucketInput" maxlength="180" placeholder="Add something to do together..." required><button type="submit">Add wish</button></form><ul class="bucket-list" id="bucketList"></ul></div></section>
