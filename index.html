@@ -16,6 +16,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
+  /* ─── root variables ─── */
   :root{
     --paper: #FBF3EA;
     --paper-deep: #F4E9DC;
@@ -30,6 +31,14 @@
     --glass-bg: rgba(255,253,249,0.6);
     --glass-bg-strong: rgba(255,253,249,0.72);
     --glass-border: rgba(255,255,255,0.55);
+    --card-border: rgba(107,83,68,0.15);
+    --card-shadow: 0 10px 20px rgba(107,83,68,0.15);
+    --skeleton-shine: linear-gradient(
+      90deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.4) 50%,
+      rgba(255,255,255,0) 100%
+    );
   }
 
   body.dark-mode{
@@ -46,7 +55,265 @@
     --glass-bg: rgba(48,39,57,0.55);
     --glass-bg-strong: rgba(48,39,57,0.7);
     --glass-border: rgba(255,255,255,0.14);
+    --card-border: rgba(255,255,255,0.08);
+    --card-shadow: 0 10px 20px rgba(0,0,0,0.45);
+    --skeleton-shine: linear-gradient(
+      90deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.08) 50%,
+      rgba(255,255,255,0) 100%
+    );
   }
+
+  /* ─── Skeleton loading ─── */
+  .skeleton {
+    background: var(--paper-deep);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    min-height: 140px;
+  }
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--skeleton-shine);
+    animation: skeletonShimmer 1.4s ease-in-out infinite;
+    background-size: 200% 100%;
+  }
+  @keyframes skeletonShimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .skeleton-text {
+    height: 16px;
+    border-radius: 4px;
+    background: var(--paper-deep);
+    margin-top: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  .skeleton-text::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--skeleton-shine);
+    animation: skeletonShimmer 1.4s ease-in-out infinite;
+    background-size: 200% 100%;
+  }
+  .skeleton-note { width: 170px; min-height: 160px; }
+  .skeleton-doodle { width: 184px; min-height: 230px; }
+  .skeleton-polaroid { width: 190px; min-height: 260px; }
+
+  /* ─── Image fade-in ─── */
+  .photo-frame img {
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+  .photo-frame img.loaded { opacity: 1; }
+
+  /* ─── Back to top button ─── */
+  .back-to-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 100;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg-strong);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--rose-deep);
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 16px var(--shadow);
+    opacity: 0;
+    transform: translateY(16px) scale(0.9);
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease, background 0.15s ease;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .back-to-top.pressed {
+    transform: scale(0.88) !important;
+    box-shadow: 0 2px 8px var(--shadow) !important;
+    background: var(--rose-deep);
+    color: var(--white);
+    transition-duration: 0.05s;
+  }
+  .back-to-top.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+  .back-to-top:hover {
+    background: var(--rose-deep);
+    color: var(--white);
+    transform: translateY(-2px) scale(1.05);
+  }
+
+  /* ─── Doodle canvas overlay (double tap to draw) ─── */
+  .doodle-canvas-wrap {
+    position: relative;
+  }
+  .doodle-canvas-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,253,249,0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: opacity 0.4s ease, transform 0.3s ease;
+    color: var(--ink-soft);
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    gap: 8px;
+    text-align: center;
+    padding: 1rem;
+  }
+  .doodle-canvas-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.96);
+  }
+  .doodle-canvas-overlay .overlay-icon {
+    font-size: 2.4rem;
+  }
+  .doodle-canvas-overlay .overlay-text {
+    font-size: 0.85rem;
+    opacity: 0.7;
+  }
+  body.dark-mode .doodle-canvas-overlay {
+    background: rgba(48,39,57,0.7);
+    color: #e0d4de;
+  }
+
+  /* ─── Heart bloom effect ─── */
+  .heart-bloom {
+    position: fixed;
+    z-index: 600;
+    pointer-events: none;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(217,138,147,0.6) 0%, rgba(217,138,147,0.2) 50%, rgba(217,138,147,0) 70%);
+    transform: translate(-50%, -50%) scale(0);
+    animation: heartBloom 0.9s ease-out forwards;
+  }
+  .heart-bloom-speck {
+    position: fixed;
+    z-index: 600;
+    pointer-events: none;
+    font-size: 0.6rem;
+    color: var(--rose-deep);
+    transform: translate(-50%, -50%) scale(0);
+    animation: heartSpeck 1s ease-out forwards;
+  }
+  @keyframes heartBloom {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0.9; }
+    30% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+    100% { transform: translate(-50%, -50%) scale(2.8); opacity: 0; }
+  }
+  @keyframes heartSpeck {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+    25% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px))) scale(0.6); opacity: 0; }
+  }
+
+  /* ─── Bigger tap targets ─── */
+  .mood-picker button,
+  .note-reaction-picker button,
+  .doodle-reaction-picker button,
+  .reaction-plus-btn,
+  .note-fav,
+  .doodle-fav,
+  .fav-heart,
+  .mood-badge {
+    position: relative;
+  }
+  .mood-picker button::after,
+  .note-reaction-picker button::after,
+  .doodle-reaction-picker button::after,
+  .reaction-plus-btn::after,
+  .note-fav::after,
+  .doodle-fav::after,
+  .fav-heart::after {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    right: -6px;
+    bottom: -6px;
+    border-radius: 50%;
+  }
+  .reaction-plus-wrap {
+    --plus-size: 34px;
+  }
+  .reaction-plus-wrap .reaction-plus-btn {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .reaction-plus-input {
+    width: 100%;
+    height: 100%;
+    font-size: 16px;
+  }
+  .note-reaction-picker .reaction-plus-wrap { --plus-size: 30px; }
+  .doodle-reaction-picker .reaction-plus-wrap { --plus-size: 30px; }
+  .calendar-day {
+    min-height: 52px;
+    padding: 2px;
+    cursor: pointer;
+  }
+  .ttt-cell,
+  .c4-cell {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* ─── Card borders (light mode fix) ─── */
+  .face {
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
+  }
+  .note-face {
+    border: 1px solid var(--card-border);
+    box-shadow: 0 3px 8px var(--shadow);
+  }
+  .doodle-face {
+    border: 1px solid var(--card-border);
+    box-shadow: 0 5px 12px var(--shadow);
+  }
+  .extras-card {
+    border: 1px solid var(--card-border);
+    box-shadow: 0 10px 28px var(--shadow);
+  }
+  .game-choice-btn {
+    border: 1px solid var(--card-border);
+  }
+
+  /* ─── Rest of existing styles ─── */
   body.dark-mode .ambient span{ opacity: 0.22; }
   body.dark-mode .setup-banner{ background: #4A3F2E; color: var(--ink); }
   body.dark-mode .note-front{ background: #3A3044; }
@@ -71,7 +338,6 @@
 
   *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-  /* ---------- love envelope ---------- */
   .love-envelope{ position:fixed; top:45%; right:-22px; z-index:55; width:56px; height:56px; border-radius:50%; border:2px solid rgba(255,255,255,.6); background:linear-gradient(135deg,var(--rose),var(--gold)); box-shadow:0 3px 6px rgba(0,0,0,.3), 0 10px 22px rgba(0,0,0,.28); display:flex; align-items:center; justify-content:center; font-size:1.4rem; cursor:pointer; padding:0; overflow:hidden; transition:right .3s cubic-bezier(.3,.8,.3,1), opacity .35s ease, transform .35s ease; }
   .love-envelope::after{ content:''; position:absolute; top:-60%; left:-70%; width:55%; height:220%; background:linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.65) 50%, rgba(255,255,255,0) 70%); transform:rotate(20deg); pointer-events:none; }
   .love-envelope:hover{ right:-6px; }
@@ -89,7 +355,6 @@
   body.dark-mode .envelope-note::before{ background:linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,0)); }
   body.dark-mode .envelope-note p{ color:#f6eaf3; }
 
-  /* ---------- shake compliment (mobile) ---------- */
   .shake-compliment-modal{ position:fixed; inset:0; z-index:70; display:flex; align-items:center; justify-content:center; padding:1.4rem; background:rgba(20,14,18,.4); backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px); }
   .shake-compliment-modal.hidden{ display:none; }
   .shake-compliment-card{ position:relative; width:min(360px,88vw); background:var(--white); border:1px solid rgba(255,255,255,.6); border-radius:20px; padding:2.1rem 1.7rem; box-shadow:0 4px 14px rgba(0,0,0,.22),0 26px 50px rgba(0,0,0,.3); overflow:hidden; animation:shakeComplimentIn .5s cubic-bezier(.25,.85,.35,1.15); text-align:center; }
@@ -119,7 +384,6 @@
     min-height: 100vh;
   }
 
-  /* ---------- password gate ---------- */
   .pass-gate{
     position: fixed;
     top: 0;
@@ -300,7 +564,6 @@
   @media (prefers-reduced-motion:reduce){ .vault-message,.pass-card.shake,.pass-card.unlocked .vault-lock-heart::before,.pass-card.unlocked .vault-lock-heart,.pass-card.unlocked .vault-lock::after,.vault-lock-heart,.vault-lock-key,.vault-celebration span,.pass-card::after,.pass-card::before,.pass-card button::after,.pass-gate-sparkle,.lock-ripple,.energy-spark,.corner-thread path,.candle-flame{ animation:none; } .lock-ripple,.energy-spark{ display:none; } .pass-card,.pass-card.unlocked{ animation:none; } .pass-gate{ transition:none; } }
   #siteContent.hidden{ display: none; }
 
-  /* ---------- ambient floating hearts ---------- */
   .ambient{
     position: fixed;
     inset: 0;
@@ -332,7 +595,6 @@
     100%{ transform: translateY(-115vh) translateX(20px) rotate(25deg); opacity: 0; }
   }
 
-  /* ---------- burst hearts (on pin) ---------- */
   .burst-heart{
     position: fixed;
     z-index: 500;
@@ -399,7 +661,6 @@
     100%{ transform: translate(calc(-50% + var(--cdx,0px)), calc(-50% - 34px)) scale(1); opacity: 0; }
   }
 
-  /* ---------- hero ---------- */
   .hero{
     position: relative;
     z-index: 1;
@@ -498,7 +759,6 @@
     color: var(--white);
   }
 
-  /* ---------- editable title ---------- */
   .title-block{
     position: relative;
     display: inline-block;
@@ -549,7 +809,6 @@
   .save-title-btn{ background: var(--rose-deep); color: var(--white); }
   .cancel-title-btn{ background: var(--paper-deep); color: var(--ink); }
 
-  /* ---------- search / sort row ---------- */
   .secondary-row{
     width: min(100%, 1080px);
     margin: 0.8rem auto 0;
@@ -557,9 +816,6 @@
     align-items: center;
     transition: margin-bottom .22s ease;
   }
-  /* Keep an open menu clear of the memories below instead of layering over them.
-     (feature-menu's spacing is set dynamically in JS from the popover's real
-     height, so it never falls out of sync again as items are added/removed.) */
   .secondary-row:has(.photo-sort-menu.open){ margin-bottom: 172px; }
   .search-input, .sort-select{
     font-family: 'Quicksand', sans-serif;
@@ -583,8 +839,6 @@
   .search-input{ width: 200px; max-width: 60vw; }
   .search-input:focus, .sort-select:focus{ border-color: var(--rose-deep); }
 
-  /* The photo sorter deliberately matches the Little things menu. Notes and
-     Doodles retain their simple native selects. */
   .photo-sort-menu{ position:relative; z-index:30; flex:0 0 auto; }
   .photo-sort-trigger{
     min-width: 158px;
@@ -641,8 +895,6 @@
     .secondary-row{ gap:.55rem; }
     .secondary-row .search-input{ width:min(260px, 100%); }
     .secondary-row > *{ max-width:100%; }
-    /* Centering a wide popover on a small trigger can push it beyond the
-       viewport. On phones, line the menu up with the trigger instead. */
     .feature-menu-popover,
     .photo-sort-popover{
       left:0;
@@ -654,7 +906,6 @@
     }
   }
 
-  /* ---------- love notes wall ---------- */
   .notes-wall{
     max-width: 700px;
     margin: 0 auto 3rem;
@@ -787,7 +1038,6 @@
     height: 32px;
   }
 
-  /* ---------- recording countdown ---------- */
   .countdown-overlay{
     position: fixed;
     inset: 0;
@@ -832,7 +1082,6 @@
     .countdown-pulse{ animation: none; opacity: 1; }
   }
 
-  /* ---------- note author picker ---------- */
   .note-author-toggle{
     display: block;
     margin: 0 auto;
@@ -952,7 +1201,6 @@
   }
   .note-flip.flipped{ transform: rotateY(180deg); }
 
-  /* Same hidden-face tap fix as the polaroid cards. */
   .note-front{ pointer-events: auto; }
   .note-back{ pointer-events: none; }
   .note-flip.flipped .note-front{ pointer-events: none; }
@@ -1078,7 +1326,6 @@
   }
   .note-flip-back-btn:hover{ opacity: 1; color: var(--rose-deep); }
 
-  /* ---------- doodles wall ---------- */
   .doodles-wall{ max-width: 760px; margin: 0 auto 3rem; padding: 0 1.5rem; position: relative; z-index: 1; }
   .doodles-wall.hidden{ display:none; }
   .doodle-studio{ max-width: 520px; margin:0 auto 1.5rem; padding:1rem; border-radius:16px; background:var(--glass-bg-strong); border:1px solid var(--glass-border); box-shadow:0 10px 28px var(--shadow); }
@@ -1086,7 +1333,7 @@
   .doodle-author-toggle .toggle-glow{ width:66px; }
   .doodle-author-toggle[data-author="2"] .toggle-glow{ transform:translateX(66px); }
   .doodle-author-toggle .toggle-letter{ font-size:.78rem; }
-  .doodle-canvas-wrap{ margin:.7rem 0; border:1px solid #E3D3C2; border-radius:10px; overflow:hidden; background:#FFFDF7; aspect-ratio: 4 / 3; }
+  .doodle-canvas-wrap{ margin:.7rem 0; border:1px solid #E3D3C2; border-radius:10px; overflow:hidden; background:#FFFDF7; aspect-ratio: 4 / 3; position:relative; }
   #doodleCanvas, #duetDoodleCanvas{ display:block; width:100%; height:100%; touch-action:none; cursor:crosshair; }
   .doodle-toolbar,.doodle-tools,.doodle-size-row,.doodle-submit-row{ display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:.45rem; }
   .doodle-toolbar{ margin-bottom:.5rem; }
@@ -1139,20 +1386,14 @@
   .doodle-back-actions{ display:flex; justify-content:space-between; align-items:center; }
   @media (max-width:480px){ .doodles-wall{ padding:0 1rem; } .doodle-studio{ padding:.75rem; } .doodle-tools button{ padding:.32rem .5rem; } .doodles-grid{ display:flex; flex-wrap:wrap; justify-content:center; gap:.7rem; } .doodle-wrap{ width:calc(50% - .35rem); min-width:0; contain-intrinsic-size:0 250px; } .doodle-flip,.doodle-front{ min-height:0; } .doodle-front{ padding:6px 6px 24px; } .doodle-caption-preview{ margin-top:5px; font-size:.75rem; } .doodle-author-badge{ left:6px; bottom:6px; font-size:.55rem; } .doodle-date{ right:6px; bottom:7px; font-size:.52rem; } .doodle-fav,.doodle-remove{ top:4px; font-size:.75rem; } .doodle-fav{left:4px}.doodle-remove{right:4px}.doodle-reaction-badge{ top:4px; font-size:.95rem; } .doodle-back{ padding:.65rem; } .doodle-caption-edit{ font-size:1rem; min-height:34px; max-height:48px; } .doodle-reply-input{ min-height:56px; font-size:.9rem; } .doodle-reaction-picker{ gap:4px; } .doodle-reaction-picker button{ font-size:.85rem; } }
 
-  /* ---------- little universe extras ---------- */
   .extras-wall{ max-width:720px; margin:0 auto 3rem; padding:0 1.5rem; position:relative; z-index:1; }
   .extras-wall.hidden{ display:none; }
   .extras-card{ max-width:540px; margin:0 auto; padding:1rem; border:1px solid var(--glass-border); border-radius:16px; background:var(--glass-bg-strong); box-shadow:0 10px 28px var(--shadow); }
   .extras-card p{ text-align:center; color:var(--ink-soft); font-size:.8rem; margin:.1rem 0 .8rem; }
   .mood-picker-row,.extras-form,.bucket-add{ display:flex; flex-wrap:wrap; gap:.5rem; justify-content:center; align-items:center; }
-  /* "+" button that opens the device's own emoji keyboard, so any emoji can
-     be picked as a reaction instead of only the fixed set above it. */
   .reaction-plus-wrap{ position:relative; display:inline-flex; align-items:center; justify-content:center; width:var(--plus-size,28px); height:var(--plus-size,28px); flex-shrink:0; }
   .reaction-plus-btn{ width:100%; height:100%; border-radius:50%; border:1px dashed var(--ink-soft); background:rgba(255,255,255,.5); color:var(--ink-soft); font-size:.85rem; line-height:1; display:flex; align-items:center; justify-content:center; pointer-events:none; }
   .reaction-plus-input{ position:absolute; inset:0; opacity:0; border:0; padding:0; margin:0; cursor:pointer; font-size:16px; background:transparent; }
-  /* While a custom emoji is showing, the button itself (not the hidden input)
-     becomes the click target, so tapping it again removes the reaction
-     instead of re-opening the emoji keyboard. */
   .reaction-plus-wrap.active .reaction-plus-input{ pointer-events:none; }
   .reaction-plus-wrap.active .reaction-plus-btn{ pointer-events:auto; cursor:pointer; border-style:solid; border-color:var(--rose-deep); background:#FCE5E9; color:var(--ink); font-size:.9rem; }
   body.dark-mode .reaction-plus-btn{ border-color:#a1909c; background:rgba(255,255,255,.08); color:#d8c9d4; }
@@ -1172,9 +1413,9 @@
   .calendar-title{ text-align:center; font:1.5rem 'Caveat',cursive; color:var(--ink); margin:0; min-width:140px; }
   .mood-calendar{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
   .calendar-weekday{ text-align:center; color:var(--ink-soft); font:700 .6rem 'Quicksand',sans-serif; padding:.2rem; }
-  .calendar-day{ min-height:46px; border:1px solid rgba(138,101,78,.18); border-radius:8px; background:rgba(255,255,255,.5); color:var(--ink); cursor:pointer; font:700 .68rem 'Quicksand',sans-serif; position:relative; }
+  .calendar-day{ min-height:52px; border:1px solid rgba(138,101,78,.18); border-radius:8px; background:rgba(255,255,255,.5); color:var(--ink); cursor:pointer; font:700 .68rem 'Quicksand',sans-serif; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2px; }
   .calendar-day:hover{ border-color:var(--rose-deep); }.calendar-day.empty{ visibility:hidden; }.calendar-day.today{ box-shadow:inset 0 0 0 1px var(--rose-deep); }
-  .calendar-day .day-moods{ display:flex; justify-content:center; gap:2px; margin-top:2px; }.calendar-day .day-mood{ font-size:.9rem; }.day-mood.author-1{ filter:drop-shadow(0 0 2px var(--rose-deep)); }.day-mood.author-2{ filter:drop-shadow(0 0 2px var(--sage)); }
+  .calendar-day .day-moods{ display:flex; justify-content:center; gap:2px; margin-top:2px; flex-wrap:wrap; }.calendar-day .day-mood{ font-size:.9rem; }.day-mood.author-1{ filter:drop-shadow(0 0 2px var(--rose-deep)); }.day-mood.author-2{ filter:drop-shadow(0 0 2px var(--sage)); }
   .extras-form input,.extras-form textarea,.bucket-add input{ box-sizing:border-box; border:1px solid #E3D3C2; border-radius:10px; padding:.55rem .7rem; background:rgba(255,255,255,.75); color:var(--ink); font:inherit; color-scheme:light; }
   .extras-form textarea{ width:100%; height:86px; resize:none; font-family:'Caveat',cursive; font-size:1.1rem; }.extras-form input{ flex:1; min-width:150px; }
   .extras-form button,.bucket-add button{ border:0; border-radius:999px; padding:.55rem 1rem; background:var(--rose-deep); color:white; cursor:pointer; font:600 .78rem 'Quicksand',sans-serif; }
@@ -1228,7 +1469,6 @@
   body.dark-mode .notes-close-btn{ background:#e3dce3; color:#241d28; border:1px solid #f7eaf5; box-shadow:0 2px 8px rgba(0,0,0,.35); font-weight:800; } body.dark-mode .notes-close-btn:hover{ background:#d9758b; color:white; }
   body.dark-mode .extra-author .toggle-letter{ color:#eaddea; opacity:.7; } body.dark-mode .bucket-item small{ color:#6f4e60; font-weight:800; }
 
-  /* ---------- break glass ---------- */
   .break-glass-btn{ background:rgba(217,138,147,.12); }
   .glass-modal{ position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; padding:1.2rem; background:rgba(20,14,18,.6); backdrop-filter:blur(4px); }
   .glass-modal.hidden{ display:none; }
@@ -1274,10 +1514,9 @@
   body.dark-mode .glass-hint{ color:#cfd7dd; }
   body.dark-mode .glass-edit-form textarea{ color:#302735; background:#dedbe0; }
 
-  /* ---------- mini games ---------- */
   .game-hub p{ margin-bottom:.4rem; }
   .game-choice-row{ display:flex; gap:.8rem; justify-content:center; flex-wrap:wrap; margin-top:.7rem; }
-  .game-choice-btn{ display:flex; flex-direction:column; align-items:center; gap:.25rem; width:150px; padding:1.1rem .8rem; border:1px solid var(--glass-border); border-radius:14px; background:rgba(255,255,255,.6); cursor:pointer; font-size:2rem; color:var(--ink); transition:transform .18s ease,border-color .18s ease; }
+  .game-choice-btn{ display:flex; flex-direction:column; align-items:center; gap:.25rem; width:150px; padding:1.1rem .8rem; border:1px solid var(--card-border); border-radius:14px; background:rgba(255,255,255,.6); cursor:pointer; font-size:2rem; color:var(--ink); transition:transform .18s ease,border-color .18s ease; }
   .game-choice-btn span{ font:700 .85rem 'Quicksand',sans-serif; }
   .game-choice-btn small{ font:600 .68rem 'Quicksand',sans-serif; color:var(--ink-soft); }
   .game-choice-btn:hover{ border-color:var(--rose-deep); transform:translateY(-2px); }
@@ -1305,7 +1544,7 @@
   .memory-leaderboard b{ color:var(--ink); }
   .ttt-status{ text-align:center; font:700 .85rem 'Quicksand',sans-serif; color:var(--ink); margin:0 0 .8rem; }
   .ttt-board{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; width:min(260px,80vw); margin:0 auto .9rem; }
-  .ttt-cell{ aspect-ratio:1; border:1px solid rgba(138,101,78,.25); border-radius:10px; background:rgba(255,255,255,.65); font-size:2rem; font-weight:800; cursor:pointer; color:var(--rose-deep); display:flex; align-items:center; justify-content:center; }
+  .ttt-cell{ aspect-ratio:1; min-height:48px; min-width:48px; border:1px solid rgba(138,101,78,.25); border-radius:10px; background:rgba(255,255,255,.65); font-size:2rem; font-weight:800; cursor:pointer; color:var(--rose-deep); display:flex; align-items:center; justify-content:center; }
   .ttt-cell[data-v="2"]{ color:var(--sage); }
   .ttt-cell:disabled{ cursor:default; }
   .ttt-board + .author-toggle-row{ margin-bottom:.7rem; }
@@ -1314,9 +1553,8 @@
   body.dark-mode .ttt-cell{ background:rgba(255,255,255,.08); }
   body.dark-mode .memory-leaderboard{ color:#c6b4c2; } body.dark-mode .memory-leaderboard b{ color:#f6eaf3; }
 
-  /* ---------- connect 4 ---------- */
   .c4-board{ display:grid; grid-template-columns:repeat(7,1fr); gap:5px; width:min(320px,88vw); margin:0 auto .9rem; padding:.5rem; border-radius:12px; background:linear-gradient(135deg,#5b8fc7,#3f6fa8); box-shadow:inset 0 2px 8px rgba(0,0,0,.25); }
-  .c4-cell{ aspect-ratio:1; border:0; border-radius:50%; background:rgba(255,255,255,.85); cursor:pointer; padding:0; position:relative; }
+  .c4-cell{ aspect-ratio:1; min-height:44px; min-width:44px; border:0; border-radius:50%; background:rgba(255,255,255,.85); cursor:pointer; padding:0; position:relative; }
   .c4-cell:disabled{ cursor:default; }
   .c4-cell[data-v="1"]{ background:var(--rose-deep); }
   .c4-cell[data-v="2"]{ background:var(--gold); }
@@ -1325,7 +1563,6 @@
   body.dark-mode .c4-cell:not([data-v="1"]):not([data-v="2"]){ background:rgba(255,255,255,.14); }
 
 
-  /* ---------- truth or dare jar ---------- */
   .td-jar{ text-align:center; padding:1.6rem 1rem; cursor:pointer; }
   .td-jar span{ font-size:3.4rem; display:inline-block; transition:transform .2s ease; }
   .td-jar:hover span{ transform:scale(1.08) rotate(-4deg); }
@@ -1339,7 +1576,6 @@
   .td-card p{ font:1.2rem/1.4 'Caveat',cursive; color:var(--ink); margin:0; }
   body.dark-mode .td-card{ background:rgba(255,255,255,.08); }
 
-  /* ---------- memory match size picker ---------- */
   .memory-size-picker.hidden{ display:none; }
   .memory-size-picker p{ text-align:center; margin:0 0 .8rem; }
   .memory-size-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:.6rem; }
@@ -1350,7 +1586,6 @@
   .memory-play-area.hidden{ display:none; }
   body.dark-mode .memory-size-btn{ background:rgba(255,255,255,.08); color:#f6eaf3; }
 
-  /* ---------- odd one out (color game) ---------- */
   .oc-hint{ text-align:center; font:600 .78rem 'Quicksand',sans-serif; color:var(--ink-soft); margin:0 0 .5rem; }
   .oc-score{ font:700 .78rem 'Quicksand',sans-serif; color:var(--ink-soft); }
   .oc-timerbar{ height:6px; border-radius:999px; background:rgba(0,0,0,.08); overflow:hidden; margin-bottom:.8rem; }
@@ -1371,14 +1606,11 @@
   .feature-menu-popover{ position:absolute; top:calc(100% + .55rem); left:50%; width:min(275px, calc(100vw - 2rem)); transform:translate(-50%,-8px) scale(.96); opacity:0; visibility:hidden; pointer-events:none; padding:.5rem; border:1px solid var(--glass-border); border-radius:14px; background:var(--glass-bg-strong); backdrop-filter:blur(18px); box-shadow:0 14px 30px var(--shadow); transition:opacity .22s ease, transform .22s cubic-bezier(.2,.9,.3,1), visibility .22s; }
   .feature-menu.open .feature-menu-popover{ opacity:1; visibility:visible; pointer-events:auto; transform:translate(-50%,0) scale(1); }.feature-menu-popover button{ width:100%; border:0; border-radius:9px; background:transparent; color:var(--ink); text-align:left; padding:.65rem .75rem; cursor:pointer; font:600 .82rem 'Quicksand',sans-serif; }.feature-menu-popover button:hover,.feature-menu-popover button:focus-visible{ background:rgba(219,125,143,.16); outline:none; }.feature-menu-popover button + button{ margin-top:2px; } body.dark-mode .feature-menu-popover button{ color:#f6eaf3; } body.dark-mode .feature-menu-popover button:hover{ background:rgba(242,154,174,.2); }
   @media (max-width: 720px){
-    /* This comes after the desktop popover rule so the open state cannot
-       re-centre the menu beyond the left edge of a phone screen. */
     .feature-menu-popover{ left:0; transform:translate(0,-8px) scale(.96); }
     .feature-menu.open .feature-menu-popover{ transform:translate(0,0) scale(1); }
   }
   @media (max-width:480px){ .bucket-add input{ min-width:0; font-size:.78rem; }.bucket-add button[type="submit"]{ padding-left:.75rem; padding-right:.75rem; } }
 
-  /* ---------- milestone banner ---------- */
   .toast-container{
     position: fixed;
     bottom: 20px;
@@ -1492,7 +1724,6 @@
     cursor: pointer;
   }
 
-  /* ---------- upload style choice modal ---------- */
   .style-modal{
     position: fixed;
     inset: 0;
@@ -1701,7 +1932,6 @@
   .season-picker button{ border:1px solid var(--glass-border); border-radius:999px; padding:.38rem .62rem; color:var(--ink); background:var(--glass-bg); font:600 .7rem 'Quicksand',sans-serif; cursor:pointer; }
   .season-picker button.active{ background:var(--rose-deep); color:var(--white); border-color:var(--rose-deep); }
 
-  /* ---------- season dropdown (mobile only) ---------- */
   .season-menu{ display:none; position:relative; z-index:20; width:min(360px,92vw); margin:.9rem auto 0; }
   .season-menu-trigger{ position:relative; width:100%; display:flex; align-items:center; justify-content:center; }
   .season-menu-trigger .menu-caret{ position:absolute; right:1rem; font-size:.7rem; transition:transform .2s ease; }
@@ -1745,7 +1975,6 @@
   .seasonal-layer.blossom{ background:linear-gradient(180deg,rgba(255,214,228,.14),transparent 45%); }
   .seasonal-layer.blossom span{ top:-8vh; width:11px; height:11px; background:linear-gradient(135deg,#ffd9e6,#ff9dbe); border-radius:150px 0 150px 0; box-shadow:0 0 6px rgba(255,175,205,.5); animation:blossomFall linear infinite; }
 
-  /* ---------- cursor-reactive theme effects (desktop only) ---------- */
   .cursor-ripple{ position:fixed; z-index:5; border-radius:50%; border:1.5px solid rgba(160,211,235,.85); pointer-events:none; animation:cursorRippleAnim .9s ease-out forwards; }
   @keyframes cursorRippleAnim{ 0%{ width:6px; height:6px; margin:-3px 0 0 -3px; opacity:.8; border-width:2px; } 100%{ width:46px; height:46px; margin:-23px 0 0 -23px; opacity:0; border-width:.5px; } }
   .cursor-petal{ position:fixed; z-index:5; width:10px; height:10px; margin:-5px 0 0 -5px; background:linear-gradient(135deg,#ffd9e6,#ff9dbe); border-radius:150px 0 150px 0; box-shadow:0 0 6px rgba(255,175,205,.5); pointer-events:none; animation:cursorPetalAnim 1.6s ease-out forwards; }
@@ -1845,7 +2074,6 @@
     .presence-indicator.together .presence-dot{ animation: none; }
   }
 
-  /* ---------- garland ---------- */
   main{
     position: relative;
     z-index: 1;
@@ -1878,7 +2106,6 @@
     gap: 1.6rem 1.8rem;
   }
 
-  /* ---------- polaroid card ---------- */
   .polaroid-wrap{
     position: relative;
     width: 190px;
@@ -1936,10 +2163,6 @@
   }
   .polaroid.flipped{ transform: rotateY(180deg); }
 
-  /* Prevent the hidden (rotated-away) face from catching taps meant for
-     the visible face — a known quirk on some Android browsers where
-     backface-visibility:hidden doesn't fully exclude an element from
-     hit-testing. */
   .face.front{ pointer-events: auto; }
   .face.back{ pointer-events: none; }
   .polaroid.flipped .face.front{ pointer-events: none; }
@@ -1949,7 +2172,7 @@
     backface-visibility: hidden;
     background: var(--white);
     border-radius: 4px;
-    box-shadow: 0 10px 20px var(--shadow);
+    box-shadow: var(--card-shadow);
     padding: 10px 10px 10px;
     display: flex;
     flex-direction: column;
@@ -2208,7 +2431,6 @@
   }
   .card-download:hover{ background: var(--sage); color: var(--white); }
 
-  /* add-tile */
   .add-tile{
     display: flex;
     align-items: center;
@@ -2222,7 +2444,6 @@
     background: rgba(212,165,116,0.08);
   }
 
-  /* empty state */
   .empty-note{
     text-align: center;
     font-family: 'Caveat', cursive;
@@ -2281,7 +2502,6 @@
     border-radius: 4px;
   }
 
-  /* ---------- lightbox ---------- */
   .lightbox{
     position: fixed;
     inset: 0;
@@ -2586,7 +2806,13 @@
       <button type="button" class="note-author-toggle doodle-author-toggle" data-author="1" id="doodleAuthorToggle" aria-label="Currently drawing as By J — tap to switch">
         <span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span>
       </button>
-      <div class="doodle-canvas-wrap"><canvas id="doodleCanvas" aria-label="Draw your doodle"></canvas></div>
+      <div class="doodle-canvas-wrap" id="doodleCanvasWrap">
+        <canvas id="doodleCanvas" aria-label="Draw your doodle"></canvas>
+        <div class="doodle-canvas-overlay" id="doodleCanvasOverlay">
+          <span class="overlay-icon">🎨</span>
+          <span class="overlay-text">Double tap to start drawing</span>
+        </div>
+      </div>
       <div class="doodle-toolbar">
         <div class="doodle-swatches" id="doodleSwatches" aria-label="Colour palette"></div>
         <input class="doodle-color-picker" id="doodleColorPicker" type="color" value="#C96A7A" aria-label="Choose any colour">
@@ -2607,7 +2833,13 @@
       <button type="button" class="note-author-toggle doodle-author-toggle" data-author="1" id="duetDoodleAuthorToggle" aria-label="Currently drawing as By J — tap to switch">
         <span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span>
       </button>
-      <div class="doodle-canvas-wrap"><canvas id="duetDoodleCanvas" aria-label="Draw together, live"></canvas></div>
+      <div class="doodle-canvas-wrap" id="duetDoodleCanvasWrap">
+        <canvas id="duetDoodleCanvas" aria-label="Draw together, live"></canvas>
+        <div class="doodle-canvas-overlay" id="duetDoodleCanvasOverlay">
+          <span class="overlay-icon">👥</span>
+          <span class="overlay-text">Double tap to start drawing together</span>
+        </div>
+      </div>
       <div class="doodle-toolbar">
         <div class="doodle-swatches" id="duetDoodleSwatches" aria-label="Colour palette"></div>
         <input class="doodle-color-picker" id="duetDoodleColorPicker" type="color" value="#C96A7A" aria-label="Choose any colour">
@@ -2816,37 +3048,61 @@
   </div>
 </div>
 
+<button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
+
 </div>
 
 <script>
 (function(){
-  /* ---------- theme (light/dark), applied immediately ---------- */
+  /* ─── Theme ─── */
   const THEME_KEY = 'ourLittleUniverseTheme';
   if (localStorage.getItem(THEME_KEY) === 'dark'){
     document.body.classList.add('dark-mode');
   }
 
-  /* ---------- love envelope compliments ----------
-     Add, remove, or rewrite any of these — one is shown at random each time
-     the little envelope on the side of the page is opened. Keep them short
-     so they fit nicely inside the note card. */
-  const COMPLIMENT_LINES = [
-    "Inthandam ga unnave evare nuvvuuuu.",
-    "Your smile is my favorite notification.",
-    "I fall for you a little more every single day.",
-    "You're the best thing I never knew I needed.",
-    "Your smile lights up my entire world.",
-    "You make hard days feel a lot lighter.",
-    "Andame asuya pade la unnav ga....",
-    "Every memory in here is better because you're in it.",
-    "Shake my banti like you are shaking your phone right now.",
-    "Ewwwwww Bangaram....."
-  ];
+  /* ─── Haptic feedback ─── */
+  function haptic(pattern){
+    if (navigator.vibrate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      try { navigator.vibrate(pattern); }
+      catch(e) { /* silently fail */ }
+    }
+  }
 
-  /* ---------- toast notifications ----------
-     showToast(message) — simple info/error message, auto-dismisses.
-     showToast(message, { type:'error', actionLabel:'Undo', onAction:fn,
-       duration:5000 }) — with an action button, for things like undo. */
+  /* ─── Heart bloom effect ─── */
+  function heartBloom(x, y){
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    
+    // Main glow bloom
+    const bloom = document.createElement('span');
+    bloom.className = 'heart-bloom';
+    const size = 60 + Math.random() * 40;
+    bloom.style.width = size + 'px';
+    bloom.style.height = size + 'px';
+    bloom.style.left = x + 'px';
+    bloom.style.top = y + 'px';
+    document.body.appendChild(bloom);
+    setTimeout(() => bloom.remove(), 1000);
+
+    // Small heart specks
+    const speckCount = 4 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < speckCount; i++){
+      const speck = document.createElement('span');
+      speck.className = 'heart-bloom-speck';
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 30 + Math.random() * 60;
+      speck.textContent = ['♥', '♡', '✧', '✦'][Math.floor(Math.random() * 4)];
+      speck.style.fontSize = (0.4 + Math.random() * 0.5) + 'rem';
+      speck.style.left = x + 'px';
+      speck.style.top = y + 'px';
+      speck.style.setProperty('--dx', (Math.cos(angle) * dist) + 'px');
+      speck.style.setProperty('--dy', (Math.sin(angle) * dist - 20) + 'px');
+      speck.style.animationDelay = (Math.random() * 0.15) + 's';
+      document.body.appendChild(speck);
+      setTimeout(() => speck.remove(), 1200);
+    }
+  }
+
+  /* ─── Toast notifications ─── */
   function showToast(message, options){
     options = options || {};
     const toast = document.createElement('div');
@@ -2879,10 +3135,145 @@
     return remove;
   }
 
-  let photos = []; // {id, src, caption, date, path, favorite, mood}
-  // Appended to every reaction/mood picker so any emoji can be picked, not
-  // just the fixed set — tapping it opens the device's normal keyboard,
-  // where the emoji tab can be used to choose anything.
+  /* ─── Back to top button ─── */
+  const backToTop = document.getElementById('backToTop');
+  let backToTopVisible = false;
+  
+  // Handle scroll visibility
+  window.addEventListener('scroll', () => {
+    const threshold = 600;
+    const shouldShow = window.scrollY > threshold;
+    if (shouldShow !== backToTopVisible){
+      backToTopVisible = shouldShow;
+      backToTop.classList.toggle('visible', shouldShow);
+    }
+  }, { passive: true });
+  
+  // Handle button press with proper release
+  backToTop.addEventListener('mousedown', () => {
+    backToTop.classList.add('pressed');
+  });
+  backToTop.addEventListener('mouseup', () => {
+    backToTop.classList.remove('pressed');
+  });
+  backToTop.addEventListener('mouseleave', () => {
+    backToTop.classList.remove('pressed');
+  });
+  backToTop.addEventListener('touchstart', () => {
+    backToTop.classList.add('pressed');
+  });
+  backToTop.addEventListener('touchend', () => {
+    backToTop.classList.remove('pressed');
+    // Small delay to ensure the click registers first
+    setTimeout(() => {
+      backToTop.classList.remove('pressed');
+    }, 100);
+  });
+  backToTop.addEventListener('touchcancel', () => {
+    backToTop.classList.remove('pressed');
+  });
+  
+  // Click handler
+  backToTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    haptic(10);
+    // Ensure pressed state is removed
+    setTimeout(() => {
+      backToTop.classList.remove('pressed');
+    }, 150);
+  });
+
+  /* ─── Doodle canvas overlay handlers (double tap) ─── */
+  let soloCanvasActivated = false;
+  let duetCanvasActivated = false;
+  let soloTapCount = 0;
+  let duetTapCount = 0;
+  let soloTapTimer = null;
+  let duetTapTimer = null;
+
+  function setupDoodleCanvasOverlay(wrapId, overlayId, canvasId, engineSetup) {
+    const wrap = document.getElementById(wrapId);
+    const overlay = document.getElementById(overlayId);
+    const canvas = document.getElementById(canvasId);
+    if (!wrap || !overlay || !canvas) return;
+
+    // Store activation state on the overlay element
+    let tapCount = 0;
+    let tapTimer = null;
+
+    function activateCanvas() {
+      overlay.classList.add('hidden');
+      canvas.style.pointerEvents = 'auto';
+      if (engineSetup) engineSetup();
+      // Store that this canvas is activated
+      if (wrapId === 'doodleCanvasWrap') {
+        soloCanvasActivated = true;
+      } else {
+        duetCanvasActivated = true;
+      }
+    }
+
+    function deactivateCanvas() {
+      overlay.classList.remove('hidden');
+      canvas.style.pointerEvents = 'none';
+      if (wrapId === 'doodleCanvasWrap') {
+        soloCanvasActivated = false;
+      } else {
+        duetCanvasActivated = false;
+      }
+    }
+
+    // Double tap detection
+    overlay.addEventListener('click', function(e) {
+      e.preventDefault();
+      tapCount++;
+      
+      if (tapTimer) {
+        clearTimeout(tapTimer);
+        tapTimer = null;
+      }
+      
+      if (tapCount >= 2) {
+        // Double tap detected
+        tapCount = 0;
+        activateCanvas();
+        return;
+      }
+      
+      // Wait for second tap
+      tapTimer = setTimeout(function() {
+        tapCount = 0;
+        tapTimer = null;
+      }, 400);
+    });
+
+    // Also handle touch events for mobile
+    overlay.addEventListener('touchstart', function(e) {
+      // Don't prevent default here - allow scrolling
+    });
+
+    // Return deactivate function so it can be called externally
+    return { activateCanvas, deactivateCanvas };
+  }
+
+  // Store references to the overlay handlers
+  let soloOverlayHandler = null;
+  let duetOverlayHandler = null;
+
+  // Function to reset canvas overlay when leaving doodles
+  function resetDoodleCanvasOverlays() {
+    if (soloOverlayHandler) {
+      soloOverlayHandler.deactivateCanvas();
+    }
+    if (duetOverlayHandler) {
+      duetOverlayHandler.deactivateCanvas();
+    }
+    // Reset activation flags
+    soloCanvasActivated = false;
+    duetCanvasActivated = false;
+  }
+
+  let photos = [];
   function customEmojiPickerHtml(currentValue, fixedList){
     const isCustom = !!currentValue && !fixedList.includes(currentValue);
     const display = isCustom ? escapeHtml(currentValue) : '+';
@@ -2992,8 +3383,6 @@
   const vaultLock = document.getElementById('vaultLock');
   const threadHeartPaths = Array.from(document.querySelectorAll('.thread-heart-path'));
   const candleFlames = Array.from(document.querySelectorAll('.candle-flame'));
-  // Use each path's real rendered length so the stitching finishes exactly
-  // at 100% progress, instead of guessing a dash length that might be off.
   const threadHeartLengths = threadHeartPaths.map(p => {
     const len = p.getTotalLength();
     p.style.strokeDasharray = len;
@@ -3009,15 +3398,8 @@
   const lightboxPrev = document.getElementById('lightboxPrev');
   const lightboxNext = document.getElementById('lightboxNext');
 
-  /* ================================================================
-     SITE SETTINGS — edit these to make the page yours
-     ================================================================ */
-
-  // A soft access gate for just the two of you. This is NOT strong
-  // security (anyone who views the page source can find it) — it just
-  // keeps random link visitors out. Change it to whatever you like.
+  /* ═══ CONFIGURATION ═══ */
   const PASSWORD_HASH = 'f7b38af3b7540ce6d1a89a6c47cdd85f5d884718b9d162818a22bb56443e117e';
-  // Keep this in sync with the character count of the chosen passcode.
   const PASSWORD_LENGTH = 7;
 
 async function sha256Hex(text){
@@ -3028,23 +3410,13 @@ async function sha256Hex(text){
     .join('');
 }
 
-  // Set this to the date you want the "days together" counter to count
-  // from, in YYYY-MM-DD format. Leave as-is to hide the counter.
   const ANNIVERSARY_DATE = 'YYYY-MM-DD';
-
-  // Names shown on the love notes author picker — edit these to your
-  // own names. Each note is tagged with whichever one was selected
-  // when it was posted, shown as a small color-coded accent on the card.
   const NOTE_AUTHOR_1 = 'Me';
   const NOTE_AUTHOR_2 = 'Partner';
-
-  // Single-letter initials shown on the toggle and each note's badge.
   const NOTE_AUTHOR_1_LETTER = 'J';
   const NOTE_AUTHOR_2_LETTER = 'M';
 
-  /* ================================================================
-     CLOUD STORAGE SETUP — fill these in with your own Supabase project
-     ================================================================ */
+  /* ═══ SUPABASE ═══ */
   const SUPABASE_URL = 'https://cctlzqlchijwrxrxnmmm.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjdGx6cWxjaGlqd3J4cnhubW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MDg1NTksImV4cCI6MjA5OTQ4NDU1OX0.5cEM69NsRjiN2d1XqzFcqVmSp8Db0AqxRr6wLJmm5Yc';
   const BUCKET = 'photos';
@@ -3059,9 +3431,7 @@ async function sha256Hex(text){
     setupBanner.classList.add('show');
   }
 
-  /* ---------- password gate ----------
-     Asks every time the page loads or reloads — nothing is remembered
-     in the browser, so it's not a one-time-per-session unlock anymore. */
+  /* ─── Password gate ─── */
   const VAULT_WELCOMES = [
     'our little universe is waiting for you',
     'psst… your memories missed you',
@@ -3107,11 +3477,6 @@ async function sha256Hex(text){
     if(isOpen){
       document.body.classList.add('pass-keyboard-open');
     }else{
-      // Don't collapse the compact layout immediately: on mobile, tapping
-      // the Unlock button blurs the input a beat before the click/submit
-      // fires. If we shrink the layout right away, the button moves out
-      // from under the finger and the tap is lost, forcing a second tap.
-      // Waiting lets the click land first.
       keyboardCollapseTimer=setTimeout(()=>document.body.classList.remove('pass-keyboard-open'),350);
     }
   }
@@ -3145,11 +3510,6 @@ async function sha256Hex(text){
     setTimeout(() => passGate.classList.add('unlocking'), 720);
     setTimeout(() => {
       passGate.classList.add('hidden');
-      // nudge a tiny synthetic scroll so the browser promotes the fixed
-      // background layers to their own GPU layer now, ahead of the
-      // person's first real scroll gesture, instead of doing that
-      // promotion work mid-gesture (which is what causes a brief
-      // stutter right at the top of the page).
       requestAnimationFrame(() => {
         window.scrollBy(0, 1);
         requestAnimationFrame(() => window.scrollBy(0, -1));
@@ -3162,19 +3522,21 @@ async function sha256Hex(text){
     const enteredHash = await sha256Hex(passInput.value);
     if (enteredHash === PASSWORD_HASH){
       passError.textContent = '';
+      haptic([20, 50, 20]);
       unlockSite();
     }else{
       passError.textContent = 'almost, love — try our special word again ♡';
       passForm.classList.remove('shake');
       void passForm.offsetWidth;
       passForm.classList.add('shake');
+      haptic([30, 50, 30, 50, 30]);
       passInput.value = '';
       lightVaultStars();
       passInput.focus();
     }
   });
 
-  /* ---------- days together ---------- */
+  /* ─── Days together ─── */
   function renderDaysTogether(){
     if (!ANNIVERSARY_DATE || ANNIVERSARY_DATE === 'YYYY-MM-DD'){
       daysTogetherEl.style.display = 'none';
@@ -3191,11 +3553,13 @@ async function sha256Hex(text){
     daysTogetherEl.textContent = `${days.toLocaleString()} days together ✨`;
   }
 
-  /* ---------- burst hearts ---------- */
+  /* ─── Burst effects ─── */
   function burstHearts(originEl){
     const rect = originEl.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
+    haptic(10);
+    heartBloom(cx, cy);
     for (let i = 0; i < 6; i++){
       const h = document.createElement('span');
       h.className = 'burst-heart';
@@ -3209,12 +3573,12 @@ async function sha256Hex(text){
     }
   }
 
-  // A bigger, more generous heart burst — used ONLY for the scratch-off
-  // reveal moment, never for regular button/photo/note clicks.
   function burstHeartsBig(originEl){
     const rect = originEl.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
+    haptic(15);
+    heartBloom(cx, cy);
     for (let i = 0; i < 14; i++){
       const h = document.createElement('span');
       h.className = 'burst-heart-big';
@@ -3228,11 +3592,12 @@ async function sha256Hex(text){
     }
   }
 
-  // A colorful confetti burst — used for game wins (tic tac toe, etc).
   function burstConfetti(originEl){
     const rect = originEl.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
+    haptic([20, 30, 20]);
+    heartBloom(cx, cy);
     const colors = ['#ff6f91','#ffc75f','#82e0aa','#7fd8ff','#c39bff','#ff9f68','#ff5d8f'];
     for (let i = 0; i < 40; i++){
       const p = document.createElement('span');
@@ -3255,7 +3620,6 @@ async function sha256Hex(text){
     }
   }
 
-
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const supportsHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
@@ -3275,10 +3639,9 @@ async function sha256Hex(text){
     });
   }
 
-  /* ---------- small heart burst on any interactive tap ---------- */
   function miniClickBurst(x, y){
     if (prefersReducedMotion) return;
-    const count = 2 + Math.floor(Math.random() * 2); // 2 or 3
+    const count = 2 + Math.floor(Math.random() * 2);
     for (let i = 0; i < count; i++){
       const h = document.createElement('span');
       h.className = 'click-heart';
@@ -3297,10 +3660,6 @@ async function sha256Hex(text){
     miniClickBurst(e.clientX, e.clientY);
   }, true);
 
-  /* ---------- soft pin chime ----------
-     A short two-note bell sound, generated the same way as the
-     background music (no audio file needed). Plays independently
-     of whether background music is on. */
   function playPinChime(){
     try{
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -3326,9 +3685,6 @@ async function sha256Hex(text){
     }
   }
 
-  /* ---------- glass crack sound ----------
-     A short filtered-noise crack plus a couple of high glassy tings,
-     generated the same way as the pin chime (no audio file needed). */
   let glassNoiseBuffer = null;
   function getGlassNoiseBuffer(){
     if (glassNoiseBuffer) return glassNoiseBuffer;
@@ -3473,8 +3829,6 @@ async function sha256Hex(text){
     }
   }
 
-  // This is for a polaroid's emoji reaction, stored on the memories row.
-  // It must not share a name with the separate Mood Calendar save handler.
   async function savePhotoMood(photo){
     if (!supabase) return;
     const { error } = await supabase
@@ -3499,27 +3853,12 @@ async function sha256Hex(text){
     }
   }
 
-  /* ---------- scratch-off surprise cards ----------
-     A canvas sits over the photo like a frosted layer. Scratching it
-     (mouse-drag or touch-drag) erases the parts you pass over via
-     destination-out compositing, revealing the real photo underneath.
-     Once enough of it is cleared, the whole layer fades away and the
-     reveal is saved permanently, so it never needs scratching again. */
   function initScratchCard(wrap, photo){
     const canvas = wrap.querySelector('.scratch-layer');
     const hint = wrap.querySelector('.scratch-hint');
     const frame = wrap.querySelector('.photo-frame');
     if (!canvas || !frame) return;
 
-    // Deliberately NOT scaling by devicePixelRatio here. A dpr-scaled
-    // buffer needs every drawing coordinate multiplied by that same
-    // ratio at draw time — if it drifts even slightly (common on phones,
-    // where dpr is often 2-3x and can shift with pinch/zoom state), the
-    // scratch trail stops lining up with the actual finger position.
-    // Mapping 1:1 to CSS pixels instead means "click here" always means
-    // "erase here", with zero chance of a scaling mismatch. This layer
-    // is a soft translucent gradient, not fine detail, so it doesn't
-    // need retina sharpness anyway.
     function setupCanvas(){
       const w = frame.clientWidth;
       const h = frame.clientHeight;
@@ -3542,9 +3881,6 @@ async function sha256Hex(text){
     }
     setupCanvas();
 
-    // Re-sync if the card's size changes after setup (orientation
-    // change, pinch-zoom, font reflow) — without this, an old buffer
-    // size could go stale relative to the live layout box.
     let resizeTimer = null;
     window.addEventListener('resize', () => {
       if (photo.revealed) return;
@@ -3612,6 +3948,7 @@ async function sha256Hex(text){
         if (hint) hint.remove();
       }, 500);
       burstHeartsBig(frame);
+      haptic([30, 60, 30, 60, 30]);
       playPinChime();
       saveSurpriseRevealed(photo);
     }
@@ -3637,13 +3974,6 @@ async function sha256Hex(text){
     };
     canvas.addEventListener('pointerup', stopScratch);
     canvas.addEventListener('pointercancel', stopScratch);
-
-    // A scratch gesture can synthesize a native 'click' on release (this
-    // is standard browser behavior, not a bug in the scratch code) — if
-    // that click bubbled up to the card, it would flip it immediately
-    // after a reveal, since `photo.revealed` is already true by then.
-    // Stopping it here means tapping the card to flip only ever happens
-    // as its own deliberate, separate tap.
     canvas.addEventListener('click', (e) => e.stopPropagation());
   }
 
@@ -3658,7 +3988,7 @@ async function sha256Hex(text){
     }
   }
 
-  /* ---------- love notes wall ---------- */
+  /* ─── Love notes ─── */
   const NOTES_TABLE = 'love_notes';
   const VOICE_BUCKET = 'voice-notes';
   const NOTE_REACTIONS = ['😂', '💕', '😙', '😢'];
@@ -3667,8 +3997,8 @@ async function sha256Hex(text){
   let notesSearchQuery = '';
   let notesSortMode = 'newest';
   let notesShowFavoritesOnly = false;
+  let notesSkeletonShown = false;
 
-  /* ---------- note author picker ---------- */
   const AUTHOR_KEY = 'ourLittleUniverseNoteAuthor';
   let currentNoteAuthor = localStorage.getItem(AUTHOR_KEY) === '2' ? '2' : '1';
 
@@ -3701,6 +4031,7 @@ async function sha256Hex(text){
         .order('created_at', { ascending: false });
       if (error) throw error;
       allNotes = (data || []).map(n => ({ ...n, favorite: !!n.is_favorite }));
+      notesSkeletonShown = false;
       renderNotesFiltered();
     }catch(err){
       console.error('Could not load love notes:', err);
@@ -3770,6 +4101,16 @@ async function sha256Hex(text){
 
   function renderNotes(notes){
     notesGrid.innerHTML = '';
+    if (!notes.length && !notesSkeletonShown && allNotes.length === 0){
+      notesSkeletonShown = true;
+      for (let i = 0; i < 3; i++){
+        const skel = document.createElement('div');
+        skel.className = 'note-wrap';
+        skel.innerHTML = `<div class="skeleton skeleton-note"></div><div class="skeleton-text" style="width:80%;margin:8px auto 0;"></div>`;
+        notesGrid.appendChild(skel);
+      }
+      return;
+    }
     if (!notes.length){
       const empty = document.createElement('p');
       empty.className = 'empty-note';
@@ -3842,6 +4183,11 @@ async function sha256Hex(text){
 
       favBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
+        if (!note.favorite){
+          const rect = favBtn.getBoundingClientRect();
+          heartBloom(rect.left + rect.width/2, rect.top + rect.height/2);
+          haptic(10);
+        }
         note.favorite = !note.favorite;
         favBtn.textContent = note.favorite ? '♥' : '♡';
         await saveNoteFavorite(note);
@@ -3914,6 +4260,7 @@ async function sha256Hex(text){
         }else if (badge){
           badge.remove();
         }
+        haptic(8);
         await saveNoteReaction(note);
       }
       reactionBtns.forEach(btn => {
@@ -3934,9 +4281,6 @@ async function sha256Hex(text){
         });
       }
       if (noteCustomEmojiBtn){
-        // Only does anything once a custom emoji is showing (the .active
-        // state) — that's when this button becomes the click target instead
-        // of the hidden input, so tapping the picked emoji removes it.
         noteCustomEmojiBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
           if (note.reaction) await applyNoteReaction(note.reaction);
@@ -3963,6 +4307,7 @@ async function sha256Hex(text){
     notesShowFavoritesOnly = !notesShowFavoritesOnly;
     notesFavFilterBtn.classList.toggle('active', notesShowFavoritesOnly);
     notesFavFilterBtn.textContent = notesShowFavoritesOnly ? '♥ Showing favorites' : '♡ Favorites only';
+    haptic(8);
     renderNotesFiltered();
   });
 
@@ -3984,6 +4329,7 @@ async function sha256Hex(text){
     e.preventDefault();
     const message = noteInput.value.trim();
     if (!message || !supabase) return;
+    haptic(12);
     try{
       await supabase.from(NOTES_TABLE).insert({ message, author: currentNoteAuthor });
       noteInput.value = '';
@@ -3994,7 +4340,7 @@ async function sha256Hex(text){
     }
   });
 
-  /* ---------- doodles wall & canvas ---------- */
+  /* ─── Doodles ─── */
   const DOODLES_TABLE = 'doodles';
   const DOODLES_BUCKET = 'doodles';
   const DOODLE_REACTIONS = ['😂', '💕', '😙', '😢'];
@@ -4024,13 +4370,9 @@ async function sha256Hex(text){
   const doodlesFavFilterBtn = document.getElementById('doodlesFavFilterBtn');
   let doodleAuthor = localStorage.getItem('ourLittleUniverseDoodleAuthor') === '2' ? '2' : '1';
   let duetDoodleAuthor = doodleAuthor;
-  let doodlesLoaded = false, allDoodles = [], doodlesSearchQuery = '', doodlesSortMode = 'newest', doodlesFavoritesOnly = false, doodlesRealtimeStarted = false;
+  let doodlesLoaded = false, allDoodles = [], doodlesSearchQuery = '', doodlesSortMode = 'newest', doodlesFavoritesOnly = false, doodlesRealtimeStarted = false, doodlesSkeletonShown = false;
   let currentDoodleMode = 'solo';
 
-  /* ---------- reusable drawing-canvas engine, shared by solo + duet ----------
-     Each call makes an independent canvas with its own colour/tool/history
-     state. `hooks` lets duet mode piggyback on every draw action to also
-     broadcast it live, without solo mode needing to know anything about that. */
   function createDoodleEngine(ids, hooks){
     hooks = hooks || {};
     const canvas = document.getElementById(ids.canvas);
@@ -4058,10 +4400,6 @@ async function sha256Hex(text){
       if (previous){ const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height); img.src = previous; }
     }
     function pointFor(event){ const r = canvas.getBoundingClientRect(); return { x:event.clientX-r.left, y:event.clientY-r.top }; }
-    // Points and sizes are normalized to 0..1 of the canvas's own CSS size
-    // before broadcasting, and scaled back up by the *receiving* canvas's own
-    // size on the other end — so a duet doodle lines up correctly even if
-    // the two of you are on very differently sized screens.
     function normPoint(p){ const r = canvas.getBoundingClientRect(); return { x: r.width ? p.x/r.width : 0, y: r.height ? p.y/r.height : 0 }; }
     function denormPoint(p){ const r = canvas.getBoundingClientRect(); return { x: p.x*r.width, y: p.y*r.height }; }
     function normSize(px){ const r = canvas.getBoundingClientRect(); return r.width ? px/r.width : px; }
@@ -4141,7 +4479,6 @@ async function sha256Hex(text){
     };
   }
 
-  /* ---------- duet realtime channel ---------- */
   let duetChannel = null, duetChannelReady = false;
   function duetBroadcast(event, payload){ if (duetChannel && duetChannelReady) duetChannel.send({ type:'broadcast', event, payload }); }
   const duetEngine = createDoodleEngine(
@@ -4171,7 +4508,7 @@ async function sha256Hex(text){
   doodleAuthorToggle.addEventListener('click',()=>{ doodleAuthor=doodleAuthor==='1'?'2':'1'; localStorage.setItem('ourLittleUniverseDoodleAuthor',doodleAuthor); doodleAuthorToggle.dataset.author=doodleAuthor; doodleAuthorToggle.setAttribute('aria-label',`Currently drawing as By ${doodleAuthor==='1'?'J':'M'} — tap to switch`); });
   duetDoodleAuthorToggle.addEventListener('click',()=>{ duetDoodleAuthor=duetDoodleAuthor==='1'?'2':'1'; localStorage.setItem('ourLittleUniverseDoodleAuthor',duetDoodleAuthor); duetDoodleAuthorToggle.dataset.author=duetDoodleAuthor; duetDoodleAuthorToggle.setAttribute('aria-label',`Currently drawing as By ${duetDoodleAuthor==='1'?'J':'M'} — tap to switch`); });
 
-  async function loadDoodles(){ if(!supabase)return; try{ const {data,error}=await supabase.from(DOODLES_TABLE).select('*').order('created_at',{ascending:false}); if(error)throw error; allDoodles=data||[]; renderDoodlesFiltered(); }catch(err){ console.error('Could not load doodles:',err); showToast('Could not load doodles. Run the doodles setup SQL first.',{type:'error'}); } }
+  async function loadDoodles(){ if(!supabase)return; try{ const {data,error}=await supabase.from(DOODLES_TABLE).select('*').order('created_at',{ascending:false}); if(error)throw error; allDoodles=data||[]; doodlesSkeletonShown=false; renderDoodlesFiltered(); }catch(err){ console.error('Could not load doodles:',err); showToast('Could not load doodles. Run the doodles setup SQL first.',{type:'error'}); } }
   function renderDoodlesFiltered(){
     let items = allDoodles.filter(d => (d.mode||'solo') === currentDoodleMode);
     if (doodlesFavoritesOnly) items = items.filter(d=>d.favorite);
@@ -4186,7 +4523,18 @@ async function sha256Hex(text){
     return !!(active && active.closest && active.closest('.doodle-wrap') && (active.tagName==='TEXTAREA' || active.tagName==='INPUT'));
   }
   function renderDoodles(items){
-    doodlesGrid.innerHTML=''; if(!items.length){ const p=document.createElement('p'); p.className='empty-note'; p.style.display='block'; p.textContent=qOrEmptyDoodles(); doodlesGrid.appendChild(p); knownDoodleIds=new Set(); return; }
+    doodlesGrid.innerHTML='';
+    if (!items.length && !doodlesSkeletonShown && allDoodles.length === 0){
+      doodlesSkeletonShown = true;
+      for (let i = 0; i < 3; i++){
+        const skel = document.createElement('div');
+        skel.className = 'doodle-wrap';
+        skel.innerHTML = `<div class="skeleton skeleton-doodle"></div><div class="skeleton-text" style="width:60%;margin:8px auto 0;"></div>`;
+        doodlesGrid.appendChild(skel);
+      }
+      return;
+    }
+    if(!items.length){ const p=document.createElement('p'); p.className='empty-note'; p.style.display='block'; p.textContent=qOrEmptyDoodles(); doodlesGrid.appendChild(p); knownDoodleIds=new Set(); return; }
     const isFirstRender=knownDoodleIds===null;
     const currentIds=new Set();
     items.forEach(d=>{ currentIds.add(d.id); const wrap=document.createElement('div'); wrap.className='doodle-wrap'+((!isFirstRender && !knownDoodleIds.has(d.id))?' doodle-wrap-enter':''); wrap.style.setProperty('--nt',(Math.random()*6-3).toFixed(1)+'deg'); const author=String(d.author||1), date=d.created_at?new Date(d.created_at).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'';
@@ -4194,12 +4542,20 @@ async function sha256Hex(text){
       const flip=wrap.querySelector('.doodle-flip'), image=wrap.querySelector('.doodle-image'), fav=wrap.querySelector('.doodle-fav'), remove=wrap.querySelector('.doodle-remove'), reply=wrap.querySelector('.doodle-reply-input'), captionEdit=wrap.querySelector('.doodle-caption-edit'), back=wrap.querySelector('.note-flip-back-btn'), download=wrap.querySelector('.doodle-download');
       flip.addEventListener('click',e=>{ if(e.target.closest('button,textarea,img'))return; flip.classList.toggle('flipped'); }); flip.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===flip){e.preventDefault();flip.classList.toggle('flipped');}}); back.addEventListener('click',()=>flip.classList.remove('flipped'));
       image.addEventListener('click',()=>{ currentList=items.map(x=>({src:x.image_url,caption:x.caption||'A little doodle'})); lightboxIndex=items.findIndex(x=>x.id===d.id); openLightbox(lightboxIndex,'doodle'); });
-      fav.addEventListener('click',async()=>{ d.favorite=!d.favorite; fav.textContent=d.favorite?'♥':'♡'; await updateDoodle(d,{favorite:d.favorite}); if(doodlesFavoritesOnly)renderDoodlesFiltered(); });
+      fav.addEventListener('click',async()=>{
+        if (!d.favorite){
+          const rect = fav.getBoundingClientRect();
+          heartBloom(rect.left + rect.width/2, rect.top + rect.height/2);
+          haptic(10);
+        }
+        d.favorite=!d.favorite; fav.textContent=d.favorite?'♥':'♡';
+        await updateDoodle(d,{favorite:d.favorite}); if(doodlesFavoritesOnly)renderDoodlesFiltered();
+      });
       let replyTimer; reply.addEventListener('input',()=>{ d.reply=reply.value; clearTimeout(replyTimer); replyTimer=setTimeout(()=>updateDoodle(d,{reply:d.reply}),400); });
       reply.addEventListener('blur',flushPendingDoodleReload);
       let captionTimer; captionEdit.addEventListener('input',()=>{ d.caption=captionEdit.value; clearTimeout(captionTimer); captionTimer=setTimeout(()=>updateDoodle(d,{caption:d.caption||null}),400); });
       captionEdit.addEventListener('blur',flushPendingDoodleReload);
-      wrap.querySelectorAll('[data-reaction]').forEach(b=>b.addEventListener('click',async()=>{ d.reaction=d.reaction===b.dataset.reaction?null:b.dataset.reaction; await updateDoodle(d,{reaction:d.reaction}); renderDoodlesFiltered(); }));
+      wrap.querySelectorAll('[data-reaction]').forEach(b=>b.addEventListener('click',async()=>{ d.reaction=d.reaction===b.dataset.reaction?null:b.dataset.reaction; haptic(8); await updateDoodle(d,{reaction:d.reaction}); renderDoodlesFiltered(); }));
       const doodleCustomEmojiInput = wrap.querySelector('.doodle-reaction-picker .reaction-plus-input');
       const doodleCustomEmojiBtn = wrap.querySelector('.doodle-reaction-picker .reaction-plus-btn');
       if (doodleCustomEmojiInput){
@@ -4210,6 +4566,7 @@ async function sha256Hex(text){
           if (!val) return;
           d.reaction = d.reaction === val ? null : val;
           refreshCustomEmojiVisual(wrap.querySelector('.doodle-reaction-picker'), DOODLE_REACTIONS, d.reaction);
+          haptic(8);
           await updateDoodle(d, { reaction: d.reaction });
           renderDoodlesFiltered();
         });
@@ -4219,6 +4576,7 @@ async function sha256Hex(text){
           e.stopPropagation();
           if (!d.reaction) return;
           d.reaction = null;
+          haptic(8);
           await updateDoodle(d, { reaction: d.reaction });
           renderDoodlesFiltered();
         });
@@ -4233,47 +4591,72 @@ async function sha256Hex(text){
     if (doodlesSearchQuery.trim()) return 'no doodles match that search';
     return currentDoodleMode==='duet' ? 'no duet doodles yet — draw one together!' : 'no doodles yet — draw one!';
   }
-  doodleForm.addEventListener('submit',async e=>{ e.preventDefault(); if(!supabase){showToast('Connect Supabase before saving doodles.',{type:'error'});return;} doodleSubmitBtn.disabled=true; try{ const blob=await soloEngine.exportBlob(); if(!blob)throw new Error('Could not create PNG'); const path=`${Date.now()}-${crypto.randomUUID()}.png`; const {error:uploadError}=await supabase.storage.from(DOODLES_BUCKET).upload(path,blob,{contentType:'image/png'}); if(uploadError)throw uploadError; const {data:urlData}=supabase.storage.from(DOODLES_BUCKET).getPublicUrl(path); const {error}=await supabase.from(DOODLES_TABLE).insert({image_url:urlData.publicUrl,storage_path:path,caption:doodleCaption.value.trim()||null,author:Number(doodleAuthor),mode:'solo'}); if(error)throw error; doodleCaption.value=''; soloEngine.reset(); showToast('Doodle pinned!'); loadDoodles(); }catch(err){console.error(err);showToast('Could not save doodle. Check the doodles bucket and SQL setup.',{type:'error'});}finally{doodleSubmitBtn.disabled=false;} });
-  duetDoodleForm.addEventListener('submit',async e=>{ e.preventDefault(); if(!supabase){showToast('Connect Supabase before saving doodles.',{type:'error'});return;} duetDoodleSubmitBtn.disabled=true; try{ const blob=await duetEngine.exportBlob(); if(!blob)throw new Error('Could not create PNG'); const path=`${Date.now()}-${crypto.randomUUID()}.png`; const {error:uploadError}=await supabase.storage.from(DOODLES_BUCKET).upload(path,blob,{contentType:'image/png'}); if(uploadError)throw uploadError; const {data:urlData}=supabase.storage.from(DOODLES_BUCKET).getPublicUrl(path); const {error}=await supabase.from(DOODLES_TABLE).insert({image_url:urlData.publicUrl,storage_path:path,caption:duetDoodleCaption.value.trim()||null,author:Number(duetDoodleAuthor),mode:'duet'}); if(error)throw error; duetDoodleCaption.value=''; duetEngine.reset(); duetBroadcast('clear',{}); showToast('Duet doodle pinned!'); loadDoodles(); }catch(err){console.error(err);showToast('Could not save doodle. Check the doodles bucket and SQL setup.',{type:'error'});}finally{duetDoodleSubmitBtn.disabled=false;} });
+  doodleForm.addEventListener('submit',async e=>{ e.preventDefault(); if(!supabase){showToast('Connect Supabase before saving doodles.',{type:'error'});return;} doodleSubmitBtn.disabled=true; haptic(15); try{ const blob=await soloEngine.exportBlob(); if(!blob)throw new Error('Could not create PNG'); const path=`${Date.now()}-${crypto.randomUUID()}.png`; const {error:uploadError}=await supabase.storage.from(DOODLES_BUCKET).upload(path,blob,{contentType:'image/png'}); if(uploadError)throw uploadError; const {data:urlData}=supabase.storage.from(DOODLES_BUCKET).getPublicUrl(path); const {error}=await supabase.from(DOODLES_TABLE).insert({image_url:urlData.publicUrl,storage_path:path,caption:doodleCaption.value.trim()||null,author:Number(doodleAuthor),mode:'solo'}); if(error)throw error; doodleCaption.value=''; soloEngine.reset(); showToast('Doodle pinned!'); loadDoodles(); }catch(err){console.error(err);showToast('Could not save doodle. Check the doodles bucket and SQL setup.',{type:'error'});}finally{doodleSubmitBtn.disabled=false;} });
+  duetDoodleForm.addEventListener('submit',async e=>{ e.preventDefault(); if(!supabase){showToast('Connect Supabase before saving doodles.',{type:'error'});return;} duetDoodleSubmitBtn.disabled=true; haptic(15); try{ const blob=await duetEngine.exportBlob(); if(!blob)throw new Error('Could not create PNG'); const path=`${Date.now()}-${crypto.randomUUID()}.png`; const {error:uploadError}=await supabase.storage.from(DOODLES_BUCKET).upload(path,blob,{contentType:'image/png'}); if(uploadError)throw uploadError; const {data:urlData}=supabase.storage.from(DOODLES_BUCKET).getPublicUrl(path); const {error}=await supabase.from(DOODLES_TABLE).insert({image_url:urlData.publicUrl,storage_path:path,caption:duetDoodleCaption.value.trim()||null,author:Number(duetDoodleAuthor),mode:'duet'}); if(error)throw error; duetDoodleCaption.value=''; duetEngine.reset(); duetBroadcast('clear',{}); showToast('Duet doodle pinned!'); loadDoodles(); }catch(err){console.error(err);showToast('Could not save doodle. Check the doodles bucket and SQL setup.',{type:'error'});}finally{duetDoodleSubmitBtn.disabled=false;} });
 
   function showDoodleModeChooser(){
     doodleModeChooser.classList.remove('hidden');
     doodleSoloView.classList.add('hidden'); doodleDuetView.classList.add('hidden'); doodlesGalleryArea.classList.add('hidden');
+    // Reset canvas overlays when leaving doodle mode
+    resetDoodleCanvasOverlays();
   }
+  
   function openDoodleSolo(){
     doodleModeChooser.classList.add('hidden'); doodleDuetView.classList.add('hidden');
     doodleSoloView.classList.remove('hidden'); doodlesGalleryArea.classList.remove('hidden');
     currentDoodleMode='solo'; doodlesGridLabel.textContent='Solo doodles'; knownDoodleIds=null;
+    // Reset overlay before setting up
+    resetDoodleCanvasOverlays();
     soloEngine.setupCanvas();
+    // Setup overlay handler if not already done
+    if (!soloOverlayHandler) {
+      soloOverlayHandler = setupDoodleCanvasOverlay('doodleCanvasWrap', 'doodleCanvasOverlay', 'doodleCanvas', () => {
+        soloEngine.setupCanvas();
+      });
+    } else {
+      // Reactivate overlay
+      soloOverlayHandler.deactivateCanvas();
+    }
     if(!doodlesLoaded){ doodlesLoaded=true; loadDoodles(); } else { renderDoodlesFiltered(); }
   }
+  
   function openDoodleDuet(){
     doodleModeChooser.classList.add('hidden'); doodleSoloView.classList.add('hidden');
     doodleDuetView.classList.remove('hidden'); doodlesGalleryArea.classList.remove('hidden');
     currentDoodleMode='duet'; doodlesGridLabel.textContent='Duet doodles'; knownDoodleIds=null;
+    // Reset overlay before setting up
+    resetDoodleCanvasOverlays();
     duetEngine.setupCanvas();
+    // Setup overlay handler if not already done
+    if (!duetOverlayHandler) {
+      duetOverlayHandler = setupDoodleCanvasOverlay('duetDoodleCanvasWrap', 'duetDoodleCanvasOverlay', 'duetDoodleCanvas', () => {
+        duetEngine.setupCanvas();
+      });
+    } else {
+      duetOverlayHandler.deactivateCanvas();
+    }
     startDuetChannel();
     if(!doodlesLoaded){ doodlesLoaded=true; loadDoodles(); } else { renderDoodlesFiltered(); }
   }
+  
   chooseDoodleSolo.addEventListener('click', openDoodleSolo);
   chooseDoodleDuet.addEventListener('click', openDoodleDuet);
   document.querySelectorAll('.doodle-mode-back').forEach(b=>b.addEventListener('click', showDoodleModeChooser));
 
   doodlesToggleBtn.addEventListener('click',()=>{ const opening=doodlesWall.classList.contains('hidden'); doodlesWall.classList.toggle('hidden'); if(opening){notesWall.classList.add('hidden'); showDoodleModeChooser();} });
-  doodlesCloseBtn.addEventListener('click',()=>doodlesWall.classList.add('hidden'));
+  doodlesCloseBtn.addEventListener('click',()=>{
+    doodlesWall.classList.add('hidden');
+    resetDoodleCanvasOverlays();
+  });
   notesToggleBtn.addEventListener('click',()=>doodlesWall.classList.add('hidden'));
-  doodlesFavFilterBtn.addEventListener('click',()=>{doodlesFavoritesOnly=!doodlesFavoritesOnly; doodlesFavFilterBtn.classList.toggle('active',doodlesFavoritesOnly); doodlesFavFilterBtn.textContent=doodlesFavoritesOnly?'♥ Showing favorites':'♡ Favorites only'; renderDoodlesFiltered();});
+  doodlesFavFilterBtn.addEventListener('click',()=>{doodlesFavoritesOnly=!doodlesFavoritesOnly; doodlesFavFilterBtn.classList.toggle('active',doodlesFavoritesOnly); doodlesFavFilterBtn.textContent=doodlesFavoritesOnly?'♥ Showing favorites':'♡ Favorites only'; haptic(8); renderDoodlesFiltered();});
   let doodleSearchTimer; doodlesSearchInput.addEventListener('input',()=>{clearTimeout(doodleSearchTimer);doodleSearchTimer=setTimeout(()=>{doodlesSearchQuery=doodlesSearchInput.value;renderDoodlesFiltered();},250);}); doodlesSortSelect.addEventListener('change',()=>{doodlesSortMode=doodlesSortSelect.value;renderDoodlesFiltered();});
-  // Typing a reply or caption saves in the background, which echoes back through
-  // this realtime subscription — reloading mid-keystroke would destroy the very
-  // textarea being typed into and close the on-screen keyboard. So while any
-  // doodle text field has focus, a reload is deferred until it loses focus.
   let doodlesReloadPending=false;
   function flushPendingDoodleReload(){ if(doodlesReloadPending){ doodlesReloadPending=false; setTimeout(()=>{ if(!isDoodleFieldFocused()) loadDoodles(); },150); } }
   function startDoodlesRealtime(){ if(!supabase||doodlesRealtimeStarted)return; doodlesRealtimeStarted=true; supabase.channel('doodles-wall').on('postgres_changes',{event:'*',schema:'public',table:DOODLES_TABLE},()=>{ if(!doodlesLoaded) return; if(isDoodleFieldFocused()){ doodlesReloadPending=true; return; } loadDoodles(); }).subscribe(); }
   startDoodlesRealtime();
 
-  /* ---------- mood calendar, capsules, bucket list & constellation ---------- */
+  /* ─── Extras ─── */
   const MOODS_TABLE = 'daily_moods', CAPSULES_TABLE = 'time_capsules', BUCKET_LIST_TABLE = 'bucket_list';
   const CALENDAR_MOODS = ['😊','🥰','🥴','😢','😤','😴','🫩'];
   const moodsToggleBtn=document.getElementById('moodsToggleBtn'), capsulesToggleBtn=document.getElementById('capsulesToggleBtn'), bucketToggleBtn=document.getElementById('bucketToggleBtn'), constellationToggleBtn=document.getElementById('constellationToggleBtn'), gamesToggleBtn=document.getElementById('gamesToggleBtn');
@@ -4366,8 +4749,6 @@ async function sha256Hex(text){
     });
   }
   if (calendarCustomEmojiBtn){
-    // Only acts once a custom emoji is showing — tapping the picked emoji
-    // again clears it and goes back to "+", instead of reopening the keyboard.
     calendarCustomEmojiBtn.addEventListener('click', () => {
       const isCustom = selectedCalendarMood && !CALENDAR_MOODS.includes(selectedCalendarMood);
       if (isCustom) resetCalendarMoodPicker();
@@ -4387,6 +4768,7 @@ async function sha256Hex(text){
       if(error){console.error('Could not unpin mood:',error);showToast('Could not unpin that mood.',{type:'error'});return;}
       allMoods=allMoods.filter(x=>x!==existing);renderMoodCalendar();
       if(usedCustomMood)resetCalendarMoodPicker();
+      haptic(10);
       return;
     }
     const item={mood_date,mood:selectedCalendarMood,author:Number(moodAuthor)};
@@ -4399,26 +4781,20 @@ async function sha256Hex(text){
     if(i>-1)allMoods[i]={...allMoods[i],...item};else allMoods.push(item);
     renderMoodCalendar();
     if(usedCustomMood)resetCalendarMoodPicker();
+    haptic(10);
   }
   calendarPrev.addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()-1,1);renderMoodCalendar();});calendarNext.addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+1,1);renderMoodCalendar();});
   function renderCapsules(){capsuleList.innerHTML='';if(!allCapsules.length){capsuleList.innerHTML='<li class="capsule-item locked">No time capsules yet — seal the first one.</li>';return;}const today=dateKey(new Date());allCapsules.forEach(c=>{const unlocked=c.unlock_date<=today,li=document.createElement('li');li.className='capsule-item'+(unlocked?'':' locked');const by=`By ${String(c.author||1)==='2'?'M':'J'}`;li.innerHTML=`${unlocked?`${escapeHtml(c.message)}<span class="capsule-date">${by} · Opened ${new Date(c.unlock_date+'T00:00:00').toLocaleDateString()}</span>`:`🔒 ${by}'s capsule · sealed until ${new Date(c.unlock_date+'T00:00:00').toLocaleDateString()}`}<button class="capsule-remove" type="button" aria-label="Delete this time capsule" title="Delete capsule">✕</button>`;li.querySelector('.capsule-remove').addEventListener('click',async()=>{if(!confirm('Delete this time capsule? This cannot be undone.'))return;const {error}=await supabase.from(CAPSULES_TABLE).delete().eq('id',c.id);if(error){console.error(error);showToast('Could not delete that capsule.',{type:'error'});return;}allCapsules=allCapsules.filter(item=>item.id!==c.id);renderCapsules();showToast('Time capsule deleted.');});capsuleList.appendChild(li);});}
   async function loadCapsules(){if(!supabase)return;try{const {data,error}=await supabase.from(CAPSULES_TABLE).select('*').order('unlock_date',{ascending:true});if(error)throw error;allCapsules=data||[];renderCapsules();}catch(e){console.error(e);showToast('Could not load time capsules.',{type:'error'});}}
-  capsuleForm.addEventListener('submit',async e=>{e.preventDefault();if(!supabase)return;const {data,error}=await supabase.from(CAPSULES_TABLE).insert({unlock_date:capsuleDate.value,message:capsuleMessage.value.trim(),author:Number(capsuleAuthor)}).select().single();if(error){showToast('Could not seal that capsule.',{type:'error'});return;}allCapsules.push(data);capsuleMessage.value='';capsuleDate.value='';updateCapsuleDateDisplay();renderCapsules();showToast('Time capsule sealed ✨');});
-  function renderBucket(){bucketList.innerHTML='';if(!allBucketItems.length){bucketList.innerHTML='<li class="bucket-item">No wishes yet — add one above.</li>';return;}allBucketItems.forEach(item=>{const li=document.createElement('li');li.className='bucket-item'+(item.completed?' done':'');li.innerHTML=`<input type="checkbox" ${item.completed?'checked':''} aria-label="Mark completed"><span>${escapeHtml(item.item)}</span><small>By ${String(item.author||1)==='2'?'M':'J'}</small><button class="bucket-remove" type="button" aria-label="Remove wish">✕</button>`;li.querySelector('input').addEventListener('change',async e=>{item.completed=e.target.checked;await supabase.from(BUCKET_LIST_TABLE).update({completed:item.completed}).eq('id',item.id);renderBucket();});li.querySelector('.bucket-remove').addEventListener('click',async()=>{await supabase.from(BUCKET_LIST_TABLE).delete().eq('id',item.id);allBucketItems=allBucketItems.filter(x=>x.id!==item.id);renderBucket();});bucketList.appendChild(li);});}
+  capsuleForm.addEventListener('submit',async e=>{e.preventDefault();if(!supabase)return;haptic(12);const {data,error}=await supabase.from(CAPSULES_TABLE).insert({unlock_date:capsuleDate.value,message:capsuleMessage.value.trim(),author:Number(capsuleAuthor)}).select().single();if(error){showToast('Could not seal that capsule.',{type:'error'});return;}allCapsules.push(data);capsuleMessage.value='';capsuleDate.value='';updateCapsuleDateDisplay();renderCapsules();showToast('Time capsule sealed ✨');});
+  function renderBucket(){bucketList.innerHTML='';if(!allBucketItems.length){bucketList.innerHTML='<li class="bucket-item">No wishes yet — add one above.</li>';return;}allBucketItems.forEach(item=>{const li=document.createElement('li');li.className='bucket-item'+(item.completed?' done':'');li.innerHTML=`<input type="checkbox" ${item.completed?'checked':''} aria-label="Mark completed"><span>${escapeHtml(item.item)}</span><small>By ${String(item.author||1)==='2'?'M':'J'}</small><button class="bucket-remove" type="button" aria-label="Remove wish">✕</button>`;li.querySelector('input').addEventListener('change',async e=>{item.completed=e.target.checked;haptic(10);await supabase.from(BUCKET_LIST_TABLE).update({completed:item.completed}).eq('id',item.id);renderBucket();});li.querySelector('.bucket-remove').addEventListener('click',async()=>{await supabase.from(BUCKET_LIST_TABLE).delete().eq('id',item.id);allBucketItems=allBucketItems.filter(x=>x.id!==item.id);renderBucket();});bucketList.appendChild(li);});}
   async function loadBucket(){if(!supabase)return;try{const {data,error}=await supabase.from(BUCKET_LIST_TABLE).select('*').order('created_at',{ascending:false});if(error)throw error;allBucketItems=data||[];renderBucket();}catch(e){console.error(e);showToast('Could not load your bucket list.',{type:'error'});}}
-  bucketForm.addEventListener('submit',async e=>{e.preventDefault();if(!supabase)return;const {data,error}=await supabase.from(BUCKET_LIST_TABLE).insert({item:bucketInput.value.trim(),author:Number(bucketAuthor)}).select().single();if(error){showToast('Could not add that wish.',{type:'error'});return;}allBucketItems.unshift(data);bucketInput.value='';renderBucket();});
-  function renderConstellation(){constellationSky.innerHTML='';if(!photos.length){const p=document.createElement('p');p.className='constellation-empty';p.textContent='Pin some memories first, then your sky will fill with stars ✦';constellationSky.appendChild(p);return;}photos.forEach((p,i)=>{const star=document.createElement('button');star.type='button';star.className='constellation-star';star.style.left=`${15+((i*37)%70)}%`;star.style.top=`${20+((i*53)%65)}%`;star.dataset.label=(p.caption||'A memory').slice(0,32);star.setAttribute('aria-label',`Open memory ${i+1}`);star.addEventListener('click',()=>{currentList=photos;openLightbox(i);});constellationSky.appendChild(star);});}
+  bucketForm.addEventListener('submit',async e=>{e.preventDefault();if(!supabase)return;haptic(12);const {data,error}=await supabase.from(BUCKET_LIST_TABLE).insert({item:bucketInput.value.trim(),author:Number(bucketAuthor)}).select().single();if(error){showToast('Could not add that wish.',{type:'error'});return;}allBucketItems.unshift(data);bucketInput.value='';renderBucket();});
+  function renderConstellation(){constellationSky.innerHTML='';if(!photos.length){const p=document.createElement('p');p.className='constellation-empty';p.textContent='Pin some memories first, then your sky will fill with stars ✦';constellationSky.appendChild(p);return;}photos.forEach((p,i)=>{const star=document.createElement('button');star.type='button';star.className='constellation-star';star.style.left=`${15+((i*37)%70)}%`;star.style.top=`${20+((i*53)%65)}%`;star.dataset.label=(p.caption||'A memory').slice(0,32);star.setAttribute('aria-label',`Open memory ${i+1}`);star.addEventListener('click',()=>{currentList=photos;haptic(10);openLightbox(i);});constellationSky.appendChild(star);});}
   moodsToggleBtn.addEventListener('click',()=>{openExtra(moodsWall);loadMoods();});capsulesToggleBtn.addEventListener('click',()=>{openExtra(capsulesWall);loadCapsules();});bucketToggleBtn.addEventListener('click',()=>{openExtra(bucketWall);loadBucket();});constellationToggleBtn.addEventListener('click',()=>{openExtra(constellationWall);renderConstellation();});gamesToggleBtn.addEventListener('click',()=>{openExtra(gamesWall);showGameChooser();});specialDaysToggleBtn.addEventListener('click',()=>{openExtra(specialDaysWall);renderSpecialDays();});document.querySelectorAll('.extras-close').forEach(b=>b.addEventListener('click',closeExtras));notesToggleBtn.addEventListener('click',closeExtras);doodlesToggleBtn.addEventListener('click',closeExtras);
 
-  /* ═══════════════════════════════════════════════════════════════════
-     SPECIAL DAYS — add a new entry any time you want a new surprise page
-     to unlock on a specific date and stay unlocked for good after that.
-     Each entry needs: emoji, title, blurb, unlockDate ("YYYY-MM-DD"), href.
-     That's it — nothing else in the code needs to change.
-  ═══════════════════════════════════════════════════════════════════ */
   const SPECIAL_DAYS = [
     { emoji:'🎀', title:"National Girlfriend's Day", blurb:"A little something made just for this day.", unlockDate:'2026-08-01', href:'for-you.html' }
-    // { emoji:'💍', title:"Our Anniversary", blurb:"...", unlockDate:'2026-XX-XX', href:'anniversary.html' },
   ];
   function renderSpecialDays(){
     specialDayList.innerHTML='';
@@ -4439,7 +4815,7 @@ async function sha256Hex(text){
   function startExtrasRealtime(){if(!supabase||extrasRealtimeStarted)return;extrasRealtimeStarted=true;[MOODS_TABLE,CAPSULES_TABLE,BUCKET_LIST_TABLE].forEach(table=>supabase.channel(`extras-${table}`).on('postgres_changes',{event:'*',schema:'public',table},()=>{if(!moodsWall.classList.contains('hidden')&&table===MOODS_TABLE)loadMoods();if(!capsulesWall.classList.contains('hidden')&&table===CAPSULES_TABLE)loadCapsules();if(!bucketWall.classList.contains('hidden')&&table===BUCKET_LIST_TABLE)loadBucket();}).subscribe());}
   startExtrasRealtime();
 
-  /* ---------- mini games ---------- */
+  /* ─── Games ─── */
   const GAME_SCORES_TABLE='game_scores', TTT_TABLE='tictactoe_game', CONNECT4_TABLE='connect4_game';
   const gameChooser=document.getElementById('gameChooser'), memoryMatchView=document.getElementById('memoryMatchView'), tictactoeView=document.getElementById('tictactoeView'), connect4View=document.getElementById('connect4View'), truthDareView=document.getElementById('truthDareView'), oddColorView=document.getElementById('oddColorView');
   const allGameViews=[memoryMatchView,tictactoeView,connect4View,truthDareView,oddColorView];
@@ -4461,7 +4837,6 @@ async function sha256Hex(text){
   chooseOddColor.addEventListener('click',openOddColor);
   document.querySelectorAll('.game-back-btn').forEach(b=>b.addEventListener('click',()=>{ clearInterval(memoryTimerInterval); clearTimeout(ocTimeout); showGameChooser(); }));
 
-  /* memory match */
   let memoryAuthor=localStorage.getItem('ourLittleUniverseMemoryAuthor')==='2'?'2':'1';
   function setMemoryAuthor(v){ memoryAuthor=v; localStorage.setItem('ourLittleUniverseMemoryAuthor',v); memoryAuthorToggle.dataset.author=v; memoryAuthorToggle.setAttribute('aria-label',`Currently playing as By ${v==='2'?'M':'J'} — tap to switch`); }
   memoryAuthorToggle.addEventListener('click',()=>setMemoryAuthor(memoryAuthor==='1'?'2':'1'));
@@ -4563,7 +4938,6 @@ async function sha256Hex(text){
       }, isMatch?450:800);
     }
   }
-  // Keeps only the best 5 scores stored per board size — called after every new score.
   async function trimLeaderboard(gameKey, orderColumn, ascending){
     if(!supabase) return;
     try{
@@ -4576,6 +4950,7 @@ async function sha256Hex(text){
     clearInterval(memoryTimerInterval);
     const seconds=Math.floor((Date.now()-memoryStartTime)/1000);
     showToast(`Cleared the board in ${memoryMoves} moves — nice! 🎉`);
+    haptic([20, 40, 20, 40, 20]);
     if(!supabase) return;
     const gameKey=`memory-${memoryGridSize}x${memoryGridSize}`;
     try{
@@ -4597,7 +4972,6 @@ async function sha256Hex(text){
   }
   memoryRestartBtn.addEventListener('click',startNewMemoryGame);
 
-  /* tic tac toe (async, turn-based) */
   let tttAuthor=localStorage.getItem('ourLittleUniverseTttAuthor')==='2'?'2':'1', tttBoardState=Array(9).fill(null), tttTurn=1, tttWinner=null, tttRealtimeStarted=false;
   function setTttAuthor(v){ tttAuthor=v; localStorage.setItem('ourLittleUniverseTttAuthor',v); tttAuthorToggle.dataset.author=v; tttAuthorToggle.setAttribute('aria-label',`Currently playing as By ${v==='2'?'M':'J'} — tap to switch`); renderTicTacToe(); }
   tttAuthorToggle.addEventListener('click',()=>setTttAuthor(tttAuthor==='1'?'2':'1'));
@@ -4642,7 +5016,7 @@ async function sha256Hex(text){
     if(error){ console.error(error); showToast('Could not save your move.',{type:'error'}); return; }
     tttBoardState=board; tttWinner=winner; tttTurn=winner?tttTurn:nextTurn;
     renderTicTacToe();
-    if(winner && winner!=='draw') burstConfetti(tttBoard);
+    if(winner && winner!=='draw'){ burstConfetti(tttBoard); haptic([30, 50, 30]); }
   }
   tttResetBtn.addEventListener('click', async ()=>{
     if(!supabase) return;
@@ -4657,7 +5031,6 @@ async function sha256Hex(text){
     supabase.channel('tictactoe-game').on('postgres_changes',{event:'*',schema:'public',table:TTT_TABLE},()=>{ if(!gamesWall.classList.contains('hidden')&&!tictactoeView.classList.contains('hidden')) loadTicTacToe(); }).subscribe();
   }
 
-  /* connect 4 (async, turn-based, 7 columns x 6 rows) */
   const c4Board=document.getElementById('c4Board'), c4Status=document.getElementById('c4Status'), c4ResetBtn=document.getElementById('c4ResetBtn'), c4AuthorToggle=document.getElementById('c4AuthorToggle');
   const C4_COLS=7, C4_ROWS=6;
   let c4Author=localStorage.getItem('ourLittleUniverseC4Author')==='2'?'2':'1', c4BoardState=Array(C4_COLS*C4_ROWS).fill(null), c4Turn=1, c4Winner=null, c4RealtimeStarted=false, c4LastDropIndex=null;
@@ -4692,8 +5065,6 @@ async function sha256Hex(text){
       if(data && Array.isArray(data.board) && data.board.length===total){
         c4BoardState=data.board; c4Turn=data.turn||1; c4Winner=data.winner||null;
       }else{
-        // the stored board is missing or the wrong size (e.g. a fresh row still
-        // holding its empty default) — start clean and repair it in the database
         c4BoardState=Array(total).fill(null); c4Turn=1; c4Winner=null;
         if(data){
           try{ await supabase.from(CONNECT4_TABLE).upsert({id:1,board:c4BoardState,turn:1,winner:null,updated_at:new Date().toISOString()}); }
@@ -4725,7 +5096,7 @@ async function sha256Hex(text){
     if(!supabase||c4Winner||Number(c4Author)!==Number(c4Turn)) return;
     let targetRow=-1;
     for(let row=C4_ROWS-1;row>=0;row--){ if(!c4BoardState[c4Index(col,row)]){ targetRow=row; break; } }
-    if(targetRow===-1) return; // column full
+    if(targetRow===-1) return;
     const board=[...c4BoardState];
     const idx=c4Index(col,targetRow);
     board[idx]=c4Author;
@@ -4735,7 +5106,7 @@ async function sha256Hex(text){
     if(error){ console.error(error); showToast('Could not save your move.',{type:'error'}); return; }
     c4BoardState=board; c4Winner=winner; c4Turn=winner?c4Turn:nextTurn; c4LastDropIndex=idx;
     renderConnect4();
-    if(winner && winner!=='draw') burstConfetti(c4Board);
+    if(winner && winner!=='draw'){ burstConfetti(c4Board); haptic([30, 50, 30]); }
   }
   c4ResetBtn.addEventListener('click', async ()=>{
     if(!supabase) return;
@@ -4750,7 +5121,6 @@ async function sha256Hex(text){
     supabase.channel('connect4-game').on('postgres_changes',{event:'*',schema:'public',table:CONNECT4_TABLE},()=>{ if(!gamesWall.classList.contains('hidden')&&!connect4View.classList.contains('hidden')) loadConnect4(); }).subscribe();
   }
 
-  /* truth or dare jar */
   const TRUTH_PROMPTS=[
     "What's a small thing I do that always makes you smile?",
     "What's a memory of us you replay in your head?",
@@ -4775,6 +5145,7 @@ async function sha256Hex(text){
   let tdLastPrompt=null;
   function pullTruthOrDare(){
     tdJar.classList.remove('shaking'); void tdJar.offsetWidth; tdJar.classList.add('shaking');
+    haptic(12);
     const isDare=Math.random()<0.5;
     const pool=isDare?DARE_PROMPTS:TRUTH_PROMPTS;
     let prompt=pool[Math.floor(Math.random()*pool.length)];
@@ -4796,7 +5167,6 @@ async function sha256Hex(text){
   tdJar.addEventListener('click',pullTruthOrDare);
   tdPullBtn.addEventListener('click',pullTruthOrDare);
 
-  /* odd one out (color spotting game) */
   const ocGrid=document.getElementById('ocGrid'), ocScoreEl=document.getElementById('ocScore'), ocHint=document.getElementById('ocHint'), ocTimerFill=document.getElementById('ocTimerFill'), ocGameOver=document.getElementById('ocGameOver'), ocFinalScore=document.getElementById('ocFinalScore'), ocPlayAgainBtn=document.getElementById('ocPlayAgainBtn'), ocLeaderboard=document.getElementById('ocLeaderboard'), oddColorAuthorToggle=document.getElementById('oddColorAuthorToggle');
   let oddColorAuthor=localStorage.getItem('ourLittleUniverseOddColorAuthor')==='2'?'2':'1', ocRound=0, ocScore=0, ocOddIndex=-1, ocTimeout=null, ocPlaying=false;
   function setOddColorAuthor(v){ oddColorAuthor=v; localStorage.setItem('ourLittleUniverseOddColorAuthor',v); oddColorAuthorToggle.dataset.author=v; oddColorAuthorToggle.setAttribute('aria-label',`Currently playing as By ${v==='2'?'M':'J'} — tap to switch`); }
@@ -4848,9 +5218,11 @@ async function sha256Hex(text){
     if(!ocPlaying) return;
     if(i===ocOddIndex){
       ocScore++;
+      haptic(10);
       clearTimeout(ocTimeout);
       nextOddColorRound();
     }else{
+      haptic([20, 30, 20]);
       endOddColorGame();
     }
   }
@@ -4882,7 +5254,7 @@ async function sha256Hex(text){
   }
   ocPlayAgainBtn.addEventListener('click',startOddColorGame);
 
-  /* ---------- break glass ---------- */
+  /* ─── Break glass ─── */
   const breakGlassBtn=document.getElementById('breakGlassBtn'), glassModal=document.getElementById('glassModal'), glassModalClose=document.getElementById('glassModalClose'), glassAngerChoice=document.getElementById('glassAngerChoice'), glassPane=document.getElementById('glassPane'), glassCrackSvg=document.getElementById('glassCrack'), glassHint=document.getElementById('glassHint'), glassTapCounter=document.getElementById('glassTapCounter'), glassNote=document.getElementById('glassNote'), glassNoteText=document.getElementById('glassNoteText'), glassEditBtn=document.getElementById('glassEditBtn'), glassEditForm=document.getElementById('glassEditForm'), glassNoteInput=document.getElementById('glassNoteInput'), glassEditCancel=document.getElementById('glassEditCancel');
   const DEFAULT_GLASS_NOTE="Hey love. Whatever just happened, it doesn't change us. Let's breathe for a second — I love you more than I'm upset right now, and I'd rather work this out together than win it. Come find me when you're ready? 🤍";
   const ANGER_LEVELS = [
@@ -4924,12 +5296,10 @@ async function sha256Hex(text){
       glassTapCounter.classList.remove('visible');
       glassAngerChoice.classList.add('hidden');
       glassPane.classList.remove('hidden');
+      haptic(10);
     });
   });
 
-  // Draws a small burst of jagged crack lines radiating from the exact spot tapped.
-  // Bigger/more branches for higher anger levels, and cracks grow larger as taps
-  // progress toward the total needed, so most of the glass looks shattered right at the end.
   function addGlassImpact(x, y){
     const level = glassLevel;
     const progress = glassTapCount / level.taps;
@@ -4951,7 +5321,6 @@ async function sha256Hex(text){
       path.style.animation = `crackDraw ${Math.max(.16,.32/Math.sqrt(level.intensity))}s ease forwards`;
       path.style.animationDelay = (i*0.025)+'s';
     }
-    // extra hairline cracks nearby for angrier levels and later taps, for a denser shattered look
     const extras = Math.round((level.intensity > 1.5 ? 1.2 : 0.6) + progress*2.2);
     for(let j=0;j<extras;j++){
       const a2 = Math.random()*Math.PI*2, len2 = (8+Math.random()*12) * (0.8+level.intensity*0.3) * (0.6+progress*1.4);
@@ -4964,7 +5333,6 @@ async function sha256Hex(text){
       path2.style.animation = 'crackDraw .2s ease forwards';
       path2.style.animationDelay = (0.06+j*0.03)+'s';
     }
-    // a couple of light-catching glints right at the impact point
     const glints = 1 + (Math.random()<0.5?1:0);
     for(let k=0;k<glints;k++){
       const glint = document.createElement('span');
@@ -4984,6 +5352,7 @@ async function sha256Hex(text){
     const vbY = ((e.clientY - rect.top) / rect.height) * 220;
     glassTapCount++;
     addGlassImpact(vbX, vbY);
+    haptic(8);
     playGlassTapSound(glassLevel.intensity);
     glassPane.classList.remove('cracking'); void glassPane.offsetWidth; glassPane.classList.add('cracking');
     glassHint.style.display='none';
@@ -4991,6 +5360,7 @@ async function sha256Hex(text){
     glassTapCounter.classList.add('visible');
     if(glassTapCount >= glassLevel.taps){
       glassBroken=true;
+      haptic([30, 50, 30, 50, 30]);
       glassTapCounter.classList.remove('visible');
       setTimeout(()=>{ glassPane.classList.add('broken'); glassNote.classList.remove('hidden'); },450);
     }
@@ -5002,12 +5372,13 @@ async function sha256Hex(text){
     breakGlassMessage=glassNoteInput.value.trim()||DEFAULT_GLASS_NOTE;
     glassNoteText.textContent=breakGlassMessage;
     glassEditForm.classList.add('hidden');
+    haptic(10);
     if(!supabase) return;
     try{ await supabase.from(SETTINGS_TABLE).upsert({id:1,break_glass_message:breakGlassMessage}); showToast('Saved for next time 🤍'); }
     catch(err){ console.error(err); showToast('Could not save that note.',{type:'error'}); }
   });
 
-  /* ---------- voice notes recording ---------- */
+  /* ─── Voice notes ─── */
   const MAX_RECORDING_SECONDS = 120;
   let mediaRecorder = null;
   let audioChunks = [];
@@ -5130,6 +5501,7 @@ async function sha256Hex(text){
 
       noteInput.value = '';
       showToast('Voice note saved!');
+      haptic(15);
       loadNotes();
     }catch(err){
       console.error('Could not save voice note:', err);
@@ -5137,7 +5509,6 @@ async function sha256Hex(text){
     }
   }
 
-  /* ---------- 3-2-1 recording countdown ---------- */
   let countdownInProgress = false;
   let countdownCancelled = false;
 
@@ -5148,7 +5519,7 @@ async function sha256Hex(text){
   function showCountdownNumber(n){
     countdownNumber.textContent = n;
     countdownNumber.classList.remove('countdown-pulse');
-    void countdownNumber.offsetWidth; // restart the animation each tick
+    void countdownNumber.offsetWidth;
     countdownNumber.classList.add('countdown-pulse');
   }
 
@@ -5161,6 +5532,7 @@ async function sha256Hex(text){
     for (const n of [3, 2, 1]){
       if (countdownCancelled) break;
       showCountdownNumber(n);
+      haptic([10, 20, 10]);
       await delay(1000);
     }
 
@@ -5185,7 +5557,7 @@ async function sha256Hex(text){
     }
   });
 
-  /* ---------- editable title & subtitle ---------- */
+  /* ─── Editable title ─── */
   const SETTINGS_TABLE = 'site_settings';
 
   async function loadSiteSettings(){
@@ -5223,6 +5595,7 @@ async function sha256Hex(text){
     siteTitle.textContent = newTitle;
     siteSubtitle.textContent = newSubtitle;
     titleEditForm.classList.add('hidden');
+    haptic(10);
     if (supabase){
       try{
         await supabase.from(SETTINGS_TABLE).upsert({ id: 1, title: newTitle, subtitle: newSubtitle });
@@ -5233,7 +5606,7 @@ async function sha256Hex(text){
     }
   });
 
-  /* ---------- full backup export ---------- */
+  /* ─── Backup ─── */
   async function downloadBackup(){
     if (!photos.length){
       showToast('No memories to back up yet.');
@@ -5297,12 +5670,12 @@ async function sha256Hex(text){
 
   backupBtn.addEventListener('click', downloadBackup);
 
-  /* ---------- downloadable memory card ---------- */
+  /* ─── Downloadable memory card ─── */
   async function downloadMemoryCard(photo){
     try{
       await document.fonts.load('32px Caveat');
       await document.fonts.load('16px Quicksand');
-    }catch(e){ /* fonts may already be loaded; safe to continue either way */ }
+    }catch(e){}
 
     const { img } = await fileToImage(await (await fetch(photo.src)).blob());
     const W = 600, H = 750, pad = 36, photoH = 560;
@@ -5357,10 +5730,6 @@ async function sha256Hex(text){
     lines.forEach((l, i) => ctx.fillText(l.trim(), x, startY + i * lineHeight));
   }
 
-
-  /* ---------- soft ambient background music ----------
-     Generated entirely in the browser (no audio file needed) —
-     a few soft sustained tones with a slow filter sweep. */
   let audioCtx = null;
   let musicNodes = null;
   let musicOn = false;
@@ -5435,9 +5804,9 @@ async function sha256Hex(text){
     document.body.classList.toggle('dark-mode');
     localStorage.setItem(THEME_KEY, document.body.classList.contains('dark-mode') ? 'dark' : 'light');
     updateThemeBtn();
+    haptic(10);
   });
 
-  /* ---------- on this day ---------- */
   function maybeShowOnThisDay(){
     const now = new Date();
     const eligible = photos.filter(p => {
@@ -5465,7 +5834,6 @@ async function sha256Hex(text){
     onThisDay.classList.add('hidden');
   });
 
-  /* ---------- optional seasonal skins ---------- */
   const SEASON_KEY = 'ourLittleUniverseSeason';
   function renderSeasonalScene(renderKey){
     seasonalLayer.innerHTML = '';
@@ -5631,17 +5999,12 @@ async function sha256Hex(text){
     }
   }
 
-  /* ---------- weather-synced theme ----------
-     Uses the free Open-Meteo API (no key needed) plus the browser's
-     location permission to reflect today's *real* weather, reusing the
-     existing rain/snow art. Only runs when someone picks this theme
-     themselves — never on by default. */
   function mapWeatherCodeToScene(code){
     if (code === null || code === undefined) return 'none';
     if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'rain';
     if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow';
-    if (code >= 95) return 'rain'; // thunderstorms reuse the rain art
-    return 'none'; // clear, cloudy, fog — kept subtle, no overlay
+    if (code >= 95) return 'rain';
+    return 'none';
   }
   function fetchLiveWeather(){
     if (!navigator.geolocation){
@@ -5653,7 +6016,7 @@ async function sha256Hex(text){
       fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`)
         .then(res => res.json())
         .then(data => {
-          if (localStorage.getItem(SEASON_KEY) !== 'weather') return; // theme changed while we were fetching
+          if (localStorage.getItem(SEASON_KEY) !== 'weather') return;
           const code = data && data.current_weather ? data.current_weather.weathercode : null;
           const mapped = mapWeatherCodeToScene(code);
           seasonalLayer.className = 'seasonal-layer weather' + (mapped !== 'none' ? ` ${mapped}` : '');
@@ -5706,13 +6069,6 @@ async function sha256Hex(text){
     fileInput.click();
   });
 
-  /* ---------- smooth crossfade for sort/filter/search changes ----------
-     A simple, fully manual opacity crossfade on the grid itself. This
-     used to use the browser's View Transitions API, but that API's
-     built-in cross-fade compositing was causing an occasional white
-     flash on some devices even with overlap-guarding — since we don't
-     need anything fancier than a fade, doing it by hand with a plain
-     CSS opacity transition sidesteps that entirely. */
   let transitionBusy = false;
   function transitionRender(){
     if (transitionBusy){ render(); return; }
@@ -5732,6 +6088,7 @@ async function sha256Hex(text){
     showFavoritesOnly = !showFavoritesOnly;
     favFilterBtn.classList.toggle('active', showFavoritesOnly);
     favFilterBtn.textContent = showFavoritesOnly ? '♥ Showing favorites' : '♡ Favorites only';
+    haptic(8);
     transitionRender();
   });
 
@@ -5766,6 +6123,7 @@ async function sha256Hex(text){
       item.setAttribute('aria-checked', String(selected));
     });
     closePhotoSortMenu();
+    haptic(8);
     transitionRender();
   }));
   document.addEventListener('click', (event) => {
@@ -5781,17 +6139,10 @@ async function sha256Hex(text){
       .filter(i => i !== -1);
     if (!eligibleIndexes.length) return;
     const idx = eligibleIndexes[Math.floor(Math.random() * eligibleIndexes.length)];
+    haptic(10);
     openLightbox(idx);
   });
 
-  /* ---------- cursor-reactive theme effects (desktop only) ----------
-     Moving the mouse during the Monsoon theme leaves little water ripples;
-     during Cherry Blossom it brushes off small petals; Snowfall trails tiny
-     snowflakes; Autumn drizzle brushes off small leaves; Night sky and
-     Birthday stars leave a trail of tiny stars; Fireflies leaves a trail of
-     tiny glowing fireflies. Only runs on devices with a real mouse
-     (hover+fine pointer), so it does nothing on touchscreens — there's no
-     persistent cursor there to react to. */
   (function setupCursorSeasonalEffects(){
     if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
     let lastSpawn = 0;
@@ -5866,18 +6217,10 @@ async function sha256Hex(text){
     });
   })();
 
-  /* ---------- shake to shuffle ----------
-     On desktop/laptop, shaking (if the device supports it) still triggers
-     "Surprise me", same as before. On mobile, shaking instead reveals a
-     centered compliment card (since the lurking envelope is hidden there).
-     Note: browsers only allow motion-sensor access on secure origins
-     (https:// or localhost). If this file is opened directly from local
-     storage or a content:// link instead of the deployed https:// site,
-     the motion event will never fire — that's a browser/OS restriction,
-     not a bug here. It works once the site is hosted over https. */
   (function setupShakeToShuffle(){
     let lastX=null, lastY=null, lastZ=null, lastShakeTime=0;
-    const SHAKE_THRESHOLD = 10, SHAKE_COOLDOWN = 1300;
+    const SHAKE_THRESHOLD = 18; // Increased from 10 to prevent accidental triggers
+    const SHAKE_COOLDOWN = 1300;
     if (typeof window.isSecureContext !== 'undefined' && !window.isSecureContext){
       console.warn('Shake to shuffle needs a secure (https://) origin to access motion sensors — it will be inactive on this preview.');
     }
@@ -5886,10 +6229,11 @@ async function sha256Hex(text){
     function showShakeCompliment(){
       shakeComplimentText.textContent = COMPLIMENT_LINES[Math.floor(Math.random() * COMPLIMENT_LINES.length)];
       shakeComplimentModal.classList.remove('hidden');
+      haptic(15);
     }
     shakeComplimentModal.addEventListener('click', () => shakeComplimentModal.classList.add('hidden'));
     function handleMotion(e){
-      if (!passGate.classList.contains('hidden')) return; // only once unlocked
+      if (!passGate.classList.contains('hidden')) return;
       const acc = e.accelerationIncludingGravity || e.acceleration;
       if (!acc || acc.x === null) return;
       const { x, y, z } = acc;
@@ -5899,13 +6243,13 @@ async function sha256Hex(text){
       const now = Date.now();
       if (delta > SHAKE_THRESHOLD && now - lastShakeTime > SHAKE_COOLDOWN){
         lastShakeTime = now;
+        haptic(20);
         if (window.innerWidth <= 600) showShakeCompliment();
         else surpriseBtn.click();
       }
     }
     if (typeof DeviceMotionEvent === 'undefined') return;
     if (typeof DeviceMotionEvent.requestPermission === 'function'){
-      // iOS requires a user gesture before it will grant motion access
       document.addEventListener('click', function requestOnce(){
         DeviceMotionEvent.requestPermission().then(state => {
           if (state === 'granted') window.addEventListener('devicemotion', handleMotion);
@@ -5917,12 +6261,6 @@ async function sha256Hex(text){
     }
   })();
 
-  /* ---------- love envelope ----------
-     A small envelope tab lurks on the edge of the screen. Tapping it opens
-     with a little wiggle and a note slides out showing a random line from
-     COMPLIMENT_LINES near the top of this script. It then disappears for
-     the rest of this visit — reloading or reopening the page brings it
-     back (nothing is stored, it's just plain in-memory state). */
   (function setupLoveEnvelope(){
     const envelopeBtn = document.getElementById('loveEnvelopeBtn');
     const envelopeIcon = document.getElementById('envelopeIcon');
@@ -5935,11 +6273,12 @@ async function sha256Hex(text){
       envelopeNoteText.textContent = COMPLIMENT_LINES[Math.floor(Math.random() * COMPLIMENT_LINES.length)];
       envelopeIcon.textContent = '💖';
       envelopeNote.classList.remove('hidden');
-      void envelopeNote.offsetWidth; // restart the pop-in animation if reopened quickly
+      void envelopeNote.offsetWidth;
       envelopeNote.style.animation = 'none';
       void envelopeNote.offsetWidth;
       envelopeNote.style.animation = '';
       envelopeOpen = true;
+      haptic(10);
     }
     function closeEnvelope(){
       envelopeNote.classList.add('hidden');
@@ -5960,11 +6299,6 @@ async function sha256Hex(text){
     });
   })();
 
-  /* ---------- upload filters (opt-in per upload) ----------
-     Each filter is just a CSS filter string applied via the canvas's
-     built-in filter engine — the same syntax as CSS `filter:`, so
-     adding more filters later is just adding another entry here.
-     "vignette" adds the soft dark-edge overlay used by Vintage. */
   function fileToImage(file){
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -6005,13 +6339,6 @@ async function sha256Hex(text){
     }
   }
 
-  /* ---------- resize + compress every upload ----------
-     By default, caps the longer side at 1920px and saves as JPEG at 85%
-     quality — invisible on screen but shrinks file size meaningfully.
-     If "keep original quality" is chosen, the resize cap is skipped and
-     a much higher quality setting is used instead (a full pixel-for-pixel
-     original is only possible with the "As it is" filter, since any
-     other filter always requires re-encoding through canvas). */
   const MAX_DIMENSION = 1920;
   const JPEG_QUALITY = 0.85;
   const JPEG_QUALITY_HIGH = 0.97;
@@ -6093,8 +6420,6 @@ async function sha256Hex(text){
           .catch(err => console.error('Could not build style preview:', err));
       }
 
-      // Reset per-upload options so a choice from a previous photo
-      // never silently carries over to the next one.
       surpriseToggle.checked = false;
       surpriseHintText = '';
       surpriseCaptionText = '';
@@ -6115,10 +6440,10 @@ async function sha256Hex(text){
     });
   }
 
-  /* ---------- milestone celebration ---------- */
   const MILESTONES = [10, 50, 100, 250, 500, 1000];
   function checkMilestone(count){
     if (!MILESTONES.includes(count)) return;
+    haptic([30, 50, 30, 50, 30]);
     milestoneTitle.textContent = `🎉 ${count} memories pinned!`;
     milestoneText.textContent = 'a little universe, growing one moment at a time';
     milestoneBanner.classList.remove('hidden');
@@ -6150,7 +6475,6 @@ async function sha256Hex(text){
       try{
         let uploadFile;
         if (keepOriginal && choice === 'original'){
-          // true pixel-for-pixel original, no re-encoding at all
           uploadFile = file;
         }else{
           const blob = await processPhoto(file, choice, keepOriginal);
@@ -6161,6 +6485,7 @@ async function sha256Hex(text){
         photos.push(record);
         render();
         burstHearts(heroAddBtn);
+        haptic(15);
         playPinChime();
         checkMilestone(photos.length);
         uploaded++;
@@ -6183,7 +6508,6 @@ async function sha256Hex(text){
     return deg + 'deg';
   }
 
-  /* ---------- render ---------- */
   let hasRenderedOnce = false;
 
   function render(){
@@ -6428,6 +6752,11 @@ async function sha256Hex(text){
 
     favBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
+      if (!photo.favorite){
+        const rect = favBtn.getBoundingClientRect();
+        heartBloom(rect.left + rect.width/2, rect.top + rect.height/2);
+        haptic(10);
+      }
       photo.favorite = !photo.favorite;
       favBtn.textContent = photo.favorite ? '♥' : '♡';
       favBtn.classList.toggle('active', photo.favorite);
@@ -6451,6 +6780,7 @@ async function sha256Hex(text){
       }else if (badge){
         badge.remove();
       }
+      haptic(8);
       await savePhotoMood(photo);
     }
     moodBtns.forEach(btn => {
@@ -6493,7 +6823,6 @@ async function sha256Hex(text){
     return div.innerHTML;
   }
 
-  /* ---------- lightbox ---------- */
   function openLightbox(index, kind='photo'){
     lightboxIndex = index;
     lightbox.classList.toggle('doodle-lightbox',kind==='doodle');
@@ -6526,7 +6855,6 @@ async function sha256Hex(text){
   lightboxPrev.addEventListener('click', () => { lightboxIndex--; showLightboxPhoto(); });
   lightboxNext.addEventListener('click', () => { lightboxIndex++; showLightboxPhoto(); });
 
-  /* ---------- ambient hearts ---------- */
   function buildAmbientHearts(){
     const el = document.getElementById('ambient');
     const symbols = ['♥', '✿', '♡'];
@@ -6541,12 +6869,6 @@ async function sha256Hex(text){
     }
   }
 
-  /* ---------- live presence ----------
-     Uses Supabase's Realtime Presence — a live WebSocket channel that
-     doesn't touch any database table. Each browser gets a persistent
-     random ID (stored locally, never shown anywhere), and the dot
-     lights up whenever two different IDs are connected to the same
-     channel at once — meaning both of you have the page open right now. */
   const PRESENCE_ID_KEY = 'ourLittleUniversePresenceId';
   function getPresenceId(){
     let id = localStorage.getItem(PRESENCE_ID_KEY);
