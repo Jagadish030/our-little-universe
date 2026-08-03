@@ -1755,6 +1755,24 @@
             gap: .2rem;
             max-width: 100%;
         }
+        .feeling-note .hidden {
+            display: none !important;
+        }
+        .feeling-clear {
+            width: 18px;
+            height: 18px;
+            padding: 0;
+            border: 0;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--ink-soft);
+            font: 700 .82rem/1 sans-serif;
+            cursor: pointer;
+        }
+        .feeling-clear:hover {
+            background: var(--rose-deep);
+            color: var(--white);
+        }
         .feeling-note .feeling-entry .feeling-text {
             max-width: clamp(90px, 24vw, 240px);
             overflow: hidden;
@@ -6415,6 +6433,42 @@
                 -webkit-backdrop-filter: blur(6px);
             }
         }
+        /* ─── Together additions ─── */
+        .together-rituals { display:flex; flex-wrap:wrap; justify-content:center; gap:.65rem; margin:1rem auto .25rem; max-width:700px; }
+        .ritual-card { display:flex; align-items:center; gap:.55rem; padding:.55rem .75rem; border:1px solid var(--card-border); border-radius:999px; background:var(--glass-bg-strong); color:var(--ink); box-shadow:0 5px 14px var(--shadow); font:600 .78rem 'Quicksand',sans-serif; }
+        .ritual-card button { border:0; background:transparent; color:inherit; font:inherit; cursor:pointer; padding:.15rem; }
+        .ritual-card input { width:105px; border:0; border-bottom:1px dashed var(--rose-deep); background:transparent; color:var(--ink); font:600 .75rem 'Quicksand',sans-serif; outline:none; }
+        .touch-heart { width:42px; height:42px; border-radius:50%; border:0; background:linear-gradient(135deg,var(--rose),var(--rose-deep)); color:white; font-size:1.25rem; cursor:pointer; box-shadow:0 5px 14px var(--shadow); }
+        .touch-heart.pulsing { animation:touchPulse .8s ease-in-out infinite; }
+        @keyframes touchPulse { 50% { transform:scale(1.16); box-shadow:0 0 0 12px rgba(217,138,147,.14),0 0 26px var(--rose-deep); } }
+        .together-game { max-width:680px; margin:1rem auto 0; text-align:center; }
+        .together-game h3 { margin:.25rem 0; font:700 1.5rem 'Caveat',cursive; color:var(--ink); }
+        .together-game .game-copy { color:var(--ink-soft); font-size:.82rem; }
+        .together-game .game-controls { display:flex; flex-wrap:wrap; justify-content:center; gap:.55rem; margin:.8rem 0; }
+        .together-game input,.together-game select { min-width:0; border:1px solid var(--card-border); border-radius:10px; padding:.55rem .65rem; background:var(--paper); color:var(--ink); font:600 .82rem 'Quicksand',sans-serif; }
+        .together-game button { border:0; border-radius:10px; padding:.58rem .75rem; background:var(--rose-deep); color:white; font:700 .78rem 'Quicksand',sans-serif; cursor:pointer; }
+        .together-game .game-back-btn { display:inline-block; padding:.25rem 0; border:0; border-radius:0; background:none; color:var(--ink-soft); font:600 .8rem 'Quicksand',sans-serif; }
+        .together-game .game-back-btn:hover { color:var(--rose-deep); transform:translateX(-2px); }
+        .reaction-target { width:124px; height:124px; margin:.7rem auto; border-radius:50%; display:grid; place-items:center; background:var(--paper-deep); color:var(--ink-soft); font:700 .85rem 'Quicksand',sans-serif; transition:.18s; user-select:none; }
+        .reaction-target.ready { background:#e75b5b; color:white; transform:scale(1.06); box-shadow:0 0 0 9px rgba(231,91,91,.16); }
+        .wordle-grid { display:grid; grid-template-columns:repeat(5, minmax(36px, 50px)); gap:6px; justify-content:center; margin:1rem auto; }
+        .wordle-tile { width:clamp(36px, 10vw, 50px); aspect-ratio:1; display:grid; place-items:center; border:2px solid var(--card-border); border-radius:7px; color:var(--ink); font:700 1.15rem 'Quicksand',sans-serif; text-transform:uppercase; }
+        .wordle-tile.correct { background:#6aaa64; border-color:#6aaa64; color:white; }
+        .wordle-tile.present { background:#c9b458; border-color:#c9b458; color:white; }
+        .wordle-tile.absent { background:#787c7e; border-color:#787c7e; color:white; }
+        .wordle-role { display:flex; justify-content:center; margin:.65rem 0 .35rem; }
+        .wordle-scoreboard { display:flex; justify-content:center; gap:.5rem; margin:.45rem 0 .85rem; color:var(--ink); font:700 .78rem 'Quicksand',sans-serif; }
+        .wordle-scoreboard span { padding:.34rem .6rem; border:1px solid var(--card-border); border-radius:999px; background:var(--glass-bg); }
+        .together-game .wordle-action { background:transparent; color:var(--rose-deep); border:1px solid var(--rose-deep); border-radius:999px; padding:.62rem 1rem; font-size:.84rem; }
+        .together-game .wordle-action:hover { background:var(--rose-deep); color:var(--white); }
+        .wordle-new-game { margin:.2rem auto .5rem; }
+        .wordle-new-game.hidden { display:none; }
+        .score-list { margin:.55rem auto; max-width:360px; color:var(--ink-soft); font-size:.78rem; }
+        .secret-note { position:fixed; inset:0; z-index:700; display:grid; place-items:center; pointer-events:none; opacity:0; background:radial-gradient(circle,rgba(217,138,147,.35),transparent 55%); transition:opacity .3s; }
+        .secret-note.show { opacity:1; animation:secretFade 3.4s ease forwards; }
+        .secret-note span { padding:1.3rem 1.7rem; border-radius:16px; background:var(--white); color:var(--ink); box-shadow:0 18px 40px var(--shadow); font:2rem 'Caveat',cursive; }
+        @keyframes secretFade { 0%,75% { opacity:1; } 100% { opacity:0; } }
+        @media (max-width:480px) { .ritual-card{width:100%;justify-content:center}.together-game .game-controls{gap:.4rem}.together-game input{max-width:150px} }
     </style>
 </head>
 
@@ -6516,11 +6570,13 @@
                     <span class="feeling-entry author-j hidden" id="feelingEntryJ">
                         <span class="feeling-text" id="feelingTextJ"></span>
                         <span class="feeling-author">— J</span>
+                        <button type="button" class="feeling-clear" data-feeling="j" aria-label="Delete J's feeling">×</button>
                     </span>
                     <span class="feeling-sep hidden" id="feelingSep">|</span>
                     <span class="feeling-entry author-m hidden" id="feelingEntryM">
                         <span class="feeling-text" id="feelingTextM"></span>
                         <span class="feeling-author">— M</span>
+                        <button type="button" class="feeling-clear" data-feeling="m" aria-label="Delete M's feeling">×</button>
                     </span>
                 </div>
                 <form class="feeling-note-form hidden" id="feelingNoteForm">
@@ -6614,6 +6670,9 @@
             <div class="presence-indicator" id="presenceIndicator" title="">
                 <span class="presence-dot" id="presenceDot"></span>
                 <span id="presenceText">just you right now</span>
+            </div>
+            <div class="together-rituals" aria-label="Together rituals">
+                <div class="ritual-card"><button id="touchHeartBtn" class="touch-heart" type="button" aria-label="Send a thinking of you touch">♥</button><span id="touchHint">press &amp; hold to send a touch</span></div>
             </div>
 
             <div class="on-this-day hidden" id="onThisDay">
@@ -6794,6 +6853,8 @@
                         <button type="button" class="game-choice-btn" id="chooseConnect4">🔴<span>Connect 4</span><small>take turns, any time</small></button>
                         <button type="button" class="game-choice-btn" id="chooseTruthDare">🫙<span>Truth or Dare Jar</span><small>pull a prompt</small></button>
                         <button type="button" class="game-choice-btn" id="chooseOddColor">🎨<span>Odd One Out</span><small>spot the different color</small></button>
+                        <button type="button" class="game-choice-btn" id="chooseReaction">❤️<span>Heart Reflex</span><small>tap when it turns red</small></button>
+                        <button type="button" class="game-choice-btn" id="chooseWordle">🟩<span>Our Wordle</span><small>solve the five-letter word</small></button>
                     </div>
                 </div>
                 <div class="game-view hidden" id="memoryMatchView">
@@ -6854,6 +6915,8 @@
                         <div class="oc-leaderboard" id="ocLeaderboard"></div>
                     </div>
                 </div>
+                <div class="game-view hidden together-game" id="reactionView"><button type="button" class="game-back-btn">‹ back to games</button><h3>Heart Reflex</h3><p class="game-copy" id="reactionStatus">Both of you need to be here to start.</p><div class="reaction-target" id="reactionTarget">waiting…</div><button id="reactionStartBtn" type="button">Start shared round</button><div class="score-list" id="reactionScores"></div></div>
+                <div class="game-view hidden together-game" id="wordleView"><button type="button" class="game-back-btn">‹ back to games</button><h3>Our Wordle</h3><div class="wordle-role"><button type="button" class="note-author-toggle extra-author" data-author="1" id="wordleAuthorToggle" aria-label="Choose whether J or M is setting the word"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">J</span><span class="toggle-letter" data-letter="2">M</span></span></button></div><p class="game-copy" id="wordleStatus">Choose who is setting a five-letter word.</p><div class="wordle-scoreboard"><span id="wordleJScore">J · 0 wins</span><span id="wordleMScore">M · 0 wins</span></div><div class="game-controls"><input id="wordleAnswer" maxlength="5" inputmode="text" autocapitalize="characters" placeholder="five-letter word"><button id="wordleSetBtn" class="wordle-action" type="button">Set word</button></div><div class="wordle-grid" id="wordleGrid" aria-label="Wordle board"></div><div class="game-controls"><input id="wordleGuess" maxlength="5" inputmode="text" autocapitalize="characters" placeholder="enter a guess"><button id="wordleGuessBtn" class="wordle-action" type="button">Try guess</button></div><button id="wordleNewGameBtn" class="wordle-action wordle-new-game hidden" type="button">Start a new game</button></div>
             </div>
         </section>
 
@@ -9299,7 +9362,7 @@
 
             function showGameChooser() {
                 gameChooser.classList.remove('hidden');
-                allGameViews.forEach(v => v.classList.add('hidden'));
+                document.querySelectorAll('#gamesWall .game-view').forEach(v => v.classList.add('hidden'));
             }
 
             function openMemoryMatch() {
@@ -10403,6 +10466,17 @@
                     form.classList.add('hidden');
                     noteEl.classList.remove('hidden');
                 });
+                noteEl.querySelectorAll('.feeling-clear').forEach(button => button.addEventListener('click', async(e) => {
+                    e.stopPropagation();
+                    const suffix = button.dataset.feeling;
+                    const patch = { [`feeling_${suffix}`]: null, [`feeling_${suffix}_updated_at`]: null };
+                    if (supabase) {
+                        const { error } = await supabase.from(SETTINGS_TABLE).upsert({ id: 1, ...patch });
+                        if (error) { console.error('Could not delete feeling:', error); showToast('Could not delete that.', { type: 'error' }); return; }
+                    }
+                    loadSiteSettings();
+                    haptic(8);
+                }));
                 form.addEventListener('submit', async(e) => {
                     e.preventDefault();
                     const val = input.value.trim();
@@ -10411,7 +10485,8 @@
                     const patch = { [field]: val || null, [timeField]: val ? new Date().toISOString() : null };
                     if (supabase) {
                         try {
-                            await supabase.from(SETTINGS_TABLE).upsert({ id: 1, ...patch });
+                            const { error } = await supabase.from(SETTINGS_TABLE).upsert({ id: 1, ...patch });
+                            if (error) throw error;
                         } catch (err) {
                             console.error('Could not save feeling status:', err);
                             showToast('Could not save that.', { type: 'error' });
@@ -11792,6 +11867,54 @@
                 });
             });
         }
+    </script>
+    <div class="secret-note" id="secretNote" aria-live="polite"><span>you found our little secret ✨</span></div>
+    <script>
+    (() => {
+      const url = 'https://cctlzqlchijwrxrxnmmm.supabase.co';
+      const key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjdGx6cWxjaGlqd3J4cnhubW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MDg1NTksImV4cCI6MjA5OTQ4NDU1OX0.5cEM69NsRjiN2d1XqzFcqVmSp8Db0AqxRr6wLJmm5Yc';
+      const db = window.supabase ? window.supabase.createClient(url, key) : null;
+      const $ = id => document.getElementById(id);
+      const toast = m => { if (typeof showToast === 'function') showToast(m); else window.alert(m); };
+      const visitor = localStorage.luTogetherId || (localStorage.luTogetherId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())));
+      const today = () => new Date().toISOString().slice(0,10);
+      let touchTimer, touchChannel, bothOnline = false, wordleGame = null;
+
+      function pulseTouch(text='thinking of you ♥') { $('touchHeartBtn').classList.add('pulsing'); $('touchHint').textContent=text; setTimeout(()=>{$('touchHeartBtn').classList.remove('pulsing'); $('touchHint').textContent='press & hold to send a touch';},2600); }
+      $('touchHeartBtn').addEventListener('pointerdown', () => { touchTimer=setTimeout(async()=>{ if (!db) return toast('Connect Supabase first.'); await db.from('touch_events').insert({sender_id:visitor}); pulseTouch('sent across the distance ♥'); },550); });
+      ['pointerup','pointerleave','pointercancel'].forEach(e=>$('touchHeartBtn').addEventListener(e,()=>clearTimeout(touchTimer)));
+
+      function openGame(view) { document.querySelectorAll('#gamesWall .game-view').forEach(v=>v.classList.add('hidden')); $('gameChooser').classList.add('hidden'); $(view).classList.remove('hidden'); }
+      $('chooseReaction').addEventListener('click',()=>{openGame('reactionView'); loadScores();});
+      $('chooseWordle').addEventListener('click',()=>{openGame('wordleView'); loadWordle();});
+
+      let reactionReady=false;
+      $('reactionStartBtn').addEventListener('click',async()=>{
+        if (!bothOnline) return toast('This round needs both of you online.');
+        if (!db) return toast('Connect Supabase first.');
+        const target=new Date(Date.now()+2000+Math.random()*3000).toISOString();
+        await db.from('reaction_games').upsert({id:1,target_at:target,started_by:visitor,updated_at:new Date().toISOString()});
+      });
+      function runReaction(row) { const delay=Math.max(0,new Date(row.target_at)-Date.now()); reactionReady=false; $('reactionTarget').classList.remove('ready'); $('reactionTarget').textContent='wait for it…'; setTimeout(()=>{reactionReady=true;$('reactionTarget').classList.add('ready');$('reactionTarget').textContent='TAP!';},delay); }
+      $('reactionTarget').addEventListener('click',async()=>{ if(!reactionReady||!db)return; reactionReady=false; const ms=Date.now()-Number($('reactionTarget').dataset.target||Date.now()); $('reactionTarget').classList.remove('ready'); $('reactionTarget').textContent=`${ms} ms!`; await db.from('reaction_scores').insert({player_id:visitor,score_ms:Math.max(0,ms)}); loadScores(); });
+      async function loadScores(){ if(!db)return; const {data}=await db.from('reaction_scores').select('*').order('score_ms').limit(5); $('reactionScores').textContent=data&&data.length ? 'Best reactions: '+data.map((s,i)=>`${i+1}. ${s.score_ms}ms`).join(' · ') : 'No scores yet — start a round.'; }
+
+      let wordlePlayer=localStorage.luWordlePlayer==='M'?'M':'J';
+      const wordleToggle=$('wordleAuthorToggle');
+      function setWordlePlayer(player){wordlePlayer=player;localStorage.luWordlePlayer=player;wordleToggle.dataset.author=player==='J'?'1':'2';}
+      setWordlePlayer(wordlePlayer);
+      wordleToggle.addEventListener('click',()=>setWordlePlayer(wordlePlayer==='J'?'M':'J'));
+      function wordleMarks(answer, guess) { const marks=Array(5).fill('absent'), remaining=answer.split(''); guess.split('').forEach((letter,i)=>{if(letter===answer[i]){marks[i]='correct';remaining[i]=null;}}); guess.split('').forEach((letter,i)=>{if(marks[i]!=='correct'){const at=remaining.indexOf(letter);if(at!==-1){marks[i]='present';remaining[at]=null;}}}); return marks; }
+      function wordleConfetti(){const box=$('wordleGrid').getBoundingClientRect(), colors=['#ff6f91','#ffc75f','#82e0aa','#7fd8ff','#c39bff'];for(let i=0;i<28;i++){const bit=document.createElement('span');bit.className='confetti-piece';bit.style.background=colors[i%colors.length];bit.style.width='7px';bit.style.height='5px';bit.style.left=(box.left+box.width/2)+'px';bit.style.top=(box.top+box.height/2)+'px';const a=Math.random()*Math.PI*2,d=45+Math.random()*130;bit.style.setProperty('--cx',(Math.cos(a)*d)+'px');bit.style.setProperty('--cy',(Math.sin(a)*d+80)+'px');bit.style.setProperty('--crot',(Math.random()*720-360)+'deg');document.body.append(bit);setTimeout(()=>bit.remove(),1800);}}
+      function drawWordle() { const grid=$('wordleGrid'); grid.innerHTML=''; const active=wordleGame&&wordleGame.round_active!==false, attempts=active&&wordleGame?(wordleGame.guesses||[]):[]; for(let row=0;row<6;row++) for(let col=0;col<5;col++){const tile=document.createElement('span');tile.className='wordle-tile'; const guess=attempts[row]||''; tile.textContent=guess[col]||''; if(guess) tile.classList.add(wordleMarks(wordleGame.answer,guess)[col]); grid.append(tile);} const j=wordleGame&&wordleGame.j_wins||0,m=wordleGame&&wordleGame.m_wins||0;$('wordleJScore').textContent=`J · ${j} win${j===1?'':'s'}`;$('wordleMScore').textContent=`M · ${m} win${m===1?'':'s'}`;if(!wordleGame||!active){$('wordleStatus').textContent=`${wordlePlayer} can set the next five-letter word.`;$('wordleNewGameBtn').classList.add('hidden');return;} const last=attempts[attempts.length-1], setter=wordleGame.setter||'J', guesser=setter==='J'?'M':'J', finished=last===wordleGame.answer||attempts.length>=6; $('wordleNewGameBtn').classList.toggle('hidden',!finished); $('wordleStatus').textContent=last===wordleGame.answer?`🎉 ${wordleGame.winner||guesser} won by solving it!` :attempts.length>=6?`No point this round — the word was “${wordleGame.answer.toUpperCase()}”.`:`${setter} sets the word · ${guesser} guesses · ${6-attempts.length} left.`; }
+      async function loadWordle(){if(!db)return;const {data}=await db.from('wordle_games').select('*').eq('id',1).maybeSingle();wordleGame=data;drawWordle();}
+      $('wordleSetBtn').addEventListener('click',async()=>{const answer=$('wordleAnswer').value.trim().toLowerCase();if(!/^[a-z]{5}$/.test(answer))return toast('Please use one five-letter word.');if(!db)return toast('Connect Supabase first.');const wins=wordleGame||{};const {error}=await db.from('wordle_games').upsert({id:1,answer,setter:wordlePlayer,winner:null,guesses:[],round_active:true,j_wins:wins.j_wins||0,m_wins:wins.m_wins||0,updated_at:new Date().toISOString()});if(error)return toast('Run the updated Wordle SQL first.');$('wordleAnswer').value='';setWordlePlayer(wordlePlayer==='J'?'M':'J');loadWordle();});
+      $('wordleGuessBtn').addEventListener('click',async()=>{const guess=$('wordleGuess').value.trim().toLowerCase();if(!/^[a-z]{5}$/.test(guess))return toast('Enter a five-letter word.');if(!db||!wordleGame||wordleGame.round_active===false)return toast('Set a word first.');const guesses=wordleGame.guesses||[],guesser=wordleGame.setter==='J'?'M':'J';if(wordlePlayer!==guesser)return toast(`${guesser} is the guesser for this round — switch the toggle first.`);if(guesses.length>=6||guesses[guesses.length-1]===wordleGame.answer)return toast('Set a new word to play again.');const solved=guess===wordleGame.answer,finalGuess=guesses.length===5,patch={guesses:[...guesses,guess],updated_at:new Date().toISOString()};if(solved){patch.winner=guesser;patch.j_wins=(wordleGame.j_wins||0)+(guesser==='J'?1:0);patch.m_wins=(wordleGame.m_wins||0)+(guesser==='M'?1:0);}const {error}=await db.from('wordle_games').update(patch).eq('id',1);if(error)return toast('Could not save that guess.');$('wordleGuess').value='';if(solved||finalGuess)wordleConfetti();loadWordle();});
+      $('wordleNewGameBtn').addEventListener('click',async()=>{if(!db||!wordleGame)return;const {error}=await db.from('wordle_games').update({guesses:[],winner:null,round_active:false,updated_at:new Date().toISOString()}).eq('id',1);if(error)return toast('Could not start the new round.');$('wordleAnswer').value='';$('wordleGuess').value='';loadWordle();setTimeout(()=>$('wordleAnswer').focus(),50);});
+
+      let combo=[]; document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(e.target.tagName))return;combo.push(e.key.toLowerCase());combo=combo.slice(-10);if(combo.join('')==='arrowuparrowuparrowdownarrowdownarrowleftarrowrightarrowleftarrowrightba'||combo.join('')==='iloveyou'){$('secretNote').classList.add('show');setTimeout(()=>$('secretNote').classList.remove('show'),3500);}});
+      if(db){ loadWordle(); const presence=db.channel('together-game-presence',{config:{presence:{key:visitor}}}); presence.on('presence',{event:'sync'},()=>{bothOnline=Object.keys(presence.presenceState()).length>=2; $('reactionStatus').textContent=bothOnline?'Both here — start when you are ready.':'Both of you need to be here to start.';}); presence.subscribe(async status=>{if(status==='SUBSCRIBED') await presence.track({online_at:new Date().toISOString()});}); touchChannel=db.channel('together-live').on('postgres_changes',{event:'INSERT',schema:'public',table:'touch_events'},p=>{if(p.new.sender_id!==visitor)pulseTouch('a touch just arrived ♥');}).on('postgres_changes',{event:'*',schema:'public',table:'reaction_games'},p=>{ $('reactionTarget').dataset.target=new Date(p.new.target_at).getTime();runReaction(p.new);}).on('postgres_changes',{event:'*',schema:'public',table:'wordle_games'},loadWordle).subscribe();}
+    })();
     </script>
 
 </body>
