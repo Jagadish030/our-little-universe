@@ -727,6 +727,7 @@
             font-family: 'Quicksand', sans-serif;
             overflow-x: hidden;
             min-height: 100vh;
+            overflow-anchor: none;
         }
 
         .pass-gate {
@@ -2749,6 +2750,7 @@
             padding: 0 1.5rem;
             position: relative;
             z-index: 1;
+            box-sizing: border-box;
         }
         .doodles-wall.hidden {
             display: none;
@@ -3196,6 +3198,7 @@
             padding: 0 1.5rem;
             position: relative;
             z-index: 1;
+            box-sizing: border-box;
         }
         .extras-wall.hidden {
             display: none;
@@ -3564,11 +3567,16 @@
             right: .45rem;
             width: 24px;
             height: 24px;
+            border: 0;
+            padding: 0;
             border-radius: 50%;
             background: rgba(107, 83, 68, .1);
             color: var(--ink-soft);
             cursor: pointer;
             font: 700 1rem/1 Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .capsule-remove:hover {
             background: var(--rose-deep);
@@ -6438,9 +6446,20 @@
         .ritual-card { display:flex; align-items:center; gap:.55rem; padding:.55rem .75rem; border:1px solid var(--card-border); border-radius:999px; background:var(--glass-bg-strong); color:var(--ink); box-shadow:0 5px 14px var(--shadow); font:600 .78rem 'Quicksand',sans-serif; }
         .ritual-card button { border:0; background:transparent; color:inherit; font:inherit; cursor:pointer; padding:.15rem; }
         .ritual-card input { width:105px; border:0; border-bottom:1px dashed var(--rose-deep); background:transparent; color:var(--ink); font:600 .75rem 'Quicksand',sans-serif; outline:none; }
-        .touch-heart { width:42px; height:42px; border-radius:50%; border:0; background:linear-gradient(135deg,var(--rose),var(--rose-deep)); color:white; font-size:1.25rem; cursor:pointer; box-shadow:0 5px 14px var(--shadow); }
+        .ritual-card, .touch-heart, #touchHint {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .touch-heart {
+            width:50px; height:50px; padding:12px; box-sizing:border-box; border-radius:50%; border:0;
+            background:linear-gradient(135deg,var(--rose),var(--rose-deep)); color:white; font-size:1.3rem;
+            cursor:pointer; box-shadow:0 5px 14px var(--shadow);
+            touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+            transition: box-shadow .25s ease, transform .15s ease;
+        }
         .touch-heart.pulsing { animation:touchPulse .8s ease-in-out infinite; }
-        @keyframes touchPulse { 50% { transform:scale(1.16); box-shadow:0 0 0 12px rgba(217,138,147,.14),0 0 26px var(--rose-deep); } }
+        @keyframes touchPulse { 50% { transform:scale(1.22); box-shadow:0 0 0 22px rgba(217,138,147,.28),0 0 60px 14px var(--rose-deep); } }
         .together-game { max-width:680px; margin:1rem auto 0; text-align:center; }
         .together-game h3 { margin:.25rem 0; font:700 1.5rem 'Caveat',cursive; color:var(--ink); }
         .together-game .game-copy { color:var(--ink-soft); font-size:.82rem; }
@@ -6468,7 +6487,7 @@
         .secret-note.show { opacity:1; animation:secretFade 3.4s ease forwards; }
         .secret-note span { padding:1.3rem 1.7rem; border-radius:16px; background:var(--white); color:var(--ink); box-shadow:0 18px 40px var(--shadow); font:2rem 'Caveat',cursive; }
         @keyframes secretFade { 0%,75% { opacity:1; } 100% { opacity:0; } }
-        @media (max-width:480px) { .ritual-card{width:100%;justify-content:center}.together-game .game-controls{gap:.4rem}.together-game input{max-width:150px} }
+        @media (max-width:480px) { .touch-heart{width:58px;height:58px;padding:14px;font-size:1.55rem}.together-game .game-controls{gap:.4rem}.together-game input{max-width:150px} }
     </style>
 </head>
 
@@ -7355,9 +7374,9 @@
                 return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
             }
 
-            const ANNIVERSARY_DATE = 'YYYY-MM-DD';
-            const NOTE_AUTHOR_1 = 'Me';
-            const NOTE_AUTHOR_2 = 'Partner';
+            const ANNIVERSARY_DATE = '2025-02-23';
+            const NOTE_AUTHOR_1 = 'Jagadish';
+            const NOTE_AUTHOR_2 = 'Malavika';
             const NOTE_AUTHOR_1_LETTER = 'J';
             const NOTE_AUTHOR_2_LETTER = 'M';
 
@@ -8137,8 +8156,11 @@
 
             notesToggleBtn.addEventListener('click', () => {
                 const nowHidden = notesWall.classList.toggle('hidden');
-                if (!nowHidden && !notesLoaded) { notesLoaded = true;
-                    loadNotes(); }
+                if (!nowHidden) {
+                    scrollToSection(notesWall);
+                    if (!notesLoaded) { notesLoaded = true;
+                        loadNotes(); }
+                }
             });
             notesCloseBtn.addEventListener('click', () => notesWall.classList.add('hidden'));
             notesFavFilterBtn.addEventListener('click', () => {
@@ -8807,9 +8829,11 @@
             document.querySelectorAll('.doodle-mode-back').forEach(b => b.addEventListener('click', showDoodleModeChooser));
             doodlesToggleBtn.addEventListener('click', () => {
                 const opening = doodlesWall.classList.contains('hidden');
+                closeFeatureMenuInstantly();
                 doodlesWall.classList.toggle('hidden');
                 if (opening) { notesWall.classList.add('hidden');
-                    showDoodleModeChooser(); }
+                    showDoodleModeChooser();
+                    scrollToSection(doodlesWall); }
             });
             doodlesCloseBtn.addEventListener('click', () => {
                 doodlesWall.classList.add('hidden');
@@ -8940,13 +8964,35 @@
             document.addEventListener('click', (e) => { if (!featureMenu.contains(e.target)) closeFeatureMenu(); });
             document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeFeatureMenu(); });
 
+            function closeFeatureMenuInstantly() {
+                if (featureMenuRow) {
+                    featureMenuRow.style.transition = 'none';
+                    featureMenuRow.style.marginBottom = '';
+                    void featureMenuRow.offsetHeight;
+                    featureMenuRow.style.transition = '';
+                }
+                featureMenu.classList.remove('open');
+                featureMenuBtn.setAttribute('aria-expanded', 'false');
+            }
+
+            function scrollToSection(el) {
+                if (!el) return;
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    });
+                });
+            }
+
             function closeExtras() { extrasWalls.forEach(w => w.classList.add('hidden')); }
 
             function openExtra(wall) {
+                closeFeatureMenuInstantly();
                 closeExtras();
                 notesWall.classList.add('hidden');
                 doodlesWall.classList.add('hidden');
                 wall.classList.remove('hidden');
+                scrollToSection(wall);
             }
             const littleThingsWalls = [doodlesWall, moodsWall, capsulesWall, bucketWall, constellationWall, gamesWall,
                 specialDaysWall
@@ -8959,6 +9005,7 @@
                     notesWall.classList.add('hidden');
                     doodlesWall.classList.remove('hidden');
                     showDoodleModeChooser();
+                    scrollToSection(doodlesWall);
                     if (!doodlesLoaded) { doodlesLoaded = true;
                         loadDoodles(); }
                 } else {
@@ -11881,7 +11928,8 @@
       let touchTimer, touchChannel, bothOnline = false, wordleGame = null;
 
       function pulseTouch(text='thinking of you ♥') { $('touchHeartBtn').classList.add('pulsing'); $('touchHint').textContent=text; setTimeout(()=>{$('touchHeartBtn').classList.remove('pulsing'); $('touchHint').textContent='press & hold to send a touch';},2600); }
-      $('touchHeartBtn').addEventListener('pointerdown', () => { touchTimer=setTimeout(async()=>{ if (!db) return toast('Connect Supabase first.'); await db.from('touch_events').insert({sender_id:visitor}); pulseTouch('sent across the distance ♥'); },550); });
+      $('touchHeartBtn').addEventListener('contextmenu', e => e.preventDefault());
+      $('touchHeartBtn').addEventListener('pointerdown', (e) => { e.preventDefault(); touchTimer=setTimeout(async()=>{ if (!db) return toast('Connect Supabase first.'); await db.from('touch_events').insert({sender_id:visitor}); pulseTouch('sent across the distance ♥'); },550); });
       ['pointerup','pointerleave','pointercancel'].forEach(e=>$('touchHeartBtn').addEventListener(e,()=>clearTimeout(touchTimer)));
 
       function openGame(view) { document.querySelectorAll('#gamesWall .game-view').forEach(v=>v.classList.add('hidden')); $('gameChooser').classList.add('hidden'); $(view).classList.remove('hidden'); }
