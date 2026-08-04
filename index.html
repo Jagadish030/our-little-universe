@@ -28,6 +28,7 @@
             --ink-soft: #9C8776;
             --sage: #A8B89C;
             --gold: #D4A574;
+            --lavender: #9B8AC4;
             --white: #FFFDF9;
             --shadow: rgba(107, 83, 68, 0.18);
             --glass-bg: rgba(255, 253, 249, 0.6);
@@ -46,6 +47,7 @@
             --ink-soft: #C6B4C2;
             --sage: #9FBFA9;
             --gold: #DDBD8E;
+            --lavender: #B7A8DE;
             --white: #302739;
             --shadow: rgba(0, 0, 0, 0.45);
             --glass-bg: rgba(48, 39, 57, 0.55);
@@ -4138,6 +4140,11 @@
             font: 700 .92rem 'Quicksand', sans-serif;
             margin-bottom: .8rem;
             padding: .3rem 0;
+            transition: color .18s ease, transform .18s ease;
+        }
+        .game-back-btn:hover {
+            color: var(--rose-deep);
+            transform: translateX(-2px);
         }
         .doodle-mode-view.hidden {
             display: none;
@@ -4593,6 +4600,168 @@
         }
         body.dark-mode .oc-timerbar {
             background: rgba(255, 255, 255, .1);
+        }
+
+        /* ─── Dots and Boxes ─── */
+        .db-board {
+            width: min(280px, 88vw);
+            margin: 0 auto .9rem;
+            padding: .6rem;
+            border-radius: 14px;
+            background: var(--paper-deep);
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, .1);
+        }
+        .db-board svg {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        .db-dot {
+            fill: var(--ink-soft);
+        }
+        .db-line-visible {
+            stroke: var(--card-border);
+            stroke-width: 5;
+            stroke-linecap: round;
+            transition: stroke .15s ease;
+        }
+        .db-line-hit {
+            fill: transparent;
+            stroke: transparent;
+            stroke-width: 20;
+            cursor: pointer;
+        }
+        .db-line-hit.db-disabled {
+            cursor: default;
+        }
+        .db-line-visible.owner-1 {
+            stroke: var(--rose-deep);
+        }
+        .db-line-visible.owner-2 {
+            stroke: var(--gold);
+        }
+        .db-box-fill {
+            fill: transparent;
+            transition: fill .25s ease;
+        }
+        .db-box-fill.owner-1 {
+            fill: rgba(217, 138, 147, .3);
+        }
+        .db-box-fill.owner-2 {
+            fill: rgba(212, 165, 116, .35);
+        }
+        .db-box-icon {
+            font: 700 15px 'Quicksand', sans-serif;
+            fill: var(--ink);
+            text-anchor: middle;
+            dominant-baseline: central;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .2s ease;
+        }
+        .db-box-icon.shown {
+            opacity: 1;
+        }
+        body.dark-mode .db-board {
+            background: rgba(255, 255, 255, .04);
+        }
+
+        /* ─── Catch the Hearts ─── */
+        .ch-arena {
+            position: relative;
+            width: min(320px, 90vw);
+            height: 360px;
+            margin: 0 auto 1rem;
+            border-radius: 14px;
+            background: linear-gradient(180deg, var(--paper-deep), var(--paper));
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, .1);
+            overflow: hidden;
+            touch-action: none;
+            cursor: grab;
+        }
+        .ch-basket {
+            position: absolute;
+            bottom: 8px;
+            width: 54px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            pointer-events: none;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .18));
+        }
+        .ch-item {
+            position: absolute;
+            font-size: 1.5rem;
+            line-height: 1;
+            pointer-events: none;
+            user-select: none;
+        }
+        body.dark-mode .ch-arena {
+            background: linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .02));
+        }
+        @media (max-width:380px) {
+            .ch-arena {
+                height: 300px;
+            }
+            .ch-basket {
+                width: 46px;
+                height: 46px;
+                font-size: 1.6rem;
+            }
+            .ch-item {
+                font-size: 1.3rem;
+            }
+        }
+
+        /* ─── Simon Says ─── */
+        .simon-board {
+            display: grid;
+            gap: 8px;
+            margin: 0 auto 1rem;
+        }
+        .simon-tile {
+            aspect-ratio: 1;
+            border: 0;
+            background: var(--tile-color);
+            opacity: .58;
+            cursor: pointer;
+            padding: 0;
+            transition: opacity .12s ease, transform .12s ease, box-shadow .12s ease, filter .12s ease;
+        }
+        .simon-tile:disabled {
+            cursor: default;
+        }
+        .simon-tile.active {
+            opacity: 1;
+            transform: scale(1.08);
+            filter: brightness(1.3) saturate(1.25);
+            box-shadow: 0 0 0 3px var(--white), 0 0 0 6px rgba(255, 255, 255, .55), 0 0 16px rgba(255, 255, 255, .6);
+            z-index: 1;
+            position: relative;
+        }
+        .simon-tile.wrong {
+            animation: simonShake .35s ease;
+        }
+        @keyframes simonShake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-6px);
+            }
+
+            75% {
+                transform: translateX(6px);
+            }
+        }
+        .simon-start-btn {
+            display: block;
+            margin: .3rem auto 1.1rem;
         }
 
         @media (max-width:480px) {
@@ -6465,9 +6634,7 @@
         .together-game .game-copy { color:var(--ink-soft); font-size:.82rem; }
         .together-game .game-controls { display:flex; flex-wrap:wrap; justify-content:center; gap:.55rem; margin:.8rem 0; }
         .together-game input,.together-game select { min-width:0; border:1px solid var(--card-border); border-radius:10px; padding:.55rem .65rem; background:var(--paper); color:var(--ink); font:600 .82rem 'Quicksand',sans-serif; }
-        .together-game button { border:0; border-radius:10px; padding:.58rem .75rem; background:var(--rose-deep); color:white; font:700 .78rem 'Quicksand',sans-serif; cursor:pointer; }
-        .together-game .game-back-btn { display:inline-block; padding:.25rem 0; border:0; border-radius:0; background:none; color:var(--ink-soft); font:600 .8rem 'Quicksand',sans-serif; }
-        .together-game .game-back-btn:hover { color:var(--rose-deep); transform:translateX(-2px); }
+        .together-game .fav-filter-btn { display:inline-block; margin:.4rem 0; }
         .reaction-target { width:124px; height:124px; margin:.7rem auto; border-radius:50%; display:grid; place-items:center; background:var(--paper-deep); color:var(--ink-soft); font:700 .85rem 'Quicksand',sans-serif; transition:.18s; user-select:none; }
         .reaction-target.ready { background:#e75b5b; color:white; transform:scale(1.06); box-shadow:0 0 0 9px rgba(231,91,91,.16); }
         .wordle-grid { display:grid; grid-template-columns:repeat(5, minmax(36px, 50px)); gap:6px; justify-content:center; margin:1rem auto; }
@@ -6870,8 +7037,11 @@
                         <button type="button" class="game-choice-btn" id="chooseMemoryMatch">🧠<span>Memory Match</span><small>flip your own photos</small></button>
                         <button type="button" class="game-choice-btn" id="chooseTicTacToe">⭕<span>Tic Tac Toe</span><small>take turns, any time</small></button>
                         <button type="button" class="game-choice-btn" id="chooseConnect4">🔴<span>Connect 4</span><small>take turns, any time</small></button>
+                        <button type="button" class="game-choice-btn" id="chooseDotsBoxes">🔗<span>Dots and Boxes</span><small>take turns, any time</small></button>
                         <button type="button" class="game-choice-btn" id="chooseTruthDare">🫙<span>Truth or Dare Jar</span><small>pull a prompt</small></button>
                         <button type="button" class="game-choice-btn" id="chooseOddColor">🎨<span>Odd One Out</span><small>spot the different color</small></button>
+                        <button type="button" class="game-choice-btn" id="chooseCatchHearts">🧺<span>Catch the Hearts</span><small>dodge the bombs</small></button>
+                        <button type="button" class="game-choice-btn" id="chooseSimon">🎼<span>Simon Says</span><small>repeat the sequence</small></button>
                         <button type="button" class="game-choice-btn" id="chooseReaction">❤️<span>Heart Reflex</span><small>tap when it turns red</small></button>
                         <button type="button" class="game-choice-btn" id="chooseWordle">🟩<span>Our Wordle</span><small>solve the five-letter word</small></button>
                     </div>
@@ -6907,6 +7077,13 @@
                     <div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="c4AuthorToggle" aria-label="Choose who is playing"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div>
                     <button type="button" class="fav-filter-btn" id="c4ResetBtn">🔄 New game</button>
                 </div>
+                <div class="game-view hidden" id="dotsBoxesView">
+                    <button type="button" class="game-back-btn">‹ back to games</button>
+                    <p class="ttt-status" id="dbStatus">Loading board...</p>
+                    <div class="db-board" id="dbBoard"></div>
+                    <div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="dbAuthorToggle" aria-label="Choose who is playing"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div>
+                    <button type="button" class="fav-filter-btn" id="dbResetBtn">🔄 New game</button>
+                </div>
                 <div class="game-view hidden" id="truthDareView">
                     <button type="button" class="game-back-btn">‹ back to games</button>
                     <div class="td-jar" id="tdJar">
@@ -6934,7 +7111,43 @@
                         <div class="oc-leaderboard" id="ocLeaderboard"></div>
                     </div>
                 </div>
-                <div class="game-view hidden together-game" id="reactionView"><button type="button" class="game-back-btn">‹ back to games</button><h3>Heart Reflex</h3><p class="game-copy" id="reactionStatus">Both of you need to be here to start.</p><div class="reaction-target" id="reactionTarget">waiting…</div><button id="reactionStartBtn" type="button">Start shared round</button><div class="score-list" id="reactionScores"></div></div>
+                <div class="game-view hidden" id="catchHeartsView">
+                    <button type="button" class="game-back-btn">‹ back to games</button>
+                    <div class="game-view-header">
+                        <div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="chAuthorToggle" aria-label="Choose who is playing"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div>
+                        <span class="oc-score" id="chScore">Score: 0</span>
+                    </div>
+                    <p class="oc-hint" id="chHint">Drag inside the arena to move the basket — catch hearts, dodge bombs 💣</p>
+                    <div class="ch-arena" id="chArena"><div class="ch-basket" id="chBasket">🧺</div></div>
+                    <div class="oc-gameover hidden" id="chGameOver">
+                        <p id="chFinalScore"></p>
+                        <button type="button" class="fav-filter-btn" id="chPlayAgainBtn">🔁 Play again</button>
+                        <div class="oc-leaderboard" id="chLeaderboard"></div>
+                    </div>
+                </div>
+                <div class="game-view hidden" id="simonView">
+                    <button type="button" class="game-back-btn">‹ back to games</button>
+                    <div class="memory-size-picker" id="simonSizePicker">
+                        <p>Pick a grid size</p>
+                        <div class="memory-size-row" id="simonSizeRow"></div>
+                    </div>
+                    <div class="memory-play-area hidden" id="simonPlayArea">
+                        <div class="game-view-header">
+                            <div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="simonAuthorToggle" aria-label="Choose who is playing"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div>
+                            <span class="oc-score" id="simonScore">Level: 0</span>
+                            <button type="button" class="fav-filter-btn" id="simonChangeSizeBtn">📐 Change size</button>
+                        </div>
+                        <p class="oc-hint" id="simonHint">Watch the sequence, then repeat it</p>
+                        <div class="simon-board" id="simonBoard"></div>
+                        <button type="button" class="fav-filter-btn simon-start-btn" id="simonStartBtn">▶️ Start</button>
+                        <div class="oc-gameover hidden" id="simonGameOver">
+                            <p id="simonFinalScore"></p>
+                            <button type="button" class="fav-filter-btn" id="simonPlayAgainBtn">🔁 Play again</button>
+                            <div class="oc-leaderboard" id="simonLeaderboard"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-view hidden together-game" id="reactionView"><button type="button" class="game-back-btn">‹ back to games</button><h3>Heart Reflex</h3><p class="game-copy" id="reactionStatus">Both of you need to be here to start.</p><div class="reaction-target" id="reactionTarget">waiting…</div><button id="reactionStartBtn" class="fav-filter-btn" type="button">Start shared round</button><div class="score-list" id="reactionScores"></div></div>
                 <div class="game-view hidden together-game" id="wordleView"><button type="button" class="game-back-btn">‹ back to games</button><h3>Our Wordle</h3><div class="wordle-role"><button type="button" class="note-author-toggle extra-author" data-author="1" id="wordleAuthorToggle" aria-label="Choose whether J or M is setting the word"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">J</span><span class="toggle-letter" data-letter="2">M</span></span></button></div><p class="game-copy" id="wordleStatus">Choose who is setting a five-letter word.</p><div class="wordle-scoreboard"><span id="wordleJScore">J · 0 wins</span><span id="wordleMScore">M · 0 wins</span></div><div class="game-controls"><input id="wordleAnswer" maxlength="5" inputmode="text" autocapitalize="characters" placeholder="five-letter word"><button id="wordleSetBtn" class="wordle-action" type="button">Set word</button></div><div class="wordle-grid" id="wordleGrid" aria-label="Wordle board"></div><div class="game-controls"><input id="wordleGuess" maxlength="5" inputmode="text" autocapitalize="characters" placeholder="enter a guess"><button id="wordleGuessBtn" class="wordle-action" type="button">Try guess</button></div><button id="wordleNewGameBtn" class="wordle-action wordle-new-game hidden" type="button">Start a new game</button></div>
             </div>
         </section>
@@ -7375,8 +7588,8 @@
             }
 
             const ANNIVERSARY_DATE = 'YYYY-MM-DD';
-            const NOTE_AUTHOR_1 = 'Jagadish';
-            const NOTE_AUTHOR_2 = 'Malavika';
+            const NOTE_AUTHOR_1 = 'Me';
+            const NOTE_AUTHOR_2 = 'Partner';
             const NOTE_AUTHOR_1_LETTER = 'J';
             const NOTE_AUTHOR_2_LETTER = 'M';
 
@@ -9379,19 +9592,28 @@
             /* ─── Games ─── */
             const GAME_SCORES_TABLE = 'game_scores',
                 TTT_TABLE = 'tictactoe_game',
-                CONNECT4_TABLE = 'connect4_game';
+                CONNECT4_TABLE = 'connect4_game',
+                DOTS_BOXES_TABLE = 'dots_boxes_game';
             const gameChooser = document.getElementById('gameChooser'),
                 memoryMatchView = document.getElementById('memoryMatchView'),
                 tictactoeView = document.getElementById('tictactoeView'),
                 connect4View = document.getElementById('connect4View'),
+                dotsBoxesView = document.getElementById('dotsBoxesView'),
                 truthDareView = document.getElementById('truthDareView'),
-                oddColorView = document.getElementById('oddColorView');
-            const allGameViews = [memoryMatchView, tictactoeView, connect4View, truthDareView, oddColorView];
+                oddColorView = document.getElementById('oddColorView'),
+                catchHeartsView = document.getElementById('catchHeartsView'),
+                simonView = document.getElementById('simonView');
+            const allGameViews = [memoryMatchView, tictactoeView, connect4View, dotsBoxesView, truthDareView,
+                oddColorView, catchHeartsView, simonView
+            ];
             const chooseMemoryMatch = document.getElementById('chooseMemoryMatch'),
                 chooseTicTacToe = document.getElementById('chooseTicTacToe'),
                 chooseConnect4 = document.getElementById('chooseConnect4'),
+                chooseDotsBoxes = document.getElementById('chooseDotsBoxes'),
                 chooseTruthDare = document.getElementById('chooseTruthDare'),
-                chooseOddColor = document.getElementById('chooseOddColor');
+                chooseOddColor = document.getElementById('chooseOddColor'),
+                chooseCatchHearts = document.getElementById('chooseCatchHearts'),
+                chooseSimon = document.getElementById('chooseSimon');
             const memoryGrid = document.getElementById('memoryGrid'),
                 memoryMovesEl = document.getElementById('memoryMoves'),
                 memoryTimerEl = document.getElementById('memoryTimer'),
@@ -9442,20 +9664,47 @@
                 resetTruthDare();
             }
 
+            function openDotsBoxes() {
+                gameChooser.classList.add('hidden');
+                allGameViews.forEach(v => v.classList.add('hidden'));
+                dotsBoxesView.classList.remove('hidden');
+                loadDotsBoxes();
+                startDotsBoxesRealtime();
+            }
+
             function openOddColor() {
                 gameChooser.classList.add('hidden');
                 allGameViews.forEach(v => v.classList.add('hidden'));
                 oddColorView.classList.remove('hidden');
                 startOddColorGame();
             }
+
+            function openCatchHearts() {
+                gameChooser.classList.add('hidden');
+                allGameViews.forEach(v => v.classList.add('hidden'));
+                catchHeartsView.classList.remove('hidden');
+                startCatchHeartsGame();
+            }
+
+            function openSimon() {
+                gameChooser.classList.add('hidden');
+                allGameViews.forEach(v => v.classList.add('hidden'));
+                simonView.classList.remove('hidden');
+                showSimonSizePicker();
+            }
             chooseMemoryMatch.addEventListener('click', openMemoryMatch);
             chooseTicTacToe.addEventListener('click', openTicTacToe);
             chooseConnect4.addEventListener('click', openConnect4);
+            chooseDotsBoxes.addEventListener('click', openDotsBoxes);
             chooseTruthDare.addEventListener('click', openTruthDare);
             chooseOddColor.addEventListener('click', openOddColor);
+            chooseCatchHearts.addEventListener('click', openCatchHearts);
+            chooseSimon.addEventListener('click', openSimon);
             document.querySelectorAll('.game-back-btn').forEach(b => b.addEventListener('click', () => {
                 clearInterval(memoryTimerInterval);
                 clearTimeout(ocTimeout);
+                stopCatchHeartsGame();
+                stopSimonSequence();
                 showGameChooser();
             }));
 
@@ -9917,6 +10166,218 @@
                 }).subscribe();
             }
 
+            /* ─── Dots and Boxes ─── */
+            const dbBoard = document.getElementById('dbBoard'),
+                dbStatus = document.getElementById('dbStatus'),
+                dbResetBtn = document.getElementById('dbResetBtn'),
+                dbAuthorToggle = document.getElementById('dbAuthorToggle');
+            const DB_DOTS = 5,
+                DB_BOX = DB_DOTS - 1,
+                DB_CELL = 54,
+                DB_PAD = 12,
+                DB_SIZE = DB_BOX * DB_CELL + DB_PAD * 2,
+                DB_LINE_COUNT = DB_DOTS * DB_BOX * 2,
+                DB_BOX_COUNT = DB_BOX * DB_BOX;
+            let dbAuthor = localStorage.getItem('ourLittleUniverseDbAuthor') === '2' ? '2' : '1',
+                dbLines = Array(DB_LINE_COUNT).fill(null),
+                dbBoxes = Array(DB_BOX_COUNT).fill(null),
+                dbTurn = 1,
+                dbWinner = null,
+                dbRealtimeStarted = false;
+
+            function setDbAuthor(v) {
+                dbAuthor = v;
+                localStorage.setItem('ourLittleUniverseDbAuthor', v);
+                dbAuthorToggle.dataset.author = v;
+                dbAuthorToggle.setAttribute('aria-label',
+                    `Currently playing as By ${v === '2' ? 'M' : 'J'} — tap to switch`);
+                renderDotsBoxes();
+            }
+            dbAuthorToggle.addEventListener('click', () => setDbAuthor(dbAuthor === '1' ? '2' : '1'));
+            setDbAuthor(dbAuthor);
+
+            function dbHIndex(r, c) { return r * DB_BOX + c; }
+
+            function dbVIndex(r, c) { return DB_DOTS * DB_BOX + r * DB_DOTS + c; }
+
+            function dbBoxEdges(br, bc) { return [dbHIndex(br, bc), dbHIndex(br + 1, bc), dbVIndex(br, bc), dbVIndex(
+                    br, bc + 1)]; }
+
+            function dbDotX(c) { return DB_PAD + c * DB_CELL; }
+
+            function dbDotY(r) { return DB_PAD + r * DB_CELL; }
+
+            function svgEl(tag, attrs) {
+                const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+                Object.entries(attrs || {}).forEach(([k, v]) => el.setAttribute(k, v));
+                return el;
+            }
+
+            async function loadDotsBoxes() {
+                if (!supabase) return;
+                dbStatus.textContent = 'Loading board...';
+                try {
+                    const { data, error } = await supabase.from(DOTS_BOXES_TABLE).select('*').eq('id', 1)
+                        .maybeSingle();
+                    if (error) throw error;
+                    if (data && Array.isArray(data.lines) && data.lines.length === DB_LINE_COUNT && Array.isArray(data
+                            .boxes) && data.boxes.length === DB_BOX_COUNT) {
+                        dbLines = data.lines;
+                        dbBoxes = data.boxes;
+                        dbTurn = data.turn || 1;
+                        dbWinner = data.winner || null;
+                    } else {
+                        dbLines = Array(DB_LINE_COUNT).fill(null);
+                        dbBoxes = Array(DB_BOX_COUNT).fill(null);
+                        dbTurn = 1;
+                        dbWinner = null;
+                        if (data) {
+                            try {
+                                await supabase.from(DOTS_BOXES_TABLE).upsert({ id: 1, lines: dbLines, boxes: dbBoxes,
+                                    turn: 1, winner: null, updated_at: new Date().toISOString() });
+                            } catch (repairErr) { console.error('Could not repair board:', repairErr); }
+                        }
+                    }
+                    renderDotsBoxes();
+                } catch (e) {
+                    console.error(e);
+                    showToast('Could not load Dots and Boxes. Run the games SQL setup first.', { type: 'error' });
+                }
+            }
+
+            function dbScoreText() {
+                let j = 0,
+                    m = 0;
+                dbBoxes.forEach(v => { if (Number(v) === 1) j++;
+                    else if (Number(v) === 2) m++; });
+                return `J: ${j} · M: ${m}`;
+            }
+
+            function renderDotsBoxes() {
+                dbBoard.innerHTML = '';
+                const svg = svgEl('svg', { viewBox: `0 0 ${DB_SIZE} ${DB_SIZE}`, 'aria-label':
+                    'Dots and Boxes board' });
+                const canPlay = !dbWinner && Number(dbAuthor) === Number(dbTurn);
+
+                for (let br = 0; br < DB_BOX; br++) {
+                    for (let bc = 0; bc < DB_BOX; bc++) {
+                        const idx = br * DB_BOX + bc,
+                            owner = dbBoxes[idx];
+                        svg.appendChild(svgEl('rect', { class: 'db-box-fill' + (owner ? ` owner-${owner}` : ''),
+                            x: dbDotX(bc), y: dbDotY(br), width: DB_CELL, height: DB_CELL, rx: 6 }));
+                        const text = svgEl('text', { class: 'db-box-icon' + (owner ? ' shown' : ''),
+                            x: dbDotX(bc) + DB_CELL / 2, y: dbDotY(br) + DB_CELL / 2 });
+                        text.textContent = Number(owner) === 2 ? '✦' : owner ? '♥' : '';
+                        svg.appendChild(text);
+                    }
+                }
+                for (let r = 0; r < DB_DOTS; r++) {
+                    for (let c = 0; c < DB_BOX; c++) {
+                        const idx = dbHIndex(r, c),
+                            owner = dbLines[idx],
+                            x1 = dbDotX(c),
+                            x2 = dbDotX(c + 1),
+                            y = dbDotY(r),
+                            clickable = !owner && canPlay;
+                        svg.appendChild(svgEl('line', { class: 'db-line-visible' + (owner ? ` owner-${owner}` : ''),
+                            x1, y1: y, x2, y2: y }));
+                        const hit = svgEl('line', { class: 'db-line-hit' + (clickable ? '' : ' db-disabled'), x1, y1: y,
+                            x2, y2: y });
+                        if (clickable) hit.addEventListener('click', () => playDotsBoxesMove(idx));
+                        svg.appendChild(hit);
+                    }
+                }
+                for (let r = 0; r < DB_BOX; r++) {
+                    for (let c = 0; c < DB_DOTS; c++) {
+                        const idx = dbVIndex(r, c),
+                            owner = dbLines[idx],
+                            x = dbDotX(c),
+                            y1 = dbDotY(r),
+                            y2 = dbDotY(r + 1),
+                            clickable = !owner && canPlay;
+                        svg.appendChild(svgEl('line', { class: 'db-line-visible' + (owner ? ` owner-${owner}` : ''),
+                            x1: x, y1, x2: x, y2 }));
+                        const hit = svgEl('line', { class: 'db-line-hit' + (clickable ? '' : ' db-disabled'), x1: x, y1,
+                            x2: x, y2 });
+                        if (clickable) hit.addEventListener('click', () => playDotsBoxesMove(idx));
+                        svg.appendChild(hit);
+                    }
+                }
+                for (let r = 0; r < DB_DOTS; r++)
+                    for (let c = 0; c < DB_DOTS; c++)
+                        svg.appendChild(svgEl('circle', { class: 'db-dot', cx: dbDotX(c), cy: dbDotY(r), r: 4 }));
+
+                dbBoard.appendChild(svg);
+
+                if (dbWinner === 'draw') dbStatus.textContent = `It's a draw! ${dbScoreText()}`;
+                else if (dbWinner) dbStatus.textContent = `${Number(dbWinner) === 2 ? 'M' : 'J'} wins! 🎉 ${dbScoreText()}`;
+                else dbStatus.textContent = (Number(dbAuthor) === Number(dbTurn) ? 'Your move — tap a line ✦' :
+                    `Waiting for ${Number(dbTurn) === 2 ? 'M' : 'J'}'s move...`) + ' · ' + dbScoreText();
+            }
+
+            async function playDotsBoxesMove(lineIdx) {
+                if (!supabase || dbWinner || dbLines[lineIdx] || Number(dbAuthor) !== Number(dbTurn)) return;
+                const lines = [...dbLines];
+                lines[lineIdx] = dbAuthor;
+                const boxes = [...dbBoxes];
+                let completedAny = false;
+                for (let br = 0; br < DB_BOX; br++) {
+                    for (let bc = 0; bc < DB_BOX; bc++) {
+                        const bIdx = br * DB_BOX + bc;
+                        if (boxes[bIdx]) continue;
+                        const edges = dbBoxEdges(br, bc);
+                        if (edges.includes(lineIdx) && edges.every(e => lines[e])) {
+                            boxes[bIdx] = dbAuthor;
+                            completedAny = true;
+                        }
+                    }
+                }
+                let winner = null;
+                if (lines.every(v => v)) {
+                    let j = 0,
+                        m = 0;
+                    boxes.forEach(v => { if (Number(v) === 1) j++;
+                        else if (Number(v) === 2) m++; });
+                    winner = j === m ? 'draw' : (j > m ? '1' : '2');
+                }
+                const nextTurn = completedAny && !winner ? dbTurn : (Number(dbTurn) === 1 ? 2 : 1);
+                const { error } = await supabase.from(DOTS_BOXES_TABLE).upsert({ id: 1, lines, boxes, turn: nextTurn,
+                    winner: winner || null, updated_at: new Date().toISOString() });
+                if (error) { console.error(error);
+                    showToast('Could not save your move.', { type: 'error' }); return; }
+                dbLines = lines;
+                dbBoxes = boxes;
+                dbTurn = nextTurn;
+                dbWinner = winner;
+                renderDotsBoxes();
+                if (completedAny) haptic(15);
+                if (winner && winner !== 'draw') { burstConfetti(dbBoard);
+                    haptic([30, 50, 30]); }
+            }
+            dbResetBtn.addEventListener('click', async() => {
+                if (!supabase) return;
+                const lines = Array(DB_LINE_COUNT).fill(null),
+                    boxes = Array(DB_BOX_COUNT).fill(null);
+                const { error } = await supabase.from(DOTS_BOXES_TABLE).upsert({ id: 1, lines, boxes, turn: 1,
+                    winner: null, updated_at: new Date().toISOString() });
+                if (error) { showToast('Could not start a new game.', { type: 'error' }); return; }
+                dbLines = lines;
+                dbBoxes = boxes;
+                dbTurn = 1;
+                dbWinner = null;
+                renderDotsBoxes();
+            });
+
+            function startDotsBoxesRealtime() {
+                if (!supabase || dbRealtimeStarted) return;
+                dbRealtimeStarted = true;
+                supabase.channel('dots-boxes-game').on('postgres_changes', { event: '*', schema: 'public',
+                    table: DOTS_BOXES_TABLE }, () => {
+                    if (!gamesWall.classList.contains('hidden') && !dotsBoxesView.classList.contains('hidden'))
+                        loadDotsBoxes();
+                }).subscribe();
+            }
+
             const TRUTH_PROMPTS = [
                 "What's a small thing I do that always makes you smile?",
                 "What's a memory of us you replay in your head?",
@@ -10098,6 +10559,381 @@
                 } catch (e) { console.error('Could not load odd-color leaderboard. Run the games SQL setup first.', e); }
             }
             ocPlayAgainBtn.addEventListener('click', startOddColorGame);
+
+            /* ─── Catch the Hearts ─── */
+            const chArena = document.getElementById('chArena'),
+                chBasket = document.getElementById('chBasket'),
+                chScoreEl = document.getElementById('chScore'),
+                chHint = document.getElementById('chHint'),
+                chGameOver = document.getElementById('chGameOver'),
+                chFinalScore = document.getElementById('chFinalScore'),
+                chPlayAgainBtn = document.getElementById('chPlayAgainBtn'),
+                chLeaderboard = document.getElementById('chLeaderboard'),
+                chAuthorToggle = document.getElementById('chAuthorToggle');
+            let chAuthor = localStorage.getItem('ourLittleUniverseChAuthor') === '2' ? '2' : '1',
+                chScore = 0,
+                chItems = [],
+                chRunning = false,
+                chRAF = null,
+                chLastTs = 0,
+                chStartTs = 0,
+                chLastSpawn = 0,
+                chBasketX = 0;
+
+            function setChAuthor(v) {
+                chAuthor = v;
+                localStorage.setItem('ourLittleUniverseChAuthor', v);
+                chAuthorToggle.dataset.author = v;
+                chAuthorToggle.setAttribute('aria-label',
+                    `Currently playing as By ${v === '2' ? 'M' : 'J'} — tap to switch`);
+            }
+            chAuthorToggle.addEventListener('click', () => setChAuthor(chAuthor === '1' ? '2' : '1'));
+            setChAuthor(chAuthor);
+
+            function chElapsedSeconds() { return chStartTs ? Math.max(0, (chLastTs - chStartTs) / 1000) : 0; }
+
+            function chSpawnInterval() { return Math.max(380, 1150 - chElapsedSeconds() * 26); }
+
+            function chFallSpeed() { return Math.min(.46, .11 + chElapsedSeconds() * .012); }
+
+            function chBombChance() { return Math.min(.45, .15 + chElapsedSeconds() * .006); }
+
+            function chSetBasketX(clientX) {
+                const rect = chArena.getBoundingClientRect();
+                const w = chBasket.offsetWidth || 54;
+                let x = clientX - rect.left - w / 2;
+                x = Math.max(0, Math.min(rect.width - w, x));
+                chBasketX = x;
+                chBasket.style.left = x + 'px';
+            }
+
+            function chPointerMove(e) {
+                if (!chRunning) return;
+                const point = e.touches ? e.touches[0] : e;
+                chSetBasketX(point.clientX);
+            }
+            chArena.addEventListener('pointerdown', chPointerMove);
+            chArena.addEventListener('pointermove', chPointerMove);
+
+            function chSpawnItem() {
+                const rect = chArena.getBoundingClientRect();
+                const isBomb = Math.random() < chBombChance();
+                const size = 30;
+                const el = document.createElement('span');
+                el.className = 'ch-item';
+                el.textContent = isBomb ? '💣' : (Math.random() < .5 ? '💗' : '💖');
+                const x = Math.random() * Math.max(1, rect.width - size);
+                el.style.left = x + 'px';
+                el.style.top = '-30px';
+                chArena.appendChild(el);
+                chItems.push({ el, x, y: -30, size, isBomb });
+            }
+
+            function chUpdateScore() { chScoreEl.textContent = `Score: ${chScore}`; }
+
+            function chLoop(ts) {
+                if (!chRunning) return;
+                if (!chLastTs) chLastTs = ts;
+                if (!chStartTs) chStartTs = ts;
+                const dt = ts - chLastTs;
+                chLastTs = ts;
+                if (ts - chLastSpawn > chSpawnInterval()) { chSpawnItem();
+                    chLastSpawn = ts; }
+                const rect = chArena.getBoundingClientRect();
+                const basketW = chBasket.offsetWidth || 54,
+                    basketTop = rect.height - 54,
+                    speed = chFallSpeed();
+                for (let i = chItems.length - 1; i >= 0; i--) {
+                    const it = chItems[i];
+                    it.y += speed * dt;
+                    it.el.style.top = it.y + 'px';
+                    if (it.y + it.size >= basketTop && it.x + it.size > chBasketX && it.x < chBasketX + basketW) {
+                        it.el.remove();
+                        chItems.splice(i, 1);
+                        if (it.isBomb) { finishCatchHearts();
+                            return; }
+                        chScore++;
+                        chUpdateScore();
+                        haptic(10);
+                        continue;
+                    }
+                    if (it.y > rect.height) { it.el.remove();
+                        chItems.splice(i, 1); }
+                }
+                chRAF = requestAnimationFrame(chLoop);
+            }
+
+            function startCatchHeartsGame() {
+                stopCatchHeartsGame();
+                chScore = 0;
+                chUpdateScore();
+                chGameOver.classList.add('hidden');
+                chHint.classList.remove('hidden');
+                chLastTs = 0;
+                chStartTs = 0;
+                chLastSpawn = 0;
+                chRunning = true;
+                requestAnimationFrame(() => {
+                    const rect = chArena.getBoundingClientRect();
+                    chSetBasketX(rect.left + rect.width / 2);
+                    chRAF = requestAnimationFrame(chLoop);
+                });
+            }
+
+            function stopCatchHeartsGame() {
+                chRunning = false;
+                if (chRAF) cancelAnimationFrame(chRAF);
+                chRAF = null;
+                chItems.forEach(it => it.el.remove());
+                chItems = [];
+            }
+
+            async function finishCatchHearts() {
+                stopCatchHeartsGame();
+                haptic([20, 30, 20]);
+                chGameOver.classList.remove('hidden');
+                chFinalScore.textContent = chScore === 0 ? "Caught a bomb! Tap Play again to try once more." :
+                    `You caught ${chScore}! 🎉`;
+                if (!supabase) return;
+                try {
+                    await supabase.from(GAME_SCORES_TABLE).insert({ game: 'catchhearts', author: Number(chAuthor),
+                        moves: chScore, seconds: 0 });
+                    await trimLeaderboard('catchhearts', 'moves', false);
+                    loadCatchHeartsLeaderboard();
+                } catch (err) { console.error('Could not save catch-the-hearts score:', err); }
+            }
+
+            async function loadCatchHeartsLeaderboard() {
+                if (!supabase) return;
+                try {
+                    const { data, error } = await supabase.from(GAME_SCORES_TABLE).select('*').eq('game',
+                        'catchhearts').order('moves', { ascending: false }).limit(5);
+                    if (error) throw error;
+                    if (!data || !data.length) { chLeaderboard.innerHTML = 'No scores yet — be the first!';
+                        return; }
+                    chLeaderboard.innerHTML = '<b>Best scores</b><br>' + data.map((s, i) =>
+                        `${i + 1}. By ${Number(s.author) === 2 ? 'M' : 'J'} — ${s.moves}`).join('<br>');
+                } catch (e) { console.error(
+                    'Could not load catch-the-hearts leaderboard. Run the games SQL setup first.', e); }
+            }
+            chPlayAgainBtn.addEventListener('click', startCatchHeartsGame);
+
+            /* ─── Simon Says ─── */
+            const simonSizePicker = document.getElementById('simonSizePicker'),
+                simonSizeRow = document.getElementById('simonSizeRow'),
+                simonPlayArea = document.getElementById('simonPlayArea'),
+                simonChangeSizeBtn = document.getElementById('simonChangeSizeBtn'),
+                simonBoardEl = document.getElementById('simonBoard'),
+                simonScoreEl = document.getElementById('simonScore'),
+                simonHint = document.getElementById('simonHint'),
+                simonStartBtn = document.getElementById('simonStartBtn'),
+                simonGameOver = document.getElementById('simonGameOver'),
+                simonFinalScore = document.getElementById('simonFinalScore'),
+                simonPlayAgainBtn = document.getElementById('simonPlayAgainBtn'),
+                simonLeaderboard = document.getElementById('simonLeaderboard'),
+                simonAuthorToggle = document.getElementById('simonAuthorToggle');
+            const SIMON_SIZES = [2, 4, 6];
+            let simonAuthor = localStorage.getItem('ourLittleUniverseSimonAuthor') === '2' ? '2' : '1',
+                simonSize = 2,
+                simonTiles = [],
+                simonSequence = [],
+                simonPlayerStep = 0,
+                simonShowing = false,
+                simonPlaying = false,
+                simonTimeouts = [];
+
+            function setSimonAuthor(v) {
+                simonAuthor = v;
+                localStorage.setItem('ourLittleUniverseSimonAuthor', v);
+                simonAuthorToggle.dataset.author = v;
+                simonAuthorToggle.setAttribute('aria-label',
+                    `Currently playing as By ${v === '2' ? 'M' : 'J'} — tap to switch`);
+            }
+            simonAuthorToggle.addEventListener('click', () => setSimonAuthor(simonAuthor === '1' ? '2' : '1'));
+            setSimonAuthor(simonAuthor);
+
+            function simonColorsFor(n) {
+                if (n <= 4) return ['var(--rose-deep)', 'var(--gold)', 'var(--sage)', 'var(--lavender)'].slice(0, n);
+                const colors = [];
+                for (let i = 0; i < n; i++) colors.push(`hsl(${Math.round(i * 360 / n)},62%,55%)`);
+                return colors;
+            }
+
+            function renderSimonBoard(size) {
+                simonBoardEl.innerHTML = '';
+                simonBoardEl.style.gridTemplateColumns = `repeat(${size},1fr)`;
+                const boardPx = size === 2 ? 220 : size === 4 ? 280 : 320;
+                simonBoardEl.style.width = `min(${boardPx}px, 88vw)`;
+                const total = size * size,
+                    colors = simonColorsFor(total),
+                    radius = size === 2 ? '18px' : size === 4 ? '12px' : '8px';
+                for (let i = 0; i < total; i++) {
+                    const tile = document.createElement('button');
+                    tile.type = 'button';
+                    tile.className = 'simon-tile';
+                    tile.dataset.i = i;
+                    tile.style.setProperty('--tile-color', colors[i]);
+                    tile.style.borderRadius = radius;
+                    tile.disabled = true;
+                    tile.addEventListener('click', () => handleSimonTap(i));
+                    simonBoardEl.appendChild(tile);
+                }
+                simonTiles = Array.from(simonBoardEl.children);
+            }
+
+            function showSimonSizePicker() {
+                stopSimonSequence();
+                simonSizePicker.classList.remove('hidden');
+                simonPlayArea.classList.add('hidden');
+                renderSimonSizePicker();
+            }
+
+            function renderSimonSizePicker() {
+                simonSizeRow.innerHTML = '';
+                SIMON_SIZES.forEach(size => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'memory-size-btn';
+                    btn.innerHTML = `${size}×${size}<small>${size === 2 ? 'easy' : size === 4 ? 'harder' : 'hardest'}</small>`;
+                    btn.addEventListener('click', () => {
+                        simonSize = size;
+                        simonSizePicker.classList.add('hidden');
+                        simonPlayArea.classList.remove('hidden');
+                        renderSimonBoard(size);
+                        resetSimonGame();
+                        loadSimonLeaderboard();
+                    });
+                    simonSizeRow.appendChild(btn);
+                });
+            }
+            simonChangeSizeBtn.addEventListener('click', showSimonSizePicker);
+
+            function stopSimonSequence() {
+                simonTimeouts.forEach(t => clearTimeout(t));
+                simonTimeouts = [];
+                simonShowing = false;
+                simonPlaying = false;
+                simonTiles.forEach(t => { t.disabled = true;
+                    t.classList.remove('active', 'wrong'); });
+            }
+
+            function resetSimonGame() {
+                stopSimonSequence();
+                simonSequence = [];
+                simonPlayerStep = 0;
+                simonScoreEl.textContent = 'Level: 0';
+                simonHint.textContent = 'Watch the sequence, then repeat it';
+                simonGameOver.classList.add('hidden');
+                simonStartBtn.classList.remove('hidden');
+            }
+
+            function simonFlash(tile, ms) {
+                return new Promise(resolve => {
+                    tile.classList.add('active');
+                    const t1 = setTimeout(() => {
+                        tile.classList.remove('active');
+                        const t2 = setTimeout(resolve, 180);
+                        simonTimeouts.push(t2);
+                    }, ms);
+                    simonTimeouts.push(t1);
+                });
+            }
+
+            function simonSpeedFor(level) {
+                const base = simonSize === 2 ? 620 : simonSize === 4 ? 560 : 500,
+                    floor = simonSize === 2 ? 320 : simonSize === 4 ? 260 : 200,
+                    step = simonSize === 2 ? 12 : simonSize === 4 ? 16 : 20;
+                return Math.max(floor, base - level * step);
+            }
+
+            async function playSimonSequence() {
+                simonShowing = true;
+                simonTiles.forEach(t => t.disabled = true);
+                simonHint.textContent = 'Watch closely...';
+                const speed = simonSpeedFor(simonSequence.length);
+                await new Promise(r => { const t = setTimeout(r, 450);
+                    simonTimeouts.push(t); });
+                for (const i of simonSequence) {
+                    if (!simonPlaying) return;
+                    await simonFlash(simonTiles[i], speed);
+                }
+                if (!simonPlaying) return;
+                simonShowing = false;
+                simonPlayerStep = 0;
+                simonTiles.forEach(t => t.disabled = false);
+                simonHint.textContent = 'Your turn — repeat it';
+            }
+
+            function simonNextRound() {
+                simonSequence.push(Math.floor(Math.random() * simonSize * simonSize));
+                simonScoreEl.textContent = `Level: ${simonSequence.length}`;
+                playSimonSequence();
+            }
+
+            function startSimonGame() {
+                stopSimonSequence();
+                simonSequence = [];
+                simonPlayerStep = 0;
+                simonPlaying = true;
+                simonGameOver.classList.add('hidden');
+                simonStartBtn.classList.add('hidden');
+                simonNextRound();
+            }
+
+            function handleSimonTap(i) {
+                if (!simonPlaying || simonShowing) return;
+                const tile = simonTiles[i];
+                if (simonSequence[simonPlayerStep] === i) {
+                    simonFlash(tile, 200);
+                    simonPlayerStep++;
+                    if (simonPlayerStep === simonSequence.length) {
+                        simonTiles.forEach(t => t.disabled = true);
+                        const t = setTimeout(() => { if (simonPlaying) simonNextRound(); }, 700);
+                        simonTimeouts.push(t);
+                    }
+                } else {
+                    tile.classList.add('wrong');
+                    haptic([20, 30, 20]);
+                    endSimonGame();
+                }
+            }
+
+            async function endSimonGame() {
+                if (!simonPlaying) return;
+                simonPlaying = false;
+                simonShowing = false;
+                simonTiles.forEach(t => t.disabled = true);
+                const finalLevel = Math.max(0, simonSequence.length - 1);
+                simonGameOver.classList.remove('hidden');
+                simonFinalScore.textContent = finalLevel === 0 ? "Didn't quite get one — tap Play again!" :
+                    `You reached level ${finalLevel}! 🎉`;
+                if (!supabase) return;
+                const gameKey = `simon-${simonSize}x${simonSize}`;
+                try {
+                    await supabase.from(GAME_SCORES_TABLE).insert({ game: gameKey, author: Number(simonAuthor),
+                        moves: finalLevel, seconds: 0 });
+                    await trimLeaderboard(gameKey, 'moves', false);
+                    loadSimonLeaderboard();
+                } catch (err) { console.error('Could not save Simon Says score:', err); }
+            }
+
+            async function loadSimonLeaderboard() {
+                if (!supabase) return;
+                const gameKey = `simon-${simonSize}x${simonSize}`;
+                try {
+                    const { data, error } = await supabase.from(GAME_SCORES_TABLE).select('*').eq('game', gameKey)
+                        .order('moves', { ascending: false }).limit(5);
+                    if (error) throw error;
+                    if (!data || !data.length) { simonLeaderboard.innerHTML =
+                        `No scores yet for ${simonSize}×${simonSize} — be the first!`;
+                        return; }
+                    simonLeaderboard.innerHTML = `<b>Best levels (${simonSize}×${simonSize})</b><br>` + data.map((s,
+                        i) => `${i + 1}. By ${Number(s.author) === 2 ? 'M' : 'J'} — level ${s.moves}`).join('<br>');
+                } catch (e) { console.error('Could not load Simon Says leaderboard. Run the games SQL setup first.',
+                    e); }
+            }
+            simonStartBtn.addEventListener('click', startSimonGame);
+            simonPlayAgainBtn.addEventListener('click', startSimonGame);
 
             /* ─── Break glass ─── */
             const breakGlassBtn = document.getElementById('breakGlassBtn'),
