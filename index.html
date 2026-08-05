@@ -6014,85 +6014,64 @@
         }
         .signature-card {
             position: relative;
-            max-width: 320px;
+            max-width: 340px;
         }
-        .signature-tabs {
-            display: flex;
-            gap: .4rem;
-            justify-content: center;
-            margin-bottom: .8rem;
-        }
-        .signature-tab {
-            border: 1px solid var(--card-border);
+        .signature-doodle-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: .5rem;
+            max-height: 260px;
+            overflow-y: auto;
+            margin: .5rem 0 1rem;
+            padding: .4rem;
+            border: 2px dashed var(--card-border);
+            border-radius: 12px;
             background: var(--paper-deep);
-            color: var(--ink-soft);
-            border-radius: 999px;
-            padding: .35rem .8rem;
-            font: 700 .74rem 'Quicksand', sans-serif;
-            cursor: pointer;
-            transition: background .15s ease, color .15s ease, border-color .15s ease;
         }
-        .signature-tab.active {
-            background: var(--rose-deep);
-            border-color: var(--rose-deep);
-            color: white;
+        .signature-doodle-grid .oc-hint {
+            grid-column: 1 / -1;
         }
-        .signature-type-area.hidden {
-            display: none;
-        }
-        #signatureTextInput {
-            width: 100%;
-            box-sizing: border-box;
-            border: 1px solid var(--card-border);
-            border-radius: 10px;
-            padding: .55rem .7rem;
+        .signature-doodle-thumb {
+            padding: 0;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            overflow: hidden;
             background: var(--paper);
-            color: var(--ink);
-            font: 600 .9rem 'Quicksand', sans-serif;
-            margin-bottom: .6rem;
+            cursor: pointer;
+            aspect-ratio: 1;
+            transition: border-color .15s ease, transform .15s ease;
         }
-        .signature-type-preview {
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px dashed var(--card-border);
-            border-radius: 12px;
-            background: var(--paper-deep);
-            font: 700 2rem 'Caveat', cursive;
-            color: var(--ink);
-            margin: 0 0 1rem;
-            word-break: break-word;
-            padding: .3rem .6rem;
-        }
-        #signatureCanvas {
-            display: block;
+        .signature-doodle-thumb img {
             width: 100%;
-            max-width: 280px;
-            height: 130px;
-            margin: 0 auto 1rem;
-            border: 2px dashed var(--card-border);
-            border-radius: 12px;
-            background: var(--paper-deep);
-            touch-action: none;
-            cursor: crosshair;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
-        #signatureCanvas.hidden {
-            display: none;
+        .signature-doodle-thumb:hover {
+            transform: scale(1.04);
         }
-        #signatureSwatches {
-            margin: 0 0 .7rem;
-        }
-        #signatureDrawControls {
-            margin-bottom: .5rem;
-        }
-        #signatureDrawControls.hidden {
-            display: none;
+        .signature-doodle-thumb.selected {
+            border-color: var(--rose-deep);
         }
         .signature-actions {
             display: flex;
             gap: .6rem;
             justify-content: center;
+        }
+        .signature-reset-btn {
+            display: block;
+            margin: .8rem auto 0;
+            border: 0;
+            background: none;
+            color: var(--ink-soft);
+            font: 700 .76rem 'Quicksand', sans-serif;
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            transition: color .15s ease;
+        }
+        .signature-reset-btn:hover {
+            color: var(--rose-deep);
         }
         .sig-avatar {
             border-radius: 50%;
@@ -6100,6 +6079,20 @@
             background: var(--white);
             display: inline-block;
             vertical-align: middle;
+        }
+        .note-author-badge.has-sig {
+            width: 27px;
+            height: 27px;
+        }
+        .doodle-author-badge.has-sig {
+            padding: 0;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         @keyframes presencePulse {
             0%,
@@ -7403,6 +7396,7 @@
         <!-- ===== IDENTITY PICKER ===== -->
         <div class="identity-modal hidden" id="identityModal">
             <div class="identity-card">
+                <button type="button" class="style-modal-close" id="identityModalClose" aria-label="Close">✕</button>
                 <h3>Who's opening this? 💕</h3>
                 <p>This just personalizes this device — every "By J / By M" toggle across the site will default to
                     your pick. You can still switch any individual toggle any time, and change this later too.</p>
@@ -7417,30 +7411,13 @@
         <div class="identity-modal hidden" id="signatureModal">
             <div class="identity-card signature-card">
                 <button type="button" class="style-modal-close" id="signatureModalClose" aria-label="Close">✕</button>
-                <h3>Your signature ✍️</h3>
-                <p>Used as your little avatar on notes, doodles, and leaderboards. You can redo this any time.</p>
-                <div class="signature-tabs">
-                    <button type="button" class="signature-tab active" data-mode="draw">✍️ Scribble</button>
-                    <button type="button" class="signature-tab" data-mode="type">🔤 Type</button>
-                </div>
-                <canvas id="signatureCanvas" width="300" height="140"></canvas>
-                <div class="doodle-swatches" id="signatureSwatches">
-                    <input class="doodle-color-picker" id="signatureColorPicker" type="color" value="#6B5344" aria-label="Choose any colour">
-                </div>
-                <div id="signatureDrawControls">
-                    <div class="doodle-tools" id="signatureTools">
-                        <button type="button" class="active" data-tool="pen">✏️ Pen</button><button type="button" data-tool="eraser">🧼 Eraser</button><button type="button" id="signatureUndo">↶ Undo</button>
-                    </div>
-                    <div class="doodle-size-row"><label class="doodle-size">Brush size <input id="signatureBrushSize" type="range" min="1" max="10" value="3"><span id="signatureBrushValue">3</span></label></div>
-                </div>
-                <div class="signature-type-area hidden" id="signatureTypeArea">
-                    <input type="text" id="signatureTextInput" maxlength="18" placeholder="e.g. J or Jagadish">
-                    <p class="signature-type-preview" id="signatureTypePreview">Aa</p>
-                </div>
+                <h3>Your signature 🎨</h3>
+                <p>Pick one of your saved doodles to use as your little avatar on notes, doodles, and leaderboards.</p>
+                <div class="signature-doodle-grid" id="signatureDoodleGrid"></div>
                 <div class="signature-actions">
-                    <button type="button" class="fav-filter-btn" id="signatureClearBtn">🧹 Clear all</button>
-                    <button type="button" class="fav-filter-btn" id="signatureSaveBtn">💾 Save</button>
+                    <button type="button" class="fav-filter-btn" id="signatureSaveBtn">💾 Use this doodle</button>
                 </div>
+                <button type="button" class="signature-reset-btn" id="signatureResetBtn">↩️ Reset to plain J / M</button>
             </div>
         </div>
 
@@ -8494,7 +8471,7 @@
                     <div class="note-message">${escapeHtml(note.message)}</div>
                     ${note.audio_url ? `<div class="note-voice"><audio controls preload="none" src="${note.audio_url}"></audio></div>` : ''}
                     ${note.reaction ? `<span class="note-reaction-badge">${note.reaction}</span>` : ''}
-                    <span class="note-author-badge author-${effectiveAuthor}" title="${escapeHtml(authorLabel(effectiveAuthor))}" aria-label="${escapeHtml(authorLabel(effectiveAuthor))}">${sigAvatarHTML(effectiveAuthor, 20) || (effectiveAuthor === '2' ? NOTE_AUTHOR_2_LETTER : NOTE_AUTHOR_1_LETTER)}</span>
+                    <span class="note-author-badge author-${effectiveAuthor}${hasSignature(effectiveAuthor) ? ' has-sig' : ''}" title="${escapeHtml(authorLabel(effectiveAuthor))}" aria-label="${escapeHtml(authorLabel(effectiveAuthor))}">${sigAvatarHTML(effectiveAuthor, 27) || (effectiveAuthor === '2' ? NOTE_AUTHOR_2_LETTER : NOTE_AUTHOR_1_LETTER)}</span>
                     <span class="note-date">${dateLabel}</span>
                   </div>
                   <div class="note-face note-back">
@@ -9086,7 +9063,7 @@
                     <img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption ? `: ${escapeHtml(d.caption)}` : ''}" loading="lazy" decoding="async">
                     <div class="doodle-caption-preview">${escapeHtml(d.caption || 'A little doodle ✨')}</div>
                     ${d.reaction ? `<span class="doodle-reaction-badge">${d.reaction}</span>` : ''}
-                    <span class="doodle-author-badge author-${author}">${sigAvatarHTML(author, 16) || `By ${author === '2' ? 'M' : 'J'}`}</span>
+                    <span class="doodle-author-badge author-${author}${hasSignature(author) ? ' has-sig' : ''}">${sigAvatarHTML(author, 25) || `By ${author === '2' ? 'M' : 'J'}`}</span>
                     <span class="doodle-date">${date}</span>
                   </div>
                   <div class="doodle-face doodle-back">
@@ -12971,6 +12948,7 @@
                 'ourLittleUniverseFeelingAuthor', 'ourLittleUniverseMoodAuthor', 'ourLittleUniverseNoteAuthor'
             ];
             const identityModal = document.getElementById('identityModal'),
+                identityModalClose = document.getElementById('identityModalClose'),
                 presenceSwitchBtn = document.getElementById('presenceSwitchBtn');
 
             function getIdentity() { return localStorage.getItem(IDENTITY_KEY); }
@@ -12983,6 +12961,7 @@
             function showIdentityPicker() { identityModal.classList.remove('hidden'); }
 
             function hideIdentityPicker() { identityModal.classList.add('hidden'); }
+            identityModalClose.addEventListener('click', hideIdentityPicker);
             identityModal.querySelectorAll('.identity-choice-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const id = btn.dataset.id;
@@ -12999,6 +12978,8 @@
             const SIGNATURES_TABLE = 'signatures';
             let signatureCache = { '1': null, '2': null };
 
+            function hasSignature(identity) { return !!signatureCache[String(identity)]; }
+
             function sigAvatarHTML(identity, size) {
                 const src = signatureCache[String(identity)];
                 if (!src) return '';
@@ -13007,8 +12988,8 @@
 
             function leaderName(author) {
                 const name = Number(author) === 2 ? 'M' : 'J';
-                const av = sigAvatarHTML(author, 15);
-                return av ? `${av} ${name}` : `By ${name}`;
+                if (!hasSignature(author)) return `By ${name}`;
+                return `${sigAvatarHTML(author, 20)} ${name}`;
             }
 
             async function loadSignatures() {
@@ -13029,188 +13010,116 @@
             const signatureModal = document.getElementById('signatureModal'),
                 signatureBtn = document.getElementById('signatureBtn'),
                 signatureModalClose = document.getElementById('signatureModalClose'),
-                signatureCanvas = document.getElementById('signatureCanvas'),
-                signatureClearBtn = document.getElementById('signatureClearBtn'),
                 signatureSaveBtn = document.getElementById('signatureSaveBtn'),
-                signatureTypeArea = document.getElementById('signatureTypeArea'),
-                signatureTextInput = document.getElementById('signatureTextInput'),
-                signatureTypePreview = document.getElementById('signatureTypePreview'),
-                signatureTabs = Array.from(document.querySelectorAll('.signature-tab')),
-                signatureSwatches = document.getElementById('signatureSwatches'),
-                signatureColorPicker = document.getElementById('signatureColorPicker'),
-                signatureDrawControls = document.getElementById('signatureDrawControls'),
-                signatureTools = document.getElementById('signatureTools'),
-                signatureUndo = document.getElementById('signatureUndo'),
-                signatureBrushSize = document.getElementById('signatureBrushSize'),
-                signatureBrushValue = document.getElementById('signatureBrushValue');
-            const sigCtx = signatureCanvas.getContext('2d');
-            let sigDrawing = false,
-                sigHasStrokes = false,
-                sigMode = 'draw',
-                sigTool = 'pen',
-                sigColor = '#6B5344',
-                sigHistory = [];
+                signatureResetBtn = document.getElementById('signatureResetBtn'),
+                signatureDoodleGrid = document.getElementById('signatureDoodleGrid');
+            let selectedDoodleDataUrl = null;
 
-            function setupSignatureCanvas() {
-                const ratio = Math.min(window.devicePixelRatio || 1, 2);
-                const rect = signatureCanvas.getBoundingClientRect();
-                signatureCanvas.width = Math.max(1, Math.round(rect.width * ratio));
-                signatureCanvas.height = Math.max(1, Math.round(rect.height * ratio));
-                sigCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
-                sigCtx.lineCap = 'round';
-                sigCtx.lineJoin = 'round';
+            function toSquareDataURL(imgSrc, size) {
+                size = size || 160;
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        try {
+                            const c = document.createElement('canvas');
+                            c.width = size;
+                            c.height = size;
+                            const cx = c.getContext('2d');
+                            const scale = Math.max(size / img.width, size / img.height);
+                            const w = img.width * scale,
+                                h = img.height * scale;
+                            cx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+                            resolve(c.toDataURL('image/png'));
+                        } catch (err) { reject(err); }
+                    };
+                    img.onerror = reject;
+                    img.src = imgSrc;
+                });
             }
 
-            function sigSnapshot() {
-                const pixels = sigCtx.getImageData(0, 0, signatureCanvas.width, signatureCanvas.height);
-                sigHistory.push(new ImageData(new Uint8ClampedArray(pixels.data), pixels.width, pixels.height));
-                if (sigHistory.length > 40) sigHistory.shift();
+            async function loadSignatureDoodleOptions() {
+                if (!supabase) { signatureDoodleGrid.innerHTML =
+                    '<p class="oc-hint">Connect Supabase to see your doodles.</p>';
+                    return; }
+                const identity = getIdentity();
+                if (!identity) return;
+                signatureDoodleGrid.innerHTML = '<p class="oc-hint">Loading your doodles...</p>';
+                try {
+                    const { data, error } = await supabase.from(DOODLES_TABLE).select('id,image_url,caption').eq(
+                        'author', Number(identity)).order('created_at', { ascending: false }).limit(24);
+                    if (error) throw error;
+                    if (!data || !data.length) { signatureDoodleGrid.innerHTML =
+                        '<p class="oc-hint">No doodles from you yet — draw one on the Doodles Wall first, then come back here.</p>';
+                        return; }
+                    signatureDoodleGrid.innerHTML = data.map(d =>
+                        `<button type="button" class="signature-doodle-thumb" data-id="${d.id}" data-src="${escapeHtml(d.image_url)}"><img src="${escapeHtml(d.image_url)}" alt="${escapeHtml(d.caption || '')}" loading="lazy"></button>`
+                    ).join('');
+                } catch (e) { console.error(e);
+                    signatureDoodleGrid.innerHTML = '<p class="oc-hint">Could not load your doodles.</p>'; }
             }
-
-            function sigPointFromEvent(e) {
-                const r = signatureCanvas.getBoundingClientRect();
-                return { x: e.clientX - r.left, y: e.clientY - r.top };
-            }
-            signatureCanvas.addEventListener('pointerdown', (e) => {
-                e.preventDefault();
-                signatureCanvas.setPointerCapture(e.pointerId);
-                sigSnapshot();
-                sigDrawing = true;
-                sigCtx.globalCompositeOperation = sigTool === 'eraser' ? 'destination-out' : 'source-over';
-                sigCtx.strokeStyle = sigColor;
-                sigCtx.lineWidth = +signatureBrushSize.value;
-                const p = sigPointFromEvent(e);
-                sigCtx.beginPath();
-                sigCtx.moveTo(p.x, p.y);
-            });
-            signatureCanvas.addEventListener('pointermove', (e) => {
-                if (!sigDrawing) return;
-                const p = sigPointFromEvent(e);
-                sigCtx.lineTo(p.x, p.y);
-                sigCtx.stroke();
-                sigHasStrokes = true;
-            });
-            ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => signatureCanvas.addEventListener(ev, () => {
-                sigDrawing = false; }));
-
-            function clearSignatureCanvas() {
-                sigSnapshot();
-                sigCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
-                sigHasStrokes = false;
-            }
-
-            function setSigColor(c) {
-                sigColor = c;
-                signatureColorPicker.value = c;
-                signatureSwatches.querySelectorAll('.doodle-swatch').forEach(b => b.classList.toggle('active', b
-                    .dataset.color === c));
-                signatureTypePreview.style.color = c;
-            }
-            DOODLE_COLORS.forEach(c => {
-                const b = document.createElement('button');
-                b.type = 'button';
-                b.className = 'doodle-swatch';
-                b.dataset.color = c;
-                b.style.background = c;
-                b.setAttribute('aria-label', `Use ${c}`);
-                b.addEventListener('click', () => setSigColor(c));
-                signatureSwatches.insertBefore(b, signatureColorPicker);
-            });
-            setSigColor(sigColor);
-            signatureColorPicker.addEventListener('input', () => setSigColor(signatureColorPicker.value));
-
-            function setSigTool(tool) {
-                sigTool = tool;
-                signatureTools.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('active', b.dataset
-                    .tool === tool));
-            }
-            signatureTools.addEventListener('click', (e) => {
-                const b = e.target.closest('[data-tool]');
-                if (!b) return;
-                setSigTool(b.dataset.tool);
-            });
-            signatureUndo.addEventListener('click', () => {
-                const prior = sigHistory.pop();
-                if (prior) sigCtx.putImageData(prior, 0, 0);
-            });
-            signatureBrushSize.addEventListener('input', () => { signatureBrushValue.textContent =
-                signatureBrushSize.value; });
-
-            function setSignatureMode(mode) {
-                sigMode = mode;
-                signatureTabs.forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
-                signatureCanvas.classList.toggle('hidden', mode !== 'draw');
-                signatureDrawControls.classList.toggle('hidden', mode !== 'draw');
-                signatureTypeArea.classList.toggle('hidden', mode !== 'type');
-            }
-            signatureTabs.forEach(tab => tab.addEventListener('click', () => setSignatureMode(tab.dataset.mode)));
-            signatureTextInput.addEventListener('input', () => {
-                signatureTypePreview.textContent = signatureTextInput.value.trim() || 'Aa';
-            });
-            signatureClearBtn.addEventListener('click', () => {
-                if (sigMode === 'type') { signatureTextInput.value = '';
-                    signatureTypePreview.textContent = 'Aa'; }
-                else clearSignatureCanvas();
+            signatureDoodleGrid.addEventListener('click', async(e) => {
+                const btn = e.target.closest('.signature-doodle-thumb');
+                if (!btn) return;
+                signatureDoodleGrid.querySelectorAll('.signature-doodle-thumb').forEach(b => b.classList.remove(
+                    'selected'));
+                btn.classList.add('selected');
+                try { selectedDoodleDataUrl = await toSquareDataURL(btn.dataset.src, 160); } catch (err) {
+                    console.error(err);
+                    showToast('Could not load that doodle image.', { type: 'error' });
+                    selectedDoodleDataUrl = null;
+                    btn.classList.remove('selected');
+                }
             });
 
             function openSignatureModal() {
                 if (!getIdentity()) { showIdentityPicker();
                     return; }
                 signatureModal.classList.remove('hidden');
-                setSignatureMode('draw');
-                setSigTool('pen');
-                sigHistory = [];
-                signatureTextInput.value = '';
-                signatureTypePreview.textContent = 'Aa';
-                requestAnimationFrame(() => { setupSignatureCanvas();
-                    clearSignatureCanvas();
-                    sigHistory = []; });
+                selectedDoodleDataUrl = null;
+                loadSignatureDoodleOptions();
             }
 
             function closeSignatureModal() { signatureModal.classList.add('hidden'); }
             signatureBtn.addEventListener('click', openSignatureModal);
             signatureModalClose.addEventListener('click', closeSignatureModal);
 
-            async function renderTextSignature(text) {
-                const fontFamily = "'Caveat', cursive";
-                try { await document.fonts.load(`700 46px ${fontFamily}`); } catch (e) {}
-                setupSignatureCanvas();
-                sigCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
-                const rect = signatureCanvas.getBoundingClientRect();
-                sigCtx.fillStyle = sigColor;
-                sigCtx.textAlign = 'center';
-                sigCtx.textBaseline = 'middle';
-                let fontSize = 48;
-                sigCtx.font = `700 ${fontSize}px ${fontFamily}`;
-                while (sigCtx.measureText(text).width > rect.width - 24 && fontSize > 16) {
-                    fontSize -= 2;
-                    sigCtx.font = `700 ${fontSize}px ${fontFamily}`;
-                }
-                sigCtx.fillText(text, rect.width / 2, rect.height / 2);
-            }
             signatureSaveBtn.addEventListener('click', async() => {
                 const identity = getIdentity();
                 if (!identity) { showToast('Pick who you are first.', { type: 'error' });
                     return; }
                 if (!supabase) { showToast('Connect Supabase first.', { type: 'error' });
                     return; }
-                if (sigMode === 'type') {
-                    const text = signatureTextInput.value.trim();
-                    if (!text) { showToast('Type something first 🔤', { type: 'error' });
-                        return; }
-                    await renderTextSignature(text);
-                } else if (!sigHasStrokes) { showToast('Draw something first ✍️', { type: 'error' });
+                if (!selectedDoodleDataUrl) { showToast('Pick a doodle first 🎨', { type: 'error' });
                     return; }
-                const dataUrl = signatureCanvas.toDataURL('image/png');
                 try {
-                    await supabase.from(SIGNATURES_TABLE).upsert({ identity: Number(identity), data_url: dataUrl,
-                        updated_at: new Date().toISOString() });
-                    signatureCache[identity] = dataUrl;
+                    await supabase.from(SIGNATURES_TABLE).upsert({ identity: Number(identity), data_url:
+                        selectedDoodleDataUrl, updated_at: new Date().toISOString() });
+                    signatureCache[identity] = selectedDoodleDataUrl;
                     haptic([20, 40, 20]);
-                    showToast('Signature saved! ✍️💕');
+                    showToast('Signature saved! 🎨💕');
                     closeSignatureModal();
                 } catch (e) { console.error(e);
                     showToast('Could not save your signature. Run the games SQL setup first.', { type: 'error' }); }
+            });
+            signatureResetBtn.addEventListener('click', async() => {
+                const identity = getIdentity();
+                if (!identity) { showToast('Pick who you are first.', { type: 'error' });
+                    return; }
+                if (!supabase) { showToast('Connect Supabase first.', { type: 'error' });
+                    return; }
+                try {
+                    await supabase.from(SIGNATURES_TABLE).upsert({ identity: Number(identity), data_url: null,
+                        updated_at: new Date().toISOString() });
+                    signatureCache[identity] = null;
+                    selectedDoodleDataUrl = null;
+                    signatureDoodleGrid.querySelectorAll('.signature-doodle-thumb').forEach(b => b.classList.remove(
+                        'selected'));
+                    haptic(15);
+                    showToast(`Back to plain ${Number(identity) === 2 ? 'M' : 'J'} 🤍`);
+                    closeSignatureModal();
+                } catch (e) { console.error(e);
+                    showToast('Could not reset your signature.', { type: 'error' }); }
             });
 
             /* ─── Presence: who's here / last seen ─── */
