@@ -4970,6 +4970,11 @@
             background: var(--rose-deep);
             color: var(--white);
         }
+        #signatureModal .style-modal-close {
+            left: 50%;
+            right: auto;
+            transform: translateX(-50%);
+        }
         .style-card h3 {
             font-family: 'Caveat', cursive;
             font-size: 1.6rem;
@@ -6016,45 +6021,41 @@
             position: relative;
             max-width: 340px;
         }
-        .signature-doodle-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: .5rem;
-            max-height: 260px;
-            overflow-y: auto;
-            margin: .5rem 0 1rem;
-            padding: .4rem;
+        #signatureModal .signature-card {
+            padding-top: 2.6rem;
+        }
+        #signatureCanvas {
+            display: block;
+            width: 100%;
+            max-width: 280px;
+            height: 130px;
+            margin: 0 auto .6rem;
             border: 2px dashed var(--card-border);
             border-radius: 12px;
             background: var(--paper-deep);
+            touch-action: none;
+            cursor: crosshair;
         }
-        .signature-doodle-grid .oc-hint {
-            grid-column: 1 / -1;
+        .signature-swatch-label {
+            margin: 0 0 .3rem;
+            font: 600 .68rem 'Quicksand', sans-serif;
+            color: var(--ink-soft);
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: .04em;
         }
-        .signature-doodle-thumb {
-            padding: 0;
-            border: 2px solid transparent;
-            border-radius: 8px;
-            overflow: hidden;
-            background: var(--paper);
-            cursor: pointer;
-            aspect-ratio: 1;
-            transition: border-color .15s ease, transform .15s ease;
+        #signatureSwatches {
+            margin: 0 0 .6rem;
         }
-        .signature-doodle-thumb img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
+        #signatureBgSwatches {
+            margin: 0 0 .7rem;
         }
-        .signature-doodle-thumb:hover {
-            transform: scale(1.04);
-        }
-        .signature-doodle-thumb.selected {
-            border-color: var(--rose-deep);
+        #signatureDrawControls {
+            margin-bottom: .5rem;
         }
         .signature-actions {
             display: flex;
+            flex-wrap: wrap;
             gap: .6rem;
             justify-content: center;
         }
@@ -7411,11 +7412,27 @@
         <div class="identity-modal hidden" id="signatureModal">
             <div class="identity-card signature-card">
                 <button type="button" class="style-modal-close" id="signatureModalClose" aria-label="Close">✕</button>
-                <h3>Your signature 🎨</h3>
-                <p>Pick one of your saved doodles to use as your little avatar on notes, doodles, and leaderboards.</p>
-                <div class="signature-doodle-grid" id="signatureDoodleGrid"></div>
+                <h3>Your signature ✍️</h3>
+                <p>Draw a little scribble to use as your avatar on notes, doodles, and leaderboards. You can redraw
+                    this any time.</p>
+                <canvas id="signatureCanvas" width="300" height="140"></canvas>
+                <p class="signature-swatch-label">Ink colour</p>
+                <div class="doodle-swatches" id="signatureSwatches">
+                    <input class="doodle-color-picker" id="signatureColorPicker" type="color" value="#6B5344" aria-label="Choose any colour">
+                </div>
+                <p class="signature-swatch-label">Background</p>
+                <div class="doodle-swatches" id="signatureBgSwatches">
+                    <input class="doodle-color-picker" id="signatureBgColorPicker" type="color" value="#FFFFFF" aria-label="Choose background colour">
+                </div>
+                <div id="signatureDrawControls">
+                    <div class="doodle-tools" id="signatureTools">
+                        <button type="button" class="active" data-tool="pen">✏️ Pen</button><button type="button" data-tool="eraser">🧼 Eraser</button><button type="button" id="signatureUndo">↶ Undo</button>
+                    </div>
+                    <div class="doodle-size-row"><label class="doodle-size">Brush size <input id="signatureBrushSize" type="range" min="1" max="10" value="3"><span id="signatureBrushValue">3</span></label></div>
+                </div>
                 <div class="signature-actions">
-                    <button type="button" class="fav-filter-btn" id="signatureSaveBtn">💾 Use this doodle</button>
+                    <button type="button" class="fav-filter-btn" id="signatureClearBtn">🧹 Clear all</button>
+                    <button type="button" class="fav-filter-btn" id="signatureSaveBtn">💾 Save</button>
                 </div>
                 <button type="button" class="signature-reset-btn" id="signatureResetBtn">↩️ Reset to plain J / M</button>
             </div>
@@ -7629,7 +7646,8 @@
                     backupVisible = atTop;
                     backupBtn.classList.toggle('visible', atTop);
                 }
-                if (topRightControls) topRightControls.classList.toggle('visible', atTop);
+                const unlocked = siteContent && !siteContent.classList.contains('hidden');
+                if (topRightControls) topRightControls.classList.toggle('visible', atTop && unlocked);
             }
             window.addEventListener('scroll', updateBackupVisibility, { passive: true });
             window.addEventListener('resize', updateBackupVisibility, { passive: true });
@@ -13010,74 +13028,157 @@
             const signatureModal = document.getElementById('signatureModal'),
                 signatureBtn = document.getElementById('signatureBtn'),
                 signatureModalClose = document.getElementById('signatureModalClose'),
+                signatureCanvas = document.getElementById('signatureCanvas'),
+                signatureClearBtn = document.getElementById('signatureClearBtn'),
                 signatureSaveBtn = document.getElementById('signatureSaveBtn'),
                 signatureResetBtn = document.getElementById('signatureResetBtn'),
-                signatureDoodleGrid = document.getElementById('signatureDoodleGrid');
-            let selectedDoodleDataUrl = null;
+                signatureSwatches = document.getElementById('signatureSwatches'),
+                signatureColorPicker = document.getElementById('signatureColorPicker'),
+                signatureBgSwatches = document.getElementById('signatureBgSwatches'),
+                signatureBgColorPicker = document.getElementById('signatureBgColorPicker'),
+                signatureDrawControls = document.getElementById('signatureDrawControls'),
+                signatureTools = document.getElementById('signatureTools'),
+                signatureUndo = document.getElementById('signatureUndo'),
+                signatureBrushSize = document.getElementById('signatureBrushSize'),
+                signatureBrushValue = document.getElementById('signatureBrushValue');
+            const sigCtx = signatureCanvas.getContext('2d');
+            const SIGNATURE_BG_COLORS = ['#FFFFFF', '#FBF3EA', '#D9D2C7', '#2B2320', '#221C29', '#000000'];
+            let sigDrawing = false,
+                sigHasStrokes = false,
+                sigTool = 'pen',
+                sigColor = '#6B5344',
+                sigBgColor = '#FFFFFF',
+                sigCssW = 280,
+                sigCssH = 130,
+                sigHistory = [];
 
-            function toSquareDataURL(imgSrc, size) {
-                size = size || 160;
-                return new Promise((resolve, reject) => {
-                    const img = new Image();
-                    img.crossOrigin = 'anonymous';
-                    img.onload = () => {
-                        try {
-                            const c = document.createElement('canvas');
-                            c.width = size;
-                            c.height = size;
-                            const cx = c.getContext('2d');
-                            const scale = Math.max(size / img.width, size / img.height);
-                            const w = img.width * scale,
-                                h = img.height * scale;
-                            cx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
-                            resolve(c.toDataURL('image/png'));
-                        } catch (err) { reject(err); }
-                    };
-                    img.onerror = reject;
-                    img.src = imgSrc;
-                });
+            function setupSignatureCanvas() {
+                const ratio = Math.min(window.devicePixelRatio || 1, 2);
+                const rect = signatureCanvas.getBoundingClientRect();
+                sigCssW = rect.width || sigCssW;
+                sigCssH = rect.height || sigCssH;
+                signatureCanvas.width = Math.max(1, Math.round(sigCssW * ratio));
+                signatureCanvas.height = Math.max(1, Math.round(sigCssH * ratio));
+                sigCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+                sigCtx.lineCap = 'round';
+                sigCtx.lineJoin = 'round';
             }
 
-            async function loadSignatureDoodleOptions() {
-                if (!supabase) { signatureDoodleGrid.innerHTML =
-                    '<p class="oc-hint">Connect Supabase to see your doodles.</p>';
-                    return; }
-                const identity = getIdentity();
-                if (!identity) return;
-                signatureDoodleGrid.innerHTML = '<p class="oc-hint">Loading your doodles...</p>';
-                try {
-                    const { data, error } = await supabase.from(DOODLES_TABLE).select('id,image_url,caption').eq(
-                        'author', Number(identity)).order('created_at', { ascending: false }).limit(24);
-                    if (error) throw error;
-                    if (!data || !data.length) { signatureDoodleGrid.innerHTML =
-                        '<p class="oc-hint">No doodles from you yet — draw one on the Doodles Wall first, then come back here.</p>';
-                        return; }
-                    signatureDoodleGrid.innerHTML = data.map(d =>
-                        `<button type="button" class="signature-doodle-thumb" data-id="${d.id}" data-src="${escapeHtml(d.image_url)}"><img src="${escapeHtml(d.image_url)}" alt="${escapeHtml(d.caption || '')}" loading="lazy"></button>`
-                    ).join('');
-                } catch (e) { console.error(e);
-                    signatureDoodleGrid.innerHTML = '<p class="oc-hint">Could not load your doodles.</p>'; }
+            function sigSnapshot() {
+                const pixels = sigCtx.getImageData(0, 0, signatureCanvas.width, signatureCanvas.height);
+                sigHistory.push(new ImageData(new Uint8ClampedArray(pixels.data), pixels.width, pixels.height));
+                if (sigHistory.length > 40) sigHistory.shift();
             }
-            signatureDoodleGrid.addEventListener('click', async(e) => {
-                const btn = e.target.closest('.signature-doodle-thumb');
-                if (!btn) return;
-                signatureDoodleGrid.querySelectorAll('.signature-doodle-thumb').forEach(b => b.classList.remove(
-                    'selected'));
-                btn.classList.add('selected');
-                try { selectedDoodleDataUrl = await toSquareDataURL(btn.dataset.src, 160); } catch (err) {
-                    console.error(err);
-                    showToast('Could not load that doodle image.', { type: 'error' });
-                    selectedDoodleDataUrl = null;
-                    btn.classList.remove('selected');
-                }
+
+            function sigPointFromEvent(e) {
+                const r = signatureCanvas.getBoundingClientRect();
+                return { x: e.clientX - r.left, y: e.clientY - r.top };
+            }
+            signatureCanvas.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                signatureCanvas.setPointerCapture(e.pointerId);
+                sigSnapshot();
+                sigDrawing = true;
+                sigCtx.globalCompositeOperation = sigTool === 'eraser' ? 'destination-out' : 'source-over';
+                sigCtx.strokeStyle = sigColor;
+                sigCtx.lineWidth = +signatureBrushSize.value;
+                const p = sigPointFromEvent(e);
+                sigCtx.beginPath();
+                sigCtx.moveTo(p.x, p.y);
             });
+            signatureCanvas.addEventListener('pointermove', (e) => {
+                if (!sigDrawing) return;
+                const p = sigPointFromEvent(e);
+                sigCtx.lineTo(p.x, p.y);
+                sigCtx.stroke();
+                sigHasStrokes = true;
+            });
+            ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => signatureCanvas.addEventListener(ev, () => {
+                sigDrawing = false; }));
+
+            function clearSignatureCanvas() {
+                sigSnapshot();
+                sigCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+                sigHasStrokes = false;
+            }
+            signatureClearBtn.addEventListener('click', clearSignatureCanvas);
+
+            function setSigColor(c) {
+                sigColor = c;
+                signatureColorPicker.value = c;
+                signatureSwatches.querySelectorAll('.doodle-swatch').forEach(b => b.classList.toggle('active', b
+                    .dataset.color === c));
+            }
+            DOODLE_COLORS.forEach(c => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'doodle-swatch';
+                b.dataset.color = c;
+                b.style.background = c;
+                b.setAttribute('aria-label', `Use ${c}`);
+                b.addEventListener('click', () => setSigColor(c));
+                signatureSwatches.insertBefore(b, signatureColorPicker);
+            });
+            setSigColor(sigColor);
+            signatureColorPicker.addEventListener('input', () => setSigColor(signatureColorPicker.value));
+
+            function setSigBgColor(c) {
+                sigBgColor = c;
+                signatureBgColorPicker.value = c;
+                signatureBgSwatches.querySelectorAll('.doodle-swatch').forEach(b => b.classList.toggle('active', b
+                    .dataset.color === c));
+                signatureCanvas.style.background = c;
+            }
+            SIGNATURE_BG_COLORS.forEach(c => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'doodle-swatch';
+                b.dataset.color = c;
+                b.style.background = c;
+                b.setAttribute('aria-label', `Use ${c} background`);
+                b.addEventListener('click', () => setSigBgColor(c));
+                signatureBgSwatches.insertBefore(b, signatureBgColorPicker);
+            });
+            setSigBgColor(sigBgColor);
+            signatureBgColorPicker.addEventListener('input', () => setSigBgColor(signatureBgColorPicker.value));
+
+            function setSigTool(tool) {
+                sigTool = tool;
+                signatureTools.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('active', b.dataset
+                    .tool === tool));
+            }
+            signatureTools.addEventListener('click', (e) => {
+                const b = e.target.closest('[data-tool]');
+                if (!b) return;
+                setSigTool(b.dataset.tool);
+            });
+            signatureUndo.addEventListener('click', () => {
+                const prior = sigHistory.pop();
+                if (prior) sigCtx.putImageData(prior, 0, 0);
+            });
+            signatureBrushSize.addEventListener('input', () => { signatureBrushValue.textContent =
+                signatureBrushSize.value; });
+
+            function getSignatureExportDataUrl() {
+                const flat = document.createElement('canvas');
+                flat.width = signatureCanvas.width;
+                flat.height = signatureCanvas.height;
+                const flatCtx = flat.getContext('2d');
+                flatCtx.fillStyle = sigBgColor;
+                flatCtx.fillRect(0, 0, flat.width, flat.height);
+                flatCtx.drawImage(signatureCanvas, 0, 0);
+                return flat.toDataURL('image/png');
+            }
 
             function openSignatureModal() {
                 if (!getIdentity()) { showIdentityPicker();
                     return; }
                 signatureModal.classList.remove('hidden');
-                selectedDoodleDataUrl = null;
-                loadSignatureDoodleOptions();
+                setSigTool('pen');
+                sigHistory = [];
+                requestAnimationFrame(() => { setupSignatureCanvas();
+                    clearSignatureCanvas();
+                    sigHistory = []; });
             }
 
             function closeSignatureModal() { signatureModal.classList.add('hidden'); }
@@ -13090,14 +13191,15 @@
                     return; }
                 if (!supabase) { showToast('Connect Supabase first.', { type: 'error' });
                     return; }
-                if (!selectedDoodleDataUrl) { showToast('Pick a doodle first 🎨', { type: 'error' });
+                if (!sigHasStrokes) { showToast('Draw something first ✍️', { type: 'error' });
                     return; }
+                const dataUrl = getSignatureExportDataUrl();
                 try {
-                    await supabase.from(SIGNATURES_TABLE).upsert({ identity: Number(identity), data_url:
-                        selectedDoodleDataUrl, updated_at: new Date().toISOString() });
-                    signatureCache[identity] = selectedDoodleDataUrl;
+                    await supabase.from(SIGNATURES_TABLE).upsert({ identity: Number(identity), data_url: dataUrl,
+                        updated_at: new Date().toISOString() });
+                    signatureCache[identity] = dataUrl;
                     haptic([20, 40, 20]);
-                    showToast('Signature saved! 🎨💕');
+                    showToast('Signature saved! ✍️💕');
                     closeSignatureModal();
                 } catch (e) { console.error(e);
                     showToast('Could not save your signature. Run the games SQL setup first.', { type: 'error' }); }
@@ -13112,9 +13214,6 @@
                     await supabase.from(SIGNATURES_TABLE).upsert({ identity: Number(identity), data_url: null,
                         updated_at: new Date().toISOString() });
                     signatureCache[identity] = null;
-                    selectedDoodleDataUrl = null;
-                    signatureDoodleGrid.querySelectorAll('.signature-doodle-thumb').forEach(b => b.classList.remove(
-                        'selected'));
                     haptic(15);
                     showToast(`Back to plain ${Number(identity) === 2 ? 'M' : 'J'} 🤍`);
                     closeSignatureModal();
