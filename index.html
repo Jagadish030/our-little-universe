@@ -2566,6 +2566,7 @@
             font-size: 0.68rem;
             line-height: 1;
             color: var(--white);
+            overflow: hidden;
         }
         .note-author-badge.author-1 {
             background: var(--rose-deep);
@@ -2786,6 +2787,21 @@
             background: #FFFDF7;
             aspect-ratio: 4/3;
             position: relative;
+        }
+        .love-trail-dot {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: translate(-50%, -50%);
+            font-size: 1.3rem;
+            pointer-events: none;
+            z-index: 5;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .25));
+            transition: left .07s linear, top .07s linear, opacity .25s ease;
+            opacity: 0;
+        }
+        .love-trail-dot.visible {
+            opacity: 1;
         }
         #doodleCanvas,
         #duetDoodleCanvas {
@@ -5894,6 +5910,197 @@
             box-shadow: 0 0 6px var(--sage);
             animation: presencePulse 1.8s ease-in-out infinite;
         }
+        .top-right-controls {
+            position: fixed;
+            top: max(.8rem, env(safe-area-inset-top));
+            left: max(.8rem, env(safe-area-inset-left));
+            z-index: 1000;
+            display: flex;
+            gap: .5rem;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity .3s ease, visibility .3s ease;
+        }
+        .top-right-controls.visible {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        .top-right-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg-strong);
+            color: var(--ink);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            box-shadow: 0 2px 8px var(--shadow);
+            font-size: .95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity .15s ease, transform .15s ease, background .15s ease, color .15s ease;
+            opacity: .85;
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .top-right-btn:hover {
+                opacity: 1;
+                background: var(--rose-deep);
+                color: var(--white);
+                transform: translateY(-1px) rotate(20deg) scale(1.06);
+            }
+        }
+        .top-right-btn:active {
+            transform: scale(.9);
+        }
+        .identity-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1001;
+            background: rgba(40, 30, 24, .85);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        .identity-modal.hidden {
+            display: none;
+        }
+        .identity-card {
+            background: var(--paper);
+            border-radius: 18px;
+            padding: 1.8rem 1.5rem;
+            max-width: 340px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, .3);
+        }
+        .identity-card h3 {
+            margin: 0 0 .6rem;
+            font-family: 'Caveat', cursive;
+            font-size: 1.7rem;
+            color: var(--ink);
+        }
+        .identity-card p {
+            font: 600 .82rem 'Quicksand', sans-serif;
+            color: var(--ink-soft);
+            margin: 0 0 1.3rem;
+            line-height: 1.5;
+        }
+        .identity-choices {
+            display: flex;
+            gap: .9rem;
+            justify-content: center;
+        }
+        .identity-choice-btn {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            border: 2px solid var(--rose-deep);
+            background: var(--paper-deep);
+            color: var(--rose-deep);
+            font: 700 1.6rem 'Quicksand', sans-serif;
+            cursor: pointer;
+            transition: transform .15s ease, background .15s ease, color .15s ease;
+        }
+        .identity-choice-btn:hover {
+            background: var(--rose-deep);
+            color: white;
+            transform: translateY(-2px) scale(1.05);
+        }
+        .signature-card {
+            position: relative;
+            max-width: 320px;
+        }
+        .signature-tabs {
+            display: flex;
+            gap: .4rem;
+            justify-content: center;
+            margin-bottom: .8rem;
+        }
+        .signature-tab {
+            border: 1px solid var(--card-border);
+            background: var(--paper-deep);
+            color: var(--ink-soft);
+            border-radius: 999px;
+            padding: .35rem .8rem;
+            font: 700 .74rem 'Quicksand', sans-serif;
+            cursor: pointer;
+            transition: background .15s ease, color .15s ease, border-color .15s ease;
+        }
+        .signature-tab.active {
+            background: var(--rose-deep);
+            border-color: var(--rose-deep);
+            color: white;
+        }
+        .signature-type-area.hidden {
+            display: none;
+        }
+        #signatureTextInput {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: .55rem .7rem;
+            background: var(--paper);
+            color: var(--ink);
+            font: 600 .9rem 'Quicksand', sans-serif;
+            margin-bottom: .6rem;
+        }
+        .signature-type-preview {
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed var(--card-border);
+            border-radius: 12px;
+            background: var(--paper-deep);
+            font: 700 2rem 'Caveat', cursive;
+            color: var(--ink);
+            margin: 0 0 1rem;
+            word-break: break-word;
+            padding: .3rem .6rem;
+        }
+        #signatureCanvas {
+            display: block;
+            width: 100%;
+            max-width: 280px;
+            height: 130px;
+            margin: 0 auto 1rem;
+            border: 2px dashed var(--card-border);
+            border-radius: 12px;
+            background: var(--paper-deep);
+            touch-action: none;
+            cursor: crosshair;
+        }
+        #signatureCanvas.hidden {
+            display: none;
+        }
+        #signatureSwatches {
+            margin: 0 0 .7rem;
+        }
+        #signatureDrawControls {
+            margin-bottom: .5rem;
+        }
+        #signatureDrawControls.hidden {
+            display: none;
+        }
+        .signature-actions {
+            display: flex;
+            gap: .6rem;
+            justify-content: center;
+        }
+        .sig-avatar {
+            border-radius: 50%;
+            object-fit: cover;
+            background: var(--white);
+            display: inline-block;
+            vertical-align: middle;
+        }
         @keyframes presencePulse {
             0%,
             100% {
@@ -6661,6 +6868,11 @@
 <body>
 
     <!-- ========== PASSWORD GATE ========== -->
+    <div class="top-right-controls" id="topRightControls">
+        <button type="button" class="top-right-btn" id="signatureBtn" title="Draw or type your signature" aria-label="Draw or type your signature">✍️</button>
+        <button type="button" class="top-right-btn" id="presenceSwitchBtn" title="Change whose device this is" aria-label="Change whose device this is">⚙️</button>
+    </div>
+
     <div class="pass-gate" id="passGate">
         <span class="pass-gate-sparkle">✦</span>
         <span class="pass-gate-sparkle">♥</span>
@@ -6958,6 +7170,7 @@
                     </button>
                     <div class="doodle-canvas-wrap" id="duetDoodleCanvasWrap">
                         <canvas id="duetDoodleCanvas" aria-label="Draw together, live"></canvas>
+                        <div class="love-trail-dot" id="duetLoveTrail">💗</div>
                         <div class="doodle-canvas-overlay" id="duetDoodleCanvasOverlay">
                             <span class="overlay-icon">👥</span>
                             <span class="overlay-text">Double tap to start drawing together</span>
@@ -7187,6 +7400,50 @@
             <button class="lightbox-nav next" id="lightboxNext" aria-label="Next photo">›</button>
         </div>
 
+        <!-- ===== IDENTITY PICKER ===== -->
+        <div class="identity-modal hidden" id="identityModal">
+            <div class="identity-card">
+                <h3>Who's opening this? 💕</h3>
+                <p>This just personalizes this device — every "By J / By M" toggle across the site will default to
+                    your pick. You can still switch any individual toggle any time, and change this later too.</p>
+                <div class="identity-choices">
+                    <button type="button" class="identity-choice-btn" data-id="1">J</button>
+                    <button type="button" class="identity-choice-btn" data-id="2">M</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== SIGNATURE PAD ===== -->
+        <div class="identity-modal hidden" id="signatureModal">
+            <div class="identity-card signature-card">
+                <button type="button" class="style-modal-close" id="signatureModalClose" aria-label="Close">✕</button>
+                <h3>Your signature ✍️</h3>
+                <p>Used as your little avatar on notes, doodles, and leaderboards. You can redo this any time.</p>
+                <div class="signature-tabs">
+                    <button type="button" class="signature-tab active" data-mode="draw">✍️ Scribble</button>
+                    <button type="button" class="signature-tab" data-mode="type">🔤 Type</button>
+                </div>
+                <canvas id="signatureCanvas" width="300" height="140"></canvas>
+                <div class="doodle-swatches" id="signatureSwatches">
+                    <input class="doodle-color-picker" id="signatureColorPicker" type="color" value="#6B5344" aria-label="Choose any colour">
+                </div>
+                <div id="signatureDrawControls">
+                    <div class="doodle-tools" id="signatureTools">
+                        <button type="button" class="active" data-tool="pen">✏️ Pen</button><button type="button" data-tool="eraser">🧼 Eraser</button><button type="button" id="signatureUndo">↶ Undo</button>
+                    </div>
+                    <div class="doodle-size-row"><label class="doodle-size">Brush size <input id="signatureBrushSize" type="range" min="1" max="10" value="3"><span id="signatureBrushValue">3</span></label></div>
+                </div>
+                <div class="signature-type-area hidden" id="signatureTypeArea">
+                    <input type="text" id="signatureTextInput" maxlength="18" placeholder="e.g. J or Jagadish">
+                    <p class="signature-type-preview" id="signatureTypePreview">Aa</p>
+                </div>
+                <div class="signature-actions">
+                    <button type="button" class="fav-filter-btn" id="signatureClearBtn">🧹 Clear all</button>
+                    <button type="button" class="fav-filter-btn" id="signatureSaveBtn">💾 Save</button>
+                </div>
+            </div>
+        </div>
+
         <!-- ===== MILESTONE BANNER ===== -->
         <div class="milestone-banner hidden" id="milestoneBanner">
             <h3 id="milestoneTitle"></h3>
@@ -7384,8 +7641,9 @@
                 setTimeout(() => backToTop.classList.remove('pressed'), 150);
             });
 
-            /* ─── Backup button: only visible at top ─── */
+            /* ─── Backup button + signature/settings icons: only visible at top ─── */
             const backupBtn = document.getElementById('backupBtn');
+            const topRightControls = document.getElementById('topRightControls');
             let backupVisible = true;
 
             function updateBackupVisibility() {
@@ -7394,11 +7652,13 @@
                     backupVisible = atTop;
                     backupBtn.classList.toggle('visible', atTop);
                 }
+                if (topRightControls) topRightControls.classList.toggle('visible', atTop);
             }
             window.addEventListener('scroll', updateBackupVisibility, { passive: true });
             window.addEventListener('resize', updateBackupVisibility, { passive: true });
             // Start hidden
             backupBtn.classList.remove('visible');
+            if (topRightControls) topRightControls.classList.remove('visible');
             backupVisible = false;
             // Check after a moment
             setTimeout(updateBackupVisibility, 100);
@@ -8234,7 +8494,7 @@
                     <div class="note-message">${escapeHtml(note.message)}</div>
                     ${note.audio_url ? `<div class="note-voice"><audio controls preload="none" src="${note.audio_url}"></audio></div>` : ''}
                     ${note.reaction ? `<span class="note-reaction-badge">${note.reaction}</span>` : ''}
-                    <span class="note-author-badge author-${effectiveAuthor}" title="${escapeHtml(authorLabel(effectiveAuthor))}" aria-label="${escapeHtml(authorLabel(effectiveAuthor))}">${effectiveAuthor === '2' ? NOTE_AUTHOR_2_LETTER : NOTE_AUTHOR_1_LETTER}</span>
+                    <span class="note-author-badge author-${effectiveAuthor}" title="${escapeHtml(authorLabel(effectiveAuthor))}" aria-label="${escapeHtml(authorLabel(effectiveAuthor))}">${sigAvatarHTML(effectiveAuthor, 20) || (effectiveAuthor === '2' ? NOTE_AUTHOR_2_LETTER : NOTE_AUTHOR_1_LETTER)}</span>
                     <span class="note-date">${dateLabel}</span>
                   </div>
                   <div class="note-face note-back">
@@ -8610,6 +8870,7 @@
                                 .value * 2) }); }
                 });
                 canvas.addEventListener('pointermove', (e) => {
+                    if (hooks.onHover) hooks.onHover(normPoint(pointFor(e)));
                     if (!drawing) return;
                     const p = pointFor(e);
                     if (tool === 'line') {
@@ -8628,9 +8889,12 @@
                         to: normPoint(lastPoint), color, tool, size: normSize(+brushSize.value) });
                     drawing = false;
                     lastPoint = null;
+                    if (hooks.onHoverEnd) hooks.onHoverEnd();
                 });
+                canvas.addEventListener('pointerleave', () => { if (hooks.onHoverEnd) hooks.onHoverEnd(); });
                 canvas.addEventListener('pointercancel', () => { drawing = false;
-                    lastPoint = null; });
+                    lastPoint = null;
+                    if (hooks.onHoverEnd) hooks.onHoverEnd(); });
                 undoBtn.addEventListener('click', (e) => { e.preventDefault();
                     e.stopPropagation();
                     const prior = history.pop();
@@ -8671,6 +8935,30 @@
 
             function duetBroadcast(event, payload) { if (duetChannel && duetChannelReady) duetChannel.send({ type: 'broadcast',
                     event, payload }); }
+
+            const duetLoveTrail = document.getElementById('duetLoveTrail');
+            let loveTrailHideTimer = null,
+                lastLoveTrailSend = 0;
+
+            function sendLoveTrail(p) {
+                const now = performance.now();
+                if (now - lastLoveTrailSend < 55) return;
+                lastLoveTrailSend = now;
+                duetBroadcast('pointer', { x: p.x, y: p.y });
+            }
+
+            function showLoveTrailDot(payload) {
+                duetLoveTrail.style.left = (Math.min(1, Math.max(0, payload.x)) * 100) + '%';
+                duetLoveTrail.style.top = (Math.min(1, Math.max(0, payload.y)) * 100) + '%';
+                duetLoveTrail.classList.add('visible');
+                clearTimeout(loveTrailHideTimer);
+                loveTrailHideTimer = setTimeout(() => duetLoveTrail.classList.remove('visible'), 900);
+            }
+
+            function hideLoveTrailDot() {
+                clearTimeout(loveTrailHideTimer);
+                duetLoveTrail.classList.remove('visible');
+            }
             const duetEngine = createDoodleEngine({ canvas: 'duetDoodleCanvas', swatches: 'duetDoodleSwatches',
                     colorPicker: 'duetDoodleColorPicker', brushSize: 'duetDoodleBrushSize',
                     brushValue: 'duetDoodleBrushValue', tools: 'duetDoodleTools', undo: 'duetDoodleUndo',
@@ -8678,7 +8966,9 @@
                     onSegment: (p) => duetBroadcast('segment', p),
                     onSpray: (p) => duetBroadcast('spray', p),
                     onFill: (p) => duetBroadcast('fill', p),
-                    onClear: () => duetBroadcast('clear', {})
+                    onClear: () => duetBroadcast('clear', {}),
+                    onHover: sendLoveTrail,
+                    onHoverEnd: () => duetBroadcast('pointer-leave', {})
                 });
             const soloEngine = createDoodleEngine({ canvas: 'doodleCanvas', swatches: 'doodleSwatches',
                     colorPicker: 'doodleColorPicker', brushSize: 'doodleBrushSize', brushValue: 'doodleBrushValue',
@@ -8691,6 +8981,8 @@
                 duetChannel.on('broadcast', { event: 'spray' }, ({ payload }) => duetEngine.applyRemoteSpray(payload));
                 duetChannel.on('broadcast', { event: 'fill' }, ({ payload }) => duetEngine.applyRemoteFill(payload));
                 duetChannel.on('broadcast', { event: 'clear' }, () => duetEngine.applyRemoteClear());
+                duetChannel.on('broadcast', { event: 'pointer' }, ({ payload }) => showLoveTrailDot(payload));
+                duetChannel.on('broadcast', { event: 'pointer-leave' }, () => hideLoveTrailDot());
                 duetChannel.subscribe((status) => {
                     duetChannelReady = status === 'SUBSCRIBED';
                     if (duetPresenceHint) {
@@ -8794,7 +9086,7 @@
                     <img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption ? `: ${escapeHtml(d.caption)}` : ''}" loading="lazy" decoding="async">
                     <div class="doodle-caption-preview">${escapeHtml(d.caption || 'A little doodle ✨')}</div>
                     ${d.reaction ? `<span class="doodle-reaction-badge">${d.reaction}</span>` : ''}
-                    <span class="doodle-author-badge author-${author}">By ${author === '2' ? 'M' : 'J'}</span>
+                    <span class="doodle-author-badge author-${author}">${sigAvatarHTML(author, 16) || `By ${author === '2' ? 'M' : 'J'}`}</span>
                     <span class="doodle-date">${date}</span>
                   </div>
                   <div class="doodle-face doodle-back">
@@ -9893,7 +10185,7 @@
                     }
                     memoryLeaderboard.innerHTML =
                         `<b>Best times (${memoryGridSize}×${memoryGridSize})</b><br>` + data.map((s, i) =>
-                            `${i + 1}. By ${Number(s.author) === 2 ? 'M' : 'J'} — ${s.moves} moves, ${Math.floor(s.seconds / 60)}:${String(s.seconds % 60).padStart(2, '0')}`
+                            `${i + 1}. ${leaderName(s.author)} — ${s.moves} moves, ${Math.floor(s.seconds / 60)}:${String(s.seconds % 60).padStart(2, '0')}`
                             ).join('<br>');
                 } catch (e) { console.error('Could not load leaderboard. Run the games SQL setup first.', e); }
             }
@@ -10555,7 +10847,7 @@
                     if (error) throw error;
                     if (!data || !data.length) { ocLeaderboard.innerHTML = 'No scores yet — be the first!'; return; }
                     ocLeaderboard.innerHTML = '<b>Best scores</b><br>' + data.map((s, i) =>
-                        `${i + 1}. By ${Number(s.author) === 2 ? 'M' : 'J'} — ${s.moves}`).join('<br>');
+                        `${i + 1}. ${leaderName(s.author)} — ${s.moves}`).join('<br>');
                 } catch (e) { console.error('Could not load odd-color leaderboard. Run the games SQL setup first.', e); }
             }
             ocPlayAgainBtn.addEventListener('click', startOddColorGame);
@@ -10712,7 +11004,7 @@
                     if (!data || !data.length) { chLeaderboard.innerHTML = 'No scores yet — be the first!';
                         return; }
                     chLeaderboard.innerHTML = '<b>Best scores</b><br>' + data.map((s, i) =>
-                        `${i + 1}. By ${Number(s.author) === 2 ? 'M' : 'J'} — ${s.moves}`).join('<br>');
+                        `${i + 1}. ${leaderName(s.author)} — ${s.moves}`).join('<br>');
                 } catch (e) { console.error(
                     'Could not load catch-the-hearts leaderboard. Run the games SQL setup first.', e); }
             }
@@ -10928,7 +11220,7 @@
                         `No scores yet for ${simonSize}×${simonSize} — be the first!`;
                         return; }
                     simonLeaderboard.innerHTML = `<b>Best levels (${simonSize}×${simonSize})</b><br>` + data.map((s,
-                        i) => `${i + 1}. By ${Number(s.author) === 2 ? 'M' : 'J'} — level ${s.moves}`).join('<br>');
+                        i) => `${i + 1}. ${leaderName(s.author)} — level ${s.moves}`).join('<br>');
                 } catch (e) { console.error('Could not load Simon Says leaderboard. Run the games SQL setup first.',
                     e); }
             }
@@ -12670,7 +12962,261 @@
                 }
             }
 
-            const PRESENCE_ID_KEY = 'ourLittleUniversePresenceId';
+            /* ─── Device identity (who's using this device) ─── */
+            const IDENTITY_KEY = 'ourLittleUniverseIdentity';
+            const AUTHOR_KEYS_12 = ['ourLittleUniverseMemoryAuthor', 'ourLittleUniverseTttAuthor',
+                'ourLittleUniverseC4Author', 'ourLittleUniverseDbAuthor', 'ourLittleUniverseOddColorAuthor',
+                'ourLittleUniverseChAuthor', 'ourLittleUniverseSimonAuthor', 'ourLittleUniverseBucketAuthor',
+                'ourLittleUniverseCapsuleAuthor', 'ourLittleUniverseDoodleAuthor',
+                'ourLittleUniverseFeelingAuthor', 'ourLittleUniverseMoodAuthor', 'ourLittleUniverseNoteAuthor'
+            ];
+            const identityModal = document.getElementById('identityModal'),
+                presenceSwitchBtn = document.getElementById('presenceSwitchBtn');
+
+            function getIdentity() { return localStorage.getItem(IDENTITY_KEY); }
+
+            function applyIdentityToToggles(identity) {
+                AUTHOR_KEYS_12.forEach(k => localStorage.setItem(k, identity));
+                localStorage.setItem('luWordlePlayer', identity === '2' ? 'M' : 'J');
+            }
+
+            function showIdentityPicker() { identityModal.classList.remove('hidden'); }
+
+            function hideIdentityPicker() { identityModal.classList.add('hidden'); }
+            identityModal.querySelectorAll('.identity-choice-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    localStorage.setItem(IDENTITY_KEY, id);
+                    applyIdentityToToggles(id);
+                    haptic([20, 40, 20]);
+                    hideIdentityPicker();
+                    location.reload();
+                });
+            });
+            presenceSwitchBtn.addEventListener('click', showIdentityPicker);
+
+            /* ─── Handwriting signature avatars ─── */
+            const SIGNATURES_TABLE = 'signatures';
+            let signatureCache = { '1': null, '2': null };
+
+            function sigAvatarHTML(identity, size) {
+                const src = signatureCache[String(identity)];
+                if (!src) return '';
+                return `<img src="${src}" class="sig-avatar" style="width:${size}px;height:${size}px" alt="">`;
+            }
+
+            function leaderName(author) {
+                const name = Number(author) === 2 ? 'M' : 'J';
+                const av = sigAvatarHTML(author, 15);
+                return av ? `${av} ${name}` : `By ${name}`;
+            }
+
+            async function loadSignatures() {
+                if (!supabase) return;
+                try {
+                    const { data, error } = await supabase.from(SIGNATURES_TABLE).select('*');
+                    if (error) throw error;
+                    signatureCache = { '1': null, '2': null };
+                    (data || []).forEach(row => { signatureCache[String(row.identity)] = row.data_url; });
+                } catch (e) { console.error('Could not load signatures. Run the games SQL setup first.', e); }
+            }
+
+            function startSignaturesRealtime() {
+                if (!supabase) return;
+                supabase.channel('signatures-live').on('postgres_changes', { event: '*', schema: 'public', table:
+                    SIGNATURES_TABLE }, () => loadSignatures()).subscribe();
+            }
+            const signatureModal = document.getElementById('signatureModal'),
+                signatureBtn = document.getElementById('signatureBtn'),
+                signatureModalClose = document.getElementById('signatureModalClose'),
+                signatureCanvas = document.getElementById('signatureCanvas'),
+                signatureClearBtn = document.getElementById('signatureClearBtn'),
+                signatureSaveBtn = document.getElementById('signatureSaveBtn'),
+                signatureTypeArea = document.getElementById('signatureTypeArea'),
+                signatureTextInput = document.getElementById('signatureTextInput'),
+                signatureTypePreview = document.getElementById('signatureTypePreview'),
+                signatureTabs = Array.from(document.querySelectorAll('.signature-tab')),
+                signatureSwatches = document.getElementById('signatureSwatches'),
+                signatureColorPicker = document.getElementById('signatureColorPicker'),
+                signatureDrawControls = document.getElementById('signatureDrawControls'),
+                signatureTools = document.getElementById('signatureTools'),
+                signatureUndo = document.getElementById('signatureUndo'),
+                signatureBrushSize = document.getElementById('signatureBrushSize'),
+                signatureBrushValue = document.getElementById('signatureBrushValue');
+            const sigCtx = signatureCanvas.getContext('2d');
+            let sigDrawing = false,
+                sigHasStrokes = false,
+                sigMode = 'draw',
+                sigTool = 'pen',
+                sigColor = '#6B5344',
+                sigHistory = [];
+
+            function setupSignatureCanvas() {
+                const ratio = Math.min(window.devicePixelRatio || 1, 2);
+                const rect = signatureCanvas.getBoundingClientRect();
+                signatureCanvas.width = Math.max(1, Math.round(rect.width * ratio));
+                signatureCanvas.height = Math.max(1, Math.round(rect.height * ratio));
+                sigCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+                sigCtx.lineCap = 'round';
+                sigCtx.lineJoin = 'round';
+            }
+
+            function sigSnapshot() {
+                const pixels = sigCtx.getImageData(0, 0, signatureCanvas.width, signatureCanvas.height);
+                sigHistory.push(new ImageData(new Uint8ClampedArray(pixels.data), pixels.width, pixels.height));
+                if (sigHistory.length > 40) sigHistory.shift();
+            }
+
+            function sigPointFromEvent(e) {
+                const r = signatureCanvas.getBoundingClientRect();
+                return { x: e.clientX - r.left, y: e.clientY - r.top };
+            }
+            signatureCanvas.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                signatureCanvas.setPointerCapture(e.pointerId);
+                sigSnapshot();
+                sigDrawing = true;
+                sigCtx.globalCompositeOperation = sigTool === 'eraser' ? 'destination-out' : 'source-over';
+                sigCtx.strokeStyle = sigColor;
+                sigCtx.lineWidth = +signatureBrushSize.value;
+                const p = sigPointFromEvent(e);
+                sigCtx.beginPath();
+                sigCtx.moveTo(p.x, p.y);
+            });
+            signatureCanvas.addEventListener('pointermove', (e) => {
+                if (!sigDrawing) return;
+                const p = sigPointFromEvent(e);
+                sigCtx.lineTo(p.x, p.y);
+                sigCtx.stroke();
+                sigHasStrokes = true;
+            });
+            ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => signatureCanvas.addEventListener(ev, () => {
+                sigDrawing = false; }));
+
+            function clearSignatureCanvas() {
+                sigSnapshot();
+                sigCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+                sigHasStrokes = false;
+            }
+
+            function setSigColor(c) {
+                sigColor = c;
+                signatureColorPicker.value = c;
+                signatureSwatches.querySelectorAll('.doodle-swatch').forEach(b => b.classList.toggle('active', b
+                    .dataset.color === c));
+                signatureTypePreview.style.color = c;
+            }
+            DOODLE_COLORS.forEach(c => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'doodle-swatch';
+                b.dataset.color = c;
+                b.style.background = c;
+                b.setAttribute('aria-label', `Use ${c}`);
+                b.addEventListener('click', () => setSigColor(c));
+                signatureSwatches.insertBefore(b, signatureColorPicker);
+            });
+            setSigColor(sigColor);
+            signatureColorPicker.addEventListener('input', () => setSigColor(signatureColorPicker.value));
+
+            function setSigTool(tool) {
+                sigTool = tool;
+                signatureTools.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('active', b.dataset
+                    .tool === tool));
+            }
+            signatureTools.addEventListener('click', (e) => {
+                const b = e.target.closest('[data-tool]');
+                if (!b) return;
+                setSigTool(b.dataset.tool);
+            });
+            signatureUndo.addEventListener('click', () => {
+                const prior = sigHistory.pop();
+                if (prior) sigCtx.putImageData(prior, 0, 0);
+            });
+            signatureBrushSize.addEventListener('input', () => { signatureBrushValue.textContent =
+                signatureBrushSize.value; });
+
+            function setSignatureMode(mode) {
+                sigMode = mode;
+                signatureTabs.forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+                signatureCanvas.classList.toggle('hidden', mode !== 'draw');
+                signatureDrawControls.classList.toggle('hidden', mode !== 'draw');
+                signatureTypeArea.classList.toggle('hidden', mode !== 'type');
+            }
+            signatureTabs.forEach(tab => tab.addEventListener('click', () => setSignatureMode(tab.dataset.mode)));
+            signatureTextInput.addEventListener('input', () => {
+                signatureTypePreview.textContent = signatureTextInput.value.trim() || 'Aa';
+            });
+            signatureClearBtn.addEventListener('click', () => {
+                if (sigMode === 'type') { signatureTextInput.value = '';
+                    signatureTypePreview.textContent = 'Aa'; }
+                else clearSignatureCanvas();
+            });
+
+            function openSignatureModal() {
+                if (!getIdentity()) { showIdentityPicker();
+                    return; }
+                signatureModal.classList.remove('hidden');
+                setSignatureMode('draw');
+                setSigTool('pen');
+                sigHistory = [];
+                signatureTextInput.value = '';
+                signatureTypePreview.textContent = 'Aa';
+                requestAnimationFrame(() => { setupSignatureCanvas();
+                    clearSignatureCanvas();
+                    sigHistory = []; });
+            }
+
+            function closeSignatureModal() { signatureModal.classList.add('hidden'); }
+            signatureBtn.addEventListener('click', openSignatureModal);
+            signatureModalClose.addEventListener('click', closeSignatureModal);
+
+            async function renderTextSignature(text) {
+                const fontFamily = "'Caveat', cursive";
+                try { await document.fonts.load(`700 46px ${fontFamily}`); } catch (e) {}
+                setupSignatureCanvas();
+                sigCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+                const rect = signatureCanvas.getBoundingClientRect();
+                sigCtx.fillStyle = sigColor;
+                sigCtx.textAlign = 'center';
+                sigCtx.textBaseline = 'middle';
+                let fontSize = 48;
+                sigCtx.font = `700 ${fontSize}px ${fontFamily}`;
+                while (sigCtx.measureText(text).width > rect.width - 24 && fontSize > 16) {
+                    fontSize -= 2;
+                    sigCtx.font = `700 ${fontSize}px ${fontFamily}`;
+                }
+                sigCtx.fillText(text, rect.width / 2, rect.height / 2);
+            }
+            signatureSaveBtn.addEventListener('click', async() => {
+                const identity = getIdentity();
+                if (!identity) { showToast('Pick who you are first.', { type: 'error' });
+                    return; }
+                if (!supabase) { showToast('Connect Supabase first.', { type: 'error' });
+                    return; }
+                if (sigMode === 'type') {
+                    const text = signatureTextInput.value.trim();
+                    if (!text) { showToast('Type something first 🔤', { type: 'error' });
+                        return; }
+                    await renderTextSignature(text);
+                } else if (!sigHasStrokes) { showToast('Draw something first ✍️', { type: 'error' });
+                    return; }
+                const dataUrl = signatureCanvas.toDataURL('image/png');
+                try {
+                    await supabase.from(SIGNATURES_TABLE).upsert({ identity: Number(identity), data_url: dataUrl,
+                        updated_at: new Date().toISOString() });
+                    signatureCache[identity] = dataUrl;
+                    haptic([20, 40, 20]);
+                    showToast('Signature saved! ✍️💕');
+                    closeSignatureModal();
+                } catch (e) { console.error(e);
+                    showToast('Could not save your signature. Run the games SQL setup first.', { type: 'error' }); }
+            });
+
+            /* ─── Presence: who's here / last seen ─── */
+            const PRESENCE_ID_KEY = 'ourLittleUniversePresenceId',
+                PRESENCE_LAST_SEEN_TABLE = 'presence_last_seen';
+            let presenceHeartbeatInterval = null;
 
             function getPresenceId() {
                 let id = localStorage.getItem(PRESENCE_ID_KEY);
@@ -12679,34 +13225,83 @@
                 return id;
             }
 
-            function updatePresenceUI(othersOnline) {
-                if (othersOnline) {
-                    presenceIndicator.classList.add('together');
-                    presenceText.textContent = "you're both here right now 💕";
-                    presenceIndicator.title = "Both of you have this page open at the same time";
-                } else {
+            function timeAgoShort(dateStr) {
+                const mins = Math.round((Date.now() - new Date(dateStr).getTime()) / 60000);
+                if (mins < 1) return 'just now';
+                if (mins < 60) return `${mins}m ago`;
+                const hrs = Math.round(mins / 60);
+                if (hrs < 24) return `${hrs}h ago`;
+                const days = Math.round(hrs / 24);
+                if (days < 7) return `${days}d ago`;
+                return new Date(dateStr).toLocaleDateString();
+            }
+
+            async function touchLastSeen(identity) {
+                if (!supabase || !identity) return;
+                try {
+                    await supabase.from(PRESENCE_LAST_SEEN_TABLE).upsert({ identity: Number(identity), last_seen:
+                        new Date().toISOString() });
+                } catch (e) { /* table may not exist yet — ignore */ }
+            }
+
+            async function updatePresenceUI(partnerOnline, myIdentity, partnerIdentity) {
+                const partnerName = partnerIdentity === '2' ? 'M' : 'J';
+                if (!myIdentity) {
                     presenceIndicator.classList.remove('together');
                     presenceText.textContent = 'just you right now';
                     presenceIndicator.title = '';
+                    return;
                 }
+                if (partnerOnline) {
+                    presenceIndicator.classList.add('together');
+                    presenceText.textContent = `${partnerName} is here 🟢`;
+                    presenceIndicator.title = `${partnerName} has this page open right now`;
+                    return;
+                }
+                presenceIndicator.classList.remove('together');
+                if (!supabase) { presenceText.textContent = `${partnerName} isn't here right now`;
+                    return; }
+                try {
+                    const { data } = await supabase.from(PRESENCE_LAST_SEEN_TABLE).select('last_seen').eq(
+                        'identity', Number(partnerIdentity)).maybeSingle();
+                    presenceText.textContent = data && data.last_seen ?
+                        `${partnerName} was last here ${timeAgoShort(data.last_seen)}` :
+                        `${partnerName} hasn't been here yet`;
+                    presenceIndicator.title = '';
+                } catch (e) { presenceText.textContent = `${partnerName} isn't here right now`; }
             }
 
             function startPresence() {
                 if (!supabase) return;
                 try {
-                    const presenceId = getPresenceId();
+                    const presenceId = getPresenceId(),
+                        myIdentity = getIdentity();
                     const channel = supabase.channel('our-little-universe-presence', {
                         config: { presence: { key: presenceId } }
                     });
                     channel.on('presence', { event: 'sync' }, () => {
                         const state = channel.presenceState();
-                        const distinctVisitors = Object.keys(state).length;
-                        updatePresenceUI(distinctVisitors >= 2);
+                        let partnerOnline = false,
+                            partnerIdentity = myIdentity === '2' ? '1' : '2';
+                        Object.values(state).forEach(entries => entries.forEach(e => {
+                            if (myIdentity && e.identity && String(e.identity) !== String(myIdentity)) {
+                                partnerOnline = true;
+                                partnerIdentity = String(e.identity);
+                            }
+                        }));
+                        updatePresenceUI(partnerOnline, myIdentity, partnerIdentity);
                     });
                     channel.subscribe(async(status) => {
-                        if (status === 'SUBSCRIBED') await channel.track({ online_at: new Date()
-                                .toISOString() });
+                        if (status === 'SUBSCRIBED') {
+                            await channel.track({ identity: myIdentity, online_at: new Date().toISOString() });
+                            touchLastSeen(myIdentity);
+                            clearInterval(presenceHeartbeatInterval);
+                            presenceHeartbeatInterval = setInterval(() => touchLastSeen(myIdentity), 25000);
+                        }
                     });
+                    window.addEventListener('beforeunload', () => touchLastSeen(myIdentity));
+                    document.addEventListener('visibilitychange', () => { if (document.hidden) touchLastSeen(
+                        myIdentity); });
                 } catch (err) { console.error('Could not start live presence:', err); }
             }
 
@@ -12720,15 +13315,18 @@
 
             let initialized = false;
 
-            function init() {
+            async function init() {
                 if (initialized) return;
                 initialized = true;
+                if (!getIdentity()) showIdentityPicker();
                 renderDaysTogether();
                 buildAmbientHearts();
                 loadSiteSettings();
+                await loadSignatures();
                 loadPhotos();
                 startPresence();
                 startSettingsRealtime();
+                startSignaturesRealtime();
             }
 
             let lastIsMobile = window.innerWidth <= 480;
