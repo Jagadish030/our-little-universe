@@ -2804,12 +2804,91 @@
             opacity: 1;
         }
         #doodleCanvas,
-        #duetDoodleCanvas {
+        #duetDoodleCanvas,
+        #relayDoodleCanvas {
             display: block;
             width: 100%;
             height: 100%;
             touch-action: none;
             cursor: crosshair;
+        }
+        .doodle-fullscreen-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 6;
+            min-width: 30px;
+            height: 30px;
+            padding: 0 .5rem;
+            border: 0;
+            border-radius: 8px;
+            background: rgba(40, 30, 24, .45);
+            color: white;
+            font: 700 .95rem 'Quicksand', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .3rem;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            transition: background .15s ease, transform .15s ease;
+        }
+        .doodle-fullscreen-btn:hover {
+            background: var(--rose-deep);
+            transform: scale(1.06);
+        }
+        .doodle-mode-view.doodle-fullscreen {
+            position: fixed;
+            inset: 0;
+            z-index: 960;
+            background: var(--paper);
+            overflow-y: auto;
+            padding: max(.8rem, env(safe-area-inset-top)) .8rem .8rem;
+            margin: 0;
+        }
+        .doodle-mode-view.doodle-fullscreen .doodle-canvas-wrap {
+            aspect-ratio: unset;
+            height: min(58vh, 520px);
+            margin-top: .5rem;
+        }
+        body.doodle-fullscreen-lock {
+            overflow: hidden;
+        }
+        .doodle-mode-view.doodle-fullscreen .doodle-mode-back,
+        .doodle-mode-view.doodle-fullscreen .duet-hint,
+        .doodle-mode-view.doodle-fullscreen .relay-actions-row {
+            display: none;
+        }
+        .relay-locked-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(40, 30, 24, .4);
+            color: white;
+            font: 700 .88rem 'Quicksand', sans-serif;
+            text-align: center;
+            padding: 1rem;
+        }
+        .relay-locked-overlay.hidden {
+            display: none;
+        }
+        .brush-outline {
+            position: absolute;
+            border-radius: 50%;
+            border: 1.5px solid rgba(107, 83, 68, .6);
+            background: rgba(107, 83, 68, .08);
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 4;
+            display: none;
+        }
+        .brush-outline.eraser {
+            border-color: rgba(217, 138, 147, .75);
+            background: rgba(217, 138, 147, .14);
         }
         .doodle-toolbar,
         .doodle-tools,
@@ -6918,6 +6997,122 @@
         #raceScore {
             margin: .55rem 0 1rem;
         }
+        .air-hockey-table-wrap {
+            width: min(260px, 76vw);
+            aspect-ratio: 5/8;
+            margin: .8rem auto;
+            border-radius: 16px;
+            background: linear-gradient(180deg, var(--paper-deep), var(--paper));
+            border: 1px solid var(--card-border);
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, .12);
+            overflow: hidden;
+            touch-action: none;
+        }
+        #airHockeyCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+        .ah-countdown {
+            position: absolute;
+            inset: 0;
+            z-index: 8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(40, 30, 24, .45);
+            color: white;
+            font: 800 2.6rem 'Quicksand', sans-serif;
+        }
+        .ah-countdown.hidden {
+            display: none;
+        }
+        .ready-row {
+            display: flex;
+            justify-content: center;
+            gap: .7rem;
+            margin: .6rem 0;
+        }
+        .ready-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: .35rem .85rem;
+            border-radius: 999px;
+            border: 1px solid var(--card-border);
+            background: var(--paper-deep);
+            color: var(--ink-soft);
+            font: 700 .8rem 'Quicksand', sans-serif;
+            transition: background .2s ease, border-color .2s ease, color .2s ease;
+        }
+        .ready-pill::before {
+            content: '⏳';
+        }
+        .ready-pill.ready {
+            background: var(--sage);
+            border-color: var(--sage);
+            color: white;
+        }
+        .ready-pill.ready::before {
+            content: '✅';
+        }
+        .duration-row {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: .4rem;
+            margin: .6rem 0;
+        }
+        .duration-label {
+            font: 700 .76rem 'Quicksand', sans-serif;
+            color: var(--ink-soft);
+        }
+        .duration-choices {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: .4rem;
+        }
+        .duration-choices button {
+            border: 1px solid var(--card-border);
+            background: var(--paper-deep);
+            color: var(--ink-soft);
+            border-radius: 999px;
+            padding: .3rem .75rem;
+            font: 700 .76rem 'Quicksand', sans-serif;
+            cursor: pointer;
+            transition: background .15s ease, border-color .15s ease, color .15s ease;
+        }
+        .duration-choices button.active {
+            background: var(--rose-deep);
+            border-color: var(--rose-deep);
+            color: white;
+        }
+        .mini-game-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .6rem;
+            justify-content: center;
+            margin: .8rem 0;
+        }
+        .mini-game-actions .fav-filter-btn {
+            flex: 1 1 140px;
+            max-width: 220px;
+        }
+        .relay-actions-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .6rem;
+            justify-content: center;
+            margin: .6rem 0;
+        }
+        .relay-actions-row .fav-filter-btn {
+            flex: 1 1 140px;
+            max-width: 220px;
+            white-space: normal;
+            line-height: 1.3;
+        }
         @media (hover: hover) and (pointer: fine) {
             .fav-filter-btn:hover {
                 background: var(--rose-deep);
@@ -7289,10 +7484,11 @@
             </div>
 
             <div class="game-chooser" id="doodleModeChooser">
-                <p>Draw on your own, or live together on the same canvas at the same time.</p>
+                <p>Draw on your own, live together, or pass one piece back and forth.</p>
                 <div class="game-choice-row">
                     <button type="button" class="game-choice-btn" id="chooseDoodleSolo">🎨<span>Solo</span><small>draw on your own</small></button>
                     <button type="button" class="game-choice-btn" id="chooseDoodleDuet">👥<span>Duet</span><small>draw together, live</small></button>
+                    <button type="button" class="game-choice-btn" id="chooseDoodleRelay">🤝<span>Relay</span><small>pass it back and forth</small></button>
                 </div>
             </div>
 
@@ -7304,6 +7500,7 @@
                     </button>
                     <div class="doodle-canvas-wrap" id="doodleCanvasWrap">
                         <canvas id="doodleCanvas" aria-label="Draw your doodle"></canvas>
+                        <button type="button" class="doodle-fullscreen-btn" id="doodleFullscreenBtn" aria-label="Open fullscreen">⛶</button>
                         <div class="doodle-canvas-overlay" id="doodleCanvasOverlay">
                             <span class="overlay-icon">🎨</span>
                             <span class="overlay-text">Double tap to start drawing</span>
@@ -7332,6 +7529,7 @@
                     <div class="doodle-canvas-wrap" id="duetDoodleCanvasWrap">
                         <canvas id="duetDoodleCanvas" aria-label="Draw together, live"></canvas>
                         <div class="love-trail-dot" id="duetLoveTrail">💗</div>
+                        <button type="button" class="doodle-fullscreen-btn" id="duetDoodleFullscreenBtn" aria-label="Open fullscreen">⛶</button>
                         <div class="doodle-canvas-overlay" id="duetDoodleCanvasOverlay">
                             <span class="overlay-icon">👥</span>
                             <span class="overlay-text">Double tap to start drawing together</span>
@@ -7348,6 +7546,35 @@
                     <input class="doodle-caption" id="duetDoodleCaption" maxlength="200" placeholder="Add a caption (optional)">
                     <div class="doodle-submit-row"><button class="doodle-submit" id="duetDoodleSubmitBtn" type="submit">Leave a doodle</button></div>
                 </form>
+            </div>
+
+            <div id="doodleRelayView" class="doodle-mode-view hidden">
+                <button type="button" class="game-back-btn doodle-mode-back">‹ back to doodles</button>
+                <p class="duet-hint" id="relayStatusHint">Loading...</p>
+                <div class="doodle-canvas-wrap" id="relayDoodleCanvasWrap">
+                    <canvas id="relayDoodleCanvas" aria-label="Add your part of the relay doodle"></canvas>
+                    <button type="button" class="doodle-fullscreen-btn" id="relayDoodleFullscreenBtn" aria-label="Open fullscreen">⛶</button>
+                    <div class="doodle-canvas-overlay" id="relayDoodleCanvasOverlay">
+                        <span class="overlay-icon">🤝</span>
+                        <span class="overlay-text">Double tap to start drawing</span>
+                    </div>
+                    <div class="relay-locked-overlay hidden" id="relayLockedOverlay"><span>⏳ Waiting for your turn</span></div>
+                </div>
+                <div class="doodle-toolbar">
+                    <div class="doodle-swatches" id="relayDoodleSwatches" aria-label="Colour palette"></div>
+                    <input class="doodle-color-picker" id="relayDoodleColorPicker" type="color" value="#C96A7A" aria-label="Choose any colour">
+                </div>
+                <div class="doodle-tools" id="relayDoodleTools">
+                    <button type="button" class="active" data-tool="pen">✏️ Pen</button><button type="button" data-tool="line">╱ Line</button><button type="button" data-tool="fill">🪣 Fill</button><button type="button" data-tool="spray">💨 Spray</button><button type="button" data-tool="eraser">🧼 Eraser</button><button type="button" id="relayDoodleUndo">↶ Undo</button>
+                </div>
+                <button type="button" id="relayDoodleClear" style="display:none" aria-hidden="true" tabindex="-1"></button>
+                <div class="doodle-size-row"><label class="doodle-size">Brush size <input id="relayDoodleBrushSize" type="range" min="1" max="30" value="4"><span id="relayDoodleBrushValue">4</span></label></div>
+                <div class="relay-actions-row">
+                    <button type="button" class="fav-filter-btn" id="relayPassBtn">🤝 Pass it on</button>
+                    <button type="button" class="fav-filter-btn" id="relayStartOverBtn">🔄 Start a fresh piece</button>
+                </div>
+                <input class="doodle-caption" id="relayCaption" maxlength="200" placeholder="Add a caption (optional)">
+                <div class="doodle-submit-row"><button class="doodle-submit" id="relayFinishBtn" type="button">✅ Finish &amp; pin this piece</button></div>
             </div>
 
             <div id="doodlesGalleryArea" class="hidden">
@@ -7420,6 +7647,7 @@
                         <button type="button" class="game-choice-btn" id="chooseWordle">🟩<span>Our Wordle</span><small>solve the five-letter word</small></button>
                         <button type="button" class="game-choice-btn" id="chooseTugOfWar">🪢<span>Tug of War</span><small>mash to pull the rope</small></button>
                         <button type="button" class="game-choice-btn" id="chooseReactionRace">⚡<span>Reaction Race</span><small>fastest tap wins, best of 5</small></button>
+                        <button type="button" class="game-choice-btn" id="chooseAirHockey">🏒<span>Air Hockey</span><small>live paddle &amp; puck</small></button>
                     </div>
                 </div>
                 <div class="game-view hidden" id="memoryMatchView">
@@ -7527,7 +7755,20 @@
                     <button type="button" class="game-back-btn">‹ back to games</button>
                     <h3>Tug of War 🪢</h3>
                     <p class="oc-hint" id="tugStatus">Tap "Start round" — you both need to tap it before the rope
-                        starts moving. 15 seconds of mashing once it does.</p>
+                        starts moving.</p>
+                    <div class="ready-row">
+                        <span class="ready-pill" id="tugReadyJ">J</span>
+                        <span class="ready-pill" id="tugReadyM">M</span>
+                    </div>
+                    <div class="duration-row" id="tugDurationRow">
+                        <span class="duration-label">Round length</span>
+                        <div class="duration-choices" id="tugDurationChoices">
+                            <button type="button" data-secs="10">10s</button>
+                            <button type="button" class="active" data-secs="15">15s</button>
+                            <button type="button" data-secs="20">20s</button>
+                            <button type="button" data-secs="30">30s</button>
+                        </div>
+                    </div>
                     <div class="tug-track">
                         <span class="tug-label tug-label-j">J</span>
                         <div class="tug-bar-wrap">
@@ -7536,19 +7777,48 @@
                         <span class="tug-label tug-label-m">M</span>
                     </div>
                     <button type="button" class="fav-filter-btn tug-mash-btn" id="tugMashBtn">✊ Mash!</button>
+                    <div class="mini-game-actions">
+                        <button type="button" class="fav-filter-btn" id="tugStartBtn">Start round</button>
+                        <button type="button" class="fav-filter-btn" id="tugNewRoundBtn">🔄 New round</button>
+                    </div>
                     <div class="oc-score" id="tugTally">J: 0 wins · M: 0 wins</div>
-                    <button type="button" class="fav-filter-btn" id="tugStartBtn">Start round</button>
                 </div>
                 <div class="game-view hidden" id="reactionRaceView">
                     <button type="button" class="game-back-btn">‹ back to games</button>
                     <h3>Reaction Race ⚡</h3>
                     <p class="oc-hint" id="raceStatus">Tap "Start round" — you both need to tap it before the
                         screen flashes. Fastest tap wins the round, first to 3 wins the match.</p>
+                    <div class="ready-row">
+                        <span class="ready-pill" id="raceReadyJ">J</span>
+                        <span class="ready-pill" id="raceReadyM">M</span>
+                    </div>
                     <div class="race-flash" id="raceFlash">Get ready…</div>
                     <div class="oc-score" id="raceScore">J: 0 · M: 0</div>
-                    <button type="button" class="fav-filter-btn" id="raceStartBtn">Start round</button>
+                    <div class="mini-game-actions">
+                        <button type="button" class="fav-filter-btn" id="raceStartBtn">Start round</button>
+                        <button type="button" class="fav-filter-btn" id="raceNewGameBtn">↩️ Start new game</button>
+                    </div>
                     <p class="oc-hint" id="raceMatchBanner" style="display:none;"></p>
-                    <button type="button" class="fav-filter-btn" id="raceNewGameBtn">↩️ Start new game</button>
+                </div>
+                <div class="game-view hidden" id="airHockeyView">
+                    <button type="button" class="game-back-btn">‹ back to games</button>
+                    <h3>Air Hockey 🏒</h3>
+                    <p class="oc-hint" id="airHockeyStatus">Tap "Start match" — you both need to tap it before the
+                        puck drops. First to 5 goals wins. Drag your paddle to defend and strike.</p>
+                    <div class="ready-row">
+                        <span class="ready-pill" id="ahReadyJ">J</span>
+                        <span class="ready-pill" id="ahReadyM">M</span>
+                    </div>
+                    <div class="air-hockey-table-wrap" id="airHockeyTableWrap">
+                        <canvas id="airHockeyCanvas" aria-label="Air hockey table"></canvas>
+                        <div class="ah-countdown hidden" id="ahCountdown"></div>
+                    </div>
+                    <div class="oc-score" id="airHockeyScore">J: 0 · M: 0</div>
+                    <div class="mini-game-actions">
+                        <button type="button" class="fav-filter-btn" id="airHockeyStartBtn">Start match</button>
+                        <button type="button" class="fav-filter-btn" id="airHockeyNewMatchBtn">🔄 New match</button>
+                    </div>
+                    <div class="oc-score" id="airHockeyTally">J: 0 wins · M: 0 wins</div>
                 </div>
                 <div class="game-view hidden together-game" id="reactionView"><button type="button" class="game-back-btn">‹ back to games</button><h3>Heart Reflex</h3><p class="game-copy" id="reactionStatus">Both of you need to be here to start.</p><div class="reaction-target" id="reactionTarget">waiting…</div><button id="reactionStartBtn" class="fav-filter-btn" type="button">Start shared round</button><div class="score-list" id="reactionScores"></div></div>
                 <div class="game-view hidden together-game" id="wordleView"><button type="button" class="game-back-btn">‹ back to games</button><h3>Our Wordle</h3><div class="wordle-role"><button type="button" class="note-author-toggle extra-author" data-author="1" id="wordleAuthorToggle" aria-label="Choose whether J or M is setting the word"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">J</span><span class="toggle-letter" data-letter="2">M</span></span></button></div><p class="game-copy" id="wordleStatus">Choose who is setting a five-letter word.</p><div class="wordle-scoreboard"><span id="wordleJScore">J · 0 wins</span><span id="wordleMScore">M · 0 wins</span></div><div class="game-controls"><input id="wordleAnswer" maxlength="5" inputmode="text" autocapitalize="characters" placeholder="five-letter word"><button id="wordleSetBtn" class="wordle-action" type="button">Set word</button></div><div class="wordle-grid" id="wordleGrid" aria-label="Wordle board"></div><div class="game-controls"><input id="wordleGuess" maxlength="5" inputmode="text" autocapitalize="characters" placeholder="enter a guess"><button id="wordleGuessBtn" class="wordle-action" type="button">Try guess</button></div><button id="wordleNewGameBtn" class="wordle-action wordle-new-game hidden" type="button">Start a new game</button></div>
@@ -7857,8 +8127,10 @@
             /* ─── Doodle overlay handlers ─── */
             let soloOverlayHandler = null;
             let duetOverlayHandler = null;
+            let relayOverlayHandler = null;
             let soloCanvasActivated = false;
             let duetCanvasActivated = false;
+            let relayCanvasActivated = false;
 
             function setupDoodleCanvasOverlay(wrapId, overlayId, canvasId, engineSetup) {
                 const wrap = document.getElementById(wrapId);
@@ -7873,6 +8145,7 @@
                     canvas.style.pointerEvents = 'auto';
                     if (engineSetup) engineSetup();
                     if (wrapId === 'doodleCanvasWrap') soloCanvasActivated = true;
+                    else if (wrapId === 'relayDoodleCanvasWrap') relayCanvasActivated = true;
                     else duetCanvasActivated = true;
                 }
 
@@ -7880,6 +8153,7 @@
                     overlay.classList.remove('hidden');
                     canvas.style.pointerEvents = 'none';
                     if (wrapId === 'doodleCanvasWrap') soloCanvasActivated = false;
+                    else if (wrapId === 'relayDoodleCanvasWrap') relayCanvasActivated = false;
                     else duetCanvasActivated = false;
                 }
                 overlay.addEventListener('click', function(e) {
@@ -7898,8 +8172,10 @@
             function resetDoodleCanvasOverlays() {
                 if (soloOverlayHandler) soloOverlayHandler.deactivateCanvas();
                 if (duetOverlayHandler) duetOverlayHandler.deactivateCanvas();
+                if (relayOverlayHandler) relayOverlayHandler.deactivateCanvas();
                 soloCanvasActivated = false;
                 duetCanvasActivated = false;
+                relayCanvasActivated = false;
             }
 
             /* ─── Custom emoji picker helper ─── */
@@ -8874,10 +9150,12 @@
             const doodleModeChooser = document.getElementById('doodleModeChooser');
             const doodleSoloView = document.getElementById('doodleSoloView');
             const doodleDuetView = document.getElementById('doodleDuetView');
+            const doodleRelayView = document.getElementById('doodleRelayView');
             const doodlesGalleryArea = document.getElementById('doodlesGalleryArea');
             const doodlesGridLabel = document.getElementById('doodlesGridLabel');
             const chooseDoodleSolo = document.getElementById('chooseDoodleSolo');
             const chooseDoodleDuet = document.getElementById('chooseDoodleDuet');
+            const chooseDoodleRelay = document.getElementById('chooseDoodleRelay');
             const duetPresenceHint = document.getElementById('duetPresenceHint');
             const doodleCaption = document.getElementById('doodleCaption');
             const doodleSubmitBtn = document.getElementById('doodleSubmitBtn');
@@ -8919,6 +9197,23 @@
                     drawing = false,
                     lastPoint = null,
                     startPoint = null;
+                const brushOutline = document.createElement('div');
+                brushOutline.className = 'brush-outline';
+                if (canvas.parentElement) canvas.parentElement.appendChild(brushOutline);
+
+                function updateBrushOutline(p) {
+                    if (tool !== 'pen' && tool !== 'eraser') { brushOutline.style.display = 'none';
+                        return; }
+                    const size = +brushSize.value;
+                    brushOutline.style.display = 'block';
+                    brushOutline.style.width = size + 'px';
+                    brushOutline.style.height = size + 'px';
+                    brushOutline.style.left = p.x + 'px';
+                    brushOutline.style.top = p.y + 'px';
+                    brushOutline.classList.toggle('eraser', tool === 'eraser');
+                }
+
+                function hideBrushOutline() { brushOutline.style.display = 'none'; }
 
                 function fillBackground() {
                     ctx.save();
@@ -9040,6 +9335,7 @@
                     tool = b.dataset.tool;
                     tools.querySelectorAll('[data-tool]').forEach(x => x.classList.toggle('active', x === b));
                     canvas.style.cursor = tool === 'fill' ? 'cell' : 'crosshair';
+                    hideBrushOutline();
                 });
                 canvas.addEventListener('pointerdown', (e) => {
                     e.preventDefault();
@@ -9048,6 +9344,7 @@
                     drawing = true;
                     startPoint = p;
                     lastPoint = p;
+                    updateBrushOutline(p);
                     if (tool === 'fill') { snapshot();
                         fill(p);
                         if (hooks.onFill) hooks.onFill({ point: normPoint(p), color });
@@ -9061,9 +9358,10 @@
                                 .value * 2) }); }
                 });
                 canvas.addEventListener('pointermove', (e) => {
-                    if (hooks.onHover) hooks.onHover(normPoint(pointFor(e)));
-                    if (!drawing) return;
                     const p = pointFor(e);
+                    updateBrushOutline(p);
+                    if (hooks.onHover) hooks.onHover(normPoint(p));
+                    if (!drawing) return;
                     if (tool === 'line') {
                         const saved = history[history.length - 1];
                         if (saved) ctx.putImageData(saved, 0, 0);
@@ -9082,9 +9380,11 @@
                     lastPoint = null;
                     if (hooks.onHoverEnd) hooks.onHoverEnd();
                 });
-                canvas.addEventListener('pointerleave', () => { if (hooks.onHoverEnd) hooks.onHoverEnd(); });
+                canvas.addEventListener('pointerleave', () => { hideBrushOutline();
+                    if (hooks.onHoverEnd) hooks.onHoverEnd(); });
                 canvas.addEventListener('pointercancel', () => { drawing = false;
                     lastPoint = null;
+                    hideBrushOutline();
                     if (hooks.onHoverEnd) hooks.onHoverEnd(); });
                 undoBtn.addEventListener('click', (e) => { e.preventDefault();
                     e.stopPropagation();
@@ -9109,10 +9409,27 @@
 
                 function reset() { history = [];
                     fillBackground(); }
+
+                function loadImage(url) {
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.crossOrigin = 'anonymous';
+                        img.onload = () => {
+                            const rect = canvas.getBoundingClientRect();
+                            fillBackground();
+                            ctx.drawImage(img, 0, 0, rect.width, rect.height);
+                            history = [];
+                            resolve(true);
+                        };
+                        img.onerror = () => resolve(false);
+                        img.src = url;
+                    });
+                }
                 return {
                     setupCanvas,
                     exportBlob,
                     reset,
+                    loadImage,
                     applyRemoteSegment(p) { paintSegment(denormPoint(p.from), denormPoint(p.to), p.color, p.tool,
                             denormSize(p.size)); },
                     applyRemoteSpray(p) { spray(denormPoint(p.point), p.color, denormSize(p.radius)); },
@@ -9164,6 +9481,66 @@
             const soloEngine = createDoodleEngine({ canvas: 'doodleCanvas', swatches: 'doodleSwatches',
                     colorPicker: 'doodleColorPicker', brushSize: 'doodleBrushSize', brushValue: 'doodleBrushValue',
                     tools: 'doodleTools', undo: 'doodleUndo', clear: 'doodleClear' }, {});
+            const relayEngine = createDoodleEngine({ canvas: 'relayDoodleCanvas', swatches: 'relayDoodleSwatches',
+                    colorPicker: 'relayDoodleColorPicker', brushSize: 'relayDoodleBrushSize', brushValue:
+                    'relayDoodleBrushValue', tools: 'relayDoodleTools', undo: 'relayDoodleUndo', clear:
+                    'relayDoodleClear' }, {});
+
+            /* ─── Fullscreen canvas toggle (shared by solo/duet/relay) ─── */
+            function makeDoodleFullscreenToggle(viewId, btnId, engine) {
+                const view = document.getElementById(viewId);
+                const btn = document.getElementById(btnId);
+                let active = false;
+
+                function forceRepaint() {
+                    // Some mobile browsers don't repaint a dynamically-applied
+                    // position:fixed until a scroll/paint event forces it —
+                    // nudge the scroll position by a hair to force it immediately.
+                    void view.offsetHeight;
+                    const y = window.scrollY;
+                    window.scrollTo(0, y + 1);
+                    window.scrollTo(0, y);
+                }
+
+                function apply() {
+                    view.classList.toggle('doodle-fullscreen', active);
+                    document.body.classList.toggle('doodle-fullscreen-lock', active);
+                    btn.textContent = active ? '✕ Exit fullscreen' : '⛶';
+                    if (active) {
+                        view.style.position = 'fixed';
+                        view.style.top = '0';
+                        view.style.left = '0';
+                        view.style.right = '0';
+                        view.style.bottom = '0';
+                        view.style.zIndex = '960';
+                        view.style.background = 'var(--paper)';
+                        view.style.overflowY = 'auto';
+                        view.style.margin = '0';
+                        view.style.padding = 'max(.8rem, env(safe-area-inset-top)) .8rem .8rem';
+                        view.style.boxSizing = 'border-box';
+                        view.style.webkitTransform = 'translateZ(0)';
+                        view.style.transform = 'translateZ(0)';
+                    } else {
+                        ['position', 'top', 'left', 'right', 'bottom', 'zIndex', 'background', 'overflowY', 'margin',
+                            'padding', 'boxSizing', 'webkitTransform', 'transform'
+                        ].forEach(prop => { view.style[prop] = ''; });
+                    }
+                    requestAnimationFrame(() => {
+                        forceRepaint();
+                        requestAnimationFrame(() => { engine.setupCanvas();
+                            forceRepaint(); });
+                    });
+                }
+                btn.addEventListener('click', () => { active = !active;
+                    apply(); });
+                return { exit() { if (active) { active = false;
+                            apply(); } } };
+            }
+            const doodleFullscreen = makeDoodleFullscreenToggle('doodleSoloView', 'doodleFullscreenBtn', soloEngine);
+            const duetDoodleFullscreen = makeDoodleFullscreenToggle('doodleDuetView', 'duetDoodleFullscreenBtn',
+                duetEngine);
+            const relayDoodleFullscreen = makeDoodleFullscreenToggle('doodleRelayView', 'relayDoodleFullscreenBtn',
+                relayEngine);
 
             function startDuetChannel() {
                 if (!supabase || duetChannel) return;
@@ -9407,8 +9784,9 @@
 
             function qOrEmptyDoodles() {
                 if (doodlesSearchQuery.trim()) return 'no doodles match that search';
-                return currentDoodleMode === 'duet' ? 'no duet doodles yet — draw one together!' :
-                    'no doodles yet — draw one!';
+                if (currentDoodleMode === 'duet') return 'no duet doodles yet — draw one together!';
+                if (currentDoodleMode === 'relay') return 'no finished relay doodles yet — pass one back and forth!';
+                return 'no doodles yet — draw one!';
             }
             doodleForm.addEventListener('submit', async e => {
                 e.preventDefault();
@@ -9476,17 +9854,163 @@
                 } finally { duetDoodleSubmitBtn.disabled = false; }
             });
 
+            /* ─── Relay Doodle: pass one piece back and forth ─── */
+            const RELAY_STATE_TABLE = 'relay_doodle_state';
+            const relayStatusHint = document.getElementById('relayStatusHint'),
+                relayLockedOverlay = document.getElementById('relayLockedOverlay'),
+                relayPassBtn = document.getElementById('relayPassBtn'),
+                relayStartOverBtn = document.getElementById('relayStartOverBtn'),
+                relayFinishBtn = document.getElementById('relayFinishBtn'),
+                relayCaption = document.getElementById('relayCaption');
+            let relayState = null,
+                relayChannelStarted = false,
+                relayBusy = false;
+
+            function relayMyTurn() { return relayState && Number(relayState.turn || 1) === Number(getIdentity() ||
+                1); }
+
+            function renderRelayStatus() {
+                const myLetter = Number(getIdentity()) === 2 ? 'M' : 'J';
+                const turnLetter = relayState && Number(relayState.turn || 1) === 2 ? 'M' : 'J';
+                const hasPiece = !!(relayState && relayState.image_url);
+                const isMyTurn = relayMyTurn();
+                relayLockedOverlay.classList.toggle('hidden', isMyTurn);
+                if (!getIdentity()) { relayStatusHint.textContent = 'Pick who you are first to join the relay.';
+                    return; }
+                if (!hasPiece) { relayStatusHint.textContent =
+                    "A fresh piece — draw a little, then pass it on. It's " + (isMyTurn ? 'your' : `${turnLetter}'s`) +
+                    ' turn.';
+                    return; }
+                relayStatusHint.textContent = isMyTurn ?
+                    `It's your turn — add a little, then pass it back to ${turnLetter === myLetter ? (myLetter ===
+                    'J' ? 'M' : 'J') : turnLetter}.` : `Waiting for ${turnLetter} to pass it back to you...`;
+            }
+
+            async function loadRelayState() {
+                if (!supabase) { renderRelayStatus();
+                    return; }
+                try {
+                    const { data, error } = await supabase.from(RELAY_STATE_TABLE).select('*').eq('id', 1)
+                        .maybeSingle();
+                    if (error) throw error;
+                    if (!data) { const starter = Number(getIdentity()) === 2 ? 2 : 1;
+                        await supabase.from(RELAY_STATE_TABLE).upsert({ id: 1, image_url: null, turn: starter });
+                        relayState = { id: 1, image_url: null, turn: starter };
+                    } else relayState = data;
+                    relayEngine.reset();
+                    if (relayState.image_url) await relayEngine.loadImage(relayState.image_url);
+                    renderRelayStatus();
+                } catch (e) { console.error('Could not load the relay doodle. Run the games SQL setup first.', e); }
+            }
+
+            function startRelayRealtime() {
+                if (!supabase || relayChannelStarted) return;
+                relayChannelStarted = true;
+                supabase.channel('relay-doodle-live').on('postgres_changes', { event: '*', schema: 'public', table:
+                    RELAY_STATE_TABLE, filter: 'id=eq.1' }, () => {
+                    if (!doodlesWall.classList.contains('hidden') && !doodleRelayView.classList.contains('hidden'))
+                        loadRelayState();
+                }).subscribe();
+            }
+
+            async function uploadRelaySnapshot() {
+                const blob = await relayEngine.exportBlob();
+                if (!blob) throw new Error('Could not create PNG');
+                const path = `relay-${Date.now()}-${crypto.randomUUID()}.png`;
+                const { error: uploadError } = await supabase.storage.from(DOODLES_BUCKET).upload(path, blob, {
+                    contentType: 'image/png'
+                });
+                if (uploadError) throw uploadError;
+                const { data: urlData } = supabase.storage.from(DOODLES_BUCKET).getPublicUrl(path);
+                return urlData.publicUrl;
+            }
+            relayPassBtn.addEventListener('click', async() => {
+                if (!getIdentity()) { showIdentityPicker();
+                    return; }
+                if (!relayMyTurn()) { showToast("It's not your turn yet 🤝", { type: 'error' });
+                    return; }
+                if (!supabase) { showToast('Connect Supabase first.', { type: 'error' });
+                    return; }
+                if (relayBusy) return;
+                relayBusy = true;
+                haptic(15);
+                try {
+                    const imageUrl = await uploadRelaySnapshot();
+                    const nextTurn = Number(getIdentity()) === 2 ? 1 : 2;
+                    const { error } = await supabase.from(RELAY_STATE_TABLE).upsert({ id: 1, image_url: imageUrl,
+                        turn: nextTurn, last_editor: Number(getIdentity()), updated_at: new Date().toISOString() });
+                    if (error) throw error;
+                    relayState = { id: 1, image_url: imageUrl, turn: nextTurn };
+                    renderRelayStatus();
+                    showToast(`Passed to ${nextTurn === 2 ? 'M' : 'J'} 🤝`);
+                } catch (e) { console.error(e);
+                    showToast('Could not pass it on. Check the doodles bucket and SQL setup.', { type: 'error' });
+                } finally { relayBusy = false; }
+            });
+            relayStartOverBtn.addEventListener('click', async() => {
+                if (!getIdentity()) { showIdentityPicker();
+                    return; }
+                if (!supabase) { showToast('Connect Supabase first.', { type: 'error' });
+                    return; }
+                if (!window.confirm('Start a brand new blank piece? This clears the current in-progress relay drawing (already-finished pieces in the gallery are safe).')) return;
+                try {
+                    const starter = Number(getIdentity()) === 2 ? 2 : 1;
+                    await supabase.from(RELAY_STATE_TABLE).upsert({ id: 1, image_url: null, turn: starter,
+                        last_editor: null, updated_at: new Date().toISOString() });
+                    relayState = { id: 1, image_url: null, turn: starter };
+                    relayEngine.reset();
+                    renderRelayStatus();
+                    showToast('Fresh piece started 🤍');
+                } catch (e) { console.error(e);
+                    showToast('Could not start over.', { type: 'error' }); }
+            });
+            relayFinishBtn.addEventListener('click', async() => {
+                if (!getIdentity()) { showIdentityPicker();
+                    return; }
+                if (!supabase) { showToast('Connect Supabase before saving doodles.', { type: 'error' });
+                    return; }
+                if (relayBusy) return;
+                relayBusy = true;
+                relayFinishBtn.disabled = true;
+                haptic(15);
+                try {
+                    const imageUrl = await uploadRelaySnapshot();
+                    const { error } = await supabase.from(DOODLES_TABLE).insert({ image_url: imageUrl, storage_path:
+                        null, caption: relayCaption.value.trim() || null, author: Number(getIdentity()), mode:
+                        'relay' });
+                    if (error) throw error;
+                    const starter = Number(getIdentity()) === 2 ? 2 : 1;
+                    await supabase.from(RELAY_STATE_TABLE).upsert({ id: 1, image_url: null, turn: starter,
+                        last_editor: null, updated_at: new Date().toISOString() });
+                    relayState = { id: 1, image_url: null, turn: starter };
+                    relayEngine.reset();
+                    relayCaption.value = '';
+                    renderRelayStatus();
+                    showToast('Relay piece pinned! 🎉 A fresh canvas is ready for the next one.');
+                    loadDoodles();
+                } catch (err) {
+                    console.error(err);
+                    showToast('Could not save doodle. Check the doodles bucket and SQL setup.', { type: 'error' });
+                } finally { relayBusy = false;
+                    relayFinishBtn.disabled = false; }
+            });
+
             function showDoodleModeChooser() {
                 doodleModeChooser.classList.remove('hidden');
                 doodleSoloView.classList.add('hidden');
                 doodleDuetView.classList.add('hidden');
+                doodleRelayView.classList.add('hidden');
                 doodlesGalleryArea.classList.add('hidden');
                 resetDoodleCanvasOverlays();
+                doodleFullscreen.exit();
+                duetDoodleFullscreen.exit();
+                relayDoodleFullscreen.exit();
             }
 
             function openDoodleSolo() {
                 doodleModeChooser.classList.add('hidden');
                 doodleDuetView.classList.add('hidden');
+                doodleRelayView.classList.add('hidden');
                 doodleSoloView.classList.remove('hidden');
                 doodlesGalleryArea.classList.remove('hidden');
                 currentDoodleMode = 'solo';
@@ -9505,6 +10029,7 @@
             function openDoodleDuet() {
                 doodleModeChooser.classList.add('hidden');
                 doodleSoloView.classList.add('hidden');
+                doodleRelayView.classList.add('hidden');
                 doodleDuetView.classList.remove('hidden');
                 doodlesGalleryArea.classList.remove('hidden');
                 currentDoodleMode = 'duet';
@@ -9520,8 +10045,30 @@
                 if (!doodlesLoaded) { doodlesLoaded = true;
                     loadDoodles(); } else { renderDoodlesFiltered(); }
             }
+
+            function openDoodleRelay() {
+                doodleModeChooser.classList.add('hidden');
+                doodleSoloView.classList.add('hidden');
+                doodleDuetView.classList.add('hidden');
+                doodleRelayView.classList.remove('hidden');
+                doodlesGalleryArea.classList.remove('hidden');
+                currentDoodleMode = 'relay';
+                doodlesGridLabel.textContent = 'Relay doodles';
+                knownDoodleIds = null;
+                resetDoodleCanvasOverlays();
+                relayEngine.setupCanvas();
+                if (!relayOverlayHandler) {
+                    relayOverlayHandler = setupDoodleCanvasOverlay('relayDoodleCanvasWrap',
+                        'relayDoodleCanvasOverlay', 'relayDoodleCanvas', () => { relayEngine.setupCanvas(); });
+                } else { relayOverlayHandler.deactivateCanvas(); }
+                startRelayRealtime();
+                loadRelayState();
+                if (!doodlesLoaded) { doodlesLoaded = true;
+                    loadDoodles(); } else { renderDoodlesFiltered(); }
+            }
             chooseDoodleSolo.addEventListener('click', openDoodleSolo);
             chooseDoodleDuet.addEventListener('click', openDoodleDuet);
+            chooseDoodleRelay.addEventListener('click', openDoodleRelay);
             document.querySelectorAll('.doodle-mode-back').forEach(b => b.addEventListener('click', showDoodleModeChooser));
             doodlesToggleBtn.addEventListener('click', () => {
                 const opening = doodlesWall.classList.contains('hidden');
@@ -10087,9 +10634,10 @@
                 catchHeartsView = document.getElementById('catchHeartsView'),
                 simonView = document.getElementById('simonView'),
                 tugOfWarView = document.getElementById('tugOfWarView'),
-                reactionRaceView = document.getElementById('reactionRaceView');
+                reactionRaceView = document.getElementById('reactionRaceView'),
+                airHockeyView = document.getElementById('airHockeyView');
             const allGameViews = [memoryMatchView, tictactoeView, connect4View, dotsBoxesView, truthDareView,
-                oddColorView, catchHeartsView, simonView, tugOfWarView, reactionRaceView
+                oddColorView, catchHeartsView, simonView, tugOfWarView, reactionRaceView, airHockeyView
             ];
             const chooseMemoryMatch = document.getElementById('chooseMemoryMatch'),
                 chooseTicTacToe = document.getElementById('chooseTicTacToe'),
@@ -10100,7 +10648,8 @@
                 chooseCatchHearts = document.getElementById('chooseCatchHearts'),
                 chooseSimon = document.getElementById('chooseSimon'),
                 chooseTugOfWar = document.getElementById('chooseTugOfWar'),
-                chooseReactionRace = document.getElementById('chooseReactionRace');
+                chooseReactionRace = document.getElementById('chooseReactionRace'),
+                chooseAirHockey = document.getElementById('chooseAirHockey');
             const tugStatus = document.getElementById('tugStatus'),
                 tugMarker = document.getElementById('tugMarker'),
                 tugMashBtn = document.getElementById('tugMashBtn'),
@@ -10191,6 +10740,13 @@
                 showSimonSizePicker();
             }
 
+            async function clearMyReadyFlag(table, key) {
+                if (!supabase || !getIdentity()) return;
+                try {
+                    await supabase.from(table).upsert({ id: 1, [key]: false, updated_at: new Date().toISOString() });
+                } catch (e) { console.error(e); }
+            }
+
             function openTugOfWar() {
                 gameChooser.classList.add('hidden');
                 allGameViews.forEach(v => v.classList.add('hidden'));
@@ -10200,7 +10756,8 @@
                 startTugScoreRealtime();
                 startTugStateRealtime();
                 loadTugTally();
-                loadTugState();
+                clearMyReadyFlag(TUG_STATE_TABLE, Number(getIdentity()) === 2 ? 'm_ready' : 'j_ready').then(
+                    loadTugState);
             }
 
             function openReactionRace() {
@@ -10208,7 +10765,23 @@
                 allGameViews.forEach(v => v.classList.add('hidden'));
                 reactionRaceView.classList.remove('hidden');
                 startReactionRaceRealtime();
-                loadReactionRace();
+                clearMyReadyFlag(REACTION_RACE_TABLE, Number(getIdentity()) === 2 ? 'm_ready' : 'j_ready').then(
+                    loadReactionRace);
+            }
+
+            function openAirHockey() {
+                gameChooser.classList.add('hidden');
+                allGameViews.forEach(v => v.classList.add('hidden'));
+                airHockeyView.classList.remove('hidden');
+                resetAirHockey();
+                ahChannelInit();
+                startAirHockeyScoreRealtime();
+                startAirHockeyStateRealtime();
+                loadAirHockeyTally();
+                clearMyReadyFlag(AH_STATE_TABLE, Number(getIdentity()) === 2 ? 'm_ready' : 'j_ready').then(
+                    loadAirHockeyState);
+                setupAirHockeyCanvas();
+                startAirHockeyVisibilityRecovery();
             }
             chooseMemoryMatch.addEventListener('click', openMemoryMatch);
             chooseTicTacToe.addEventListener('click', openTicTacToe);
@@ -10220,6 +10793,7 @@
             chooseSimon.addEventListener('click', openSimon);
             chooseTugOfWar.addEventListener('click', openTugOfWar);
             chooseReactionRace.addEventListener('click', openReactionRace);
+            chooseAirHockey.addEventListener('click', openAirHockey);
             document.querySelectorAll('.game-back-btn').forEach(b => b.addEventListener('click', () => {
                 clearInterval(memoryTimerInterval);
                 clearTimeout(ocTimeout);
@@ -10227,14 +10801,21 @@
                 stopSimonSequence();
                 resetTugOfWar();
                 clearTimeout(raceFlashTimer);
+                clearTimeout(raceCountdownTimer);
+                stopAirHockey();
+                stopAirHockeyVisibilityRecovery();
+                const myKey = Number(getIdentity()) === 2 ? 'm_ready' : 'j_ready';
+                clearMyReadyFlag(TUG_STATE_TABLE, myKey);
+                clearMyReadyFlag(REACTION_RACE_TABLE, myKey);
+                clearMyReadyFlag(AH_STATE_TABLE, myKey);
                 showGameChooser();
             }));
 
             /* ─── Tug of War ─── */
             const TUG_TABLE = 'tug_of_war_scores';
             const TUG_STATE_TABLE = 'tug_of_war_state';
-            const TUG_ROUND_MS = 15000,
-                TUG_MAX = 12;
+            const TUG_MAX = 12;
+            let tugRoundMs = 15000;
             let tugChannel = null,
                 tugScoreChannel = null,
                 tugStateChannel = null,
@@ -10250,6 +10831,10 @@
                 tugCountdownTimer = null,
                 tugLastSend = 0,
                 tugLaunching = false;
+            const tugReadyJ = document.getElementById('tugReadyJ'),
+                tugReadyM = document.getElementById('tugReadyM'),
+                tugDurationChoices = document.getElementById('tugDurationChoices'),
+                tugNewRoundBtn = document.getElementById('tugNewRoundBtn');
 
             function tugMyLetter() { return Number(getIdentity()) === 2 ? 'M' : 'J'; }
 
@@ -10291,12 +10876,27 @@
                     .subscribe();
             }
 
+            function tugSetDuration(secs) {
+                if (tugActive || tugCountingDown) return;
+                tugRoundMs = secs * 1000;
+                tugDurationChoices.querySelectorAll('button').forEach(b => b.classList.toggle('active', Number(b
+                    .dataset.secs) === secs));
+            }
+            tugDurationChoices.addEventListener('click', (e) => {
+                const b = e.target.closest('button');
+                if (b) tugSetDuration(Number(b.dataset.secs));
+            });
+
             function renderTugReady() {
+                const jReady = !!tugState?.j_ready,
+                    mReady = !!tugState?.m_ready;
+                tugReadyJ.classList.toggle('ready', jReady);
+                tugReadyM.classList.toggle('ready', mReady);
                 if (tugActive || tugCountingDown) return;
                 const me = tugMyLetter(),
                     partnerLetter = me === 'M' ? 'J' : 'M';
-                const myReady = me === 'M' ? !!tugState?.m_ready : !!tugState?.j_ready;
-                const partnerReady = me === 'M' ? !!tugState?.j_ready : !!tugState?.m_ready;
+                const myReady = me === 'M' ? mReady : jReady;
+                const partnerReady = me === 'M' ? jReady : mReady;
 
                 if (myReady && partnerReady) {
                     tugStartBtn.disabled = true;
@@ -10384,7 +10984,7 @@
                 tugStatus.textContent = 'Mash now! 🍿';
                 renderTugMarker();
                 clearTimeout(tugEndTimer);
-                tugEndTimer = setTimeout(endTugRound, TUG_ROUND_MS);
+                tugEndTimer = setTimeout(endTugRound, tugRoundMs);
             }
 
             function endTugRound() {
@@ -10395,7 +10995,8 @@
                     tugMyLetter(), count: myCount } });
                 setTimeout(() => {
                     if (tugJCount === tugMCount) tugStatus.textContent = "It's a tie! 🤝";
-                    else tugStatus.textContent = (tugJCount > tugMCount ? 'J' : 'M') + ' pulled it! 🎉';
+                    else { tugStatus.textContent = (tugJCount > tugMCount ? 'J' : 'M') + ' pulled it! 🎉';
+                        burstConfetti(tugMarker); }
                     if (tugIsInitiator && supabase) {
                         const winner = tugJCount === tugMCount ? 'tie' : (tugJCount > tugMCount ? 'J' : 'M');
                         supabase.from(TUG_TABLE).insert({ winner, j_count: tugJCount, m_count: tugMCount }).then(
@@ -10414,11 +11015,21 @@
                 startTugStateRealtime();
                 const me = tugMyLetter();
                 try {
-                    await supabase.from(TUG_STATE_TABLE).upsert({ id: 1, j_ready: me === 'J' ? true : !!tugState
-                        ?.j_ready, m_ready: me === 'M' ? true : !!tugState?.m_ready, updated_at: new Date()
-                        .toISOString() });
+                    await supabase.from(TUG_STATE_TABLE).upsert({ id: 1, [me === 'J' ? 'j_ready' : 'm_ready']: true,
+                        updated_at: new Date().toISOString() });
                 } catch (e) { console.error(e);
                     showToast('Could not mark you ready. Run the games SQL setup first.', { type: 'error' }); }
+            });
+            tugNewRoundBtn.addEventListener('click', async() => {
+                if (!supabase) { showToast('Connect Supabase first.', { type: 'error' });
+                    return; }
+                resetTugOfWar();
+                try {
+                    await supabase.from(TUG_STATE_TABLE).upsert({ id: 1, j_ready: false, m_ready: false, round_id:
+                        null, updated_at: new Date().toISOString() });
+                    showToast('Fresh round ready — tap Start when you\'re both in 🪢');
+                } catch (e) { console.error(e);
+                    showToast('Could not reset the round.', { type: 'error' }); }
             });
             tugMashBtn.addEventListener('click', () => {
                 if (!getIdentity()) { showIdentityPicker();
@@ -10461,10 +11072,13 @@
             const RACE_FLASH_COLORS = ['#e75b5b', '#4fb0e8', '#5fbf7a', '#e8a23f', '#b478e0'];
             let raceGame = null,
                 raceFlashTimer = null,
+                raceCountdownTimer = null,
                 raceLive = false,
                 raceChannel = null,
                 raceLastScheduledTarget = null,
                 raceLaunching = false;
+            const raceReadyJ = document.getElementById('raceReadyJ'),
+                raceReadyM = document.getElementById('raceReadyM');
 
             function raceMyLetter() { return Number(getIdentity()) === 2 ? 'M' : 'J'; }
 
@@ -10485,6 +11099,8 @@
                     mWins = raceGame?.m_wins || 0;
                 raceScore.textContent = `J: ${jWins} · M: ${mWins}`;
                 raceNewGameBtn.disabled = !!raceGame?.round_active;
+                raceReadyJ.classList.toggle('ready', !!raceGame?.j_ready);
+                raceReadyM.classList.toggle('ready', !!raceGame?.m_ready);
 
                 const me = raceMyLetter(),
                     partnerLetter = me === 'J' ? 'M' : 'J';
@@ -10534,6 +11150,7 @@
                 } else {
                     raceLastScheduledTarget = null;
                     clearTimeout(raceFlashTimer);
+                    clearTimeout(raceCountdownTimer);
                     raceFlash.classList.remove('go');
                     raceFlash.textContent = 'Get ready…';
                     raceFlash.style.background = '';
@@ -10543,7 +11160,7 @@
             async function tryLaunchRaceRound() {
                 if (raceLaunching || !supabase) return;
                 raceLaunching = true;
-                const targetAt = new Date(Date.now() + 2000 + Math.random() * 3000).toISOString();
+                const targetAt = new Date(Date.now() + 2400 + 1500 + Math.random() * 3000).toISOString();
                 try {
                     await supabase.from(REACTION_RACE_TABLE).update({ round_active: true, target_at: targetAt,
                         j_ready: false, m_ready: false, round_winner: null, updated_at: new Date().toISOString() })
@@ -10553,19 +11170,34 @@
 
             function scheduleRaceFlash(targetAtISO) {
                 clearTimeout(raceFlashTimer);
+                clearTimeout(raceCountdownTimer);
                 raceLive = false;
                 raceFlash.classList.remove('go');
                 raceFlash.style.background = '';
-                raceFlash.textContent = 'Get ready…';
-                raceStatus.textContent = 'Wait for the flash!';
-                const delay = new Date(targetAtISO).getTime() - Date.now();
-                raceFlashTimer = setTimeout(() => {
-                    raceLive = true;
-                    raceFlash.style.background = RACE_FLASH_COLORS[Math.floor(Math.random() * RACE_FLASH_COLORS
-                        .length)];
-                    raceFlash.classList.add('go');
-                    raceFlash.textContent = 'TAP NOW!';
-                }, Math.max(0, delay));
+                const steps = ['Get ready… 3', 'Get ready… 2', 'Get ready… 1'];
+                let i = 0;
+
+                function countStep() {
+                    if (i < steps.length) {
+                        raceFlash.textContent = steps[i];
+                        raceStatus.textContent = steps[i];
+                        haptic(10);
+                        i++;
+                        raceCountdownTimer = setTimeout(countStep, 700);
+                    } else {
+                        raceFlash.textContent = 'Wait for the flash!';
+                        raceStatus.textContent = 'Wait for the flash!';
+                        const delay = new Date(targetAtISO).getTime() - Date.now();
+                        raceFlashTimer = setTimeout(() => {
+                            raceLive = true;
+                            raceFlash.style.background = RACE_FLASH_COLORS[Math.floor(Math.random() *
+                                RACE_FLASH_COLORS.length)];
+                            raceFlash.classList.add('go');
+                            raceFlash.textContent = 'TAP NOW!';
+                        }, Math.max(0, delay));
+                    }
+                }
+                countStep();
             }
             raceNewGameBtn.addEventListener('click', async() => {
                 if (!getIdentity()) { showIdentityPicker();
@@ -10589,11 +11221,13 @@
                     return; }
                 const startingFresh = !raceGame || raceGame.match_winner;
                 const me = raceMyLetter();
-                const patch = { id: 1, j_ready: me === 'J' ? true : !!raceGame?.j_ready, m_ready: me === 'M' ? true :
-                    !!raceGame?.m_ready, updated_at: new Date().toISOString() };
+                const patch = { id: 1, [me === 'J' ? 'j_ready' : 'm_ready']: true, updated_at: new Date()
+                    .toISOString() };
                 if (startingFresh) { patch.j_wins = 0;
                     patch.m_wins = 0;
-                    patch.match_winner = null; }
+                    patch.match_winner = null;
+                    patch.round_active = false;
+                    patch.round_winner = null; }
                 try {
                     await supabase.from(REACTION_RACE_TABLE).upsert(patch);
                 } catch (e) { console.error(e);
@@ -10619,6 +11253,7 @@
                     if (data && data.length) {
                         haptic([20, 40, 20]);
                         showToast(matchWinner ? `${me} wins the match! 🏆` : `${me} was faster! ⚡`);
+                        if (matchWinner) burstConfetti(raceFlash);
                     }
                 } catch (e) { console.error(e); }
             });
@@ -10630,6 +11265,526 @@
                         'id=eq.1' }, payload => { raceGame = payload.new;
                         renderRace(); })
                     .subscribe();
+            }
+
+            /* ─── Air Hockey ─── */
+            const AH_STATE_TABLE = 'air_hockey_state',
+                AH_SCORES_TABLE = 'air_hockey_scores';
+            const AH_PUCK_R = .045,
+                AH_PADDLE_R = .085,
+                AH_GOAL_HALF = .16,
+                AH_MAX_SPEED = 1.7,
+                AH_WIN_SCORE = 5;
+            const airHockeyCanvas = document.getElementById('airHockeyCanvas'),
+                airHockeyTableWrap = document.getElementById('airHockeyTableWrap'),
+                airHockeyStatus = document.getElementById('airHockeyStatus'),
+                airHockeyScoreEl = document.getElementById('airHockeyScore'),
+                airHockeyStartBtn = document.getElementById('airHockeyStartBtn'),
+                airHockeyNewMatchBtn = document.getElementById('airHockeyNewMatchBtn'),
+                airHockeyTallyEl = document.getElementById('airHockeyTally'),
+                ahReadyJ = document.getElementById('ahReadyJ'),
+                ahReadyM = document.getElementById('ahReadyM'),
+                ahCountdown = document.getElementById('ahCountdown');
+            const ahCtx = airHockeyCanvas.getContext('2d');
+            let ahState = null,
+                ahChannel = null,
+                ahScoreChannel = null,
+                ahStateChannel = null,
+                ahActive = false,
+                ahCountingDown = false,
+                ahRAF = null,
+                ahLastTs = 0,
+                ahLaunching = false,
+                ahRoundId = null,
+                ahCountdownTimer = null,
+                ahPuck = { x: .5, y: .5, vx: 0, vy: 0 },
+                ahJPaddle = { x: .5, y: .12 },
+                ahMPaddle = { x: .5, y: .88 },
+                ahScoreJ = 0,
+                ahScoreM = 0,
+                ahDragging = false,
+                ahLastSend = 0;
+
+            function ahMyLetter() { return Number(getIdentity()) === 2 ? 'M' : 'J'; }
+
+            function ahIsHost() { return Number(getIdentity()) !== 2; }
+
+            function ahFlip() { return Number(getIdentity()) === 1; }
+
+            function ahColors() {
+                const cs = getComputedStyle(document.body);
+                return { rose: cs.getPropertyValue('--rose-deep').trim() || '#D98A93', sage: cs.getPropertyValue(
+                        '--sage').trim() || '#A8B89C', ink: cs.getPropertyValue('--ink').trim() || '#6B5344' };
+            }
+
+            function setupAirHockeyCanvas() {
+                const ratio = Math.min(window.devicePixelRatio || 1, 2);
+                const rect = airHockeyCanvas.getBoundingClientRect();
+                airHockeyCanvas.width = Math.max(1, Math.round(rect.width * ratio));
+                airHockeyCanvas.height = Math.max(1, Math.round(rect.height * ratio));
+                ahCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+                renderAirHockey();
+            }
+            window.addEventListener('resize', () => { if (!airHockeyView.classList.contains('hidden'))
+                setupAirHockeyCanvas(); });
+
+            function ahToScreen(cx, cy) {
+                const r = airHockeyCanvas.getBoundingClientRect();
+                const sy = ahFlip() ? (1 - cy) : cy;
+                return { x: cx * r.width, y: sy * r.height };
+            }
+
+            function ahToCanonical(sx, sy) {
+                const r = airHockeyCanvas.getBoundingClientRect();
+                let cy = r.height ? sy / r.height : .5;
+                if (ahFlip()) cy = 1 - cy;
+                return { x: r.width ? sx / r.width : .5, y: cy };
+            }
+
+            function ahMyHalfClamp(c) {
+                const isJ = Number(getIdentity()) === 1;
+                const minY = isJ ? AH_PADDLE_R : .5 + .01;
+                const maxY = isJ ? .5 - .01 : 1 - AH_PADDLE_R;
+                return { x: Math.max(AH_PADDLE_R, Math.min(1 - AH_PADDLE_R, c.x)), y: Math.max(minY, Math.min(maxY,
+                    c.y)) };
+            }
+
+            function ahPointFromEvent(e) {
+                const r = airHockeyCanvas.getBoundingClientRect();
+                return { x: e.clientX - r.left, y: e.clientY - r.top };
+            }
+
+            function ahMovePaddleFromEvent(e) {
+                if (ahCountingDown) return;
+                const p = ahPointFromEvent(e);
+                const c = ahMyHalfClamp(ahToCanonical(p.x, p.y));
+                if (Number(getIdentity()) === 1) ahJPaddle = c;
+                else ahMPaddle = c;
+                ahBroadcastPaddle(c);
+            }
+            airHockeyCanvas.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                airHockeyCanvas.setPointerCapture(e.pointerId);
+                ahDragging = true;
+                ahMovePaddleFromEvent(e);
+            });
+            airHockeyCanvas.addEventListener('pointermove', (e) => { if (ahDragging) ahMovePaddleFromEvent(e); });
+            ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => airHockeyCanvas.addEventListener(ev, () => {
+                ahDragging = false; }));
+
+            function ahBroadcastPaddle(c) {
+                const now = performance.now();
+                if (now - ahLastSend < 45) return;
+                ahLastSend = now;
+                ahChannel?.send({ type: 'broadcast', event: 'paddle', payload: { who: ahMyLetter(), x: c.x, y: c
+                    .y } });
+            }
+
+            let ahLastPuckAt = 0,
+                ahVisibilityHandler = null,
+                ahWatchdogInterval = null;
+
+            function ahTeardownChannel() {
+                if (ahChannel && supabase) { try { supabase.removeChannel(ahChannel); } catch (e) {} }
+                ahChannel = null;
+            }
+
+            function ahChannelInit() {
+                if (ahChannel || !supabase) return;
+                ahChannel = supabase.channel('air-hockey-live', { config: { broadcast: { self: false } } })
+                    .on('broadcast', { event: 'paddle' }, ({ payload }) => {
+                        if (payload.who === ahMyLetter()) return;
+                        if (payload.who === 'J') ahJPaddle = { x: payload.x, y: payload.y };
+                        else ahMPaddle = { x: payload.x, y: payload.y };
+                    })
+                    .on('broadcast', { event: 'puck' }, ({ payload }) => {
+                        if (payload.roundId !== ahRoundId || ahIsHost()) return;
+                        ahPuck.x = payload.x;
+                        ahPuck.y = payload.y;
+                        ahPuck.vx = payload.vx;
+                        ahPuck.vy = payload.vy;
+                        ahScoreJ = payload.j;
+                        ahScoreM = payload.m;
+                        ahLastPuckAt = Date.now();
+                        renderAirHockeyScore();
+                    })
+                    .on('broadcast', { event: 'goal' }, ({ payload }) => { if (payload.roundId === ahRoundId) haptic([
+                        20, 30, 20]); })
+                    .on('broadcast', { event: 'matchEnd' }, ({ payload }) => { if (payload.roundId === ahRoundId)
+                        ahFinishMatch(payload.winner, payload.j, payload.m, false); })
+                    .subscribe((status) => {
+                        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                            ahTeardownChannel();
+                            if (ahActive || ahCountingDown) setTimeout(ahChannelInit, 800);
+                        }
+                    });
+            }
+
+            function ahReconnectAll() {
+                ahTeardownChannel();
+                ahChannelInit();
+                loadAirHockeyState();
+            }
+
+            function startAirHockeyVisibilityRecovery() {
+                if (ahVisibilityHandler) return;
+                ahVisibilityHandler = () => {
+                    if (document.visibilityState !== 'visible') return;
+                    if (airHockeyView.classList.contains('hidden')) return;
+                    ahReconnectAll();
+                };
+                document.addEventListener('visibilitychange', ahVisibilityHandler);
+                clearInterval(ahWatchdogInterval);
+                ahWatchdogInterval = setInterval(() => {
+                    if (!ahActive || ahIsHost() || airHockeyView.classList.contains('hidden')) return;
+                    if (ahLastPuckAt && Date.now() - ahLastPuckAt > 4000) { ahLastPuckAt = Date.now();
+                        ahReconnectAll(); }
+                }, 3000);
+            }
+
+            function stopAirHockeyVisibilityRecovery() {
+                if (ahVisibilityHandler) { document.removeEventListener('visibilitychange', ahVisibilityHandler);
+                    ahVisibilityHandler = null; }
+                clearInterval(ahWatchdogInterval);
+            }
+            airHockeyNewMatchBtn.addEventListener('click', async() => {
+                if (!supabase) { showToast('Connect Supabase first.', { type: 'error' });
+                    return; }
+                resetAirHockey();
+                try {
+                    await supabase.from(AH_STATE_TABLE).upsert({ id: 1, j_ready: false, m_ready: false, round_id:
+                        null, updated_at: new Date().toISOString() });
+                    showToast('Fresh match ready — tap Start when you\'re both in 🏒');
+                } catch (e) { console.error(e);
+                    showToast('Could not reset the match.', { type: 'error' }); }
+            });
+
+            async function loadAirHockeyState() {
+                if (!supabase) { renderAirHockeyReady();
+                    return; }
+                try {
+                    const { data, error } = await supabase.from(AH_STATE_TABLE).select('*').eq('id', 1)
+                        .maybeSingle();
+                    if (error) throw error;
+                    ahState = data;
+                    renderAirHockeyReady();
+                } catch (e) { console.error(e); }
+            }
+
+            function startAirHockeyStateRealtime() {
+                if (!supabase || ahStateChannel) return;
+                ahStateChannel = supabase.channel('air-hockey-state-live')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: AH_STATE_TABLE, filter:
+                        'id=eq.1' }, payload => {
+                        const prevRoundId = ahState?.round_id;
+                        ahState = payload.new;
+                        renderAirHockeyReady();
+                        if (ahState?.round_id && ahState.round_id !== prevRoundId) startAirHockeyCountdown(ahState
+                            .round_id);
+                    })
+                    .subscribe();
+            }
+
+            function renderAirHockeyReady() {
+                const jReady = !!ahState?.j_ready,
+                    mReady = !!ahState?.m_ready;
+                ahReadyJ.classList.toggle('ready', jReady);
+                ahReadyM.classList.toggle('ready', mReady);
+                if (ahActive || ahCountingDown) return;
+                const me = ahMyLetter(),
+                    partnerLetter = me === 'M' ? 'J' : 'M';
+                const myReady = me === 'M' ? mReady : jReady;
+                const partnerReady = me === 'M' ? jReady : mReady;
+                if (myReady && partnerReady) {
+                    airHockeyStartBtn.disabled = true;
+                    airHockeyStatus.textContent = 'Both ready — dropping the puck!';
+                    tryLaunchAirHockey();
+                } else if (myReady) {
+                    airHockeyStartBtn.disabled = true;
+                    airHockeyStatus.textContent = `Waiting for ${partnerLetter} to tap "Start match" too...`;
+                } else if (partnerReady) {
+                    airHockeyStartBtn.disabled = false;
+                    airHockeyStatus.textContent = `${partnerLetter} is ready — tap "Start match" to begin!`;
+                } else {
+                    airHockeyStartBtn.disabled = false;
+                    airHockeyStatus.textContent =
+                        'Tap "Start match" — you both need to tap it before the puck drops.';
+                }
+            }
+
+            async function tryLaunchAirHockey() {
+                if (ahLaunching || !supabase) return;
+                ahLaunching = true;
+                const roundId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+                try {
+                    const { error } = await supabase.from(AH_STATE_TABLE).update({ round_id: roundId, j_ready: false,
+                        m_ready: false, updated_at: new Date().toISOString() }).eq('id', 1).eq('j_ready', true).eq(
+                        'm_ready', true).select();
+                    if (error) throw error;
+                } catch (e) { console.error(e); } finally { ahLaunching = false; }
+            }
+
+            function startAirHockeyCountdown(roundId) {
+                ahChannelInit();
+                ahRoundId = roundId;
+                ahScoreJ = 0;
+                ahScoreM = 0;
+                ahJPaddle = { x: .5, y: .12 };
+                ahMPaddle = { x: .5, y: .88 };
+                ahPuck = { x: .5, y: .5, vx: 0, vy: 0 };
+                ahLastPuckAt = Date.now();
+                ahCountingDown = true;
+                airHockeyStartBtn.disabled = true;
+                renderAirHockeyScore();
+                renderAirHockey();
+                ahCountdown.classList.remove('hidden');
+                const steps = ['3', '2', '1', 'GO!'];
+                let i = 0;
+                clearTimeout(ahCountdownTimer);
+
+                function step() {
+                    if (i < steps.length) {
+                        ahCountdown.textContent = steps[i];
+                        airHockeyStatus.textContent = i < 3 ? `Puck drops in ${3 - i}...` : 'Go! 🏒';
+                        haptic(10);
+                        i++;
+                        ahCountdownTimer = setTimeout(step, 700);
+                    } else {
+                        ahCountdown.classList.add('hidden');
+                        ahCountingDown = false;
+                        startAirHockeyRound(roundId);
+                    }
+                }
+                step();
+            }
+
+            function startAirHockeyRound(roundId) {
+                ahRoundId = roundId;
+                ahActive = true;
+                airHockeyStartBtn.disabled = true;
+                airHockeyStatus.textContent = 'Go! Drag your paddle to defend and strike. First to 5 wins.';
+                renderAirHockeyScore();
+                if (ahIsHost()) ahLaunchPuck();
+                ahStartLoop();
+            }
+
+            function ahLaunchPuck() {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = .55 + Math.random() * .15;
+                ahPuck = { x: .5, y: .5, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed || speed };
+            }
+
+            function ahStartLoop() {
+                cancelAnimationFrame(ahRAF);
+                ahLastTs = 0;
+                ahRAF = requestAnimationFrame(ahTick);
+            }
+
+            function ahTick(ts) {
+                if (!ahActive) return;
+                if (!ahLastTs) ahLastTs = ts;
+                const dt = Math.min(.05, (ts - ahLastTs) / 1000);
+                ahLastTs = ts;
+                if (ahIsHost()) ahStepPhysics(dt);
+                renderAirHockey();
+                ahRAF = requestAnimationFrame(ahTick);
+            }
+
+            function ahStepPhysics(dt) {
+                ahPuck.x += ahPuck.vx * dt;
+                ahPuck.y += ahPuck.vy * dt;
+                if (ahPuck.x < AH_PUCK_R) { ahPuck.x = AH_PUCK_R;
+                    ahPuck.vx = Math.abs(ahPuck.vx); }
+                if (ahPuck.x > 1 - AH_PUCK_R) { ahPuck.x = 1 - AH_PUCK_R;
+                    ahPuck.vx = -Math.abs(ahPuck.vx); }
+                const inGoalX = ahPuck.x > .5 - AH_GOAL_HALF && ahPuck.x < .5 + AH_GOAL_HALF;
+                if (ahPuck.y < AH_PUCK_R) {
+                    if (inGoalX) { if (ahPuck.y < -AH_PUCK_R * 1.4) { ahHandleGoal('M');
+                            return; } } else { ahPuck.y = AH_PUCK_R;
+                        ahPuck.vy = Math.abs(ahPuck.vy); }
+                }
+                if (ahPuck.y > 1 - AH_PUCK_R) {
+                    if (inGoalX) { if (ahPuck.y > 1 + AH_PUCK_R * 1.4) { ahHandleGoal('J');
+                            return; } } else { ahPuck.y = 1 - AH_PUCK_R;
+                        ahPuck.vy = -Math.abs(ahPuck.vy); }
+                }
+                ahResolvePaddleCollision(ahJPaddle);
+                ahResolvePaddleCollision(ahMPaddle);
+                const sp = Math.hypot(ahPuck.vx, ahPuck.vy);
+                if (sp > AH_MAX_SPEED) { ahPuck.vx = ahPuck.vx / sp * AH_MAX_SPEED;
+                    ahPuck.vy = ahPuck.vy / sp * AH_MAX_SPEED; }
+                ahBroadcastPuck();
+            }
+
+            function ahResolvePaddleCollision(paddle) {
+                const dx = ahPuck.x - paddle.x,
+                    dy = ahPuck.y - paddle.y;
+                const dist = Math.hypot(dx, dy),
+                    minDist = AH_PUCK_R + AH_PADDLE_R;
+                if (dist > 0 && dist < minDist) {
+                    const nx = dx / dist,
+                        ny = dy / dist;
+                    ahPuck.x = paddle.x + nx * minDist;
+                    ahPuck.y = paddle.y + ny * minDist;
+                    const speed = Math.max(Math.hypot(ahPuck.vx, ahPuck.vy), .7);
+                    ahPuck.vx = nx * speed + (Math.random() - .5) * .06;
+                    ahPuck.vy = ny * speed + (Math.random() - .5) * .06;
+                    haptic(8);
+                }
+            }
+
+            function ahBroadcastPuck() {
+                ahChannel?.send({ type: 'broadcast', event: 'puck', payload: { roundId: ahRoundId, x: ahPuck.x, y:
+                    ahPuck.y, vx: ahPuck.vx, vy: ahPuck.vy, j: ahScoreJ, m: ahScoreM } });
+            }
+
+            function ahHandleGoal(scorer) {
+                if (scorer === 'J') ahScoreJ++;
+                else ahScoreM++;
+                haptic([20, 30, 20]);
+                ahChannel?.send({ type: 'broadcast', event: 'goal', payload: { roundId: ahRoundId } });
+                renderAirHockeyScore();
+                if (ahScoreJ >= AH_WIN_SCORE || ahScoreM >= AH_WIN_SCORE) {
+                    const winner = ahScoreJ > ahScoreM ? 'J' : 'M';
+                    ahChannel?.send({ type: 'broadcast', event: 'matchEnd', payload: { roundId: ahRoundId, winner,
+                        j: ahScoreJ, m: ahScoreM } });
+                    ahFinishMatch(winner, ahScoreJ, ahScoreM, true);
+                    return;
+                }
+                ahPuck = { x: .5, y: .5, vx: 0, vy: 0 };
+                setTimeout(() => { if (ahActive) ahLaunchPuck(); }, 700);
+            }
+
+            function renderAirHockeyScore() { airHockeyScoreEl.textContent = `J: ${ahScoreJ} · M: ${ahScoreM}`; }
+
+            async function ahFinishMatch(winner, jScore, mScore, isReporter) {
+                ahActive = false;
+                cancelAnimationFrame(ahRAF);
+                airHockeyStatus.textContent = `${winner} won the match! 🎉`;
+                renderAirHockeyScore();
+                airHockeyStartBtn.disabled = false;
+                burstConfetti(airHockeyTableWrap);
+                if (isReporter && supabase) {
+                    try {
+                        await supabase.from(AH_SCORES_TABLE).insert({ winner, j_score: jScore, m_score: mScore });
+                        loadAirHockeyTally();
+                    } catch (e) { console.error(e); }
+                    try {
+                        await supabase.from(AH_STATE_TABLE).upsert({ id: 1, j_ready: false, m_ready: false,
+                            round_id: null, updated_at: new Date().toISOString() });
+                    } catch (e) { console.error(e); }
+                }
+                setTimeout(() => { if (!ahActive) renderAirHockeyReady(); }, 2500);
+            }
+
+            function resetAirHockey() {
+                ahActive = false;
+                ahCountingDown = false;
+                cancelAnimationFrame(ahRAF);
+                clearTimeout(ahCountdownTimer);
+                ahCountdown.classList.add('hidden');
+                ahScoreJ = 0;
+                ahScoreM = 0;
+                ahPuck = { x: .5, y: .5, vx: 0, vy: 0 };
+                ahJPaddle = { x: .5, y: .12 };
+                ahMPaddle = { x: .5, y: .88 };
+                ahLastPuckAt = 0;
+                renderAirHockeyScore();
+                airHockeyStartBtn.disabled = false;
+                airHockeyStatus.textContent = 'Tap "Start match" — you both need to tap it before the puck drops.';
+            }
+
+            function stopAirHockey() {
+                ahActive = false;
+                ahCountingDown = false;
+                cancelAnimationFrame(ahRAF);
+                clearTimeout(ahCountdownTimer);
+                ahCountdown.classList.add('hidden');
+                ahTeardownChannel();
+            }
+            airHockeyStartBtn.addEventListener('click', async() => {
+                if (!getIdentity()) { showIdentityPicker();
+                    return; }
+                if (!supabase) { showToast('Connect Supabase first.', { type: 'error' });
+                    return; }
+                ahChannelInit();
+                startAirHockeyStateRealtime();
+                const me = ahMyLetter();
+                try {
+                    await supabase.from(AH_STATE_TABLE).upsert({ id: 1, [me === 'J' ? 'j_ready' : 'm_ready']: true,
+                        updated_at: new Date().toISOString() });
+                } catch (e) { console.error(e);
+                    showToast('Could not mark you ready. Run the games SQL setup first.', { type: 'error' }); }
+            });
+
+            async function loadAirHockeyTally() {
+                if (!supabase) return;
+                try {
+                    const { data, error } = await supabase.from(AH_SCORES_TABLE).select('winner');
+                    if (error) throw error;
+                    const jWins = (data || []).filter(r => r.winner === 'J').length;
+                    const mWins = (data || []).filter(r => r.winner === 'M').length;
+                    airHockeyTallyEl.textContent = `J: ${jWins} win${jWins === 1 ? '' : 's'} · M: ${mWins} win${mWins === 1 ? '' : 's'}`;
+                } catch (e) { console.error(e); }
+            }
+
+            function startAirHockeyScoreRealtime() {
+                if (!supabase || ahScoreChannel) return;
+                ahScoreChannel = supabase.channel('air-hockey-scores-live')
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: AH_SCORES_TABLE }, () =>
+                        loadAirHockeyTally())
+                    .subscribe();
+            }
+
+            function ahDrawDisc(canon, w, color, label) {
+                const p = ahToScreen(canon.x, canon.y);
+                ahCtx.beginPath();
+                ahCtx.fillStyle = color;
+                ahCtx.arc(p.x, p.y, AH_PADDLE_R * w, 0, Math.PI * 2);
+                ahCtx.fill();
+                ahCtx.fillStyle = 'white';
+                ahCtx.font = '700 11px Quicksand, sans-serif';
+                ahCtx.textAlign = 'center';
+                ahCtx.textBaseline = 'middle';
+                ahCtx.fillText(label, p.x, p.y);
+            }
+
+            function renderAirHockey() {
+                const r = airHockeyCanvas.getBoundingClientRect(),
+                    w = r.width,
+                    h = r.height;
+                if (!w || !h) return;
+                const col = ahColors();
+                ahCtx.clearRect(0, 0, w, h);
+                ahCtx.strokeStyle = 'rgba(107,83,68,.18)';
+                ahCtx.lineWidth = 2;
+                ahCtx.setLineDash([6, 6]);
+                ahCtx.beginPath();
+                ahCtx.moveTo(0, h / 2);
+                ahCtx.lineTo(w, h / 2);
+                ahCtx.stroke();
+                ahCtx.beginPath();
+                ahCtx.arc(w / 2, h / 2, w * .16, 0, Math.PI * 2);
+                ahCtx.stroke();
+                ahCtx.setLineDash([]);
+                ahCtx.strokeStyle = col.rose;
+                ahCtx.lineWidth = 3;
+                const goalW = AH_GOAL_HALF * 2 * w;
+                ahCtx.beginPath();
+                ahCtx.moveTo(w / 2 - goalW / 2, 3);
+                ahCtx.lineTo(w / 2 + goalW / 2, 3);
+                ahCtx.stroke();
+                ahCtx.beginPath();
+                ahCtx.moveTo(w / 2 - goalW / 2, h - 3);
+                ahCtx.lineTo(w / 2 + goalW / 2, h - 3);
+                ahCtx.stroke();
+                ahDrawDisc(ahJPaddle, w, col.rose, 'J');
+                ahDrawDisc(ahMPaddle, w, col.sage, 'M');
+                const pp = ahToScreen(ahPuck.x, ahPuck.y);
+                ahCtx.beginPath();
+                ahCtx.fillStyle = col.ink;
+                ahCtx.arc(pp.x, pp.y, AH_PUCK_R * w, 0, Math.PI * 2);
+                ahCtx.fill();
             }
 
             let memoryAuthor = localStorage.getItem('ourLittleUniverseMemoryAuthor') === '2' ? '2' : '1';
