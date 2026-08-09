@@ -2415,6 +2415,188 @@
             height: 32px;
         }
 
+        /* ─── Mini voice recorder (reusable — captions & replies) ─── */
+        .mini-mic-btn {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--rose-deep);
+            background: var(--white);
+            color: var(--rose-deep);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            padding: 0;
+            transition: background .18s ease, color .18s ease, transform .15s ease;
+        }
+        .mini-mic-btn svg {
+            width: 15px;
+            height: 15px;
+            display: block;
+        }
+        .mini-mic-btn:hover {
+            transform: scale(1.06);
+        }
+        .mini-mic-btn.recording {
+            background: #D64545;
+            border-color: #D64545;
+            color: var(--white);
+            animation: micPulse 1.2s ease-in-out infinite;
+        }
+        .mini-mic-btn:disabled {
+            opacity: .55;
+            cursor: default;
+        }
+        body.dark-mode .mini-mic-btn {
+            background: #3a3040;
+            border-color: #d9a3b1;
+            color: #f0dfe3;
+        }
+        /* Photo polaroids are narrower (190px) — keep the mic compact there */
+        .face.back .mini-mic-btn {
+            width: 26px;
+            height: 26px;
+            min-width: 26px;
+        }
+        .face.back .mini-mic-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+        .face.back .voice-attachment audio {
+            height: 28px;
+        }
+        .voice-input-row {
+            display: flex;
+            align-items: center;
+            gap: .45rem;
+        }
+        .voice-input-row > input,
+        .voice-input-row > textarea {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        .voice-attachment {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            margin: .4rem 0;
+        }
+        .voice-attachment.hidden {
+            display: none;
+        }
+        .voice-attachment audio {
+            flex: 1 1 auto;
+            min-width: 0;
+            height: 32px;
+        }
+        .voice-attachment-remove {
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            border-radius: 50%;
+            border: 1px solid var(--card-border);
+            background: var(--white);
+            color: var(--ink-soft);
+            font-size: .75rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        body.dark-mode .voice-attachment-remove {
+            background: #3a3040;
+            color: #e9dde2;
+        }
+        .voice-reply-block {
+            margin-top: .5rem;
+        }
+
+        /* ─── Sliding back panels (note/caption ↔ reply), shared by
+           note, photo, and doodle cards ─── */
+        .back-panels {
+            position: relative;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .back-panels-track {
+            display: flex;
+            width: 200%;
+            height: 100%;
+            transition: transform .42s cubic-bezier(.3, .86, .36, 1);
+        }
+        .back-panels.showing-reply .back-panels-track {
+            transform: translateX(-50%);
+        }
+        .back-panel {
+            width: 50%;
+            flex: 0 0 50%;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            padding: 0 2px;
+            overflow-y: auto;
+        }
+        .reply-tab-btn {
+            position: absolute;
+            top: 50%;
+            right: 2px;
+            transform: translateY(-50%);
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 1px solid var(--rose-deep);
+            background: var(--white);
+            color: var(--rose-deep);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 4;
+            font-size: .8rem;
+            line-height: 1;
+            padding: 0;
+        }
+        .reply-tab-btn .reply-dot {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #D64545;
+            display: none;
+            border: 1.5px solid var(--white);
+        }
+        .reply-tab-btn.has-reply .reply-dot {
+            display: block;
+        }
+        .reply-panel-back-btn {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            margin: 0 0 4px;
+            background: none;
+            border: none;
+            color: var(--ink-soft);
+            font-family: 'Quicksand', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+        }
+        body.dark-mode .reply-tab-btn {
+            background: #3a3040;
+            border-color: #d9a3b1;
+            color: #f0dfe3;
+        }
+
         .countdown-overlay {
             position: fixed;
             inset: 0;
@@ -2655,9 +2837,8 @@
         }
         .note-reaction-badge {
             position: absolute;
-            top: 2px;
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: 8px;
+            left: 8px;
             font-size: 1.05rem;
             line-height: 1;
             z-index: 1;
@@ -2841,9 +3022,18 @@
         .doodle-mode-view.doodle-fullscreen {
             position: fixed;
             inset: 0;
-            z-index: 960;
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            z-index: 980;
+            /* Own stacking context, painted independently of any ancestor's
+               z-index — stops other page sections (which may sit in their own
+               stacking context) from ever rendering above/through this. */
+            isolation: isolate;
             background: var(--paper);
             overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
             padding: max(.8rem, env(safe-area-inset-top)) .8rem .8rem;
             margin: 0;
         }
@@ -2852,13 +3042,27 @@
             height: min(58vh, 520px);
             margin-top: .5rem;
         }
+        html.doodle-fullscreen-lock,
         body.doodle-fullscreen-lock {
             overflow: hidden;
+            overscroll-behavior: none;
+            height: 100%;
+        }
+        body.doodle-fullscreen-lock {
+            position: fixed;
+            left: 0;
+            right: 0;
+            width: 100%;
         }
         .doodle-mode-view.doodle-fullscreen .doodle-mode-back,
         .doodle-mode-view.doodle-fullscreen .duet-hint,
         .doodle-mode-view.doodle-fullscreen .relay-actions-row {
             display: none;
+        }
+        /* Safety net: while any doodle view is fullscreen, make sure nothing
+           else in the doodles section can render above/behind it. */
+        body.doodle-fullscreen-lock #doodlesGalleryArea {
+            display: none !important;
         }
         .relay-locked-overlay {
             position: absolute;
@@ -2902,6 +3106,15 @@
         }
         .doodle-toolbar {
             margin-bottom: .5rem;
+        }
+        .doodle-tools {
+            margin-bottom: .4rem;
+        }
+        .doodle-size-row {
+            margin-bottom: .7rem;
+        }
+        .doodle-submit-row {
+            margin-top: .8rem;
         }
         .doodle-swatches {
             display: flex;
@@ -6441,8 +6654,8 @@
             height: 28px;
             border-radius: 50%;
             border: none;
-            background: rgba(255, 253, 249, 0.85);
-            box-shadow: 0 2px 6px var(--shadow);
+            background: rgba(255, 253, 249, 0.38);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
             font-size: 1rem;
             line-height: 1;
             display: flex;
@@ -6450,6 +6663,11 @@
             justify-content: center;
             cursor: pointer;
             color: var(--rose-deep);
+            transition: background .18s ease;
+        }
+        .fav-heart:hover,
+        .fav-heart:active {
+            background: rgba(255, 253, 249, 0.75);
         }
         .fav-heart.active {
             color: var(--rose-deep);
@@ -6457,18 +6675,22 @@
 
         .mood-badge {
             position: absolute;
-            top: 6px;
+            bottom: 6px;
             left: 6px;
             z-index: 2;
             width: 26px;
             height: 26px;
             border-radius: 50%;
-            background: rgba(255, 253, 249, 0.85);
-            box-shadow: 0 2px 6px var(--shadow);
+            background: rgba(255, 253, 249, 0.38);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             font-size: 0.95rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: background .18s ease;
+        }
+        .mood-badge:hover {
+            background: rgba(255, 253, 249, 0.75);
         }
 
         .flip-back-btn {
@@ -6549,22 +6771,42 @@
             inset: 0;
             transform: rotateY(180deg);
             background: var(--paper-deep);
-            justify-content: space-between;
-            padding: 14px 12px 10px;
+            justify-content: flex-start;
+            padding: 12px 12px 8px;
+            overflow-y: auto;
+            gap: 4px;
         }
         .face.back textarea {
             font-family: 'Caveat', cursive;
-            font-size: 1.25rem;
+            font-size: 1.1rem;
             color: var(--ink);
             background: transparent;
             border: none;
             resize: none;
             width: 100%;
-            height: 120px;
-            line-height: 1.3;
+            height: 52px;
+            line-height: 1.25;
+        }
+        .face.back .photo-reply-input {
+            font-size: 1rem;
+            height: 42px;
         }
         .face.back textarea:focus {
             outline: none;
+        }
+        .face.back .voice-reply-block {
+            border-top: 1px dashed var(--card-border);
+            padding-top: 6px;
+            margin-top: 2px;
+        }
+        .face.back .mood-picker {
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+        .face.back .back-footer {
+            margin-top: auto;
+            padding-top: 6px;
+            flex-shrink: 0;
         }
         .back-footer {
             display: flex;
@@ -7105,7 +7347,7 @@
             flex-wrap: wrap;
             gap: .6rem;
             justify-content: center;
-            margin: .6rem 0;
+            margin: .3rem 0 .9rem;
         }
         .relay-actions-row .fav-filter-btn {
             flex: 1 1 140px;
@@ -7514,7 +7756,11 @@
                         <button type="button" class="active" data-tool="pen">✏️ Pen</button><button type="button" data-tool="line">╱ Line</button><button type="button" data-tool="fill">🪣 Fill</button><button type="button" data-tool="spray">💨 Spray</button><button type="button" data-tool="eraser">🧼 Eraser</button><button type="button" id="doodleUndo">↶ Undo</button><button type="button" id="doodleClear">♜ Clear</button>
                     </div>
                     <div class="doodle-size-row"><label class="doodle-size">Brush size <input id="doodleBrushSize" type="range" min="1" max="30" value="4"><span id="doodleBrushValue">4</span></label></div>
-                    <input class="doodle-caption" id="doodleCaption" maxlength="200" placeholder="Add a caption (optional)">
+                    <div class="voice-input-row">
+                      <input class="doodle-caption" id="doodleCaption" maxlength="200" placeholder="Add a caption (optional)">
+                      <button type="button" class="mini-mic-btn" id="doodleCaptionMic" aria-label="Record a voice caption"></button>
+                    </div>
+                    <div class="voice-attachment hidden" id="doodleCaptionVoice"></div>
                     <div class="doodle-submit-row"><button class="doodle-submit" id="doodleSubmitBtn" type="submit">Leave a doodle</button></div>
                 </form>
             </div>
@@ -7543,7 +7789,11 @@
                         <button type="button" class="active" data-tool="pen">✏️ Pen</button><button type="button" data-tool="line">╱ Line</button><button type="button" data-tool="fill">🪣 Fill</button><button type="button" data-tool="spray">💨 Spray</button><button type="button" data-tool="eraser">🧼 Eraser</button><button type="button" id="duetDoodleUndo">↶ Undo</button><button type="button" id="duetDoodleClear">♜ Clear</button>
                     </div>
                     <div class="doodle-size-row"><label class="doodle-size">Brush size <input id="duetDoodleBrushSize" type="range" min="1" max="30" value="4"><span id="duetDoodleBrushValue">4</span></label></div>
-                    <input class="doodle-caption" id="duetDoodleCaption" maxlength="200" placeholder="Add a caption (optional)">
+                    <div class="voice-input-row">
+                      <input class="doodle-caption" id="duetDoodleCaption" maxlength="200" placeholder="Add a caption (optional)">
+                      <button type="button" class="mini-mic-btn" id="duetDoodleCaptionMic" aria-label="Record a voice caption"></button>
+                    </div>
+                    <div class="voice-attachment hidden" id="duetDoodleCaptionVoice"></div>
                     <div class="doodle-submit-row"><button class="doodle-submit" id="duetDoodleSubmitBtn" type="submit">Leave a doodle</button></div>
                 </form>
             </div>
@@ -7565,15 +7815,18 @@
                     <input class="doodle-color-picker" id="relayDoodleColorPicker" type="color" value="#C96A7A" aria-label="Choose any colour">
                 </div>
                 <div class="doodle-tools" id="relayDoodleTools">
-                    <button type="button" class="active" data-tool="pen">✏️ Pen</button><button type="button" data-tool="line">╱ Line</button><button type="button" data-tool="fill">🪣 Fill</button><button type="button" data-tool="spray">💨 Spray</button><button type="button" data-tool="eraser">🧼 Eraser</button><button type="button" id="relayDoodleUndo">↶ Undo</button>
+                    <button type="button" class="active" data-tool="pen">✏️ Pen</button><button type="button" data-tool="line">╱ Line</button><button type="button" data-tool="fill">🪣 Fill</button><button type="button" data-tool="spray">💨 Spray</button><button type="button" data-tool="eraser">🧼 Eraser</button><button type="button" id="relayDoodleUndo">↶ Undo</button><button type="button" id="relayDoodleClear">♜ Clear</button>
                 </div>
-                <button type="button" id="relayDoodleClear" style="display:none" aria-hidden="true" tabindex="-1"></button>
                 <div class="doodle-size-row"><label class="doodle-size">Brush size <input id="relayDoodleBrushSize" type="range" min="1" max="30" value="4"><span id="relayDoodleBrushValue">4</span></label></div>
                 <div class="relay-actions-row">
                     <button type="button" class="fav-filter-btn" id="relayPassBtn">🤝 Pass it on</button>
                     <button type="button" class="fav-filter-btn" id="relayStartOverBtn">🔄 Start a fresh piece</button>
                 </div>
-                <input class="doodle-caption" id="relayCaption" maxlength="200" placeholder="Add a caption (optional)">
+                <div class="voice-input-row">
+                  <input class="doodle-caption" id="relayCaption" maxlength="200" placeholder="Add a caption (optional)">
+                  <button type="button" class="mini-mic-btn" id="relayCaptionMic" aria-label="Record a voice caption"></button>
+                </div>
+                <div class="voice-attachment hidden" id="relayCaptionVoice"></div>
                 <div class="doodle-submit-row"><button class="doodle-submit" id="relayFinishBtn" type="button">✅ Finish &amp; pin this piece</button></div>
             </div>
 
@@ -8650,7 +8903,12 @@
                         mood: row.mood || null,
                         surprise: !!row.is_surprise,
                         revealed: row.is_revealed === undefined ? true : !!row.is_revealed,
-                        hintText: row.surprise_hint || ''
+                        hintText: row.surprise_hint || '',
+                        voiceUrl: row.voice_url || null,
+                        voicePath: row.voice_path || null,
+                        reply: row.reply || '',
+                        replyAudioUrl: row.reply_audio_url || null,
+                        replyAudioPath: row.reply_audio_path || null
                     }));
                 } catch (err) {
                     console.error('Could not load memories from the cloud:', err);
@@ -8692,7 +8950,12 @@
                     mood: inserted.mood || null,
                     surprise: !!inserted.is_surprise,
                     revealed: !!inserted.is_revealed,
-                    hintText: inserted.surprise_hint || ''
+                    hintText: inserted.surprise_hint || '',
+                    voiceUrl: inserted.voice_url || null,
+                    voicePath: inserted.voice_path || null,
+                    reply: inserted.reply || '',
+                    replyAudioUrl: inserted.reply_audio_url || null,
+                    replyAudioPath: inserted.reply_audio_path || null
                 };
             }
 
@@ -8701,6 +8964,41 @@
                 const { error } = await supabase.from(TABLE).update({ caption: photo.caption }).eq('id', photo.id);
                 if (error) { console.error('Could not save this note:', error);
                     showToast('Could not save that note.', { type: 'error' }); }
+            }
+
+            async function savePhotoCaptionVoice(photo, voice) {
+                if (!supabase) return;
+                const oldPath = photo.voicePath;
+                photo.voiceUrl = voice ? voice.url : null;
+                photo.voicePath = voice ? voice.path : null;
+                const { error } = await supabase.from(TABLE).update({ voice_url: photo.voiceUrl, voice_path: photo
+                        .voicePath })
+                    .eq('id', photo.id);
+                if (error) { console.error('Could not save voice caption:', error);
+                    showToast('Could not save that voice note.', { type: 'error' }); return; }
+                if (oldPath && oldPath !== photo.voicePath) supabase.storage.from(VOICE_BUCKET).remove([oldPath])
+                    .catch(() => {});
+            }
+
+            async function savePhotoReply(photo) {
+                if (!supabase) return;
+                const { error } = await supabase.from(TABLE).update({ reply: photo.reply }).eq('id', photo.id);
+                if (error) { console.error('Could not save reply:', error);
+                    showToast('Could not save that reply.', { type: 'error' }); }
+            }
+
+            async function savePhotoReplyVoice(photo, voice) {
+                if (!supabase) return;
+                const oldPath = photo.replyAudioPath;
+                photo.replyAudioUrl = voice ? voice.url : null;
+                photo.replyAudioPath = voice ? voice.path : null;
+                const { error } = await supabase.from(TABLE).update({ reply_audio_url: photo.replyAudioUrl,
+                        reply_audio_path: photo.replyAudioPath })
+                    .eq('id', photo.id);
+                if (error) { console.error('Could not save voice reply:', error);
+                    showToast('Could not save that voice reply.', { type: 'error' }); return; }
+                if (oldPath && oldPath !== photo.replyAudioPath) supabase.storage.from(VOICE_BUCKET).remove([oldPath])
+                    .catch(() => {});
             }
 
             async function saveFavorite(photo) {
@@ -8837,6 +9135,10 @@
                 if (!supabase) return;
                 try {
                     await supabase.storage.from(BUCKET).remove([photo.path]);
+                    if (photo.voicePath) await supabase.storage.from(VOICE_BUCKET).remove([photo.voicePath]);
+                    if (photo.replyAudioPath) await supabase.storage.from(VOICE_BUCKET).remove([photo
+                        .replyAudioPath
+                    ]);
                     await supabase.from(TABLE).delete().eq('id', photo.id);
                 } catch (err) {
                     console.error('Could not remove this memory:', err);
@@ -8965,12 +9267,26 @@
                     <span class="note-date">${dateLabel}</span>
                   </div>
                   <div class="note-face note-back">
-                    <textarea class="note-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(note.reply || '')}</textarea>
-                    <div class="note-reaction-picker">
-                      ${NOTE_REACTIONS.map(r => `<button type="button" data-reaction="${r}" class="${note.reaction === r ? 'active' : ''}" aria-label="React ${r}">${r}</button>`).join('')}
-                      ${customEmojiPickerHtml(note.reaction, NOTE_REACTIONS)}
+                    <div class="back-panels">
+                      <div class="back-panels-track">
+                        <div class="back-panel back-panel-main">
+                          <div class="note-reaction-picker">
+                            ${NOTE_REACTIONS.map(r => `<button type="button" data-reaction="${r}" class="${note.reaction === r ? 'active' : ''}" aria-label="React ${r}">${r}</button>`).join('')}
+                            ${customEmojiPickerHtml(note.reaction, NOTE_REACTIONS)}
+                          </div>
+                          <button class="note-flip-back-btn" type="button">‹ back</button>
+                        </div>
+                        <div class="back-panel back-panel-reply">
+                          <button class="reply-panel-back-btn" type="button">‹ back</button>
+                          <div class="voice-input-row">
+                            <textarea class="note-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(note.reply || '')}</textarea>
+                            <button type="button" class="mini-mic-btn note-reply-mic" aria-label="Record a voice reply"></button>
+                          </div>
+                          <div class="voice-attachment note-reply-voice${note.reply_audio_url ? '' : ' hidden'}"></div>
+                        </div>
+                      </div>
                     </div>
-                    <button class="note-flip-back-btn" type="button">‹ back</button>
+                    <button type="button" class="reply-tab-btn${(note.reply || note.reply_audio_url) ? ' has-reply' : ''}" aria-label="View replies"><span class="reply-dot"></span>›</button>
                   </div>
                 </div>
               `;
@@ -8978,20 +9294,69 @@
                     const favBtn = wrap.querySelector('.note-fav');
                     const removeBtn = wrap.querySelector('.note-remove');
                     const audioEl = wrap.querySelector('.note-voice audio');
+                    const backPanels = wrap.querySelector('.back-panels');
+                    const replyTabBtn = wrap.querySelector('.reply-tab-btn');
+                    const replyPanelBackBtn = wrap.querySelector('.reply-panel-back-btn');
                     const replyInput = wrap.querySelector('.note-reply-input');
-                    const reactionBtns = wrap.querySelectorAll('.note-reaction-picker button');
+                    const replyMicBtn = wrap.querySelector('.note-reply-mic');
+                    const replyVoiceBox = wrap.querySelector('.note-reply-voice');
+                    const reactionBtns = wrap.querySelectorAll('.note-reaction-picker button[data-reaction]');
                     const flipBackBtn = wrap.querySelector('.note-flip-back-btn');
 
+                    replyTabBtn.addEventListener('click', (e) => { e.stopPropagation();
+                        backPanels.classList.add('showing-reply'); });
+                    replyPanelBackBtn.addEventListener('click', (e) => { e.stopPropagation();
+                        backPanels.classList.remove('showing-reply'); });
+
+                    renderVoiceAttachment(replyVoiceBox, note.reply_audio_url ? { url: note.reply_audio_url,
+                        path: note.reply_audio_path } : null, async(voice) => {
+                        note.reply_audio_url = null;
+                        note.reply_audio_path = null;
+                        await supabase.from(NOTES_TABLE).update({ reply_audio_url: null, reply_audio_path: null })
+                            .eq('id', note.id);
+                        if (voice.path) supabase.storage.from(VOICE_BUCKET).remove([voice.path]).catch(() => {});
+                        replyTabBtn.classList.toggle('has-reply', !!(note.reply || note.reply_audio_url));
+                    });
+                    createMiniVoiceRecorder({
+                        button: replyMicBtn,
+                        onSaved: async({ url, path }) => {
+                            const oldPath = note.reply_audio_path;
+                            note.reply_audio_url = url;
+                            note.reply_audio_path = path;
+                            await supabase.from(NOTES_TABLE).update({ reply_audio_url: url, reply_audio_path: path })
+                                .eq('id', note.id);
+                            renderVoiceAttachment(replyVoiceBox, { url, path }, async(voice) => {
+                                note.reply_audio_url = null;
+                                note.reply_audio_path = null;
+                                await supabase.from(NOTES_TABLE).update({ reply_audio_url: null,
+                                    reply_audio_path: null }).eq('id', note.id);
+                                if (voice.path) supabase.storage.from(VOICE_BUCKET).remove([voice.path]).catch(() => {});
+                                replyTabBtn.classList.toggle('has-reply', !!(note.reply || note.reply_audio_url));
+                            });
+                            if (oldPath && oldPath !== path) supabase.storage.from(VOICE_BUCKET).remove([oldPath])
+                                .catch(() => {});
+                            replyTabBtn.classList.add('has-reply');
+                            showToast('Voice reply saved!');
+                            haptic(12);
+                        }
+                    });
+
                     function flip(e) {
-                        if ([removeBtn, favBtn, replyInput, flipBackBtn].includes(e.target)) return;
+                        if ([removeBtn, favBtn, replyInput, replyMicBtn, flipBackBtn, replyTabBtn,
+                                replyPanelBackBtn
+                            ].includes(e.target)) return;
                         if (e.target.closest && e.target.closest('.note-reaction-picker')) return;
                         if (e.target.closest && e.target.closest('.note-voice')) return;
+                        if (e.target.closest && e.target.closest('.note-reply-voice')) return;
                         flipEl.classList.toggle('flipped');
+                        if (!flipEl.classList.contains('flipped')) backPanels.classList.remove('showing-reply');
                     }
                     flipEl.addEventListener('click', flip);
                     flipEl.addEventListener('keydown', (e) => {
                         if ((e.key === 'Enter' || e.key === ' ') && e.target === flipEl) { e.preventDefault();
-                            flipEl.classList.toggle('flipped'); }
+                            flipEl.classList.toggle('flipped');
+                            if (!flipEl.classList.contains('flipped')) backPanels.classList.remove(
+                                'showing-reply'); }
                     });
                     flipBackBtn.addEventListener('click', (e) => { e.stopPropagation();
                         flipEl.classList.remove('flipped'); });
@@ -9028,6 +9393,9 @@
                                 if (note.audio_path) await supabase.storage.from(VOICE_BUCKET).remove([note
                                     .audio_path
                                 ]);
+                                if (note.reply_audio_path) await supabase.storage.from(VOICE_BUCKET).remove([note
+                                    .reply_audio_path
+                                ]);
                                 await supabase.from(NOTES_TABLE).delete().eq('id', note.id);
                             } catch (err) {
                                 console.error('Could not remove note:', err);
@@ -9049,14 +9417,15 @@
                     let replyTimer = null;
                     replyInput.addEventListener('input', () => {
                         note.reply = replyInput.value;
+                        replyTabBtn.classList.toggle('has-reply', !!(note.reply || note.reply_audio_url));
                         clearTimeout(replyTimer);
                         replyTimer = setTimeout(() => saveNoteReply(note), 400);
                     });
                     async function applyNoteReaction(r) {
                         note.reaction = (note.reaction === r) ? null : r;
                         reactionBtns.forEach(b => b.classList.toggle('active', b.dataset.reaction === note.reaction));
-                        refreshCustomEmojiVisual(wrap.querySelector('.note-reaction-picker'), NOTE_REACTIONS, note
-                            .reaction);
+                        wrap.querySelectorAll('.note-reaction-picker').forEach(el => refreshCustomEmojiVisual(el,
+                            NOTE_REACTIONS, note.reaction));
                         let badge = wrap.querySelector('.note-reaction-badge');
                         if (note.reaction) {
                             if (!badge) { badge = document.createElement('span');
@@ -9158,10 +9527,14 @@
             const chooseDoodleRelay = document.getElementById('chooseDoodleRelay');
             const duetPresenceHint = document.getElementById('duetPresenceHint');
             const doodleCaption = document.getElementById('doodleCaption');
+            const doodleCaptionMic = document.getElementById('doodleCaptionMic');
+            const doodleCaptionVoice = document.getElementById('doodleCaptionVoice');
             const doodleSubmitBtn = document.getElementById('doodleSubmitBtn');
             const doodleAuthorToggle = document.getElementById('doodleAuthorToggle');
             const doodleForm = document.getElementById('doodleForm');
             const duetDoodleCaption = document.getElementById('duetDoodleCaption');
+            const duetDoodleCaptionMic = document.getElementById('duetDoodleCaptionMic');
+            const duetDoodleCaptionVoice = document.getElementById('duetDoodleCaptionVoice');
             const duetDoodleSubmitBtn = document.getElementById('duetDoodleSubmitBtn');
             const duetDoodleAuthorToggle = document.getElementById('duetDoodleAuthorToggle');
             const duetDoodleForm = document.getElementById('duetDoodleForm');
@@ -9487,9 +9860,42 @@
                     'relayDoodleClear' }, {});
 
             /* ─── Fullscreen canvas toggle (shared by solo/duet/relay) ─── */
+            // Tracks how many doodle-fullscreens are currently stacking the
+            // body scroll-lock, and the scroll position to restore once the
+            // last one exits.
+            let doodleFullscreenLockCount = 0;
+            let doodleFullscreenSavedScrollY = 0;
+
+            function lockPageScroll() {
+                if (doodleFullscreenLockCount === 0) {
+                    doodleFullscreenSavedScrollY = window.scrollY || window.pageYOffset || 0;
+                    document.documentElement.classList.add('doodle-fullscreen-lock');
+                    document.body.classList.add('doodle-fullscreen-lock');
+                    // Belt-and-braces scroll lock: pinning body via position:fixed
+                    // stops scroll on every browser, regardless of whether the
+                    // page's actual scroll owner is <html> or <body>.
+                    document.body.style.top = `-${doodleFullscreenSavedScrollY}px`;
+                }
+                doodleFullscreenLockCount++;
+            }
+
+            function unlockPageScroll() {
+                doodleFullscreenLockCount = Math.max(0, doodleFullscreenLockCount - 1);
+                if (doodleFullscreenLockCount === 0) {
+                    document.documentElement.classList.remove('doodle-fullscreen-lock');
+                    document.body.classList.remove('doodle-fullscreen-lock');
+                    document.body.style.top = '';
+                    window.scrollTo(0, doodleFullscreenSavedScrollY);
+                }
+            }
+
             function makeDoodleFullscreenToggle(viewId, btnId, engine) {
                 const view = document.getElementById(viewId);
                 const btn = document.getElementById(btnId);
+                // Remember where this view naturally lives in the DOM so it can
+                // be moved back into place when leaving fullscreen.
+                const homeParent = view.parentNode;
+                const homeNextSibling = view.nextSibling;
                 let active = false;
 
                 function forceRepaint() {
@@ -9497,33 +9903,46 @@
                     // position:fixed until a scroll/paint event forces it —
                     // nudge the scroll position by a hair to force it immediately.
                     void view.offsetHeight;
-                    const y = window.scrollY;
-                    window.scrollTo(0, y + 1);
-                    window.scrollTo(0, y);
                 }
 
                 function apply() {
                     view.classList.toggle('doodle-fullscreen', active);
-                    document.body.classList.toggle('doodle-fullscreen-lock', active);
                     btn.textContent = active ? '✕ Exit fullscreen' : '⛶';
                     if (active) {
+                        // Re-parent onto <body> directly. This is what actually
+                        // fixes the "other cards/photos bleed through and
+                        // overlap the canvas while scrolling" bug: the doodle
+                        // section this view normally lives in has its own
+                        // z-index/stacking context, which traps this element's
+                        // z-index inside it — so later sections on the page
+                        // could still paint on top of it even though it's
+                        // position:fixed with a high z-index. Moving it to be a
+                        // direct child of <body> escapes that trap entirely.
+                        document.body.appendChild(view);
+                        lockPageScroll();
                         view.style.position = 'fixed';
                         view.style.top = '0';
                         view.style.left = '0';
                         view.style.right = '0';
                         view.style.bottom = '0';
-                        view.style.zIndex = '960';
+                        view.style.width = '100%';
+                        view.style.zIndex = '980';
                         view.style.background = 'var(--paper)';
                         view.style.overflowY = 'auto';
                         view.style.margin = '0';
                         view.style.padding = 'max(.8rem, env(safe-area-inset-top)) .8rem .8rem';
                         view.style.boxSizing = 'border-box';
-                        view.style.webkitTransform = 'translateZ(0)';
-                        view.style.transform = 'translateZ(0)';
                     } else {
-                        ['position', 'top', 'left', 'right', 'bottom', 'zIndex', 'background', 'overflowY', 'margin',
-                            'padding', 'boxSizing', 'webkitTransform', 'transform'
+                        unlockPageScroll();
+                        ['position', 'top', 'left', 'right', 'bottom', 'width', 'zIndex', 'background', 'overflowY',
+                            'margin', 'padding', 'boxSizing'
                         ].forEach(prop => { view.style[prop] = ''; });
+                        // Move it back to exactly where it started.
+                        if (homeNextSibling && homeNextSibling.parentNode === homeParent) {
+                            homeParent.insertBefore(view, homeNextSibling);
+                        } else {
+                            homeParent.appendChild(view);
+                        }
                     }
                     requestAnimationFrame(() => {
                         forceRepaint();
@@ -9653,21 +10072,36 @@
                     <button class="doodle-remove" type="button">✕</button>
                     <img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption ? `: ${escapeHtml(d.caption)}` : ''}" loading="lazy" decoding="async">
                     <div class="doodle-caption-preview">${escapeHtml(d.caption || 'A little doodle ✨')}</div>
+                    ${d.voice_url ? `<div class="note-voice doodle-caption-voice"><audio controls preload="none" src="${d.voice_url}"></audio></div>` : ''}
                     ${d.reaction ? `<span class="doodle-reaction-badge">${d.reaction}</span>` : ''}
                     <span class="doodle-author-badge author-${author}${hasSignature(author) ? ' has-sig' : ''}">${sigAvatarHTML(author, 25) || `By ${author === '2' ? 'M' : 'J'}`}</span>
                     <span class="doodle-date">${date}</span>
                   </div>
                   <div class="doodle-face doodle-back">
-                    <textarea class="doodle-caption-edit" maxlength="120" placeholder="Add a caption...">${escapeHtml(d.caption || '')}</textarea>
-                    <textarea class="doodle-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(d.reply || '')}</textarea>
-                    <div class="doodle-reaction-picker">
-                      ${DOODLE_REACTIONS.map(r => `<button type="button" data-reaction="${r}" class="${d.reaction === r ? 'active' : ''}">${r}</button>`).join('')}
-                      ${customEmojiPickerHtml(d.reaction, DOODLE_REACTIONS)}
+                    <div class="back-panels">
+                      <div class="back-panels-track">
+                        <div class="back-panel back-panel-main">
+                          <textarea class="doodle-caption-edit" maxlength="120" placeholder="Add a caption...">${escapeHtml(d.caption || '')}</textarea>
+                          <div class="doodle-reaction-picker">
+                            ${DOODLE_REACTIONS.map(r => `<button type="button" data-reaction="${r}" class="${d.reaction === r ? 'active' : ''}">${r}</button>`).join('')}
+                            ${customEmojiPickerHtml(d.reaction, DOODLE_REACTIONS)}
+                          </div>
+                          <div class="doodle-back-actions">
+                            <button class="note-flip-back-btn" type="button">‹ back</button>
+                            <button class="doodle-download" type="button">⇩ PNG</button>
+                          </div>
+                        </div>
+                        <div class="back-panel back-panel-reply">
+                          <button class="reply-panel-back-btn" type="button">‹ back</button>
+                          <div class="voice-input-row">
+                            <textarea class="doodle-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(d.reply || '')}</textarea>
+                            <button type="button" class="mini-mic-btn doodle-reply-mic" aria-label="Record a voice reply"></button>
+                          </div>
+                          <div class="voice-attachment doodle-reply-voice${d.reply_audio_url ? '' : ' hidden'}"></div>
+                        </div>
+                      </div>
                     </div>
-                    <div class="doodle-back-actions">
-                      <button class="note-flip-back-btn" type="button">‹ back</button>
-                      <button class="doodle-download" type="button">⇩ PNG</button>
-                    </div>
+                    <button type="button" class="reply-tab-btn${(d.reply || d.reply_audio_url) ? ' has-reply' : ''}" aria-label="View replies"><span class="reply-dot"></span>›</button>
                   </div>
                 </div>
               `;
@@ -9675,15 +10109,57 @@
                         image = wrap.querySelector('.doodle-image'),
                         fav = wrap.querySelector('.doodle-fav'),
                         remove = wrap.querySelector('.doodle-remove'),
+                        backPanels = wrap.querySelector('.back-panels'),
+                        replyTabBtn = wrap.querySelector('.reply-tab-btn'),
+                        replyPanelBackBtn = wrap.querySelector('.reply-panel-back-btn'),
                         reply = wrap.querySelector('.doodle-reply-input'),
+                        replyMicBtn = wrap.querySelector('.doodle-reply-mic'),
+                        replyVoiceBox = wrap.querySelector('.doodle-reply-voice'),
                         captionEdit = wrap.querySelector('.doodle-caption-edit'),
                         back = wrap.querySelector('.note-flip-back-btn'),
                         download = wrap.querySelector('.doodle-download');
-                    flip.addEventListener('click', e => { if (e.target.closest('button,textarea,img')) return;
-                        flip.classList.toggle('flipped'); });
+                    replyTabBtn.addEventListener('click', (e) => { e.stopPropagation();
+                        backPanels.classList.add('showing-reply'); });
+                    replyPanelBackBtn.addEventListener('click', (e) => { e.stopPropagation();
+                        backPanels.classList.remove('showing-reply'); });
+                    renderVoiceAttachment(replyVoiceBox, d.reply_audio_url ? { url: d.reply_audio_url, path: d
+                        .reply_audio_path } : null, async(voice) => {
+                        d.reply_audio_url = null;
+                        d.reply_audio_path = null;
+                        await updateDoodle(d, { reply_audio_url: null, reply_audio_path: null });
+                        if (voice.path) supabase.storage.from(VOICE_BUCKET).remove([voice.path]).catch(() => {});
+                        replyTabBtn.classList.toggle('has-reply', !!(d.reply || d.reply_audio_url));
+                    });
+                    createMiniVoiceRecorder({
+                        button: replyMicBtn,
+                        onSaved: async({ url, path }) => {
+                            const oldPath = d.reply_audio_path;
+                            d.reply_audio_url = url;
+                            d.reply_audio_path = path;
+                            await updateDoodle(d, { reply_audio_url: url, reply_audio_path: path });
+                            renderVoiceAttachment(replyVoiceBox, { url, path }, async(voice) => {
+                                d.reply_audio_url = null;
+                                d.reply_audio_path = null;
+                                await updateDoodle(d, { reply_audio_url: null, reply_audio_path: null });
+                                if (voice.path) supabase.storage.from(VOICE_BUCKET).remove([voice.path]).catch(() => {});
+                                replyTabBtn.classList.toggle('has-reply', !!(d.reply || d.reply_audio_url));
+                            });
+                            if (oldPath && oldPath !== path) supabase.storage.from(VOICE_BUCKET).remove([oldPath])
+                                .catch(() => {});
+                            replyTabBtn.classList.add('has-reply');
+                            showToast('Voice reply saved!');
+                            haptic(12);
+                        }
+                    });
+                    flip.addEventListener('click', e => { if (e.target.closest(
+                            'button,textarea,img,audio,.voice-attachment')) return;
+                        flip.classList.toggle('flipped');
+                        if (!flip.classList.contains('flipped')) backPanels.classList.remove('showing-reply'); });
                     flip.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target ===
                         flip) { e.preventDefault();
-                            flip.classList.toggle('flipped'); } });
+                            flip.classList.toggle('flipped');
+                            if (!flip.classList.contains('flipped')) backPanels.classList.remove(
+                                'showing-reply'); } });
                     back.addEventListener('click', () => flip.classList.remove('flipped'));
                     image.addEventListener('click', () => {
                         currentList = items.map(x => ({ src: x.image_url, caption: x.caption || 'A little doodle' }));
@@ -9766,6 +10242,10 @@
                                 if (d.storage_path) await supabase.storage.from(DOODLES_BUCKET).remove([d
                                     .storage_path
                                 ]);
+                                if (d.voice_path) await supabase.storage.from(VOICE_BUCKET).remove([d.voice_path]);
+                                if (d.reply_audio_path) await supabase.storage.from(VOICE_BUCKET).remove([d
+                                    .reply_audio_path
+                                ]);
                                 await supabase.from(DOODLES_TABLE).delete().eq('id', d.id);
                             } catch (err) { showToast('Could not remove doodle.', { type: 'error' }); }
                         }, 5000);
@@ -9788,6 +10268,40 @@
                 if (currentDoodleMode === 'relay') return 'no finished relay doodles yet — pass one back and forth!';
                 return 'no doodles yet — draw one!';
             }
+
+            /* Voice captions for solo/duet/relay doodles — recorded once,
+               held here until the piece is actually pinned/finished, then
+               attached to the insert. */
+            let pendingSoloVoice = null,
+                pendingDuetVoice = null,
+                pendingRelayVoice = null;
+
+            function clearPendingVoice(which) {
+                const map = { solo: [() => pendingSoloVoice = null, doodleCaptionVoice],
+                    duet: [() => pendingDuetVoice = null, duetDoodleCaptionVoice],
+                    relay: [() => pendingRelayVoice = null, relayCaptionVoice] };
+                map[which][0]();
+                map[which][1].classList.add('hidden');
+                map[which][1].innerHTML = '';
+            }
+
+            function setupDoodleVoiceCaption(micBtn, voiceBox, setter) {
+                createMiniVoiceRecorder({
+                    button: micBtn,
+                    onSaved: async({ url, path }) => {
+                        setter({ url, path });
+                        renderVoiceAttachment(voiceBox, { url, path }, (voice) => {
+                            setter(null);
+                            if (voice.path) supabase.storage.from(VOICE_BUCKET).remove([voice.path]).catch(() => {});
+                        });
+                        showToast('Voice caption attached — pin the doodle to save it.');
+                        haptic(12);
+                    }
+                });
+            }
+            setupDoodleVoiceCaption(doodleCaptionMic, doodleCaptionVoice, v => pendingSoloVoice = v);
+            setupDoodleVoiceCaption(duetDoodleCaptionMic, duetDoodleCaptionVoice, v => pendingDuetVoice = v);
+
             doodleForm.addEventListener('submit', async e => {
                 e.preventDefault();
                 if (!supabase) { showToast('Connect Supabase before saving doodles.', { type: 'error' });
@@ -9807,11 +10321,14 @@
                         image_url: urlData.publicUrl,
                         storage_path: path,
                         caption: doodleCaption.value.trim() || null,
+                        voice_url: pendingSoloVoice ? pendingSoloVoice.url : null,
+                        voice_path: pendingSoloVoice ? pendingSoloVoice.path : null,
                         author: Number(doodleAuthor),
                         mode: 'solo'
                     });
                     if (error) throw error;
                     doodleCaption.value = '';
+                    clearPendingVoice('solo');
                     soloEngine.reset();
                     showToast('Doodle pinned!');
                     loadDoodles();
@@ -9839,11 +10356,14 @@
                         image_url: urlData.publicUrl,
                         storage_path: path,
                         caption: duetDoodleCaption.value.trim() || null,
+                        voice_url: pendingDuetVoice ? pendingDuetVoice.url : null,
+                        voice_path: pendingDuetVoice ? pendingDuetVoice.path : null,
                         author: Number(duetDoodleAuthor),
                         mode: 'duet'
                     });
                     if (error) throw error;
                     duetDoodleCaption.value = '';
+                    clearPendingVoice('duet');
                     duetEngine.reset();
                     duetBroadcast('clear', {});
                     showToast('Duet doodle pinned!');
@@ -9861,7 +10381,10 @@
                 relayPassBtn = document.getElementById('relayPassBtn'),
                 relayStartOverBtn = document.getElementById('relayStartOverBtn'),
                 relayFinishBtn = document.getElementById('relayFinishBtn'),
-                relayCaption = document.getElementById('relayCaption');
+                relayCaption = document.getElementById('relayCaption'),
+                relayCaptionMic = document.getElementById('relayCaptionMic'),
+                relayCaptionVoice = document.getElementById('relayCaptionVoice');
+            setupDoodleVoiceCaption(relayCaptionMic, relayCaptionVoice, v => pendingRelayVoice = v);
             let relayState = null,
                 relayChannelStarted = false,
                 relayBusy = false;
@@ -9976,8 +10499,9 @@
                 try {
                     const imageUrl = await uploadRelaySnapshot();
                     const { error } = await supabase.from(DOODLES_TABLE).insert({ image_url: imageUrl, storage_path:
-                        null, caption: relayCaption.value.trim() || null, author: Number(getIdentity()), mode:
-                        'relay' });
+                        null, caption: relayCaption.value.trim() || null, voice_url: pendingRelayVoice ?
+                        pendingRelayVoice.url : null, voice_path: pendingRelayVoice ? pendingRelayVoice.path : null,
+                        author: Number(getIdentity()), mode: 'relay' });
                     if (error) throw error;
                     const starter = Number(getIdentity()) === 2 ? 2 : 1;
                     await supabase.from(RELAY_STATE_TABLE).upsert({ id: 1, image_url: null, turn: starter,
@@ -9985,6 +10509,7 @@
                     relayState = { id: 1, image_url: null, turn: starter };
                     relayEngine.reset();
                     relayCaption.value = '';
+                    clearPendingVoice('relay');
                     renderRelayStatus();
                     showToast('Relay piece pinned! 🎉 A fresh canvas is ready for the next one.');
                     loadDoodles();
@@ -11273,7 +11798,7 @@
             const AH_PUCK_R = .045,
                 AH_PADDLE_R = .085,
                 AH_GOAL_HALF = .16,
-                AH_MAX_SPEED = 1.7,
+                AH_MAX_SPEED = 2.3,
                 AH_WIN_SCORE = 5;
             const airHockeyCanvas = document.getElementById('airHockeyCanvas'),
                 airHockeyTableWrap = document.getElementById('airHockeyTableWrap'),
@@ -11298,8 +11823,8 @@
                 ahRoundId = null,
                 ahCountdownTimer = null,
                 ahPuck = { x: .5, y: .5, vx: 0, vy: 0 },
-                ahJPaddle = { x: .5, y: .12 },
-                ahMPaddle = { x: .5, y: .88 },
+                ahJPaddle = { x: .5, y: .12, vx: 0, vy: 0, _t: 0 },
+                ahMPaddle = { x: .5, y: .88, vx: 0, vy: 0, _t: 0 },
                 ahScoreJ = 0,
                 ahScoreM = 0,
                 ahDragging = false,
@@ -11354,13 +11879,26 @@
                 return { x: e.clientX - r.left, y: e.clientY - r.top };
             }
 
+            const AH_PADDLE_MAX_V = 6; // canonical units/sec — clamps wild spikes from low-framerate touch jumps
+
             function ahMovePaddleFromEvent(e) {
                 if (ahCountingDown) return;
                 const p = ahPointFromEvent(e);
                 const c = ahMyHalfClamp(ahToCanonical(p.x, p.y));
-                if (Number(getIdentity()) === 1) ahJPaddle = c;
-                else ahMPaddle = c;
-                ahBroadcastPaddle(c);
+                const isJ = Number(getIdentity()) === 1;
+                const prev = isJ ? ahJPaddle : ahMPaddle;
+                const now = performance.now();
+                const dt = Math.max((now - (prev._t || now)) / 1000, 1 / 120);
+                let vx = (c.x - prev.x) / dt;
+                let vy = (c.y - prev.y) / dt;
+                // clamp so a big dt gap (e.g. finger lifted then re-placed) doesn't register as a mega-hit
+                const vSpeed = Math.hypot(vx, vy);
+                if (vSpeed > AH_PADDLE_MAX_V) { vx = vx / vSpeed * AH_PADDLE_MAX_V;
+                    vy = vy / vSpeed * AH_PADDLE_MAX_V; }
+                const next = { x: c.x, y: c.y, vx, vy, _t: now };
+                if (isJ) ahJPaddle = next;
+                else ahMPaddle = next;
+                ahBroadcastPaddle(next);
             }
             airHockeyCanvas.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
@@ -11377,7 +11915,7 @@
                 if (now - ahLastSend < 45) return;
                 ahLastSend = now;
                 ahChannel?.send({ type: 'broadcast', event: 'paddle', payload: { who: ahMyLetter(), x: c.x, y: c
-                    .y } });
+                    .y, vx: c.vx || 0, vy: c.vy || 0 } });
             }
 
             let ahLastPuckAt = 0,
@@ -11394,8 +11932,10 @@
                 ahChannel = supabase.channel('air-hockey-live', { config: { broadcast: { self: false } } })
                     .on('broadcast', { event: 'paddle' }, ({ payload }) => {
                         if (payload.who === ahMyLetter()) return;
-                        if (payload.who === 'J') ahJPaddle = { x: payload.x, y: payload.y };
-                        else ahMPaddle = { x: payload.x, y: payload.y };
+                        const remote = { x: payload.x, y: payload.y, vx: payload.vx || 0, vy: payload.vy || 0,
+                            _t: performance.now() };
+                        if (payload.who === 'J') ahJPaddle = remote;
+                        else ahMPaddle = remote;
                     })
                     .on('broadcast', { event: 'puck' }, ({ payload }) => {
                         if (payload.roundId !== ahRoundId || ahIsHost()) return;
@@ -11626,10 +12166,19 @@
                         ny = dy / dist;
                     ahPuck.x = paddle.x + nx * minDist;
                     ahPuck.y = paddle.y + ny * minDist;
-                    const speed = Math.max(Math.hypot(ahPuck.vx, ahPuck.vy), .7);
+                    // How hard the paddle is actually moving right now — a stale (non-moving)
+                    // paddle contributes nothing, so resting paddles don't "boost" the puck.
+                    const paddleAge = performance.now() - (paddle._t || 0);
+                    const paddleVx = paddleAge < 140 ? (paddle.vx || 0) : 0;
+                    const paddleVy = paddleAge < 140 ? (paddle.vy || 0) : 0;
+                    // Only the component of paddle velocity heading into the puck counts as "force".
+                    const punch = Math.max(0, paddleVx * nx + paddleVy * ny);
+                    const incomingSpeed = Math.hypot(ahPuck.vx, ahPuck.vy);
+                    const baseSpeed = Math.max(incomingSpeed, .55);
+                    const speed = Math.min(baseSpeed + punch * .85, AH_MAX_SPEED);
                     ahPuck.vx = nx * speed + (Math.random() - .5) * .06;
                     ahPuck.vy = ny * speed + (Math.random() - .5) * .06;
-                    haptic(8);
+                    haptic(Math.min(8 + Math.round(punch * 6), 30));
                 }
             }
 
@@ -13282,6 +13831,136 @@
                     showToast('Could not save that voice note.', { type: 'error' });
                 }
             }
+
+            /* ─── Reusable mini voice recorder ───
+               Attaches record/stop behaviour to any small mic <button>. Each
+               instance keeps its own recording state, so many of these can
+               live on the page at once (a doodle caption, a memory caption,
+               a reply box) without interfering with each other or with the
+               main note voice recorder above. Recording uploads immediately
+               on stop; `onSaved({ url, path })` is where the caller decides
+               what to do with the result (attach to a pending caption,
+               patch a reply column, etc). */
+            function createMiniVoiceRecorder({ button, onSaved, bucket, maxSeconds = 120 }) {
+                const audioBucket = bucket || VOICE_BUCKET;
+                const MIC_SVG =
+                    '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V20H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-2v-2.08A7 7 0 0 0 19 11z"/></svg>';
+                const STOP_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+                let miniRecorder = null,
+                    miniStream = null,
+                    miniChunks = [],
+                    miniStartedAt = 0,
+                    miniTimerInt = null,
+                    miniRecording = false;
+
+                function reset() {
+                    miniRecording = false;
+                    button.classList.remove('recording');
+                    button.innerHTML = MIC_SVG;
+                    button.setAttribute('aria-label', 'Record a voice note');
+                    button.title = 'Record a voice note';
+                }
+                reset();
+
+                async function start() {
+                    if (!window.MediaRecorder || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        showToast('Voice recording isn\'t supported in this browser.', { type: 'error' });
+                        return;
+                    }
+                    if (!supabase) { setupBanner.classList.add('show');
+                        return; }
+                    try {
+                        miniStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    } catch (err) {
+                        console.error('Microphone access denied:', err);
+                        showToast('Microphone access is needed to record a voice note.', { type: 'error' });
+                        return;
+                    }
+                    const mimeType = pickAudioMimeType();
+                    miniChunks = [];
+                    miniRecorder = mimeType ? new MediaRecorder(miniStream, { mimeType }) : new MediaRecorder(
+                        miniStream);
+                    miniRecorder.addEventListener('dataavailable', (e) => { if (e.data && e.data.size > 0)
+                            miniChunks.push(e.data); });
+                    miniRecorder.addEventListener('stop', onStop);
+                    miniRecorder.start();
+                    miniRecording = true;
+                    miniStartedAt = Date.now();
+                    button.classList.add('recording');
+                    button.innerHTML = STOP_SVG;
+                    button.title = 'Stop recording';
+                    miniTimerInt = setInterval(() => {
+                        const elapsed = Math.floor((Date.now() - miniStartedAt) / 1000);
+                        const label = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`;
+                        button.setAttribute('aria-label', `Recording ${label} — tap to stop`);
+                        if (elapsed >= maxSeconds) stop();
+                    }, 500);
+                }
+
+                function stop() {
+                    if (!miniRecording || !miniRecorder) return;
+                    miniRecorder.stop();
+                    clearInterval(miniTimerInt);
+                    if (miniStream) { miniStream.getTracks().forEach(t => t.stop());
+                        miniStream = null; }
+                    reset();
+                }
+
+                async function onStop() {
+                    if (!miniChunks.length) return;
+                    const mimeType = miniRecorder.mimeType || 'audio/webm';
+                    const blob = new Blob(miniChunks, { type: mimeType });
+                    miniChunks = [];
+                    if (blob.size < 500) { showToast('That recording was too short to save.', { type: 'error' });
+                        return; }
+                    const ext = mimeType.includes('mp4') ? 'm4a' : (mimeType.includes('ogg') ? 'ogg' : 'webm');
+                    const path = `${crypto.randomUUID()}.${ext}`;
+                    button.disabled = true;
+                    try {
+                        const { error: uploadError } = await supabase.storage.from(audioBucket).upload(path, blob, {
+                            contentType: mimeType });
+                        if (uploadError) throw uploadError;
+                        const { data: urlData } = supabase.storage.from(audioBucket).getPublicUrl(path);
+                        await onSaved({ url: urlData.publicUrl, path });
+                    } catch (err) {
+                        console.error('Could not save voice note:', err);
+                        showToast('Could not save that voice note.', { type: 'error' });
+                    } finally { button.disabled = false; }
+                }
+                button.addEventListener('click', (e) => { e.preventDefault();
+                    e.stopPropagation();
+                    if (miniRecording) stop();
+                    else start(); });
+                return { stop, isRecording: () => miniRecording };
+            }
+
+            /* Builds a small "🎤 attached" playback row with a remove (×)
+               button, used under captions/replies once a voice clip exists.
+               `onRemove` is called with the stored {url,path} before it's
+               cleared, so the caller can delete the storage object if the
+               person actively removes it. */
+            function renderVoiceAttachment(container, voice, onRemove) {
+                container.innerHTML = '';
+                if (!voice || !voice.url) { container.classList.add('hidden');
+                    return; }
+                container.classList.remove('hidden');
+                const audio = document.createElement('audio');
+                audio.controls = true;
+                audio.preload = 'none';
+                audio.src = voice.url;
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'voice-attachment-remove';
+                removeBtn.setAttribute('aria-label', 'Remove voice note');
+                removeBtn.textContent = '✕';
+                removeBtn.addEventListener('click', (e) => { e.stopPropagation();
+                    onRemove && onRemove(voice);
+                    container.classList.add('hidden');
+                    container.innerHTML = ''; });
+                container.appendChild(audio);
+                container.appendChild(removeBtn);
+            }
+
             let countdownInProgress = false;
             let countdownCancelled = false;
 
@@ -14451,7 +15130,7 @@
                 let items = showFavoritesOnly ? photos.filter(p => p.favorite) : photos.slice();
                 if (searchQuery.trim()) {
                     const q = searchQuery.trim().toLowerCase();
-                    items = items.filter(p => (p.caption || '').toLowerCase().includes(q));
+                    items = items.filter(p => `${p.caption||''} ${p.reply||''}`.toLowerCase().includes(q));
                 }
                 if (sortMode === 'newest') items = items.slice().reverse();
                 else if (sortMode === 'shuffle') {
@@ -14529,21 +15208,41 @@
                     ${(photo.surprise && !photo.revealed) ? `<canvas class="scratch-layer" aria-label="Scratch to reveal the surprise"></canvas><div class="scratch-hint"><span class="scratch-hint-emoji">🎁</span><span>${escapeHtml(photo.hintText || 'scratch to reveal')}</span></div>` : ''}
                   </div>
                   <div class="cap-preview">${(photo.surprise && !photo.revealed) ? 'a surprise is waiting... 🎁' : escapeHtml(photo.caption)}</div>
+                  ${photo.voiceUrl && !(photo.surprise && !photo.revealed) ? `<div class="note-voice photo-caption-voice"><audio controls preload="none" src="${photo.voiceUrl}"></audio></div>` : ''}
                 </div>
                 <div class="face back">
-                  <textarea maxlength="120" aria-label="Write a note for this memory">${escapeHtml(photo.caption)}</textarea>
-                  <button class="flip-back-btn" type="button" aria-label="Flip back to photo">‹ back to photo</button>
-                  <div class="mood-picker">
-                    ${MOODS.map(m => `<button type="button" data-mood="${m}" class="${photo.mood === m ? 'active' : ''}" aria-label="Tag mood ${m}">${m}</button>`).join('')}
-                    ${customEmojiPickerHtml(photo.mood, MOODS)}
-                  </div>
-                  <div class="back-footer">
-                    <span>${photo.date}</span>
-                    <div style="display:flex; gap:6px;">
-                      <button class="card-download" type="button">⬇ save</button>
-                      <button class="unpin" type="button">unpin</button>
+                  <div class="back-panels">
+                    <div class="back-panels-track">
+                      <div class="back-panel back-panel-main">
+                        <div class="voice-input-row">
+                          <textarea maxlength="120" aria-label="Write a note for this memory">${escapeHtml(photo.caption)}</textarea>
+                          <button type="button" class="mini-mic-btn photo-caption-mic" aria-label="Record a voice note for this memory"></button>
+                        </div>
+                        <div class="voice-attachment photo-caption-voice-attach${photo.voiceUrl ? '' : ' hidden'}"></div>
+                        <div class="mood-picker">
+                          ${MOODS.map(m => `<button type="button" data-mood="${m}" class="${photo.mood === m ? 'active' : ''}" aria-label="Tag mood ${m}">${m}</button>`).join('')}
+                          ${customEmojiPickerHtml(photo.mood, MOODS)}
+                        </div>
+                        <button class="flip-back-btn" type="button" aria-label="Flip back to photo">‹ back to photo</button>
+                        <div class="back-footer">
+                          <span>${photo.date}</span>
+                          <div style="display:flex; gap:6px;">
+                            <button class="card-download" type="button">⬇ save</button>
+                            <button class="unpin" type="button">unpin</button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="back-panel back-panel-reply">
+                        <button class="reply-panel-back-btn" type="button">‹ back</button>
+                        <div class="voice-input-row">
+                          <textarea class="photo-reply-input" maxlength="200" placeholder="Write a reply..." aria-label="Write a reply to this memory">${escapeHtml(photo.reply || '')}</textarea>
+                          <button type="button" class="mini-mic-btn photo-reply-mic" aria-label="Record a voice reply"></button>
+                        </div>
+                        <div class="voice-attachment photo-reply-voice-attach${photo.replyAudioUrl ? '' : ' hidden'}"></div>
+                      </div>
                     </div>
                   </div>
+                  <button type="button" class="reply-tab-btn${(photo.reply || photo.replyAudioUrl) ? ' has-reply' : ''}" aria-label="View replies"><span class="reply-dot"></span>›</button>
                 </div>
               </div>
             `;
@@ -14555,7 +15254,15 @@
                     wrap.querySelector('.pin').style.animationDelay = delay;
                 }
                 const card = wrap.querySelector('.polaroid');
-                const textarea = wrap.querySelector('textarea');
+                const backPanels = wrap.querySelector('.back-panels');
+                const replyTabBtn = wrap.querySelector('.reply-tab-btn');
+                const replyPanelBackBtn = wrap.querySelector('.reply-panel-back-btn');
+                const textarea = wrap.querySelector('.back-panel-main > .voice-input-row > textarea');
+                const captionMicBtn = wrap.querySelector('.photo-caption-mic');
+                const captionVoiceBox = wrap.querySelector('.photo-caption-voice-attach');
+                const replyInput = wrap.querySelector('.photo-reply-input');
+                const replyMicBtn = wrap.querySelector('.photo-reply-mic');
+                const replyVoiceBox = wrap.querySelector('.photo-reply-voice-attach');
                 const unpinBtn = wrap.querySelector('.unpin');
                 const favBtn = wrap.querySelector('.fav-heart');
                 const expandBtn = wrap.querySelector('.expand-btn');
@@ -14575,11 +15282,56 @@
                     else photoImg.addEventListener('load', markLoaded);
                 }
 
+                replyTabBtn.addEventListener('click', (e) => { e.stopPropagation();
+                    backPanels.classList.add('showing-reply'); });
+                replyPanelBackBtn.addEventListener('click', (e) => { e.stopPropagation();
+                    backPanels.classList.remove('showing-reply'); });
+
+                renderVoiceAttachment(captionVoiceBox, photo.voiceUrl ? { url: photo.voiceUrl, path: photo
+                    .voicePath } : null, (voice) => savePhotoCaptionVoice(photo, null));
+                createMiniVoiceRecorder({
+                    button: captionMicBtn,
+                    onSaved: async({ url, path }) => {
+                        await savePhotoCaptionVoice(photo, { url, path });
+                        renderVoiceAttachment(captionVoiceBox, { url, path }, () => savePhotoCaptionVoice(photo,
+                            null));
+                        showToast('Voice note saved for this memory!');
+                        haptic(12);
+                    }
+                });
+                renderVoiceAttachment(replyVoiceBox, photo.replyAudioUrl ? { url: photo.replyAudioUrl, path: photo
+                    .replyAudioPath } : null, (voice) => { savePhotoReplyVoice(photo, null);
+                    replyTabBtn.classList.toggle('has-reply', !!(photo.reply || photo.replyAudioUrl)); });
+                createMiniVoiceRecorder({
+                    button: replyMicBtn,
+                    onSaved: async({ url, path }) => {
+                        await savePhotoReplyVoice(photo, { url, path });
+                        renderVoiceAttachment(replyVoiceBox, { url, path }, () => { savePhotoReplyVoice(photo,
+                                null);
+                            replyTabBtn.classList.toggle('has-reply', !!(photo.reply || photo.replyAudioUrl)); });
+                        replyTabBtn.classList.add('has-reply');
+                        showToast('Voice reply saved!');
+                        haptic(12);
+                    }
+                });
+                let replyTimer = null;
+                replyInput.addEventListener('click', (e) => e.stopPropagation());
+                replyInput.addEventListener('input', () => {
+                    photo.reply = replyInput.value;
+                    replyTabBtn.classList.toggle('has-reply', !!(photo.reply || photo.replyAudioUrl));
+                    clearTimeout(replyTimer);
+                    replyTimer = setTimeout(() => savePhotoReply(photo), 400);
+                });
+
                 function flip(e) {
                     if (photo.surprise && !photo.revealed) return;
-                    if ([textarea, unpinBtn, favBtn, expandBtn, downloadBtn, flipBackBtn].includes(e.target)) return;
+                    if ([textarea, replyInput, captionMicBtn, replyMicBtn, unpinBtn, favBtn, expandBtn, downloadBtn,
+                            flipBackBtn, replyTabBtn, replyPanelBackBtn
+                        ].includes(e.target)) return;
                     if (e.target.closest && e.target.closest('.mood-picker')) return;
+                    if (e.target.closest && e.target.closest('.voice-attachment')) return;
                     card.classList.toggle('flipped');
+                    if (!card.classList.contains('flipped')) backPanels.classList.remove('showing-reply');
                 }
                 card.addEventListener('click', flip);
                 card.addEventListener('keydown', (e) => {
@@ -14587,6 +15339,7 @@
                         if (photo.surprise && !photo.revealed) return;
                         e.preventDefault();
                         card.classList.toggle('flipped');
+                        if (!card.classList.contains('flipped')) backPanels.classList.remove('showing-reply');
                     }
                 });
                 flipBackBtn.addEventListener('click', (e) => { e.stopPropagation();
@@ -14600,6 +15353,14 @@
                     clearTimeout(saveTimer);
                     saveTimer = setTimeout(() => saveCaption(photo), 400);
                 });
+                const captionVoiceEl = wrap.querySelector('.photo-caption-voice audio');
+                if (captionVoiceEl) {
+                    captionVoiceEl.addEventListener('click', (e) => e.stopPropagation());
+                    captionVoiceEl.addEventListener('play', () => {
+                        document.querySelectorAll('.photo-caption-voice audio').forEach(a => { if (a !==
+                                captionVoiceEl) a.pause(); });
+                    });
+                }
                 downloadBtn.addEventListener('click', async(e) => {
                     e.stopPropagation();
                     downloadBtn.textContent = '...';
