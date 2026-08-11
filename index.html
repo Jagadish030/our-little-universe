@@ -308,10 +308,13 @@
             font-size: 16px;
         }
         .note-reaction-picker .reaction-plus-wrap {
-            --plus-size: 30px;
+            --plus-size: 24px;
         }
         .doodle-reaction-picker .reaction-plus-wrap {
-            --plus-size: 30px;
+            --plus-size: 25px;
+        }
+        .mood-picker .reaction-plus-wrap {
+            --plus-size: 25px;
         }
         .calendar-day {
             min-height: 52px;
@@ -1550,7 +1553,7 @@
             position: fixed;
             inset: 0;
             pointer-events: none;
-            z-index: 0;
+            z-index: -1;
             overflow: hidden;
             transform: translateZ(0);
             will-change: transform;
@@ -1580,10 +1583,10 @@
                 opacity: 0;
             }
             10% {
-                opacity: 0.35;
+                opacity: 0.18;
             }
             90% {
-                opacity: 0.35;
+                opacity: 0.18;
             }
             100% {
                 transform: translateY(-115vh) translateX(20px) rotate(25deg);
@@ -2415,6 +2418,313 @@
             height: 32px;
         }
 
+        /* ─── Mini voice recorder (reusable — captions & replies) ─── */
+        .mini-mic-btn {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--rose-deep);
+            background: var(--white);
+            color: var(--rose-deep);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            padding: 0;
+            transition: background .18s ease, color .18s ease, transform .15s ease;
+        }
+        .mini-mic-btn svg {
+            width: 15px;
+            height: 15px;
+            display: block;
+        }
+        .mini-mic-btn:hover {
+            transform: scale(1.06);
+        }
+        .mini-mic-btn.recording {
+            background: #D64545;
+            border-color: #D64545;
+            color: var(--white);
+            animation: micPulse 1.2s ease-in-out infinite;
+        }
+        .mini-mic-btn:disabled {
+            opacity: .55;
+            cursor: default;
+        }
+        body.dark-mode .mini-mic-btn {
+            background: #3a3040;
+            border-color: #d9a3b1;
+            color: #f0dfe3;
+        }
+        /* Photo polaroids are narrower (190px) — keep the mic compact there */
+        .face.back .mini-mic-btn {
+            width: 26px;
+            height: 26px;
+            min-width: 26px;
+        }
+        .face.back .mini-mic-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+        .face.back .voice-attachment .voice-player {
+            height: 26px;
+            padding: 3px 8px 3px 3px;
+        }
+        .face.back .voice-attachment .voice-player-toggle {
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+        }
+        .face.back .voice-attachment .voice-player-toggle svg {
+            width: 9px;
+            height: 9px;
+        }
+        .voice-input-row {
+            display: flex;
+            align-items: center;
+            gap: .45rem;
+        }
+        .voice-input-row > input,
+        .voice-input-row > textarea {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        /* Inside the narrow flip-card back panels, stack the mic below the
+           text instead of beside it — side-by-side was tight enough on a
+           polaroid/note/doodle card to force horizontal scrolling. */
+        .back-panel .voice-input-row {
+            flex-direction: column;
+            align-items: center;
+            gap: .3rem;
+            width: 100%;
+        }
+        .back-panel .voice-input-row > input,
+        .back-panel .voice-input-row > textarea {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .voice-attachment {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            margin: .4rem 0;
+        }
+        .voice-attachment.hidden {
+            display: none;
+        }
+        /* ─── Custom themed voice player (replaces native <audio controls>) ─── */
+        .voice-player {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            flex: 1 1 auto;
+            min-width: 0;
+            height: 32px;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, .5);
+            border: 1px solid var(--card-border, #E3D3C2);
+            border-radius: 999px;
+            padding: 3px 10px 3px 3px;
+        }
+        body.dark-mode .voice-player {
+            background: rgba(255, 255, 255, .07);
+            border-color: rgba(255, 255, 255, .18);
+        }
+        .voice-player-toggle {
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            border-radius: 50%;
+            border: 1px solid var(--rose-deep);
+            background: var(--white);
+            color: var(--rose-deep);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            flex-shrink: 0;
+            transition: background .15s ease, color .15s ease;
+        }
+        .voice-player-toggle svg {
+            width: 10px;
+            height: 10px;
+        }
+        .voice-player-toggle.playing {
+            background: var(--rose-deep);
+            color: var(--white);
+        }
+        body.dark-mode .voice-player-toggle {
+            background: #3a3040;
+            border-color: #d9a3b1;
+            color: #f0dfe3;
+        }
+        body.dark-mode .voice-player-toggle.playing {
+            background: var(--rose-deep);
+            color: var(--white);
+        }
+        .voice-player-track {
+            position: relative;
+            flex: 1 1 auto;
+            min-width: 24px;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(0, 0, 0, .12);
+            cursor: pointer;
+        }
+        body.dark-mode .voice-player-track {
+            background: rgba(255, 255, 255, .18);
+        }
+        .voice-player-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 0%;
+            background: var(--rose-deep);
+            border-radius: 2px;
+            pointer-events: none;
+        }
+        .voice-player-time {
+            font-family: 'Quicksand', sans-serif;
+            font-size: .62rem;
+            color: var(--ink-soft);
+            flex-shrink: 0;
+            min-width: 26px;
+            text-align: right;
+        }
+        .voice-attachment-remove {
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            border-radius: 50%;
+            border: 1px solid var(--card-border);
+            background: var(--white);
+            color: var(--ink-soft);
+            font-size: .75rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        body.dark-mode .voice-attachment-remove {
+            background: #3a3040;
+            color: #e9dde2;
+        }
+
+        /* ─── Sliding back panels (note/caption ↔ reply), shared by
+           note, photo, and doodle cards ─── */
+        .back-panels {
+            position: relative;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .back-panels-track {
+            display: flex;
+            width: 200%;
+            height: 100%;
+            transition: transform .42s cubic-bezier(.3, .86, .36, 1);
+        }
+        .back-panels.showing-reply .back-panels-track {
+            transform: translateX(-50%);
+        }
+        .back-panel {
+            width: 50%;
+            flex: 0 0 50%;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            padding: 28px 4px 0;
+            position: relative;
+            overflow-x: hidden;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        .back-panel::-webkit-scrollbar {
+            display: none;
+        }
+        /* Textareas can still show their own native scrollbar once their
+           content genuinely overflows (e.g. an unusually long caption) —
+           style that thin and on-theme instead of the default chunky
+           grey OS scrollbar, on both desktop and mobile. */
+        .back-panel textarea {
+            scrollbar-width: thin;
+            scrollbar-color: var(--rose-deep) transparent;
+        }
+        .back-panel textarea::-webkit-scrollbar {
+            width: 3px;
+        }
+        .back-panel textarea::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .back-panel textarea::-webkit-scrollbar-thumb {
+            background: var(--rose-deep);
+            opacity: 0.3;
+            border-radius: 3px;
+        }
+        /* Reply panel content should always start right under the arrow —
+           relying on default centering for a single flex child was
+           rendering inconsistently (mic ended up looking too low). */
+        .back-panel-reply {
+            justify-content: flex-start;
+            gap: 10px;
+        }
+        /* Notes' 2nd slide is voice-only — a mic with a short hint under
+           it, centered, nothing else competing for space so it never
+           needs to scroll. */
+        .voice-reply-solo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            margin-top: 14px;
+        }
+        .voice-reply-hint {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 0.72rem;
+            color: var(--ink-soft);
+            opacity: 0.75;
+        }
+        /* Small, subtle slide-navigation arrows — no circle/border, just a
+           faint glyph in the corner of each panel. Right arrow (panel A)
+           opens the reply slide; left arrow (panel B) returns from it. */
+        .tab-arrow-btn {
+            position: absolute;
+            top: 2px;
+            background: none;
+            border: none;
+            color: var(--ink-soft);
+            opacity: 0.6;
+            cursor: pointer;
+            padding: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 4;
+        }
+        .tab-arrow-btn:hover {
+            opacity: 1;
+            color: var(--rose-deep);
+        }
+        .tab-arrow-btn svg {
+            width: 13px;
+            height: 13px;
+            display: block;
+        }
+        .tab-arrow-next {
+            right: 2px;
+        }
+        .tab-arrow-prev {
+            left: 2px;
+        }
+
         .countdown-overlay {
             position: fixed;
             inset: 0;
@@ -2599,7 +2909,7 @@
         .note-flip {
             position: relative;
             width: 100%;
-            min-height: 160px;
+            min-height: 175px;
             cursor: pointer;
             transform-style: preserve-3d;
             transition: transform 0.5s cubic-bezier(.2, .8, .2, 1);
@@ -2697,28 +3007,32 @@
             background: transparent;
             border: none;
             resize: none;
-            flex: 1;
+            width: 100%;
+            min-height: 54px;
             outline: none;
             color: var(--ink);
         }
         .note-reaction-picker {
             display: flex;
+            flex-wrap: nowrap;
             justify-content: center;
-            gap: 8px;
+            gap: 5px;
             margin: 4px 0;
         }
         .note-reaction-picker button {
             background: none;
             border: 1px solid transparent;
             border-radius: 50%;
-            width: 22px;
-            height: 22px;
-            font-size: 0.85rem;
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            font-size: 0.92rem;
             cursor: pointer;
             opacity: 0.55;
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
             transition: opacity 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
         }
         .note-reaction-picker button:hover {
@@ -2741,6 +3055,11 @@
             cursor: pointer;
             opacity: 0.8;
             padding: 4px;
+        }
+        /* A touch more breathing room between the reactions and the back
+           button underneath, specifically in notes. */
+        .note-back .note-flip-back-btn {
+            margin-top: 8px;
         }
         .note-flip-back-btn:hover {
             opacity: 1;
@@ -2926,6 +3245,16 @@
         .doodle-toolbar {
             margin-bottom: .5rem;
         }
+        .doodle-tools {
+            margin-bottom: .4rem;
+        }
+        .doodle-size-row {
+            margin-bottom: .7rem;
+        }
+        .doodle-submit-row {
+            margin-top: 1.1rem;
+            margin-bottom: 1.6rem;
+        }
         .doodle-swatches {
             display: flex;
             align-items: center;
@@ -3051,6 +3380,7 @@
             gap: 1rem;
         }
         .doodles-controls {
+            margin-top: .4rem;
             margin-bottom: 1.4rem;
         }
         .doodle-wrap {
@@ -3216,8 +3546,9 @@
         }
         .doodle-reaction-picker {
             display: flex;
+            flex-wrap: nowrap;
             justify-content: center;
-            gap: 6px;
+            gap: 5px;
         }
         .doodle-reaction-picker button {
             border: 1px solid transparent;
@@ -3225,6 +3556,14 @@
             border-radius: 50%;
             cursor: pointer;
             opacity: .6;
+            width: 25px;
+            height: 25px;
+            min-width: 25px;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .doodle-reaction-picker button.active {
             opacity: 1;
@@ -3305,7 +3644,7 @@
                 font-size: .9rem;
             }
             .doodle-reaction-picker {
-                gap: 4px;
+                gap: 6px;
             }
             .doodle-reaction-picker button {
                 font-size: .85rem;
@@ -3404,15 +3743,12 @@
             color: #fff;
         }
         .note-reaction-picker {
-            --plus-size: 22px;
             align-items: center;
         }
         .mood-picker {
-            --plus-size: 28px;
             align-items: center;
         }
         .doodle-reaction-picker {
-            --plus-size: 22px;
             align-items: center;
         }
         .mood-picker-row {
@@ -3953,8 +4289,285 @@
             box-shadow: 0 24px 60px rgba(0, 0, 0, .35);
             text-align: center;
         }
+        .glass-history-link {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            background: none;
+            border: none;
+            color: var(--ink-soft);
+            font-family: 'Quicksand', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 999px;
+            transition: color .15s ease, background .15s ease;
+        }
+        .glass-history-link:hover {
+            color: var(--rose-deep);
+            background: rgba(217, 138, 147, 0.12);
+        }
+        body.dark-mode .glass-history-link {
+            color: #cdb9c3;
+        }
+        .glass-anger-choice {
+            position: relative;
+        }
+        .glass-back-btn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: none;
+            border: none;
+            color: var(--ink-soft);
+            font-family: 'Quicksand', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 999px;
+            transition: color .15s ease, background .15s ease;
+        }
+        .glass-back-btn:hover {
+            color: var(--rose-deep);
+            background: rgba(217, 138, 147, 0.12);
+        }
+        body.dark-mode .glass-back-btn {
+            color: #cdb9c3;
+        }
         .glass-anger-choice.hidden {
             display: none;
+        }
+        .glass-who-step.hidden {
+            display: none;
+        }
+        .glass-who-options {
+            display: flex;
+            justify-content: center;
+            gap: .8rem;
+            margin-bottom: .9rem;
+        }
+        .glass-who-btn {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            border: 2px solid var(--glass-border);
+            background: rgba(255, 255, 255, .55);
+            color: var(--ink);
+            font: 700 1.15rem 'Quicksand', sans-serif;
+            cursor: pointer;
+            transition: border-color .15s ease, transform .15s ease, background .15s ease;
+        }
+        .glass-who-btn:hover {
+            transform: translateY(-1px);
+        }
+        .glass-who-btn.active {
+            border-color: var(--rose-deep);
+            background: var(--rose-deep);
+            color: var(--white);
+        }
+        body.dark-mode .glass-who-btn {
+            background: rgba(255, 255, 255, .08);
+            color: #f6eaf3;
+        }
+        .glass-reason-input {
+            width: 100%;
+            box-sizing: border-box;
+            min-height: 64px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, .55);
+            color: var(--ink);
+            font: 1rem 'Caveat', cursive;
+            padding: .6rem .7rem;
+            resize: none;
+            margin-bottom: 1rem;
+            outline: none;
+        }
+        .glass-reason-input:focus {
+            border-color: var(--rose-deep);
+        }
+        body.dark-mode .glass-reason-input {
+            background: rgba(255, 255, 255, .08);
+            color: #f6eaf3;
+        }
+        .glass-who-continue {
+            width: 100%;
+        }
+        .glass-who-continue:disabled {
+            opacity: .5;
+            cursor: default;
+        }
+
+        /* ─── Anger / fight history ─── */
+        .anger-history-card {
+            width: min(460px, 100%);
+            max-height: 82vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .anger-history-list {
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: .7rem;
+            text-align: left;
+            padding-right: 2px;
+        }
+        .anger-history-empty.hidden {
+            display: none;
+        }
+        .anger-history-empty {
+            font: 1.05rem 'Caveat', cursive;
+            color: var(--ink-soft);
+            text-align: center;
+            margin: .5rem 0 0;
+        }
+        .anger-entry {
+            position: relative;
+            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, .5);
+            border-radius: 12px;
+            padding: .7rem .8rem .6rem;
+        }
+        body.dark-mode .anger-entry {
+            background: rgba(255, 255, 255, .06);
+        }
+        .anger-entry-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .5rem;
+            margin-bottom: .3rem;
+            padding-right: 22px;
+        }
+        .anger-entry-who {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            font: 700 .85rem 'Quicksand', sans-serif;
+            color: var(--rose-deep);
+        }
+        .anger-entry-who-badge {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--rose-deep);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .72rem;
+        }
+        .anger-entry-date {
+            font-family: 'Quicksand', sans-serif;
+            font-size: .68rem;
+            color: var(--ink-soft);
+            opacity: .8;
+        }
+        .anger-entry-delete {
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            background: none;
+            border: none;
+            color: var(--ink-soft);
+            opacity: .55;
+            cursor: pointer;
+            font-size: .8rem;
+            padding: 3px;
+        }
+        .anger-entry-delete:hover {
+            opacity: 1;
+            color: var(--rose-deep);
+        }
+        .anger-entry-reason {
+            font: 1rem 'Caveat', cursive;
+            color: var(--ink);
+            margin: 0 0 .5rem;
+            line-height: 1.3;
+        }
+        .anger-entry-reply-badge {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            font-family: 'Quicksand', sans-serif;
+            font-size: .72rem;
+            font-weight: 600;
+            color: var(--sage);
+            margin-bottom: .3rem;
+        }
+        .anger-entry-reply-text {
+            font: .95rem 'Caveat', cursive;
+            color: var(--ink);
+            margin: 0 0 .4rem;
+            line-height: 1.3;
+        }
+        .anger-entry-reply-text-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: .4rem;
+        }
+        .anger-entry-reply-text-row .anger-entry-reply-text {
+            flex: 1;
+        }
+        .anger-entry-edit-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: .8rem;
+            opacity: .6;
+            padding: 2px;
+            flex-shrink: 0;
+        }
+        .anger-entry-edit-btn:hover {
+            opacity: 1;
+        }
+        .anger-entry-edit-actions {
+            display: flex;
+            gap: .5rem;
+            justify-content: center;
+        }
+        .anger-entry-add-voice-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+            margin-top: .3rem;
+        }
+        .anger-entry-add-voice-row span {
+            font-family: 'Quicksand', sans-serif;
+            font-size: .68rem;
+            color: var(--ink-soft);
+        }
+        .anger-entry-reply-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        .anger-entry-reply-form textarea {
+            width: 100%;
+            box-sizing: border-box;
+            min-height: 44px;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, .5);
+            color: var(--ink);
+            font: .95rem 'Caveat', cursive;
+            padding: .5rem .6rem;
+            resize: none;
+            outline: none;
+        }
+        body.dark-mode .anger-entry-reply-form textarea {
+            background: rgba(255, 255, 255, .08);
+            color: #f6eaf3;
+        }
+        .anger-entry-reply-form .voice-attachment {
+            width: 100%;
+            justify-content: center;
         }
         .glass-anger-title {
             font: 1.25rem/1.4 'Caveat', cursive;
@@ -6454,6 +7067,86 @@
             opacity: 0;
             transform: translateY(-4px);
         }
+        .cap-preview-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .cap-preview-row .cap-preview {
+            padding-top: 0;
+        }
+        /* Tiny inline play button for a photo's voice caption — no border,
+           no padding, just a small icon beside the caption text. */
+        .caption-voice-play {
+            background: none;
+            border: none;
+            padding: 0;
+            margin-top: 6px;
+            color: var(--rose-deep);
+            cursor: pointer;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 17px;
+            height: 17px;
+            opacity: 0.75;
+        }
+        .caption-voice-play:hover {
+            opacity: 1;
+        }
+        .caption-voice-play svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .caption-voice-play .pause-icon {
+            display: none;
+        }
+        .caption-voice-play.playing .play-icon {
+            display: none;
+        }
+        .caption-voice-play.playing .pause-icon {
+            display: block;
+        }
+        .caption-voice-play.playing {
+            color: var(--sage);
+            opacity: 1;
+        }
+        /* Two small mic buttons on the reply slide — one re-records the
+           caption's voice note, one records the voice reply. Colour tells
+           them apart at a glance. */
+        .dual-mic-row {
+            display: flex;
+            justify-content: center;
+            gap: 22px;
+            margin-top: 10px;
+        }
+        .dual-mic-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+        .dual-mic-label {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: .02em;
+            color: var(--ink-soft);
+            opacity: 0.75;
+            text-transform: uppercase;
+        }
+        .mini-mic-btn.caption-mic-variant {
+            border-color: var(--sage);
+            color: var(--sage);
+        }
+        .mini-mic-btn.caption-mic-variant.recording {
+            background: #D64545;
+            border-color: #D64545;
+            color: var(--white);
+        }
 
         .fav-heart {
             position: absolute;
@@ -6464,8 +7157,8 @@
             height: 28px;
             border-radius: 50%;
             border: none;
-            background: rgba(255, 253, 249, 0.85);
-            box-shadow: 0 2px 6px var(--shadow);
+            background: rgba(255, 253, 249, 0.38);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
             font-size: 1rem;
             line-height: 1;
             display: flex;
@@ -6473,6 +7166,11 @@
             justify-content: center;
             cursor: pointer;
             color: var(--rose-deep);
+            transition: background .18s ease;
+        }
+        .fav-heart:hover,
+        .fav-heart:active {
+            background: rgba(255, 253, 249, 0.75);
         }
         .fav-heart.active {
             color: var(--rose-deep);
@@ -6486,12 +7184,16 @@
             width: 26px;
             height: 26px;
             border-radius: 50%;
-            background: rgba(255, 253, 249, 0.85);
-            box-shadow: 0 2px 6px var(--shadow);
+            background: rgba(255, 253, 249, 0.38);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             font-size: 0.95rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: background .18s ease;
+        }
+        .mood-badge:hover {
+            background: rgba(255, 253, 249, 0.75);
         }
 
         .flip-back-btn {
@@ -6515,22 +7217,25 @@
 
         .mood-picker {
             display: flex;
+            flex-wrap: nowrap;
             justify-content: center;
-            gap: 4px;
+            gap: 5px;
             margin-top: 6px;
         }
         .mood-picker button {
             background: none;
             border: 1px solid transparent;
             border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            font-size: 1rem;
+            width: 25px;
+            height: 25px;
+            min-width: 25px;
+            font-size: 0.95rem;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             opacity: 0.55;
+            flex-shrink: 0;
             transition: opacity 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
         }
         .mood-picker button:hover {
@@ -6572,8 +7277,8 @@
             inset: 0;
             transform: rotateY(180deg);
             background: var(--paper-deep);
-            justify-content: space-between;
             padding: 14px 12px 10px;
+            overflow: hidden;
         }
         .face.back textarea {
             font-family: 'Caveat', cursive;
@@ -6586,8 +7291,19 @@
             height: 120px;
             line-height: 1.3;
         }
+        .face.back .photo-reply-input {
+            font-size: 1.15rem;
+            height: 120px;
+        }
         .face.back textarea:focus {
             outline: none;
+        }
+        .face.back .mood-picker {
+            flex-shrink: 0;
+            margin-bottom: 10px;
+        }
+        .face.back .back-footer {
+            flex-shrink: 0;
         }
         .back-footer {
             display: flex;
@@ -6847,6 +7563,9 @@
             .lightbox-caption {
                 font-size: 1.2rem;
                 margin-top: .6rem;
+            }
+            .face.back .mood-picker {
+                margin-bottom: 10px;
             }
         }
 
@@ -7126,15 +7845,22 @@
         .relay-actions-row {
             display: flex;
             flex-wrap: wrap;
+            align-items: stretch;
             gap: .6rem;
             justify-content: center;
-            margin: .6rem 0;
+            margin: .3rem 0 .9rem;
         }
         .relay-actions-row .fav-filter-btn {
             flex: 1 1 140px;
             max-width: 220px;
             white-space: normal;
-            line-height: 1.3;
+            line-height: 1.25;
+            font-size: 0.82rem;
+            padding: 0.7rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
         @media (hover: hover) and (pointer: fine) {
             .fav-filter-btn:hover {
@@ -7537,7 +8263,11 @@
                         <button type="button" class="active" data-tool="pen">✏️ Pen</button><button type="button" data-tool="line">╱ Line</button><button type="button" data-tool="fill">🪣 Fill</button><button type="button" data-tool="spray">💨 Spray</button><button type="button" data-tool="eraser">🧼 Eraser</button><button type="button" id="doodleUndo">↶ Undo</button><button type="button" id="doodleClear">♜ Clear</button>
                     </div>
                     <div class="doodle-size-row"><label class="doodle-size">Brush size <input id="doodleBrushSize" type="range" min="1" max="30" value="4"><span id="doodleBrushValue">4</span></label></div>
-                    <input class="doodle-caption" id="doodleCaption" maxlength="200" placeholder="Add a caption (optional)">
+                    <div class="voice-input-row">
+                      <input class="doodle-caption" id="doodleCaption" maxlength="200" placeholder="Add a caption (optional)">
+                      <button type="button" class="mini-mic-btn" id="doodleCaptionMic" aria-label="Record a voice caption"></button>
+                    </div>
+                    <div class="voice-attachment hidden" id="doodleCaptionVoice"></div>
                     <div class="doodle-submit-row"><button class="doodle-submit" id="doodleSubmitBtn" type="submit">Leave a doodle</button></div>
                 </form>
             </div>
@@ -7566,7 +8296,11 @@
                         <button type="button" class="active" data-tool="pen">✏️ Pen</button><button type="button" data-tool="line">╱ Line</button><button type="button" data-tool="fill">🪣 Fill</button><button type="button" data-tool="spray">💨 Spray</button><button type="button" data-tool="eraser">🧼 Eraser</button><button type="button" id="duetDoodleUndo">↶ Undo</button><button type="button" id="duetDoodleClear">♜ Clear</button>
                     </div>
                     <div class="doodle-size-row"><label class="doodle-size">Brush size <input id="duetDoodleBrushSize" type="range" min="1" max="30" value="4"><span id="duetDoodleBrushValue">4</span></label></div>
-                    <input class="doodle-caption" id="duetDoodleCaption" maxlength="200" placeholder="Add a caption (optional)">
+                    <div class="voice-input-row">
+                      <input class="doodle-caption" id="duetDoodleCaption" maxlength="200" placeholder="Add a caption (optional)">
+                      <button type="button" class="mini-mic-btn" id="duetDoodleCaptionMic" aria-label="Record a voice caption"></button>
+                    </div>
+                    <div class="voice-attachment hidden" id="duetDoodleCaptionVoice"></div>
                     <div class="doodle-submit-row"><button class="doodle-submit" id="duetDoodleSubmitBtn" type="submit">Leave a doodle</button></div>
                 </form>
             </div>
@@ -7595,7 +8329,11 @@
                     <button type="button" class="fav-filter-btn" id="relayPassBtn">🤝 Pass it on</button>
                     <button type="button" class="fav-filter-btn" id="relayStartOverBtn">🔄 Start a fresh piece</button>
                 </div>
-                <input class="doodle-caption" id="relayCaption" maxlength="200" placeholder="Add a caption (optional)">
+                <div class="voice-input-row">
+                  <input class="doodle-caption" id="relayCaption" maxlength="200" placeholder="Add a caption (optional)">
+                  <button type="button" class="mini-mic-btn" id="relayCaptionMic" aria-label="Record a voice caption"></button>
+                </div>
+                <div class="voice-attachment hidden" id="relayCaptionVoice"></div>
                 <div class="doodle-submit-row"><button class="doodle-submit" id="relayFinishBtn" type="button">✅ Finish &amp; pin this piece</button></div>
             </div>
 
@@ -7966,7 +8704,18 @@
         <div class="glass-modal hidden" id="glassModal">
             <div class="glass-card">
                 <button class="style-modal-close" id="glassModalClose" type="button" aria-label="Close">✕</button>
-                <div class="glass-anger-choice" id="glassAngerChoice">
+                <div class="glass-who-step" id="glassWhoStep">
+                    <button type="button" class="glass-history-link" id="angerHistoryBtn">📜 Past history</button>
+                    <p class="glass-anger-title">Who's upset right now?</p>
+                    <div class="glass-who-options" id="glassWhoOptions">
+                        <button type="button" class="glass-who-btn" data-who="J">J</button>
+                        <button type="button" class="glass-who-btn" data-who="M">M</button>
+                    </div>
+                    <textarea id="glassReasonInput" class="glass-reason-input" maxlength="300" placeholder="What's going on? (optional)"></textarea>
+                    <button type="button" class="add-btn glass-who-continue" id="glassWhoContinue" disabled>Continue</button>
+                </div>
+                <div class="glass-anger-choice hidden" id="glassAngerChoice">
+                    <button type="button" class="glass-back-btn" id="glassAngerBack">‹ back</button>
                     <p class="glass-anger-title">How angry are you right now?</p>
                     <div class="glass-anger-options">
                         <button type="button" data-level="0">😑 Mehh</button>
@@ -7997,6 +8746,17 @@
                 </div>
             </div>
         </div>
+
+        <!-- ===== ANGER HISTORY MODAL ===== -->
+        <div class="glass-modal hidden" id="angerHistoryModal">
+            <div class="glass-card anger-history-card">
+                <button class="style-modal-close" id="angerHistoryClose" type="button" aria-label="Close">✕</button>
+                <p class="glass-anger-title">Fight history</p>
+                <div class="anger-history-list" id="angerHistoryList"></div>
+                <p class="anger-history-empty hidden" id="angerHistoryEmpty">Nothing logged yet — hopefully it stays that way 🤍</p>
+            </div>
+        </div>
+
 
         <!-- ===== TOASTS ===== -->
         <div class="toast-container" id="toastContainer"></div>
@@ -8218,6 +8978,10 @@
             }
 
             const MOODS = ['😂', '💕', '😙', '😢'];
+            const LEFT_ARROW_SVG =
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
+            const RIGHT_ARROW_SVG =
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
             let currentList = [];
             let showFavoritesOnly = false;
             let searchQuery = '';
@@ -8672,7 +9436,12 @@
                         mood: row.mood || null,
                         surprise: !!row.is_surprise,
                         revealed: row.is_revealed === undefined ? true : !!row.is_revealed,
-                        hintText: row.surprise_hint || ''
+                        hintText: row.surprise_hint || '',
+                        voiceUrl: row.voice_url || null,
+                        voicePath: row.voice_path || null,
+                        reply: row.reply || '',
+                        replyAudioUrl: row.reply_audio_url || null,
+                        replyAudioPath: row.reply_audio_path || null
                     }));
                 } catch (err) {
                     console.error('Could not load memories from the cloud:', err);
@@ -8714,7 +9483,12 @@
                     mood: inserted.mood || null,
                     surprise: !!inserted.is_surprise,
                     revealed: !!inserted.is_revealed,
-                    hintText: inserted.surprise_hint || ''
+                    hintText: inserted.surprise_hint || '',
+                    voiceUrl: inserted.voice_url || null,
+                    voicePath: inserted.voice_path || null,
+                    reply: inserted.reply || '',
+                    replyAudioUrl: inserted.reply_audio_url || null,
+                    replyAudioPath: inserted.reply_audio_path || null
                 };
             }
 
@@ -8723,6 +9497,41 @@
                 const { error } = await supabase.from(TABLE).update({ caption: photo.caption }).eq('id', photo.id);
                 if (error) { console.error('Could not save this note:', error);
                     showToast('Could not save that note.', { type: 'error' }); }
+            }
+
+            async function savePhotoCaptionVoice(photo, voice) {
+                if (!supabase) return;
+                const oldPath = photo.voicePath;
+                photo.voiceUrl = voice ? voice.url : null;
+                photo.voicePath = voice ? voice.path : null;
+                const { error } = await supabase.from(TABLE).update({ voice_url: photo.voiceUrl, voice_path: photo
+                        .voicePath })
+                    .eq('id', photo.id);
+                if (error) { console.error('Could not save voice caption:', error);
+                    showToast('Could not save that voice note.', { type: 'error' }); return; }
+                if (oldPath && oldPath !== photo.voicePath) supabase.storage.from(VOICE_BUCKET).remove([oldPath])
+                    .catch(() => {});
+            }
+
+            async function savePhotoReply(photo) {
+                if (!supabase) return;
+                const { error } = await supabase.from(TABLE).update({ reply: photo.reply }).eq('id', photo.id);
+                if (error) { console.error('Could not save reply:', error);
+                    showToast('Could not save that reply.', { type: 'error' }); }
+            }
+
+            async function savePhotoReplyVoice(photo, voice) {
+                if (!supabase) return;
+                const oldPath = photo.replyAudioPath;
+                photo.replyAudioUrl = voice ? voice.url : null;
+                photo.replyAudioPath = voice ? voice.path : null;
+                const { error } = await supabase.from(TABLE).update({ reply_audio_url: photo.replyAudioUrl,
+                        reply_audio_path: photo.replyAudioPath })
+                    .eq('id', photo.id);
+                if (error) { console.error('Could not save voice reply:', error);
+                    showToast('Could not save that voice reply.', { type: 'error' }); return; }
+                if (oldPath && oldPath !== photo.replyAudioPath) supabase.storage.from(VOICE_BUCKET).remove([oldPath])
+                    .catch(() => {});
             }
 
             async function saveFavorite(photo) {
@@ -8859,6 +9668,10 @@
                 if (!supabase) return;
                 try {
                     await supabase.storage.from(BUCKET).remove([photo.path]);
+                    if (photo.voicePath) await supabase.storage.from(VOICE_BUCKET).remove([photo.voicePath]);
+                    if (photo.replyAudioPath) await supabase.storage.from(VOICE_BUCKET).remove([photo
+                        .replyAudioPath
+                    ]);
                     await supabase.from(TABLE).delete().eq('id', photo.id);
                 } catch (err) {
                     console.error('Could not remove this memory:', err);
@@ -8981,39 +9794,109 @@
                     <button class="note-fav" type="button" aria-label="Toggle favorite">${note.favorite ? '♥' : '♡'}</button>
                     <button class="note-remove" type="button" aria-label="Remove note">✕</button>
                     <div class="note-message">${escapeHtml(note.message)}</div>
-                    ${note.audio_url ? `<div class="note-voice"><audio controls preload="none" src="${note.audio_url}"></audio></div>` : ''}
+                    ${note.audio_url ? `<div class="note-voice"></div>` : ''}
                     ${note.reaction ? `<span class="note-reaction-badge">${note.reaction}</span>` : ''}
                     <span class="note-author-badge author-${effectiveAuthor}${hasSignature(effectiveAuthor) ? ' has-sig' : ''}" title="${escapeHtml(authorLabel(effectiveAuthor))}" aria-label="${escapeHtml(authorLabel(effectiveAuthor))}">${sigAvatarHTML(effectiveAuthor, 27) || (effectiveAuthor === '2' ? NOTE_AUTHOR_2_LETTER : NOTE_AUTHOR_1_LETTER)}</span>
                     <span class="note-date">${dateLabel}</span>
                   </div>
                   <div class="note-face note-back">
-                    <textarea class="note-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(note.reply || '')}</textarea>
-                    <div class="note-reaction-picker">
-                      ${NOTE_REACTIONS.map(r => `<button type="button" data-reaction="${r}" class="${note.reaction === r ? 'active' : ''}" aria-label="React ${r}">${r}</button>`).join('')}
-                      ${customEmojiPickerHtml(note.reaction, NOTE_REACTIONS)}
+                    <div class="back-panels">
+                      <div class="back-panels-track">
+                        <div class="back-panel back-panel-main">
+                          <textarea class="note-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(note.reply || '')}</textarea>
+                          <div class="note-reaction-picker">
+                            ${NOTE_REACTIONS.map(r => `<button type="button" data-reaction="${r}" class="${note.reaction === r ? 'active' : ''}" aria-label="React ${r}">${r}</button>`).join('')}
+                            ${customEmojiPickerHtml(note.reaction, NOTE_REACTIONS)}
+                          </div>
+                          <button class="note-flip-back-btn" type="button">‹ back</button>
+                          <button type="button" class="tab-arrow-btn tab-arrow-next" aria-label="Record a voice reply">${RIGHT_ARROW_SVG}</button>
+                        </div>
+                        <div class="back-panel back-panel-reply">
+                          <button type="button" class="tab-arrow-btn tab-arrow-prev" aria-label="Back">${LEFT_ARROW_SVG}</button>
+                          <div class="voice-reply-solo">
+                            <button type="button" class="mini-mic-btn note-reply-mic" aria-label="Record a voice reply"></button>
+                            <span class="voice-reply-hint">Add a voice reply</span>
+                          </div>
+                          <div class="voice-attachment note-reply-voice${note.reply_audio_url ? '' : ' hidden'}"></div>
+                        </div>
+                      </div>
                     </div>
-                    <button class="note-flip-back-btn" type="button">‹ back</button>
                   </div>
                 </div>
               `;
                     const flipEl = wrap.querySelector('.note-flip');
                     const favBtn = wrap.querySelector('.note-fav');
                     const removeBtn = wrap.querySelector('.note-remove');
-                    const audioEl = wrap.querySelector('.note-voice audio');
+                    const audioEl = wrap.querySelector('.note-voice');
+                    if (audioEl && note.audio_url) {
+                        const player = buildVoicePlayer(note.audio_url);
+                        audioEl.appendChild(player);
+                    }
+                    const backPanels = wrap.querySelector('.back-panels');
+                    const replyTabBtn = wrap.querySelector('.tab-arrow-next');
+                    const backTabBtn = wrap.querySelector('.tab-arrow-prev');
                     const replyInput = wrap.querySelector('.note-reply-input');
-                    const reactionBtns = wrap.querySelectorAll('.note-reaction-picker button');
+                    const replyMicBtn = wrap.querySelector('.note-reply-mic');
+                    const replyVoiceBox = wrap.querySelector('.note-reply-voice');
+                    const reactionBtns = wrap.querySelectorAll('.note-reaction-picker button[data-reaction]');
                     const flipBackBtn = wrap.querySelector('.note-flip-back-btn');
 
+                    replyTabBtn.addEventListener('click', (e) => { e.stopPropagation();
+                        backPanels.classList.add('showing-reply'); });
+                    backTabBtn.addEventListener('click', (e) => { e.stopPropagation();
+                        backPanels.classList.remove('showing-reply'); });
+
+                    function renderNoteReplyVoice(voice) {
+                        renderVoiceAttachment(replyVoiceBox, voice, (v) => {
+                            removeVoiceWithUndo(replyVoiceBox, v, {
+                                label: 'Voice reply removed.',
+                                onConfirmRemove: async() => {
+                                    note.reply_audio_url = null;
+                                    note.reply_audio_path = null;
+                                    await supabase.from(NOTES_TABLE).update({ reply_audio_url: null,
+                                        reply_audio_path: null }).eq('id', note.id);
+                                    if (v.path) supabase.storage.from(VOICE_BUCKET).remove([v.path]).catch(() => {});
+                                },
+                                onRestore: () => { note.reply_audio_url = v.url;
+                                    note.reply_audio_path = v.path;
+                                    renderNoteReplyVoice(v); }
+                            });
+                        });
+                    }
+                    renderNoteReplyVoice(note.reply_audio_url ? { url: note.reply_audio_url,
+                        path: note.reply_audio_path } : null);
+                    createMiniVoiceRecorder({
+                        button: replyMicBtn,
+                        onSaved: async({ url, path }) => {
+                            const oldPath = note.reply_audio_path;
+                            note.reply_audio_url = url;
+                            note.reply_audio_path = path;
+                            await supabase.from(NOTES_TABLE).update({ reply_audio_url: url, reply_audio_path: path })
+                                .eq('id', note.id);
+                            renderNoteReplyVoice({ url, path });
+                            if (oldPath && oldPath !== path) supabase.storage.from(VOICE_BUCKET).remove([oldPath])
+                                .catch(() => {});
+                            showToast('Voice reply saved!');
+                            haptic(12);
+                        }
+                    });
+
                     function flip(e) {
-                        if ([removeBtn, favBtn, replyInput, flipBackBtn].includes(e.target)) return;
+                        if ([removeBtn, favBtn, replyInput, replyMicBtn, flipBackBtn, replyTabBtn,
+                                backTabBtn
+                            ].includes(e.target)) return;
                         if (e.target.closest && e.target.closest('.note-reaction-picker')) return;
                         if (e.target.closest && e.target.closest('.note-voice')) return;
+                        if (e.target.closest && e.target.closest('.note-reply-voice')) return;
                         flipEl.classList.toggle('flipped');
+                        if (!flipEl.classList.contains('flipped')) backPanels.classList.remove('showing-reply');
                     }
                     flipEl.addEventListener('click', flip);
                     flipEl.addEventListener('keydown', (e) => {
                         if ((e.key === 'Enter' || e.key === ' ') && e.target === flipEl) { e.preventDefault();
-                            flipEl.classList.toggle('flipped'); }
+                            flipEl.classList.toggle('flipped');
+                            if (!flipEl.classList.contains('flipped')) backPanels.classList.remove(
+                                'showing-reply'); }
                     });
                     flipBackBtn.addEventListener('click', (e) => { e.stopPropagation();
                         flipEl.classList.remove('flipped'); });
@@ -9029,13 +9912,7 @@
                         await saveNoteFavorite(note);
                         if (notesShowFavoritesOnly) renderNotesFiltered();
                     });
-                    if (audioEl) {
-                        audioEl.addEventListener('click', (e) => e.stopPropagation());
-                        audioEl.addEventListener('play', () => {
-                            document.querySelectorAll('.note-voice audio').forEach(a => { if (a !== audioEl) a
-                                .pause(); });
-                        });
-                    }
+                    if (audioEl) audioEl.addEventListener('click', (e) => e.stopPropagation());
                     removeBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         const idx = allNotes.findIndex(n => n.id === note.id);
@@ -9049,6 +9926,9 @@
                             try {
                                 if (note.audio_path) await supabase.storage.from(VOICE_BUCKET).remove([note
                                     .audio_path
+                                ]);
+                                if (note.reply_audio_path) await supabase.storage.from(VOICE_BUCKET).remove([note
+                                    .reply_audio_path
                                 ]);
                                 await supabase.from(NOTES_TABLE).delete().eq('id', note.id);
                             } catch (err) {
@@ -9077,8 +9957,8 @@
                     async function applyNoteReaction(r) {
                         note.reaction = (note.reaction === r) ? null : r;
                         reactionBtns.forEach(b => b.classList.toggle('active', b.dataset.reaction === note.reaction));
-                        refreshCustomEmojiVisual(wrap.querySelector('.note-reaction-picker'), NOTE_REACTIONS, note
-                            .reaction);
+                        wrap.querySelectorAll('.note-reaction-picker').forEach(el => refreshCustomEmojiVisual(el,
+                            NOTE_REACTIONS, note.reaction));
                         let badge = wrap.querySelector('.note-reaction-badge');
                         if (note.reaction) {
                             if (!badge) { badge = document.createElement('span');
@@ -9180,10 +10060,14 @@
             const chooseDoodleRelay = document.getElementById('chooseDoodleRelay');
             const duetPresenceHint = document.getElementById('duetPresenceHint');
             const doodleCaption = document.getElementById('doodleCaption');
+            const doodleCaptionMic = document.getElementById('doodleCaptionMic');
+            const doodleCaptionVoice = document.getElementById('doodleCaptionVoice');
             const doodleSubmitBtn = document.getElementById('doodleSubmitBtn');
             const doodleAuthorToggle = document.getElementById('doodleAuthorToggle');
             const doodleForm = document.getElementById('doodleForm');
             const duetDoodleCaption = document.getElementById('duetDoodleCaption');
+            const duetDoodleCaptionMic = document.getElementById('duetDoodleCaptionMic');
+            const duetDoodleCaptionVoice = document.getElementById('duetDoodleCaptionVoice');
             const duetDoodleSubmitBtn = document.getElementById('duetDoodleSubmitBtn');
             const duetDoodleAuthorToggle = document.getElementById('duetDoodleAuthorToggle');
             const duetDoodleForm = document.getElementById('duetDoodleForm');
@@ -9721,20 +10605,35 @@
                     <button class="doodle-remove" type="button">✕</button>
                     <img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption ? `: ${escapeHtml(d.caption)}` : ''}" loading="lazy" decoding="async">
                     <div class="doodle-caption-preview">${escapeHtml(d.caption || 'A little doodle ✨')}</div>
+                    ${d.voice_url ? `<div class="note-voice doodle-caption-voice"></div>` : ''}
                     ${d.reaction ? `<span class="doodle-reaction-badge">${d.reaction}</span>` : ''}
                     <span class="doodle-author-badge author-${author}${hasSignature(author) ? ' has-sig' : ''}">${sigAvatarHTML(author, 25) || `By ${author === '2' ? 'M' : 'J'}`}</span>
                     <span class="doodle-date">${date}</span>
                   </div>
                   <div class="doodle-face doodle-back">
-                    <textarea class="doodle-caption-edit" maxlength="120" placeholder="Add a caption...">${escapeHtml(d.caption || '')}</textarea>
-                    <textarea class="doodle-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(d.reply || '')}</textarea>
-                    <div class="doodle-reaction-picker">
-                      ${DOODLE_REACTIONS.map(r => `<button type="button" data-reaction="${r}" class="${d.reaction === r ? 'active' : ''}">${r}</button>`).join('')}
-                      ${customEmojiPickerHtml(d.reaction, DOODLE_REACTIONS)}
-                    </div>
-                    <div class="doodle-back-actions">
-                      <button class="note-flip-back-btn" type="button">‹ back</button>
-                      <button class="doodle-download" type="button">⇩ PNG</button>
+                    <div class="back-panels">
+                      <div class="back-panels-track">
+                        <div class="back-panel back-panel-main">
+                          <textarea class="doodle-caption-edit" maxlength="120" placeholder="Add a caption...">${escapeHtml(d.caption || '')}</textarea>
+                          <div class="doodle-reaction-picker">
+                            ${DOODLE_REACTIONS.map(r => `<button type="button" data-reaction="${r}" class="${d.reaction === r ? 'active' : ''}">${r}</button>`).join('')}
+                            ${customEmojiPickerHtml(d.reaction, DOODLE_REACTIONS)}
+                          </div>
+                          <div class="doodle-back-actions">
+                            <button class="note-flip-back-btn" type="button">‹ back</button>
+                            <button class="doodle-download" type="button">⇩ PNG</button>
+                          </div>
+                          <button type="button" class="tab-arrow-btn tab-arrow-next" aria-label="View replies">${RIGHT_ARROW_SVG}</button>
+                        </div>
+                        <div class="back-panel back-panel-reply">
+                          <button type="button" class="tab-arrow-btn tab-arrow-prev" aria-label="Back">${LEFT_ARROW_SVG}</button>
+                          <div class="voice-input-row">
+                            <textarea class="doodle-reply-input" maxlength="200" placeholder="Write a reply...">${escapeHtml(d.reply || '')}</textarea>
+                            <button type="button" class="mini-mic-btn doodle-reply-mic" aria-label="Record a voice reply"></button>
+                          </div>
+                          <div class="voice-attachment doodle-reply-voice${d.reply_audio_url ? '' : ' hidden'}"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -9743,15 +10642,65 @@
                         image = wrap.querySelector('.doodle-image'),
                         fav = wrap.querySelector('.doodle-fav'),
                         remove = wrap.querySelector('.doodle-remove'),
+                        backPanels = wrap.querySelector('.back-panels'),
+                        replyTabBtn = wrap.querySelector('.tab-arrow-next'),
+                        backTabBtn = wrap.querySelector('.tab-arrow-prev'),
                         reply = wrap.querySelector('.doodle-reply-input'),
+                        replyMicBtn = wrap.querySelector('.doodle-reply-mic'),
+                        replyVoiceBox = wrap.querySelector('.doodle-reply-voice'),
                         captionEdit = wrap.querySelector('.doodle-caption-edit'),
                         back = wrap.querySelector('.note-flip-back-btn'),
                         download = wrap.querySelector('.doodle-download');
-                    flip.addEventListener('click', e => { if (e.target.closest('button,textarea,img')) return;
-                        flip.classList.toggle('flipped'); });
+                    const doodleCaptionVoiceEl = wrap.querySelector('.doodle-caption-voice');
+                    if (doodleCaptionVoiceEl && d.voice_url) {
+                        doodleCaptionVoiceEl.appendChild(buildVoicePlayer(d.voice_url));
+                        doodleCaptionVoiceEl.addEventListener('click', (e) => e.stopPropagation());
+                    }
+                    replyTabBtn.addEventListener('click', (e) => { e.stopPropagation();
+                        backPanels.classList.add('showing-reply'); });
+                    backTabBtn.addEventListener('click', (e) => { e.stopPropagation();
+                        backPanels.classList.remove('showing-reply'); });
+                    function renderDoodleReplyVoice(voice) {
+                        renderVoiceAttachment(replyVoiceBox, voice, (v) => {
+                            removeVoiceWithUndo(replyVoiceBox, v, {
+                                label: 'Voice reply removed.',
+                                onConfirmRemove: async() => {
+                                    d.reply_audio_url = null;
+                                    d.reply_audio_path = null;
+                                    await updateDoodle(d, { reply_audio_url: null, reply_audio_path: null });
+                                    if (v.path) supabase.storage.from(VOICE_BUCKET).remove([v.path]).catch(() => {});
+                                },
+                                onRestore: () => { d.reply_audio_url = v.url;
+                                    d.reply_audio_path = v.path;
+                                    renderDoodleReplyVoice(v); }
+                            });
+                        });
+                    }
+                    renderDoodleReplyVoice(d.reply_audio_url ? { url: d.reply_audio_url, path: d.reply_audio_path } :
+                        null);
+                    createMiniVoiceRecorder({
+                        button: replyMicBtn,
+                        onSaved: async({ url, path }) => {
+                            const oldPath = d.reply_audio_path;
+                            d.reply_audio_url = url;
+                            d.reply_audio_path = path;
+                            await updateDoodle(d, { reply_audio_url: url, reply_audio_path: path });
+                            renderDoodleReplyVoice({ url, path });
+                            if (oldPath && oldPath !== path) supabase.storage.from(VOICE_BUCKET).remove([oldPath])
+                                .catch(() => {});
+                            showToast('Voice reply saved!');
+                            haptic(12);
+                        }
+                    });
+                    flip.addEventListener('click', e => { if (e.target.closest(
+                            'button,textarea,img,audio,.voice-attachment')) return;
+                        flip.classList.toggle('flipped');
+                        if (!flip.classList.contains('flipped')) backPanels.classList.remove('showing-reply'); });
                     flip.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target ===
                         flip) { e.preventDefault();
-                            flip.classList.toggle('flipped'); } });
+                            flip.classList.toggle('flipped');
+                            if (!flip.classList.contains('flipped')) backPanels.classList.remove(
+                                'showing-reply'); } });
                     back.addEventListener('click', () => flip.classList.remove('flipped'));
                     image.addEventListener('click', () => {
                         currentList = items.map(x => ({ src: x.image_url, caption: x.caption || 'A little doodle' }));
@@ -9834,6 +10783,10 @@
                                 if (d.storage_path) await supabase.storage.from(DOODLES_BUCKET).remove([d
                                     .storage_path
                                 ]);
+                                if (d.voice_path) await supabase.storage.from(VOICE_BUCKET).remove([d.voice_path]);
+                                if (d.reply_audio_path) await supabase.storage.from(VOICE_BUCKET).remove([d
+                                    .reply_audio_path
+                                ]);
                                 await supabase.from(DOODLES_TABLE).delete().eq('id', d.id);
                             } catch (err) { showToast('Could not remove doodle.', { type: 'error' }); }
                         }, 5000);
@@ -9856,6 +10809,40 @@
                 if (currentDoodleMode === 'relay') return 'no finished relay doodles yet — pass one back and forth!';
                 return 'no doodles yet — draw one!';
             }
+
+            /* Voice captions for solo/duet/relay doodles — recorded once,
+               held here until the piece is actually pinned/finished, then
+               attached to the insert. */
+            let pendingSoloVoice = null,
+                pendingDuetVoice = null,
+                pendingRelayVoice = null;
+
+            function clearPendingVoice(which) {
+                const map = { solo: [() => pendingSoloVoice = null, doodleCaptionVoice],
+                    duet: [() => pendingDuetVoice = null, duetDoodleCaptionVoice],
+                    relay: [() => pendingRelayVoice = null, relayCaptionVoice] };
+                map[which][0]();
+                map[which][1].classList.add('hidden');
+                map[which][1].innerHTML = '';
+            }
+
+            function setupDoodleVoiceCaption(micBtn, voiceBox, setter) {
+                createMiniVoiceRecorder({
+                    button: micBtn,
+                    onSaved: async({ url, path }) => {
+                        setter({ url, path });
+                        renderVoiceAttachment(voiceBox, { url, path }, (voice) => {
+                            setter(null);
+                            if (voice.path) supabase.storage.from(VOICE_BUCKET).remove([voice.path]).catch(() => {});
+                        });
+                        showToast('Voice caption attached — pin the doodle to save it.');
+                        haptic(12);
+                    }
+                });
+            }
+            setupDoodleVoiceCaption(doodleCaptionMic, doodleCaptionVoice, v => pendingSoloVoice = v);
+            setupDoodleVoiceCaption(duetDoodleCaptionMic, duetDoodleCaptionVoice, v => pendingDuetVoice = v);
+
             doodleForm.addEventListener('submit', async e => {
                 e.preventDefault();
                 if (!supabase) { showToast('Connect Supabase before saving doodles.', { type: 'error' });
@@ -9875,11 +10862,14 @@
                         image_url: urlData.publicUrl,
                         storage_path: path,
                         caption: doodleCaption.value.trim() || null,
+                        voice_url: pendingSoloVoice ? pendingSoloVoice.url : null,
+                        voice_path: pendingSoloVoice ? pendingSoloVoice.path : null,
                         author: Number(doodleAuthor),
                         mode: 'solo'
                     });
                     if (error) throw error;
                     doodleCaption.value = '';
+                    clearPendingVoice('solo');
                     soloEngine.reset();
                     showToast('Doodle pinned!');
                     loadDoodles();
@@ -9907,11 +10897,14 @@
                         image_url: urlData.publicUrl,
                         storage_path: path,
                         caption: duetDoodleCaption.value.trim() || null,
+                        voice_url: pendingDuetVoice ? pendingDuetVoice.url : null,
+                        voice_path: pendingDuetVoice ? pendingDuetVoice.path : null,
                         author: Number(duetDoodleAuthor),
                         mode: 'duet'
                     });
                     if (error) throw error;
                     duetDoodleCaption.value = '';
+                    clearPendingVoice('duet');
                     duetEngine.reset();
                     duetBroadcast('clear', {});
                     showToast('Duet doodle pinned!');
@@ -9929,7 +10922,10 @@
                 relayPassBtn = document.getElementById('relayPassBtn'),
                 relayStartOverBtn = document.getElementById('relayStartOverBtn'),
                 relayFinishBtn = document.getElementById('relayFinishBtn'),
-                relayCaption = document.getElementById('relayCaption');
+                relayCaption = document.getElementById('relayCaption'),
+                relayCaptionMic = document.getElementById('relayCaptionMic'),
+                relayCaptionVoice = document.getElementById('relayCaptionVoice');
+            setupDoodleVoiceCaption(relayCaptionMic, relayCaptionVoice, v => pendingRelayVoice = v);
             let relayState = null,
                 relayChannelStarted = false,
                 relayBusy = false;
@@ -10044,8 +11040,9 @@
                 try {
                     const imageUrl = await uploadRelaySnapshot();
                     const { error } = await supabase.from(DOODLES_TABLE).insert({ image_url: imageUrl, storage_path:
-                        null, caption: relayCaption.value.trim() || null, author: Number(getIdentity()), mode:
-                        'relay' });
+                        null, caption: relayCaption.value.trim() || null, voice_url: pendingRelayVoice ?
+                        pendingRelayVoice.url : null, voice_path: pendingRelayVoice ? pendingRelayVoice.path : null,
+                        author: Number(getIdentity()), mode: 'relay' });
                     if (error) throw error;
                     const starter = Number(getIdentity()) === 2 ? 2 : 1;
                     await supabase.from(RELAY_STATE_TABLE).upsert({ id: 1, image_url: null, turn: starter,
@@ -10053,6 +11050,7 @@
                     relayState = { id: 1, image_url: null, turn: starter };
                     relayEngine.reset();
                     relayCaption.value = '';
+                    clearPendingVoice('relay');
                     renderRelayStatus();
                     showToast('Relay piece pinned! 🎉 A fresh canvas is ready for the next one.');
                     loadDoodles();
@@ -13107,10 +14105,16 @@
             simonPlayAgainBtn.addEventListener('click', startSimonGame);
 
             /* ─── Break glass ─── */
+            const ANGER_LOG_TABLE = 'anger_log';
             const breakGlassBtn = document.getElementById('breakGlassBtn'),
                 glassModal = document.getElementById('glassModal'),
                 glassModalClose = document.getElementById('glassModalClose'),
+                glassWhoStep = document.getElementById('glassWhoStep'),
+                glassWhoOptions = document.getElementById('glassWhoOptions'),
+                glassReasonInput = document.getElementById('glassReasonInput'),
+                glassWhoContinue = document.getElementById('glassWhoContinue'),
                 glassAngerChoice = document.getElementById('glassAngerChoice'),
+                glassAngerBack = document.getElementById('glassAngerBack'),
                 glassPane = document.getElementById('glassPane'),
                 glassCrackSvg = document.getElementById('glassCrack'),
                 glassHint = document.getElementById('glassHint'),
@@ -13120,7 +14124,14 @@
                 glassEditBtn = document.getElementById('glassEditBtn'),
                 glassEditForm = document.getElementById('glassEditForm'),
                 glassNoteInput = document.getElementById('glassNoteInput'),
-                glassEditCancel = document.getElementById('glassEditCancel');
+                glassEditCancel = document.getElementById('glassEditCancel'),
+                angerHistoryBtn = document.getElementById('angerHistoryBtn'),
+                angerHistoryModal = document.getElementById('angerHistoryModal'),
+                angerHistoryClose = document.getElementById('angerHistoryClose'),
+                angerHistoryList = document.getElementById('angerHistoryList'),
+                angerHistoryEmpty = document.getElementById('angerHistoryEmpty');
+            let glassSelectedWho = null;
+            let glassCurrentEntryId = null;
             const DEFAULT_GLASS_NOTE =
                 "Hey love. Whatever just happened, it doesn't change us. Let's breathe for a second — I love you more than I'm upset right now, and I'd rather work this out together than win it. Come find me when you're ready? 🤍";
             const ANGER_LEVELS = [
@@ -13138,6 +14149,7 @@
             function resetGlass() {
                 glassBroken = false;
                 glassTapCount = 0;
+                glassCurrentEntryId = null;
                 glassCrackSvg.innerHTML = '';
                 glassPane.classList.remove('cracking', 'broken');
                 glassPane.classList.add('hidden');
@@ -13148,7 +14160,12 @@
                 glassTapCounter.classList.remove('visible');
                 glassNote.classList.add('hidden');
                 glassEditForm.classList.add('hidden');
-                glassAngerChoice.classList.remove('hidden');
+                glassAngerChoice.classList.add('hidden');
+                glassSelectedWho = null;
+                glassReasonInput.value = '';
+                glassWhoOptions.querySelectorAll('.glass-who-btn').forEach(b => b.classList.remove('active'));
+                glassWhoContinue.disabled = true;
+                glassWhoStep.classList.remove('hidden');
             }
             breakGlassBtn.addEventListener('click', () => {
                 resetGlass();
@@ -13157,6 +14174,38 @@
             });
             glassModalClose.addEventListener('click', () => glassModal.classList.add('hidden'));
             glassModal.addEventListener('click', e => { if (e.target === glassModal) glassModal.classList.add('hidden'); });
+            glassWhoOptions.querySelectorAll('.glass-who-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    glassSelectedWho = btn.dataset.who;
+                    glassWhoOptions.querySelectorAll('.glass-who-btn').forEach(b => b.classList.toggle('active', b ===
+                        btn));
+                    glassWhoContinue.disabled = false;
+                    haptic(8);
+                });
+            });
+            glassWhoContinue.addEventListener('click', async() => {
+                if (!glassSelectedWho) return;
+                const reason = glassReasonInput.value.trim();
+                glassWhoStep.classList.add('hidden');
+                glassAngerChoice.classList.remove('hidden');
+                haptic(10);
+                if (supabase) {
+                    try {
+                        if (glassCurrentEntryId) {
+                            await supabase.from(ANGER_LOG_TABLE).update({ who: glassSelectedWho, reason: reason ||
+                                null }).eq('id', glassCurrentEntryId);
+                        } else {
+                            const { data, error } = await supabase.from(ANGER_LOG_TABLE).insert({ who: glassSelectedWho,
+                                reason: reason || null }).select().single();
+                            if (!error && data) glassCurrentEntryId = data.id;
+                        }
+                    } catch (err) { console.error('Could not log fight entry:', err); }
+                }
+            });
+            glassAngerBack.addEventListener('click', () => {
+                glassAngerChoice.classList.add('hidden');
+                glassWhoStep.classList.remove('hidden');
+            });
             glassAngerChoice.querySelectorAll('button[data-level]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     glassLevel = ANGER_LEVELS[Number(btn.dataset.level)] || ANGER_LEVELS[0];
@@ -13264,6 +14313,230 @@
                     showToast('Could not save that note.', { type: 'error' }); }
             });
 
+            /* ─── Fight history ─── */
+            function angerWhoLabel(who) { return who === 'M' ? 'M' : 'J'; }
+            function formatAngerDate(iso) {
+                try {
+                    const d = new Date(iso);
+                    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' · ' + d
+                        .toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+                } catch (e) { return ''; }
+            }
+            async function loadAngerHistory() {
+                if (!supabase) { angerHistoryList.innerHTML = '';
+                    angerHistoryEmpty.classList.remove('hidden');
+                    angerHistoryEmpty.textContent =
+                        'Connect Supabase to see fight history.';
+                    return; }
+                angerHistoryList.innerHTML = '';
+                const { data, error } = await supabase.from(ANGER_LOG_TABLE).select('*').order('created_at', {
+                    ascending: false });
+                if (error) { console.error('Could not load fight history:', error);
+                    angerHistoryEmpty.classList.remove('hidden');
+                    angerHistoryEmpty.textContent = 'Could not load history.';
+                    return; }
+                const entries = data || [];
+                if (!entries.length) { angerHistoryEmpty.classList.remove('hidden');
+                    angerHistoryEmpty.textContent = "Nothing logged yet — hopefully it stays that way 🤍";
+                    return; }
+                angerHistoryEmpty.classList.add('hidden');
+                entries.forEach(entry => renderAngerEntry(entry));
+            }
+            function renderAngerEntry(entry) {
+                const card = document.createElement('div');
+                card.className = 'anger-entry';
+                const hasReply = !!(entry.cooldown_text || entry.cooldown_audio_url);
+                card.innerHTML = `
+                <button type="button" class="anger-entry-delete" aria-label="Delete entry">✕</button>
+                <div class="anger-entry-head">
+                  <div class="anger-entry-who"><span class="anger-entry-who-badge">${angerWhoLabel(entry.who)}</span> ${angerWhoLabel(entry.who)} was upset</div>
+                  <span class="anger-entry-date">${formatAngerDate(entry.created_at)}</span>
+                </div>
+                ${entry.reason ? `<p class="anger-entry-reason">${escapeHtml(entry.reason)}</p>` : ''}
+                <div class="anger-entry-reply-area"></div>
+              `;
+                angerHistoryList.appendChild(card);
+                const deleteBtn = card.querySelector('.anger-entry-delete');
+                const replyArea = card.querySelector('.anger-entry-reply-area');
+
+                function renderReplyArea() {
+                    replyArea.innerHTML = '';
+                    const otherWho = angerWhoLabel(entry.who) === 'J' ? 'M' : 'J';
+                    if (entry.cooldown_text || entry.cooldown_audio_url) {
+                        const badge = document.createElement('div');
+                        badge.className = 'anger-entry-reply-badge';
+                        badge.textContent = `💛 ${otherWho} left something to cool you off`;
+                        replyArea.appendChild(badge);
+                        if (entry.cooldown_text) {
+                            const textRow = document.createElement('div');
+                            textRow.className = 'anger-entry-reply-text-row';
+                            const p = document.createElement('p');
+                            p.className = 'anger-entry-reply-text';
+                            p.textContent = entry.cooldown_text;
+                            const editBtn = document.createElement('button');
+                            editBtn.type = 'button';
+                            editBtn.className = 'anger-entry-edit-btn';
+                            editBtn.setAttribute('aria-label', 'Edit this message');
+                            editBtn.textContent = '✏️';
+                            textRow.appendChild(p);
+                            textRow.appendChild(editBtn);
+                            replyArea.appendChild(textRow);
+                            editBtn.addEventListener('click', () => renderEditForm());
+                        }
+                        if (entry.cooldown_audio_url) {
+                            const voiceBox = document.createElement('div');
+                            voiceBox.className = 'voice-attachment';
+                            replyArea.appendChild(voiceBox);
+                            renderVoiceAttachment(voiceBox, { url: entry.cooldown_audio_url, path: entry
+                                .cooldown_audio_path }, (voice) => {
+                                removeVoiceWithUndo(voiceBox, voice, {
+                                    label: 'Voice message removed.',
+                                    onConfirmRemove: async() => {
+                                        entry.cooldown_audio_url = null;
+                                        entry.cooldown_audio_path = null;
+                                        await supabase.from(ANGER_LOG_TABLE).update({ cooldown_audio_url: null,
+                                            cooldown_audio_path: null }).eq('id', entry.id);
+                                        if (voice.path) supabase.storage.from(VOICE_BUCKET).remove([voice.path])
+                                            .catch(() => {});
+                                        renderReplyArea();
+                                    },
+                                    onRestore: () => { entry.cooldown_audio_url = voice.url;
+                                        entry.cooldown_audio_path = voice.path;
+                                        renderReplyArea(); }
+                                });
+                            });
+                        } else {
+                            // Text was sent but no voice yet — still offer the mic
+                            // so a voice message can be added afterwards.
+                            const micRow = document.createElement('div');
+                            micRow.className = 'anger-entry-add-voice-row';
+                            micRow.innerHTML =
+                                '<button type="button" class="mini-mic-btn" aria-label="Add a voice message"></button><span>add a voice message too</span>';
+                            replyArea.appendChild(micRow);
+                            createMiniVoiceRecorder({
+                                button: micRow.querySelector('.mini-mic-btn'),
+                                onSaved: async({ url, path }) => {
+                                    entry.cooldown_audio_url = url;
+                                    entry.cooldown_audio_path = path;
+                                    await supabase.from(ANGER_LOG_TABLE).update({ cooldown_audio_url: url,
+                                        cooldown_audio_path: path }).eq('id', entry.id);
+                                    showToast('Voice message sent 💛');
+                                    haptic(12);
+                                    renderReplyArea();
+                                }
+                            });
+                        }
+                        return;
+                    }
+                    renderComposeForm();
+
+                    function renderEditForm() {
+                        replyArea.innerHTML = '';
+                        const form = document.createElement('div');
+                        form.className = 'anger-entry-reply-form';
+                        form.innerHTML = `
+                        <textarea maxlength="240">${escapeHtml(entry.cooldown_text || '')}</textarea>
+                        <div class="anger-entry-edit-actions">
+                          <button type="button" class="save-title-btn anger-edit-save">Save</button>
+                          <button type="button" class="cancel-title-btn anger-edit-cancel">Cancel</button>
+                        </div>
+                      `;
+                        replyArea.appendChild(form);
+                        const textarea = form.querySelector('textarea');
+                        textarea.focus();
+                        form.querySelector('.anger-edit-save').addEventListener('click', async() => {
+                            const val = textarea.value.trim();
+                            entry.cooldown_text = val || null;
+                            await supabase.from(ANGER_LOG_TABLE).update({ cooldown_text: entry.cooldown_text }).eq(
+                                'id', entry.id);
+                            renderReplyArea();
+                        });
+                        form.querySelector('.anger-edit-cancel').addEventListener('click', () => renderReplyArea());
+                    }
+
+                    function renderComposeForm() {
+                        const form = document.createElement('div');
+                        form.className = 'anger-entry-reply-form';
+                        form.innerHTML = `
+                        <textarea maxlength="240" placeholder="Say something to help them cool down..."></textarea>
+                        <button type="button" class="mini-mic-btn" aria-label="Record a voice message"></button>
+                        <div class="voice-attachment hidden"></div>
+                      `;
+                        replyArea.appendChild(form);
+                        const textarea = form.querySelector('textarea');
+                        const micBtn = form.querySelector('.mini-mic-btn');
+                        const voiceBox = form.querySelector('.voice-attachment');
+                        let saveTimer = null;
+                        textarea.addEventListener('input', () => {
+                            clearTimeout(saveTimer);
+                            saveTimer = setTimeout(async() => {
+                                const val = textarea.value.trim();
+                                entry.cooldown_text = val || null;
+                                await supabase.from(ANGER_LOG_TABLE).update({ cooldown_text: entry.cooldown_text })
+                                    .eq('id', entry.id);
+                                if (val) { showToast('Sent 💛');
+                                    renderReplyArea(); }
+                            }, 500);
+                        });
+                        createMiniVoiceRecorder({
+                            button: micBtn,
+                            onSaved: async({ url, path }) => {
+                                entry.cooldown_audio_url = url;
+                                entry.cooldown_audio_path = path;
+                                await supabase.from(ANGER_LOG_TABLE).update({ cooldown_audio_url: url,
+                                    cooldown_audio_path: path }).eq('id', entry.id);
+                                showToast('Voice message sent 💛');
+                                haptic(12);
+                                renderReplyArea();
+                            }
+                        });
+                    }
+                }
+                renderReplyArea();
+
+                deleteBtn.addEventListener('click', async() => {
+                    if (!supabase) return;
+                    card.remove();
+                    const UNDO_WINDOW = 5000;
+                    let undone = false;
+                    const timer = setTimeout(async() => {
+                        if (undone) return;
+                        try {
+                            if (entry.cooldown_audio_path) await supabase.storage.from(VOICE_BUCKET).remove([entry
+                                .cooldown_audio_path
+                            ]);
+                            await supabase.from(ANGER_LOG_TABLE).delete().eq('id', entry.id);
+                        } catch (err) { console.error('Could not delete entry:', err); }
+                        if (!angerHistoryList.children.length) { angerHistoryEmpty.classList.remove('hidden');
+                            angerHistoryEmpty.textContent = "Nothing logged yet — hopefully it stays that way 🤍"; }
+                    }, UNDO_WINDOW);
+                    showToast('Entry removed.', {
+                        actionLabel: 'Undo',
+                        duration: UNDO_WINDOW,
+                        onAction: () => {
+                            undone = true;
+                            clearTimeout(timer);
+                            angerHistoryEmpty.classList.add('hidden');
+                            angerHistoryList.prepend(card);
+                        }
+                    });
+                    if (!angerHistoryList.children.length) { angerHistoryEmpty.classList.remove('hidden');
+                        angerHistoryEmpty.textContent = "Nothing logged yet — hopefully it stays that way 🤍"; }
+                });
+            }
+            angerHistoryBtn.addEventListener('click', () => {
+                glassModal.classList.add('hidden');
+                angerHistoryModal.classList.remove('hidden');
+                loadAngerHistory();
+            });
+            function closeAngerHistory() {
+                angerHistoryModal.classList.add('hidden');
+                glassModal.classList.remove('hidden');
+            }
+            angerHistoryClose.addEventListener('click', closeAngerHistory);
+            angerHistoryModal.addEventListener('click', e => { if (e.target === angerHistoryModal)
+                    closeAngerHistory(); });
+
             /* ─── Voice notes ─── */
             const MAX_RECORDING_SECONDS = 120;
             let mediaRecorder = null;
@@ -13294,6 +14567,10 @@
                 '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V20H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-2v-2.08A7 7 0 0 0 19 11z"/></svg>';
             const STOP_ICON_SVG =
                 '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+            const PLAY_ICON_SVG =
+                '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.53.85l10.5-6.5a1 1 0 0 0 0-1.7l-10.5-6.5A1 1 0 0 0 8 5.5z"/></svg>';
+            const PAUSE_ICON_SVG =
+                '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
 
             function resetRecordButtonUI() {
                 voiceRecordBtn.classList.remove('recording');
@@ -13374,6 +14651,282 @@
                     showToast('Could not save that voice note.', { type: 'error' });
                 }
             }
+
+            /* ─── Reusable mini voice recorder ───
+               Attaches record/stop behaviour to any small mic <button>. Each
+               instance keeps its own recording state, so many of these can
+               live on the page at once (a doodle caption, a memory caption,
+               a reply box) without interfering with each other or with the
+               main note voice recorder above. Recording uploads immediately
+               on stop; `onSaved({ url, path })` is where the caller decides
+               what to do with the result (attach to a pending caption,
+               patch a reply column, etc). */
+            function createMiniVoiceRecorder({ button, onSaved, bucket, maxSeconds = 120 }) {
+                const audioBucket = bucket || VOICE_BUCKET;
+                const MIC_SVG =
+                    '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V20H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-2v-2.08A7 7 0 0 0 19 11z"/></svg>';
+                const STOP_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+                let miniRecorder = null,
+                    miniStream = null,
+                    miniChunks = [],
+                    miniStartedAt = 0,
+                    miniTimerInt = null,
+                    miniRecording = false;
+
+                function reset() {
+                    miniRecording = false;
+                    button.classList.remove('recording');
+                    button.innerHTML = MIC_SVG;
+                    button.setAttribute('aria-label', 'Record a voice note');
+                    button.title = 'Record a voice note';
+                }
+                reset();
+
+                async function start() {
+                    if (!window.MediaRecorder || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        showToast('Voice recording isn\'t supported in this browser.', { type: 'error' });
+                        return;
+                    }
+                    if (!supabase) { setupBanner.classList.add('show');
+                        return; }
+                    try {
+                        miniStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    } catch (err) {
+                        console.error('Microphone access denied:', err);
+                        showToast('Microphone access is needed to record a voice note.', { type: 'error' });
+                        return;
+                    }
+                    const mimeType = pickAudioMimeType();
+                    miniChunks = [];
+                    miniRecorder = mimeType ? new MediaRecorder(miniStream, { mimeType }) : new MediaRecorder(
+                        miniStream);
+                    miniRecorder.addEventListener('dataavailable', (e) => { if (e.data && e.data.size > 0)
+                            miniChunks.push(e.data); });
+                    miniRecorder.addEventListener('stop', onStop);
+                    miniRecorder.start();
+                    miniRecording = true;
+                    miniStartedAt = Date.now();
+                    button.classList.add('recording');
+                    button.innerHTML = STOP_SVG;
+                    button.title = 'Stop recording';
+                    miniTimerInt = setInterval(() => {
+                        const elapsed = Math.floor((Date.now() - miniStartedAt) / 1000);
+                        const label = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`;
+                        button.setAttribute('aria-label', `Recording ${label} — tap to stop`);
+                        if (elapsed >= maxSeconds) stop();
+                    }, 500);
+                }
+
+                function stop() {
+                    if (!miniRecording || !miniRecorder) return;
+                    miniRecorder.stop();
+                    clearInterval(miniTimerInt);
+                    if (miniStream) { miniStream.getTracks().forEach(t => t.stop());
+                        miniStream = null; }
+                    reset();
+                }
+
+                async function onStop() {
+                    if (!miniChunks.length) return;
+                    const mimeType = miniRecorder.mimeType || 'audio/webm';
+                    const blob = new Blob(miniChunks, { type: mimeType });
+                    miniChunks = [];
+                    if (blob.size < 500) { showToast('That recording was too short to save.', { type: 'error' });
+                        return; }
+                    const ext = mimeType.includes('mp4') ? 'm4a' : (mimeType.includes('ogg') ? 'ogg' : 'webm');
+                    const path = `${crypto.randomUUID()}.${ext}`;
+                    button.disabled = true;
+                    try {
+                        const { error: uploadError } = await supabase.storage.from(audioBucket).upload(path, blob, {
+                            contentType: mimeType });
+                        if (uploadError) throw uploadError;
+                        const { data: urlData } = supabase.storage.from(audioBucket).getPublicUrl(path);
+                        await onSaved({ url: urlData.publicUrl, path });
+                    } catch (err) {
+                        console.error('Could not save voice note:', err);
+                        showToast('Could not save that voice note.', { type: 'error' });
+                    } finally { button.disabled = false; }
+                }
+                button.addEventListener('click', (e) => { e.preventDefault();
+                    e.stopPropagation();
+                    if (miniRecording) stop();
+                    else start(); });
+                return { stop, isRecording: () => miniRecording };
+            }
+
+            /* Builds a small "🎤 attached" playback row with a remove (×)
+               button, used under captions/replies once a voice clip exists.
+               `onRemove` is called with the stored {url,path} before it's
+               cleared, so the caller can delete the storage object if the
+               person actively removes it. */
+            let activeVoicePlayerAudio = null;
+
+            function formatVoiceTime(s) {
+                if (!isFinite(s) || s < 0) return '0:00';
+                const m = Math.floor(s / 60),
+                    sec = Math.floor(s % 60);
+                return `${m}:${String(sec).padStart(2, '0')}`;
+            }
+
+            /* Builds a small themed play/seek widget for a voice clip,
+               replacing the native browser <audio controls> UI. Only one
+               clip plays at a time across the whole page. */
+            function buildVoicePlayer(url) {
+                const wrap = document.createElement('div');
+                wrap.className = 'voice-player';
+                const toggle = document.createElement('button');
+                toggle.type = 'button';
+                toggle.className = 'voice-player-toggle';
+                toggle.setAttribute('aria-label', 'Play voice note');
+                toggle.innerHTML = PLAY_ICON_SVG;
+                const track = document.createElement('div');
+                track.className = 'voice-player-track';
+                const progress = document.createElement('div');
+                progress.className = 'voice-player-progress';
+                track.appendChild(progress);
+                const time = document.createElement('span');
+                time.className = 'voice-player-time';
+                time.textContent = '0:00';
+                wrap.appendChild(toggle);
+                wrap.appendChild(track);
+                wrap.appendChild(time);
+
+                const audio = new Audio(url);
+                audio.preload = 'none';
+
+                function setPlayingUI(playing) {
+                    toggle.innerHTML = playing ? PAUSE_ICON_SVG : PLAY_ICON_SVG;
+                    toggle.classList.toggle('playing', playing);
+                    toggle.setAttribute('aria-label', playing ? 'Pause voice note' : 'Play voice note');
+                }
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (audio.paused) {
+                        if (activeVoicePlayerAudio && activeVoicePlayerAudio !== audio) activeVoicePlayerAudio
+                            .pause();
+                        audio.play().catch(() => {});
+                        activeVoicePlayerAudio = audio;
+                    } else {
+                        audio.pause();
+                    }
+                });
+                audio.addEventListener('play', () => setPlayingUI(true));
+                audio.addEventListener('pause', () => setPlayingUI(false));
+                audio.addEventListener('ended', () => { setPlayingUI(false);
+                    progress.style.width = '0%';
+                    time.textContent = formatVoiceTime(audio.duration || 0); });
+                audio.addEventListener('timeupdate', () => {
+                    if (audio.duration) progress.style.width = ((audio.currentTime / audio.duration) * 100) + '%';
+                    time.textContent = formatVoiceTime(audio.duration ? audio.duration - audio.currentTime : 0);
+                });
+                audio.addEventListener('loadedmetadata', () => { time.textContent = formatVoiceTime(audio
+                    .duration); });
+                track.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const rect = track.getBoundingClientRect();
+                    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+                    if (audio.duration) audio.currentTime = ratio * audio.duration;
+                });
+                wrap.addEventListener('click', (e) => e.stopPropagation());
+                wrap._audio = audio;
+                return wrap;
+            }
+
+            function renderVoiceAttachment(container, voice, onRemove) {
+                if (container._playerAudio) { container._playerAudio.pause();
+                    container._playerAudio = null; }
+                container.innerHTML = '';
+                if (!voice || !voice.url) { container.classList.add('hidden');
+                    return; }
+                container.classList.remove('hidden');
+                const player = buildVoicePlayer(voice.url);
+                container._playerAudio = player._audio;
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'voice-attachment-remove';
+                removeBtn.setAttribute('aria-label', 'Remove voice note');
+                removeBtn.textContent = '✕';
+                removeBtn.addEventListener('click', (e) => { e.stopPropagation();
+                    player._audio.pause();
+                    onRemove && onRemove(voice);
+                    container.classList.add('hidden');
+                    container.innerHTML = ''; });
+                container.appendChild(player);
+                container.appendChild(removeBtn);
+            }
+
+            /* Wraps a voice-note removal in the same 5s "Undo" toast pattern
+               used for deleting memories/notes elsewhere in the app. The
+               attachment UI disappears immediately (optimistic), but the
+               actual DB/storage delete only happens if the person doesn't
+               tap Undo in time — tapping Undo just re-renders the clip. */
+            function removeVoiceWithUndo(container, voice, { label, onConfirmRemove, onRestore }) {
+                const UNDO_WINDOW = 5000;
+                let undone = false;
+                const timer = setTimeout(async() => {
+                    if (undone) return;
+                    await onConfirmRemove();
+                }, UNDO_WINDOW);
+                showToast(label || 'Voice note removed.', {
+                    actionLabel: 'Undo',
+                    duration: UNDO_WINDOW,
+                    onAction: () => {
+                        undone = true;
+                        clearTimeout(timer);
+                        onRestore();
+                    }
+                });
+            }
+
+            /* Tiny inline play/pause button for a photo's voice caption,
+               shown on the front face beside the caption text. Only one
+               plays at a time across the whole page. */
+            let activeCaptionPlayback = null;
+            const CAPTION_PLAY_ICON =
+                '<svg class="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><svg class="pause-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
+
+            function wireCaptionPlayButton(btn) {
+                if (!btn || btn.dataset.wired) return;
+                btn.dataset.wired = '1';
+                let audio = null;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (activeCaptionPlayback && activeCaptionPlayback !== audio) {
+                        activeCaptionPlayback.pause();
+                    }
+                    if (!audio) {
+                        audio = new Audio(btn.dataset.src);
+                        audio.addEventListener('ended', () => btn.classList.remove('playing'));
+                        audio.addEventListener('pause', () => btn.classList.remove('playing'));
+                    }
+                    if (btn.classList.contains('playing')) {
+                        audio.pause();
+                    } else {
+                        activeCaptionPlayback = audio;
+                        audio.currentTime = 0;
+                        audio.play().catch(() => {});
+                        btn.classList.add('playing');
+                    }
+                });
+            }
+
+            function ensureCaptionPlayButton(wrap, voiceUrl) {
+                let row = wrap.querySelector('.cap-preview-row');
+                let btn = wrap.querySelector('.caption-voice-play');
+                if (!voiceUrl) { if (btn) btn.remove();
+                    return; }
+                if (!btn && row) {
+                    btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'caption-voice-play';
+                    btn.setAttribute('aria-label', 'Play voice caption');
+                    btn.innerHTML = CAPTION_PLAY_ICON;
+                    row.appendChild(btn);
+                }
+                if (btn) { btn.dataset.src = voiceUrl;
+                    wireCaptionPlayButton(btn); }
+            }
+
             let countdownInProgress = false;
             let countdownCancelled = false;
 
@@ -14543,7 +16096,7 @@
                 let items = showFavoritesOnly ? photos.filter(p => p.favorite) : photos.slice();
                 if (searchQuery.trim()) {
                     const q = searchQuery.trim().toLowerCase();
-                    items = items.filter(p => (p.caption || '').toLowerCase().includes(q));
+                    items = items.filter(p => `${p.caption||''} ${p.reply||''}`.toLowerCase().includes(q));
                 }
                 if (sortMode === 'newest') items = items.slice().reverse();
                 else if (sortMode === 'shuffle') {
@@ -14620,20 +16173,46 @@
                     ${photo.mood ? `<span class="mood-badge">${photo.mood}</span>` : ''}
                     ${(photo.surprise && !photo.revealed) ? `<canvas class="scratch-layer" aria-label="Scratch to reveal the surprise"></canvas><div class="scratch-hint"><span class="scratch-hint-emoji">🎁</span><span>${escapeHtml(photo.hintText || 'scratch to reveal')}</span></div>` : ''}
                   </div>
-                  <div class="cap-preview">${(photo.surprise && !photo.revealed) ? 'a surprise is waiting... 🎁' : escapeHtml(photo.caption)}</div>
+                  <div class="cap-preview-row">
+                    <div class="cap-preview">${(photo.surprise && !photo.revealed) ? 'a surprise is waiting... 🎁' : escapeHtml(photo.caption)}</div>
+                    ${photo.voiceUrl && !(photo.surprise && !photo.revealed) ? `<button type="button" class="caption-voice-play" aria-label="Play voice caption" data-src="${photo.voiceUrl}"><svg class="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><svg class="pause-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>` : ''}
+                  </div>
                 </div>
                 <div class="face back">
-                  <textarea maxlength="120" aria-label="Write a note for this memory">${escapeHtml(photo.caption)}</textarea>
-                  <button class="flip-back-btn" type="button" aria-label="Flip back to photo">‹ back to photo</button>
-                  <div class="mood-picker">
-                    ${MOODS.map(m => `<button type="button" data-mood="${m}" class="${photo.mood === m ? 'active' : ''}" aria-label="Tag mood ${m}">${m}</button>`).join('')}
-                    ${customEmojiPickerHtml(photo.mood, MOODS)}
-                  </div>
-                  <div class="back-footer">
-                    <span>${photo.date}</span>
-                    <div style="display:flex; gap:6px;">
-                      <button class="card-download" type="button">⬇ save</button>
-                      <button class="unpin" type="button">unpin</button>
+                  <div class="back-panels">
+                    <div class="back-panels-track">
+                      <div class="back-panel back-panel-main">
+                        <textarea maxlength="120" placeholder="Add a caption..." aria-label="Write a note for this memory">${escapeHtml(photo.caption)}</textarea>
+                        <button class="flip-back-btn" type="button" aria-label="Flip back to photo">‹ back to photo</button>
+                        <div class="mood-picker">
+                          ${MOODS.map(m => `<button type="button" data-mood="${m}" class="${photo.mood === m ? 'active' : ''}" aria-label="Tag mood ${m}">${m}</button>`).join('')}
+                          ${customEmojiPickerHtml(photo.mood, MOODS)}
+                        </div>
+                        <div class="back-footer">
+                          <span>${photo.date}</span>
+                          <div style="display:flex; gap:6px;">
+                            <button class="card-download" type="button">⬇ save</button>
+                            <button class="unpin" type="button">unpin</button>
+                          </div>
+                        </div>
+                        <button type="button" class="tab-arrow-btn tab-arrow-next" aria-label="View replies">${RIGHT_ARROW_SVG}</button>
+                      </div>
+                      <div class="back-panel back-panel-reply">
+                        <button type="button" class="tab-arrow-btn tab-arrow-prev" aria-label="Back">${LEFT_ARROW_SVG}</button>
+                        <textarea class="photo-reply-input" maxlength="200" placeholder="Write a reply..." aria-label="Write a reply to this memory">${escapeHtml(photo.reply || '')}</textarea>
+                        <div class="dual-mic-row">
+                          <div class="dual-mic-item">
+                            <button type="button" class="mini-mic-btn caption-mic-variant photo-caption-mic" aria-label="Record a voice caption"></button>
+                            <span class="dual-mic-label">caption</span>
+                          </div>
+                          <div class="dual-mic-item">
+                            <button type="button" class="mini-mic-btn photo-reply-mic" aria-label="Record a voice reply"></button>
+                            <span class="dual-mic-label">reply</span>
+                          </div>
+                        </div>
+                        <div class="voice-attachment photo-caption-voice-attach${photo.voiceUrl ? '' : ' hidden'}"></div>
+                        <div class="voice-attachment photo-reply-voice-attach${photo.replyAudioUrl ? '' : ' hidden'}"></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -14647,7 +16226,15 @@
                     wrap.querySelector('.pin').style.animationDelay = delay;
                 }
                 const card = wrap.querySelector('.polaroid');
-                const textarea = wrap.querySelector('textarea');
+                const backPanels = wrap.querySelector('.back-panels');
+                const replyTabBtn = wrap.querySelector('.tab-arrow-next');
+                const backTabBtn = wrap.querySelector('.tab-arrow-prev');
+                const textarea = wrap.querySelector('.back-panel-main > textarea');
+                const captionMicBtn = wrap.querySelector('.photo-caption-mic');
+                const captionVoiceBox = wrap.querySelector('.photo-caption-voice-attach');
+                const replyInput = wrap.querySelector('.photo-reply-input');
+                const replyMicBtn = wrap.querySelector('.photo-reply-mic');
+                const replyVoiceBox = wrap.querySelector('.photo-reply-voice-attach');
                 const unpinBtn = wrap.querySelector('.unpin');
                 const favBtn = wrap.querySelector('.fav-heart');
                 const expandBtn = wrap.querySelector('.expand-btn');
@@ -14667,11 +16254,77 @@
                     else photoImg.addEventListener('load', markLoaded);
                 }
 
+                wireCaptionPlayButton(wrap.querySelector('.caption-voice-play'));
+
+                replyTabBtn.addEventListener('click', (e) => { e.stopPropagation();
+                    backPanels.classList.add('showing-reply'); });
+                backTabBtn.addEventListener('click', (e) => { e.stopPropagation();
+                    backPanels.classList.remove('showing-reply'); });
+
+                function renderPhotoCaptionVoice(voice) {
+                    renderVoiceAttachment(captionVoiceBox, voice, (v) => {
+                        removeVoiceWithUndo(captionVoiceBox, v, {
+                            label: 'Voice note removed.',
+                            onConfirmRemove: () => savePhotoCaptionVoice(photo, null),
+                            onRestore: () => { photo.voiceUrl = v.url;
+                                photo.voicePath = v.path;
+                                renderPhotoCaptionVoice(v);
+                                ensureCaptionPlayButton(wrap, v.url); }
+                        });
+                        ensureCaptionPlayButton(wrap, null);
+                    });
+                }
+                renderPhotoCaptionVoice(photo.voiceUrl ? { url: photo.voiceUrl, path: photo.voicePath } : null);
+                createMiniVoiceRecorder({
+                    button: captionMicBtn,
+                    onSaved: async({ url, path }) => {
+                        await savePhotoCaptionVoice(photo, { url, path });
+                        ensureCaptionPlayButton(wrap, url);
+                        renderPhotoCaptionVoice({ url, path });
+                        showToast('Voice note saved for this memory!');
+                        haptic(12);
+                    }
+                });
+                function renderPhotoReplyVoice(voice) {
+                    renderVoiceAttachment(replyVoiceBox, voice, (v) => {
+                        removeVoiceWithUndo(replyVoiceBox, v, {
+                            label: 'Voice reply removed.',
+                            onConfirmRemove: () => savePhotoReplyVoice(photo, null),
+                            onRestore: () => { photo.replyAudioUrl = v.url;
+                                photo.replyAudioPath = v.path;
+                                renderPhotoReplyVoice(v); }
+                        });
+                    });
+                }
+                renderPhotoReplyVoice(photo.replyAudioUrl ? { url: photo.replyAudioUrl, path: photo.replyAudioPath } :
+                    null);
+                createMiniVoiceRecorder({
+                    button: replyMicBtn,
+                    onSaved: async({ url, path }) => {
+                        await savePhotoReplyVoice(photo, { url, path });
+                        renderPhotoReplyVoice({ url, path });
+                        showToast('Voice reply saved!');
+                        haptic(12);
+                    }
+                });
+                let replyTimer = null;
+                replyInput.addEventListener('click', (e) => e.stopPropagation());
+                replyInput.addEventListener('input', () => {
+                    photo.reply = replyInput.value;
+                    clearTimeout(replyTimer);
+                    replyTimer = setTimeout(() => savePhotoReply(photo), 400);
+                });
+
                 function flip(e) {
                     if (photo.surprise && !photo.revealed) return;
-                    if ([textarea, unpinBtn, favBtn, expandBtn, downloadBtn, flipBackBtn].includes(e.target)) return;
+                    if ([textarea, replyInput, captionMicBtn, replyMicBtn, unpinBtn, favBtn, expandBtn, downloadBtn,
+                            flipBackBtn, replyTabBtn, backTabBtn
+                        ].includes(e.target)) return;
                     if (e.target.closest && e.target.closest('.mood-picker')) return;
+                    if (e.target.closest && e.target.closest('.voice-attachment')) return;
+                    if (e.target.closest && e.target.closest('.dual-mic-row')) return;
                     card.classList.toggle('flipped');
+                    if (!card.classList.contains('flipped')) backPanels.classList.remove('showing-reply');
                 }
                 card.addEventListener('click', flip);
                 card.addEventListener('keydown', (e) => {
@@ -14679,6 +16332,7 @@
                         if (photo.surprise && !photo.revealed) return;
                         e.preventDefault();
                         card.classList.toggle('flipped');
+                        if (!card.classList.contains('flipped')) backPanels.classList.remove('showing-reply');
                     }
                 });
                 flipBackBtn.addEventListener('click', (e) => { e.stopPropagation();
@@ -14692,6 +16346,14 @@
                     clearTimeout(saveTimer);
                     saveTimer = setTimeout(() => saveCaption(photo), 400);
                 });
+                const captionVoiceEl = wrap.querySelector('.photo-caption-voice audio');
+                if (captionVoiceEl) {
+                    captionVoiceEl.addEventListener('click', (e) => e.stopPropagation());
+                    captionVoiceEl.addEventListener('play', () => {
+                        document.querySelectorAll('.photo-caption-voice audio').forEach(a => { if (a !==
+                                captionVoiceEl) a.pause(); });
+                    });
+                }
                 downloadBtn.addEventListener('click', async(e) => {
                     e.stopPropagation();
                     downloadBtn.textContent = '...';
