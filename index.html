@@ -1553,7 +1553,7 @@
             position: fixed;
             inset: 0;
             pointer-events: none;
-            z-index: -1;
+            z-index: 0;
             overflow: hidden;
             transform: translateZ(0);
             will-change: transform;
@@ -1583,10 +1583,10 @@
                 opacity: 0;
             }
             10% {
-                opacity: 0.18;
+                opacity: 0.35;
             }
             90% {
-                opacity: 0.18;
+                opacity: 0.35;
             }
             100% {
                 transform: translateY(-115vh) translateX(20px) rotate(25deg);
@@ -6972,6 +6972,8 @@
         }
         .face.front {
             position: relative;
+            min-height: 240px;
+            justify-content: center;
         }
         .photo-frame {
             width: 100%;
@@ -7290,6 +7292,24 @@
             width: 100%;
             height: 120px;
             line-height: 1.3;
+        }
+        /* The main (caption) back-panel scrolls as a single unit: the
+           textarea grows to fill the space and becomes the one scrollable
+           element if the caption is long, while the flip-back link, mood
+           picker, and date/save/unpin row stay put underneath it instead
+           of living in a second, separately-scrolling area. */
+        .back-panel.back-panel-main {
+            overflow-y: hidden;
+        }
+        .face.back .back-panel-main textarea {
+            flex: 1 1 auto;
+            height: auto;
+            min-height: 40px;
+            max-height: 100%;
+            overflow-y: auto;
+        }
+        .back-panel-main .flip-back-btn {
+            flex-shrink: 0;
         }
         .face.back .photo-reply-input {
             font-size: 1.15rem;
