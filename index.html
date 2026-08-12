@@ -2955,10 +2955,20 @@
             word-break: break-word;
             min-width: 0;
         }
-        .note-date {
+        .note-footer-row {
             position: absolute;
             bottom: 10px;
             right: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .note-footer-row .caption-voice-play {
+            margin-top: 0;
+            width: 13px;
+            height: 13px;
+        }
+        .note-date {
             font-family: 'Quicksand', sans-serif;
             font-size: 0.65rem;
             color: var(--ink-soft);
@@ -3484,10 +3494,15 @@
         .doodle-caption-edit::placeholder {
             color: #9C8776;
         }
-        .doodle-author-badge {
+        .doodle-author-row {
             position: absolute;
             bottom: 7px;
             left: 9px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .doodle-author-badge {
             padding: .18rem .42rem;
             border-radius: 999px;
             color: var(--white);
@@ -3499,12 +3514,21 @@
         .doodle-author-badge.author-2 {
             background: var(--sage);
         }
-        .doodle-date {
+        .doodle-date-row {
             position: absolute;
             right: 10px;
             bottom: 10px;
-            color: var(--ink-soft);
-            font: .62rem 'Quicksand', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .doodle-author-row .caption-voice-play,
+        .doodle-date-row .caption-voice-play {
+            margin-top: 0;
+        }
+        .doodle-date {
+            color: #6B5344;
+            font: 600 .64rem 'Quicksand', sans-serif;
         }
         .doodle-fav,
         .doodle-remove {
@@ -3606,14 +3630,18 @@
                 margin-top: 5px;
                 font-size: .75rem;
             }
-            .doodle-author-badge {
+            .doodle-author-row {
                 left: 6px;
                 bottom: 6px;
+            }
+            .doodle-author-badge {
                 font-size: .55rem;
             }
-            .doodle-date {
+            .doodle-date-row {
                 right: 6px;
                 bottom: 7px;
+            }
+            .doodle-date {
                 font-size: .52rem;
             }
             .doodle-fav,
@@ -7082,8 +7110,9 @@
         .cap-preview-row .cap-preview {
             padding-top: 0;
         }
-        /* Tiny inline play button for a photo's voice caption — no border,
-           no padding, just a small icon beside the caption text. */
+        /* Tiny inline play buttons for a photo's voice caption (left, "C")
+           and voice reply (right, "R") — no border, no padding, just a
+           small tag + icon beside the caption text. */
         .caption-voice-play {
             background: none;
             border: none;
@@ -7095,16 +7124,24 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 17px;
+            gap: 1px;
+            width: auto;
             height: 17px;
             opacity: 0.75;
         }
         .caption-voice-play:hover {
             opacity: 1;
         }
+        .caption-voice-play .voice-tag {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 0.55rem;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: 0.02em;
+        }
         .caption-voice-play svg {
-            width: 100%;
-            height: 100%;
+            width: 13px;
+            height: 13px;
             display: block;
         }
         .caption-voice-play .pause-icon {
@@ -7119,6 +7156,12 @@
         .caption-voice-play.playing {
             color: var(--sage);
             opacity: 1;
+        }
+        .caption-voice-r {
+            color: var(--lavender);
+        }
+        .caption-voice-r.playing {
+            color: var(--sage);
         }
         /* Two small mic buttons on the reply slide — one re-records the
            caption's voice note, one records the voice reply. Colour tells
@@ -9405,6 +9448,40 @@
             const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             const supportsHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
+            /* Swipe left/right on any flip-card's back panel (polaroid,
+               note, or doodle) to slide between the caption/reaction page
+               and the reply page — same effect as tapping the arrow tabs,
+               just via touch. Delegated once at the document level so it
+               automatically covers every card without per-card wiring. A
+               vertical scroll inside the panel, or a small accidental
+               drag, is ignored — only a clear, mostly-horizontal swipe
+               past the threshold counts. */
+            (function setupBackPanelSwipe() {
+                const SWIPE_THRESHOLD = 42;
+                let startX = 0,
+                    startY = 0,
+                    activePanel = null;
+                document.addEventListener('touchstart', (e) => {
+                    const panel = e.target.closest && e.target.closest('.back-panels');
+                    if (!panel) { activePanel = null;
+                        return; }
+                    activePanel = panel;
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                }, { passive: true });
+                document.addEventListener('touchend', (e) => {
+                    if (!activePanel) return;
+                    const panel = activePanel;
+                    activePanel = null;
+                    const touch = e.changedTouches[0];
+                    const dx = touch.clientX - startX;
+                    const dy = touch.clientY - startY;
+                    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+                    if (dx < 0) panel.classList.add('showing-reply');
+                    else panel.classList.remove('showing-reply');
+                }, { passive: true });
+            })();
+
             if (supportsHover && !prefersReducedMotion) {
                 let lastTrailAt = 0;
                 document.addEventListener('mousemove', (e) => {
@@ -9925,7 +10002,10 @@
                     ${note.audio_url ? `<div class="note-voice"></div>` : ''}
                     ${note.reaction ? `<span class="note-reaction-badge">${note.reaction}</span>` : ''}
                     <span class="note-author-badge author-${effectiveAuthor}${hasSignature(effectiveAuthor) ? ' has-sig' : ''}" title="${escapeHtml(authorLabel(effectiveAuthor))}" aria-label="${escapeHtml(authorLabel(effectiveAuthor))}">${sigAvatarHTML(effectiveAuthor, 27) || (effectiveAuthor === '2' ? NOTE_AUTHOR_2_LETTER : NOTE_AUTHOR_1_LETTER)}</span>
-                    <span class="note-date">${dateLabel}</span>
+                    <div class="note-footer-row">
+                      ${note.reply_audio_url ? `<button type="button" class="caption-voice-play note-reply-voice-play" aria-label="Play voice reply" data-src="${note.reply_audio_url}">${CAPTION_PLAY_ICON}</button>` : ''}
+                      <span class="note-date">${dateLabel}</span>
+                    </div>
                   </div>
                   <div class="note-face note-back">
                     <div class="back-panels">
@@ -9960,6 +10040,7 @@
                         const player = buildVoicePlayer(note.audio_url);
                         audioEl.appendChild(player);
                     }
+                    wireCaptionPlayButton(wrap.querySelector('.note-reply-voice-play'));
                     const backPanels = wrap.querySelector('.back-panels');
                     const replyTabBtn = wrap.querySelector('.tab-arrow-next');
                     const backTabBtn = wrap.querySelector('.tab-arrow-prev');
@@ -9994,8 +10075,13 @@
                                 },
                                 onRestore: () => { note.reply_audio_url = v.url;
                                     note.reply_audio_path = v.path;
-                                    renderNoteReplyVoice(v); }
+                                    renderNoteReplyVoice(v);
+                                    ensureSimpleVoiceButton(wrap, { url: v.url, selector: '.note-reply-voice-play',
+                                        container: '.note-footer-row', ariaLabel: 'Play voice reply',
+                                        insertFirst: true }); }
                             });
+                            ensureSimpleVoiceButton(wrap, { url: null, selector: '.note-reply-voice-play',
+                                container: '.note-footer-row', ariaLabel: 'Play voice reply', insertFirst: true });
                         });
                     }
                     renderNoteReplyVoice(note.reply_audio_url ? { url: note.reply_audio_url,
@@ -10009,6 +10095,8 @@
                             await supabase.from(NOTES_TABLE).update({ reply_audio_url: url, reply_audio_path: path })
                                 .eq('id', note.id);
                             renderNoteReplyVoice({ url, path });
+                            ensureSimpleVoiceButton(wrap, { url, selector: '.note-reply-voice-play',
+                                container: '.note-footer-row', ariaLabel: 'Play voice reply', insertFirst: true });
                             if (oldPath && oldPath !== path) supabase.storage.from(VOICE_BUCKET).remove([oldPath])
                                 .catch(() => {});
                             showToast('Voice reply saved!');
@@ -10749,10 +10837,15 @@
                     <button class="doodle-remove" type="button">✕</button>
                     <img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption ? `: ${escapeHtml(d.caption)}` : ''}" loading="lazy" decoding="async">
                     <div class="doodle-caption-preview">${escapeHtml(d.caption || 'A little doodle ✨')}</div>
-                    ${d.voice_url ? `<div class="note-voice doodle-caption-voice"></div>` : ''}
                     ${d.reaction ? `<span class="doodle-reaction-badge">${d.reaction}</span>` : ''}
-                    <span class="doodle-author-badge author-${author}${hasSignature(author) ? ' has-sig' : ''}">${sigAvatarHTML(author, 25) || `By ${author === '2' ? 'M' : 'J'}`}</span>
-                    <span class="doodle-date">${date}</span>
+                    <div class="doodle-author-row">
+                      <span class="doodle-author-badge author-${author}${hasSignature(author) ? ' has-sig' : ''}">${sigAvatarHTML(author, 25) || `By ${author === '2' ? 'M' : 'J'}`}</span>
+                      ${d.voice_url ? `<button type="button" class="caption-voice-play doodle-voice-c" aria-label="Play voice caption" data-src="${d.voice_url}"><span class="voice-tag">C</span>${CAPTION_PLAY_ICON}</button>` : ''}
+                    </div>
+                    <div class="doodle-date-row">
+                      ${d.reply_audio_url ? `<button type="button" class="caption-voice-play doodle-voice-r" aria-label="Play voice reply" data-src="${d.reply_audio_url}"><span class="voice-tag">R</span>${CAPTION_PLAY_ICON}</button>` : ''}
+                      <span class="doodle-date">${date}</span>
+                    </div>
                   </div>
                   <div class="doodle-face doodle-back">
                     <div class="back-panels">
@@ -10795,11 +10888,8 @@
                         captionEdit = wrap.querySelector('.doodle-caption-edit'),
                         back = wrap.querySelector('.note-flip-back-btn'),
                         download = wrap.querySelector('.doodle-download');
-                    const doodleCaptionVoiceEl = wrap.querySelector('.doodle-caption-voice');
-                    if (doodleCaptionVoiceEl && d.voice_url) {
-                        doodleCaptionVoiceEl.appendChild(buildVoicePlayer(d.voice_url));
-                        doodleCaptionVoiceEl.addEventListener('click', (e) => e.stopPropagation());
-                    }
+                    wireCaptionPlayButton(wrap.querySelector('.doodle-voice-c'));
+                    wireCaptionPlayButton(wrap.querySelector('.doodle-voice-r'));
                     const doodleReactionBadge = wrap.querySelector('.doodle-reaction-badge');
                     if (doodleReactionBadge) {
                         wireReactionVoiceSticker(doodleReactionBadge, {
@@ -15080,21 +15170,51 @@
                 });
             }
 
-            function ensureCaptionPlayButton(wrap, voiceUrl) {
+            function ensureFrontVoiceButton(wrap, { url, className, side, label, ariaLabel }) {
                 let row = wrap.querySelector('.cap-preview-row');
-                let btn = wrap.querySelector('.caption-voice-play');
-                if (!voiceUrl) { if (btn) btn.remove();
+                let btn = wrap.querySelector('.' + className);
+                if (!url) { if (btn) btn.remove();
                     return; }
                 if (!btn && row) {
                     btn = document.createElement('button');
                     btn.type = 'button';
-                    btn.className = 'caption-voice-play';
-                    btn.setAttribute('aria-label', 'Play voice caption');
-                    btn.innerHTML = CAPTION_PLAY_ICON;
-                    row.appendChild(btn);
+                    btn.className = 'caption-voice-play ' + className;
+                    btn.setAttribute('aria-label', ariaLabel);
+                    btn.innerHTML = `<span class="voice-tag">${label}</span>${CAPTION_PLAY_ICON}`;
+                    if (side === 'left') row.insertBefore(btn, row.firstChild);
+                    else row.appendChild(btn);
                 }
-                if (btn) { btn.dataset.src = voiceUrl;
+                if (btn) { btn.dataset.src = url;
                     wireCaptionPlayButton(btn); }
+            }
+
+            function ensureSimpleVoiceButton(wrap, { url, selector, container, ariaLabel, insertFirst }) {
+                let btn = wrap.querySelector(selector);
+                if (!url) { if (btn) btn.remove();
+                    return; }
+                if (!btn) {
+                    const parent = wrap.querySelector(container);
+                    if (!parent) return;
+                    btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'caption-voice-play' + selector.replace(/^\./, ' ');
+                    btn.setAttribute('aria-label', ariaLabel);
+                    btn.innerHTML = CAPTION_PLAY_ICON;
+                    if (insertFirst) parent.insertBefore(btn, parent.firstChild);
+                    else parent.appendChild(btn);
+                }
+                btn.dataset.src = url;
+                wireCaptionPlayButton(btn);
+            }
+
+            function ensureCaptionPlayButton(wrap, voiceUrl) {
+                ensureFrontVoiceButton(wrap, { url: voiceUrl, className: 'caption-voice-c', side: 'left',
+                    label: 'C', ariaLabel: 'Play voice caption' });
+            }
+
+            function ensureReplyPlayButton(wrap, voiceUrl) {
+                ensureFrontVoiceButton(wrap, { url: voiceUrl, className: 'caption-voice-r', side: 'right',
+                    label: 'R', ariaLabel: 'Play voice reply' });
             }
 
             /* ─── Voice stickers on reaction badges ───
@@ -16516,8 +16636,9 @@
                     ${(photo.surprise && !photo.revealed) ? `<canvas class="scratch-layer" aria-label="Scratch to reveal the surprise"></canvas><div class="scratch-hint"><span class="scratch-hint-emoji">🎁</span><span>${escapeHtml(photo.hintText || 'scratch to reveal')}</span></div>` : ''}
                   </div>
                   <div class="cap-preview-row">
+                    ${photo.voiceUrl && !(photo.surprise && !photo.revealed) ? `<button type="button" class="caption-voice-play caption-voice-c" aria-label="Play voice caption" data-src="${photo.voiceUrl}"><span class="voice-tag">C</span>${CAPTION_PLAY_ICON}</button>` : ''}
                     <div class="cap-preview">${(photo.surprise && !photo.revealed) ? 'a surprise is waiting... 🎁' : escapeHtml(photo.caption)}</div>
-                    ${photo.voiceUrl && !(photo.surprise && !photo.revealed) ? `<button type="button" class="caption-voice-play" aria-label="Play voice caption" data-src="${photo.voiceUrl}"><svg class="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><svg class="pause-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>` : ''}
+                    ${photo.replyAudioUrl && !(photo.surprise && !photo.revealed) ? `<button type="button" class="caption-voice-play caption-voice-r" aria-label="Play voice reply" data-src="${photo.replyAudioUrl}"><span class="voice-tag">R</span>${CAPTION_PLAY_ICON}</button>` : ''}
                   </div>
                 </div>
                 <div class="face back">
@@ -16603,7 +16724,7 @@
                     else photoImg.addEventListener('load', markLoaded);
                 }
 
-                wireCaptionPlayButton(wrap.querySelector('.caption-voice-play'));
+                wrap.querySelectorAll('.caption-voice-play').forEach(wireCaptionPlayButton);
 
                 replyTabBtn.addEventListener('click', (e) => { e.stopPropagation();
                     backPanels.classList.add('showing-reply'); });
@@ -16641,8 +16762,10 @@
                             onConfirmRemove: () => savePhotoReplyVoice(photo, null),
                             onRestore: () => { photo.replyAudioUrl = v.url;
                                 photo.replyAudioPath = v.path;
-                                renderPhotoReplyVoice(v); }
+                                renderPhotoReplyVoice(v);
+                                ensureReplyPlayButton(wrap, v.url); }
                         });
+                        ensureReplyPlayButton(wrap, null);
                     });
                 }
                 renderPhotoReplyVoice(photo.replyAudioUrl ? { url: photo.replyAudioUrl, path: photo.replyAudioPath } :
@@ -16651,6 +16774,7 @@
                     button: replyMicBtn,
                     onSaved: async({ url, path }) => {
                         await savePhotoReplyVoice(photo, { url, path });
+                        ensureReplyPlayButton(wrap, url);
                         renderPhotoReplyVoice({ url, path });
                         showToast('Voice reply saved!');
                         haptic(12);
