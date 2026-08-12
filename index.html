@@ -6972,7 +6972,7 @@
         }
         .face.front {
             position: relative;
-            min-height: 240px;
+            min-height: 210px;
             justify-content: center;
         }
         .photo-frame {
@@ -7196,6 +7196,55 @@
         }
         .mood-badge:hover {
             background: rgba(255, 253, 249, 0.75);
+        }
+
+        /* ─── Voice stickers on reaction badges ───
+           Shared visual states for the mood/reaction badges on photos,
+           notes, and doodles once they can carry an attached voice clip:
+           a small dot once a clip exists, a red pulse while recording,
+           and a soft pulse while the clip is playing. */
+        .mood-badge,
+        .note-reaction-badge,
+        .doodle-reaction-badge {
+            cursor: pointer;
+            touch-action: none;
+            user-select: none;
+        }
+        .note-reaction-badge,
+        .doodle-reaction-badge {
+            padding: 2px;
+            border-radius: 50%;
+        }
+        .mood-badge.has-voice-sticker::after,
+        .note-reaction-badge.has-voice-sticker::after,
+        .doodle-reaction-badge.has-voice-sticker::after {
+            content: '';
+            position: absolute;
+            right: -1px;
+            bottom: -1px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--rose-deep);
+            box-shadow: 0 0 0 2px var(--paper, #fffaf3);
+        }
+        .mood-badge.sticker-playing,
+        .note-reaction-badge.sticker-playing,
+        .doodle-reaction-badge.sticker-playing {
+            animation: stickerPulse 0.9s ease-in-out infinite;
+        }
+        .mood-badge.recording-sticker,
+        .note-reaction-badge.recording-sticker,
+        .doodle-reaction-badge.recording-sticker {
+            animation: stickerRecord 0.6s ease-in-out infinite;
+        }
+        @keyframes stickerPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        @keyframes stickerRecord {
+            0%, 100% { box-shadow: 0 0 0 3px rgba(214, 69, 69, 0.35); }
+            50% { box-shadow: 0 0 0 7px rgba(214, 69, 69, 0.05); }
         }
 
         .flip-back-btn {
@@ -8771,6 +8820,7 @@
         <div class="glass-modal hidden" id="angerHistoryModal">
             <div class="glass-card anger-history-card">
                 <button class="style-modal-close" id="angerHistoryClose" type="button" aria-label="Close">✕</button>
+                <button type="button" class="glass-back-btn" id="angerHistoryBack">‹ back</button>
                 <p class="glass-anger-title">Fight history</p>
                 <div class="anger-history-list" id="angerHistoryList"></div>
                 <p class="anger-history-empty hidden" id="angerHistoryEmpty">Nothing logged yet — hopefully it stays that way 🤍</p>
@@ -9454,6 +9504,8 @@
                         path: row.image_path,
                         favorite: !!row.is_favorite,
                         mood: row.mood || null,
+                        moodAudioUrl: row.mood_audio_url || null,
+                        moodAudioPath: row.mood_audio_path || null,
                         surprise: !!row.is_surprise,
                         revealed: row.is_revealed === undefined ? true : !!row.is_revealed,
                         hintText: row.surprise_hint || '',
@@ -9501,6 +9553,8 @@
                     path: inserted.image_path,
                     favorite: !!inserted.is_favorite,
                     mood: inserted.mood || null,
+                    moodAudioUrl: inserted.mood_audio_url || null,
+                    moodAudioPath: inserted.mood_audio_path || null,
                     surprise: !!inserted.is_surprise,
                     revealed: !!inserted.is_revealed,
                     hintText: inserted.surprise_hint || '',
@@ -9566,6 +9620,20 @@
                 const { error } = await supabase.from(TABLE).update({ mood: photo.mood }).eq('id', photo.id);
                 if (error) { console.error('Could not save mood:', error);
                     showToast('Could not save that mood tag.', { type: 'error' }); }
+            }
+
+            async function savePhotoMoodAudio(photo, voice) {
+                if (!supabase) return;
+                const oldPath = photo.moodAudioPath;
+                photo.moodAudioUrl = voice ? voice.url : null;
+                photo.moodAudioPath = voice ? voice.path : null;
+                const { error } = await supabase.from(TABLE).update({ mood_audio_url: photo.moodAudioUrl,
+                        mood_audio_path: photo.moodAudioPath })
+                    .eq('id', photo.id);
+                if (error) { console.error('Could not save voice sticker:', error);
+                    showToast('Could not save that voice sticker.', { type: 'error' }); return; }
+                if (oldPath && oldPath !== photo.moodAudioPath) supabase.storage.from(VOICE_BUCKET).remove([oldPath])
+                    .catch(() => {});
             }
 
             async function saveSurpriseRevealed(photo) {
@@ -9777,6 +9845,20 @@
                     showToast('Could not save that reaction.', { type: 'error' }); }
             }
 
+            async function saveNoteReactionAudio(note, voice) {
+                if (!supabase) return;
+                const oldPath = note.reaction_audio_path;
+                note.reaction_audio_url = voice ? voice.url : null;
+                note.reaction_audio_path = voice ? voice.path : null;
+                const { error } = await supabase.from(NOTES_TABLE).update({ reaction_audio_url: note
+                        .reaction_audio_url, reaction_audio_path: note.reaction_audio_path })
+                    .eq('id', note.id);
+                if (error) { console.error('Could not save voice sticker:', error);
+                    showToast('Could not save that voice sticker.', { type: 'error' }); return; }
+                if (oldPath && oldPath !== note.reaction_audio_path) supabase.storage.from(VOICE_BUCKET).remove([
+                    oldPath]).catch(() => {});
+            }
+
             function renderNotes(notes) {
                 notesGrid.innerHTML = '';
                 if (!notes.length && !notesSkeletonShown && allNotes.length === 0) {
@@ -9860,6 +9942,13 @@
                     const replyVoiceBox = wrap.querySelector('.note-reply-voice');
                     const reactionBtns = wrap.querySelectorAll('.note-reaction-picker button[data-reaction]');
                     const flipBackBtn = wrap.querySelector('.note-flip-back-btn');
+                    const initialNoteReactionBadge = wrap.querySelector('.note-reaction-badge');
+                    if (initialNoteReactionBadge) {
+                        wireReactionVoiceSticker(initialNoteReactionBadge, {
+                            getUrl: () => note.reaction_audio_url,
+                            onSaved: (voice) => saveNoteReactionAudio(note, voice)
+                        });
+                    }
 
                     replyTabBtn.addEventListener('click', (e) => { e.stopPropagation();
                         backPanels.classList.add('showing-reply'); });
@@ -9906,6 +9995,7 @@
                                 backTabBtn
                             ].includes(e.target)) return;
                         if (e.target.closest && e.target.closest('.note-reaction-picker')) return;
+                        if (e.target.closest && e.target.closest('.note-reaction-badge')) return;
                         if (e.target.closest && e.target.closest('.note-voice')) return;
                         if (e.target.closest && e.target.closest('.note-reply-voice')) return;
                         flipEl.classList.toggle('flipped');
@@ -9985,7 +10075,15 @@
                                 badge.className = 'note-reaction-badge';
                                 wrap.querySelector('.note-front').appendChild(badge); }
                             badge.textContent = note.reaction;
-                        } else if (badge) { badge.remove(); }
+                            wireReactionVoiceSticker(badge, {
+                                getUrl: () => note.reaction_audio_url,
+                                onSaved: (voice) => saveNoteReactionAudio(note, voice)
+                            });
+                        } else if (badge) {
+                            badge.remove();
+                            if (note.reaction_audio_url || note.reaction_audio_path) await saveNoteReactionAudio(
+                                note, null);
+                        }
                         haptic(8);
                         await saveNoteReaction(note);
                     }
@@ -10676,6 +10774,21 @@
                         doodleCaptionVoiceEl.appendChild(buildVoicePlayer(d.voice_url));
                         doodleCaptionVoiceEl.addEventListener('click', (e) => e.stopPropagation());
                     }
+                    const doodleReactionBadge = wrap.querySelector('.doodle-reaction-badge');
+                    if (doodleReactionBadge) {
+                        wireReactionVoiceSticker(doodleReactionBadge, {
+                            getUrl: () => d.reaction_audio_url,
+                            onSaved: async(voice) => {
+                                const oldPath = d.reaction_audio_path;
+                                d.reaction_audio_url = voice.url;
+                                d.reaction_audio_path = voice.path;
+                                await updateDoodle(d, { reaction_audio_url: voice.url, reaction_audio_path: voice
+                                    .path });
+                                if (oldPath && oldPath !== voice.path) supabase.storage.from(VOICE_BUCKET).remove([
+                                    oldPath]).catch(() => {});
+                            }
+                        });
+                    }
                     replyTabBtn.addEventListener('click', (e) => { e.stopPropagation();
                         backPanels.classList.add('showing-reply'); });
                     backTabBtn.addEventListener('click', (e) => { e.stopPropagation();
@@ -10713,7 +10826,7 @@
                         }
                     });
                     flip.addEventListener('click', e => { if (e.target.closest(
-                            'button,textarea,img,audio,.voice-attachment')) return;
+                            'button,textarea,img,audio,.voice-attachment,.doodle-reaction-badge')) return;
                         flip.classList.toggle('flipped');
                         if (!flip.classList.contains('flipped')) backPanels.classList.remove('showing-reply'); });
                     flip.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target ===
@@ -10755,7 +10868,16 @@
                     wrap.querySelectorAll('[data-reaction]').forEach(b => b.addEventListener('click', async() => {
                         d.reaction = d.reaction === b.dataset.reaction ? null : b.dataset.reaction;
                         haptic(8);
-                        await updateDoodle(d, { reaction: d.reaction });
+                        if (!d.reaction && (d.reaction_audio_url || d.reaction_audio_path)) {
+                            const oldPath = d.reaction_audio_path;
+                            d.reaction_audio_url = null;
+                            d.reaction_audio_path = null;
+                            await updateDoodle(d, { reaction: d.reaction, reaction_audio_url: null,
+                                reaction_audio_path: null });
+                            if (oldPath) supabase.storage.from(VOICE_BUCKET).remove([oldPath]).catch(() => {});
+                        } else {
+                            await updateDoodle(d, { reaction: d.reaction });
+                        }
                         renderDoodlesFiltered();
                     }));
                     const doodleCustomEmojiInput = wrap.querySelector('.doodle-reaction-picker .reaction-plus-input');
@@ -14148,6 +14270,7 @@
                 angerHistoryBtn = document.getElementById('angerHistoryBtn'),
                 angerHistoryModal = document.getElementById('angerHistoryModal'),
                 angerHistoryClose = document.getElementById('angerHistoryClose'),
+                angerHistoryBack = document.getElementById('angerHistoryBack'),
                 angerHistoryList = document.getElementById('angerHistoryList'),
                 angerHistoryEmpty = document.getElementById('angerHistoryEmpty');
             let glassSelectedWho = null;
@@ -14554,6 +14677,7 @@
                 glassModal.classList.remove('hidden');
             }
             angerHistoryClose.addEventListener('click', closeAngerHistory);
+            angerHistoryBack.addEventListener('click', closeAngerHistory);
             angerHistoryModal.addEventListener('click', e => { if (e.target === angerHistoryModal)
                     closeAngerHistory(); });
 
@@ -14945,6 +15069,145 @@
                 }
                 if (btn) { btn.dataset.src = voiceUrl;
                     wireCaptionPlayButton(btn); }
+            }
+
+            /* ─── Voice stickers on reaction badges ───
+               Press-and-hold any reaction badge (a photo's mood emoji, a
+               note's reaction, a doodle's reaction) to record a very short
+               clip attached to that reaction; a plain tap plays it back if
+               one exists. This is wired onto the badge itself, after the
+               reaction has already been saved and rendered — so it works
+               identically whether the emoji came from the fixed picker or
+               the custom "+" one, since by then it's just a badge.
+               `getUrl()` returns the currently-attached clip's url (or
+               null), `onSaved(voice)` persists a newly recorded
+               `{url,path}`, and `bucket` defaults to VOICE_BUCKET. */
+            const REACTION_STICKER_MAX_SECONDS = 6;
+            const REACTION_STICKER_HOLD_MS = 350;
+            let activeStickerPlayback = null;
+
+            function wireReactionVoiceSticker(badge, { getUrl, onSaved, bucket }) {
+                if (!badge || badge.dataset.stickerWired) { if (badge) refreshStickerIndicator(badge, getUrl);
+                    return; }
+                badge.dataset.stickerWired = '1';
+                let holdTimer = null,
+                    recorder = null,
+                    stream = null,
+                    chunks = [],
+                    recording = false,
+                    startedAt = 0,
+                    capTimer = null,
+                    audio = null,
+                    heldLongEnough = false;
+
+                refreshStickerIndicator(badge, getUrl);
+
+                function cancelHold() { clearTimeout(holdTimer);
+                    holdTimer = null; }
+
+                async function beginRecording() {
+                    heldLongEnough = true;
+                    if (!window.MediaRecorder || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        showToast('Voice recording isn\'t supported in this browser.', { type: 'error' });
+                        return;
+                    }
+                    if (!supabase) { setupBanner.classList.add('show');
+                        return; }
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    } catch (err) {
+                        showToast('Microphone access is needed to record a voice sticker.', { type: 'error' });
+                        return;
+                    }
+                    const mimeType = pickAudioMimeType();
+                    chunks = [];
+                    recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+                    recorder.addEventListener('dataavailable', e => { if (e.data && e.data.size > 0) chunks.push(e
+                            .data); });
+                    recorder.addEventListener('stop', finishRecording);
+                    recorder.start();
+                    recording = true;
+                    startedAt = Date.now();
+                    badge.classList.add('recording-sticker');
+                    haptic(10);
+                    capTimer = setTimeout(stopRecording, REACTION_STICKER_MAX_SECONDS * 1000);
+                }
+
+                function stopRecording() {
+                    if (!recording || !recorder) return;
+                    clearTimeout(capTimer);
+                    recorder.stop();
+                    recording = false;
+                    if (stream) { stream.getTracks().forEach(t => t.stop());
+                        stream = null; }
+                    badge.classList.remove('recording-sticker');
+                }
+
+                async function finishRecording() {
+                    if (!chunks.length) return;
+                    const mimeType = recorder.mimeType || 'audio/webm';
+                    const blob = new Blob(chunks, { type: mimeType });
+                    chunks = [];
+                    if (blob.size < 500 || (Date.now() - startedAt) < 300) return;
+                    const ext = mimeType.includes('mp4') ? 'm4a' : (mimeType.includes('ogg') ? 'ogg' : 'webm');
+                    const path = `${crypto.randomUUID()}.${ext}`;
+                    try {
+                        const { error: uploadError } = await supabase.storage.from(bucket || VOICE_BUCKET).upload(
+                            path, blob, { contentType: mimeType });
+                        if (uploadError) throw uploadError;
+                        const { data: urlData } = supabase.storage.from(bucket || VOICE_BUCKET).getPublicUrl(path);
+                        await onSaved({ url: urlData.publicUrl, path });
+                        refreshStickerIndicator(badge, getUrl);
+                        showToast('Voice sticker saved!');
+                        haptic(15);
+                    } catch (err) {
+                        console.error('Could not save voice sticker:', err);
+                        showToast('Could not save that voice sticker.', { type: 'error' });
+                    }
+                }
+
+                function playSticker() {
+                    const url = getUrl();
+                    if (!url) return;
+                    if (activeStickerPlayback && activeStickerPlayback.audio !== audio) {
+                        activeStickerPlayback.audio.pause();
+                        activeStickerPlayback.badge.classList.remove('sticker-playing');
+                    }
+                    if (!audio || audio.src !== url) {
+                        audio = new Audio(url);
+                        audio.addEventListener('ended', () => badge.classList.remove('sticker-playing'));
+                        audio.addEventListener('pause', () => badge.classList.remove('sticker-playing'));
+                    }
+                    if (badge.classList.contains('sticker-playing')) {
+                        audio.pause();
+                    } else {
+                        activeStickerPlayback = { audio, badge };
+                        audio.currentTime = 0;
+                        audio.play().catch(() => {});
+                        badge.classList.add('sticker-playing');
+                    }
+                }
+
+                badge.addEventListener('pointerdown', (e) => {
+                    if (e.button !== undefined && e.button !== 0) return;
+                    heldLongEnough = false;
+                    holdTimer = setTimeout(beginRecording, REACTION_STICKER_HOLD_MS);
+                });
+                ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
+                    badge.addEventListener(evt, () => {
+                        if (holdTimer) { cancelHold();
+                            if (evt === 'pointerup' && !heldLongEnough) playSticker();
+                            return; }
+                        if (recording) stopRecording();
+                    });
+                });
+                badge.addEventListener('click', (e) => { e.stopPropagation();
+                    e.preventDefault(); });
+                badge.addEventListener('contextmenu', (e) => e.preventDefault());
+            }
+
+            function refreshStickerIndicator(badge, getUrl) {
+                badge.classList.toggle('has-voice-sticker', !!getUrl());
             }
 
             let countdownInProgress = false;
@@ -16261,6 +16524,13 @@
                 const downloadBtn = wrap.querySelector('.card-download');
                 const flipBackBtn = wrap.querySelector('.flip-back-btn');
                 const moodBtns = wrap.querySelectorAll('.mood-picker button');
+                const initialMoodBadge = wrap.querySelector('.mood-badge');
+                if (initialMoodBadge) {
+                    wireReactionVoiceSticker(initialMoodBadge, {
+                        getUrl: () => photo.moodAudioUrl,
+                        onSaved: (voice) => savePhotoMoodAudio(photo, voice)
+                    });
+                }
                 const photoImg = wrap.querySelector('.photo-frame img');
                 const photoFrame = wrap.querySelector('.photo-frame');
                 if (photoImg) {
@@ -16341,6 +16611,7 @@
                             flipBackBtn, replyTabBtn, backTabBtn
                         ].includes(e.target)) return;
                     if (e.target.closest && e.target.closest('.mood-picker')) return;
+                    if (e.target.closest && e.target.closest('.mood-badge')) return;
                     if (e.target.closest && e.target.closest('.voice-attachment')) return;
                     if (e.target.closest && e.target.closest('.dual-mic-row')) return;
                     card.classList.toggle('flipped');
@@ -16430,7 +16701,14 @@
                             badge.className = 'mood-badge';
                             frame.appendChild(badge); }
                         badge.textContent = photo.mood;
-                    } else if (badge) { badge.remove(); }
+                        wireReactionVoiceSticker(badge, {
+                            getUrl: () => photo.moodAudioUrl,
+                            onSaved: (voice) => savePhotoMoodAudio(photo, voice)
+                        });
+                    } else if (badge) {
+                        badge.remove();
+                        if (photo.moodAudioUrl || photo.moodAudioPath) await savePhotoMoodAudio(photo, null);
+                    }
                     haptic(8);
                     await savePhotoMood(photo);
                 }
