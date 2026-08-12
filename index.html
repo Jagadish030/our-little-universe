@@ -1782,9 +1782,29 @@
         .feeling-note .feeling-entry .feeling-text {
             max-width: clamp(90px, 24vw, 240px);
             overflow: hidden;
-            text-overflow: ellipsis;
             white-space: nowrap;
             display: inline-block;
+            vertical-align: bottom;
+            -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 4px, #000 calc(100% - 4px), transparent 100%);
+            mask-image: linear-gradient(90deg, transparent 0, #000 4px, #000 calc(100% - 4px), transparent 100%);
+        }
+        .feeling-note .feeling-entry .feeling-text-inner {
+            display: inline-block;
+            white-space: nowrap;
+            will-change: transform;
+        }
+        .feeling-note .feeling-entry .feeling-text.marquee .feeling-text-inner {
+            animation: feelingMarquee var(--marquee-duration, 6s) ease-in-out infinite;
+        }
+        @keyframes feelingMarquee {
+            0%, 12% { transform: translateX(0); }
+            45%, 55% { transform: translateX(var(--marquee-shift, 0)); }
+            88%, 100% { transform: translateX(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .feeling-note .feeling-entry .feeling-text.marquee .feeling-text-inner {
+                animation: none;
+            }
         }
         .feeling-note .feeling-entry .feeling-author {
             font-weight: 700;
@@ -3451,13 +3471,16 @@
             display: flex;
             flex-direction: column;
         }
+        .doodle-image-wrap {
+            position: relative;
+        }
         .doodle-image {
             width: 100%;
             aspect-ratio: 1/1;
             object-fit: contain;
             background: #fffdf7;
             display: block;
-            cursor: zoom-in;
+            cursor: pointer;
         }
         .doodle-caption-preview {
             position: static;
@@ -7257,7 +7280,7 @@
         .note-reaction-badge,
         .doodle-reaction-badge {
             cursor: pointer;
-            touch-action: none;
+            touch-action: pan-y;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
@@ -8209,13 +8232,13 @@
                     <span class="feeling-note-icon">💭</span>
                     <span class="feeling-empty-hint" id="feelingEmptyHint">tap to share how you're feeling</span>
                     <span class="feeling-entry author-j hidden" id="feelingEntryJ">
-                        <span class="feeling-text" id="feelingTextJ"></span>
+                        <span class="feeling-text" id="feelingTextJ"><span class="feeling-text-inner" id="feelingTextInnerJ"></span></span>
                         <span class="feeling-author">— J</span>
                         <button type="button" class="feeling-clear" data-feeling="j" aria-label="Delete J's feeling">×</button>
                     </span>
                     <span class="feeling-sep hidden" id="feelingSep">|</span>
                     <span class="feeling-entry author-m hidden" id="feelingEntryM">
-                        <span class="feeling-text" id="feelingTextM"></span>
+                        <span class="feeling-text" id="feelingTextM"><span class="feeling-text-inner" id="feelingTextInnerM"></span></span>
                         <span class="feeling-author">— M</span>
                         <button type="button" class="feeling-clear" data-feeling="m" aria-label="Delete M's feeling">×</button>
                     </span>
@@ -9477,8 +9500,54 @@
                     const dx = touch.clientX - startX;
                     const dy = touch.clientY - startY;
                     if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.2) return;
-                    if (dx < 0) panel.classList.add('showing-reply');
-                    else panel.classList.remove('showing-reply');
+                    const onReplyPage = panel.classList.contains('showing-reply');
+                    const goingForward = dx < 0;
+                    // Circular navigation: front → page 1 → page 2 → front …
+                    // Swiping "forward" past the last page, or "backward"
+                    // past the first page, flips the whole card instead of
+                    // doing nothing.
+                    if (goingForward && !onReplyPage) {
+                        panel.classList.add('showing-reply');
+                    } else if (!goingForward && onReplyPage) {
+                        panel.classList.remove('showing-reply');
+                    } else {
+                        const root = panel.closest('.polaroid, .note-flip, .doodle-flip');
+                        if (root) root.classList.remove('flipped');
+                        panel.classList.remove('showing-reply');
+                    }
+                }, { passive: true });
+            })();
+
+            /* Swipe left or right (either direction) on the FRONT of any
+               polaroid, note, or doodle to flip it — same effect as
+               tapping it, just via touch. Scoped to the front only: on
+               the back, a swipe already switches between the caption and
+               reply pages (above), so this doesn't compete with that.
+               Re-dispatches a synthetic click on the exact element the
+               touch started on, so the card's own flip() handler decides
+               whether it counts (buttons, badges, and pickers are already
+               excluded there) instead of duplicating that logic here. */
+            (function setupFrontFaceSwipeFlip() {
+                const SWIPE_THRESHOLD = 40;
+                let startX = 0,
+                    startY = 0,
+                    startEl = null;
+                document.addEventListener('touchstart', (e) => {
+                    const front = e.target.closest && e.target.closest('.face.front, .note-front, .doodle-front');
+                    startEl = front ? e.target : null;
+                    if (!front) return;
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                }, { passive: true });
+                document.addEventListener('touchend', (e) => {
+                    if (!startEl) return;
+                    const el = startEl;
+                    startEl = null;
+                    const touch = e.changedTouches[0];
+                    const dx = touch.clientX - startX;
+                    const dy = touch.clientY - startY;
+                    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+                    el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
                 }, { passive: true });
             })();
 
@@ -10835,7 +10904,10 @@
                   <div class="doodle-face doodle-front">
                     <button class="doodle-fav" type="button">${d.favorite ? '♥' : '♡'}</button>
                     <button class="doodle-remove" type="button">✕</button>
-                    <img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption ? `: ${escapeHtml(d.caption)}` : ''}" loading="lazy" decoding="async">
+                    <div class="doodle-image-wrap">
+                      <img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption ? `: ${escapeHtml(d.caption)}` : ''}" loading="lazy" decoding="async">
+                      <button class="expand-btn doodle-expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>
+                    </div>
                     <div class="doodle-caption-preview">${escapeHtml(d.caption || 'A little doodle ✨')}</div>
                     ${d.reaction ? `<span class="doodle-reaction-badge">${d.reaction}</span>` : ''}
                     <div class="doodle-author-row">
@@ -10877,6 +10949,7 @@
               `;
                     const flip = wrap.querySelector('.doodle-flip'),
                         image = wrap.querySelector('.doodle-image'),
+                        doodleExpandBtn = wrap.querySelector('.doodle-expand-btn'),
                         fav = wrap.querySelector('.doodle-fav'),
                         remove = wrap.querySelector('.doodle-remove'),
                         backPanels = wrap.querySelector('.back-panels'),
@@ -10942,7 +11015,7 @@
                         }
                     });
                     flip.addEventListener('click', e => { if (e.target.closest(
-                            'button,textarea,img,audio,.voice-attachment,.doodle-reaction-badge')) return;
+                            'button,textarea,audio,.voice-attachment,.doodle-reaction-badge')) return;
                         flip.classList.toggle('flipped');
                         if (!flip.classList.contains('flipped')) backPanels.classList.remove('showing-reply'); });
                     flip.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target ===
@@ -10951,11 +11024,14 @@
                             if (!flip.classList.contains('flipped')) backPanels.classList.remove(
                                 'showing-reply'); } });
                     back.addEventListener('click', () => flip.classList.remove('flipped'));
-                    image.addEventListener('click', () => {
-                        currentList = items.map(x => ({ src: x.image_url, caption: x.caption || 'A little doodle' }));
-                        lightboxIndex = items.findIndex(x => x.id === d.id);
-                        openLightbox(lightboxIndex, 'doodle');
-                    });
+                    if (doodleExpandBtn) {
+                        doodleExpandBtn.addEventListener('click', (e) => { e.stopPropagation();
+                            currentList = items.map(x => ({ src: x.image_url, caption: x.caption ||
+                                'A little doodle' }));
+                            lightboxIndex = items.findIndex(x => x.id === d.id);
+                            openLightbox(lightboxIndex, 'doodle');
+                        });
+                    }
                     fav.addEventListener('click', async() => {
                         if (!d.favorite) {
                             const rect = fav.getBoundingClientRect();
@@ -15231,7 +15307,7 @@
                `{url,path}` — or persists `null` to clear it — and
                `bucket` defaults to VOICE_BUCKET. */
             const REACTION_STICKER_MAX_SECONDS = 9;
-            const REACTION_STICKER_HOLD_MS = 350;
+            const REACTION_STICKER_HOLD_MS = 500;
             const REACTION_STICKER_DOUBLE_TAP_MS = 350;
             let activeStickerPlayback = null;
 
@@ -15249,7 +15325,9 @@
                     audio = null,
                     heldLongEnough = false,
                     lastQuickTapAt = 0,
-                    originalText = null;
+                    originalText = null,
+                    holdStartX = 0,
+                    holdStartY = 0;
 
                 refreshStickerIndicator(badge, getUrl);
 
@@ -15370,7 +15448,17 @@
                 badge.addEventListener('pointerdown', (e) => {
                     if (e.button !== undefined && e.button !== 0) return;
                     heldLongEnough = false;
+                    holdStartX = e.clientX;
+                    holdStartY = e.clientY;
                     holdTimer = setTimeout(beginRecording, REACTION_STICKER_HOLD_MS);
+                });
+                badge.addEventListener('pointermove', (e) => {
+                    if (!holdTimer) return;
+                    const movedX = Math.abs(e.clientX - holdStartX);
+                    const movedY = Math.abs(e.clientY - holdStartY);
+                    // A real hold stays put; a scroll drags the finger —
+                    // bail out so this never eats a scroll gesture.
+                    if (movedX > 8 || movedY > 8) cancelHold();
                 });
                 ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
                     badge.addEventListener(evt, () => {
@@ -15471,6 +15559,8 @@
                 const entryM = document.getElementById('feelingEntryM');
                 const textJ = document.getElementById('feelingTextJ');
                 const textM = document.getElementById('feelingTextM');
+                const innerJ = document.getElementById('feelingTextInnerJ');
+                const innerM = document.getElementById('feelingTextInnerM');
                 const sep = document.getElementById('feelingSep');
                 const emptyHint = document.getElementById('feelingEmptyHint');
 
@@ -15478,14 +15568,16 @@
                 const hasM = feelingM && feelingM.trim();
 
                 if (hasJ) {
-                    textJ.textContent = feelingJ.trim();
+                    innerJ.textContent = feelingJ.trim();
                     entryJ.classList.remove('hidden');
+                    setupFeelingMarquee(textJ, innerJ);
                 } else {
                     entryJ.classList.add('hidden');
                 }
                 if (hasM) {
-                    textM.textContent = feelingM.trim();
+                    innerM.textContent = feelingM.trim();
                     entryM.classList.remove('hidden');
+                    setupFeelingMarquee(textM, innerM);
                 } else {
                     entryM.classList.add('hidden');
                 }
@@ -15500,6 +15592,24 @@
                     sep.classList.add('hidden');
                     emptyHint.classList.remove('hidden');
                 }
+            }
+
+            // If a feeling is too long to fit its pill, slide it back and forth
+            // (pause → reveal the tail → pause → reset) instead of clipping it
+            // with an ellipsis, so the whole thing is readable over a few
+            // seconds. J and M are measured and run independently.
+            function setupFeelingMarquee(container, inner) {
+                container.classList.remove('marquee');
+                inner.style.removeProperty('--marquee-shift');
+                inner.style.removeProperty('--marquee-duration');
+                requestAnimationFrame(() => {
+                    const overflow = inner.scrollWidth - container.clientWidth;
+                    if (overflow > 4) {
+                        inner.style.setProperty('--marquee-shift', `-${overflow}px`);
+                        inner.style.setProperty('--marquee-duration', `${Math.min(11, 4 + overflow / 35)}s`);
+                        container.classList.add('marquee');
+                    }
+                });
             }
 
             // Re-check expiry every few minutes so a feeling disappears from an
