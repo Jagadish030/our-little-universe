@@ -1782,29 +1782,9 @@
         .feeling-note .feeling-entry .feeling-text {
             max-width: clamp(90px, 24vw, 240px);
             overflow: hidden;
+            text-overflow: ellipsis;
             white-space: nowrap;
             display: inline-block;
-            vertical-align: bottom;
-            -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 4px, #000 calc(100% - 4px), transparent 100%);
-            mask-image: linear-gradient(90deg, transparent 0, #000 4px, #000 calc(100% - 4px), transparent 100%);
-        }
-        .feeling-note .feeling-entry .feeling-text-inner {
-            display: inline-block;
-            white-space: nowrap;
-            will-change: transform;
-        }
-        .feeling-note .feeling-entry .feeling-text.marquee .feeling-text-inner {
-            animation: feelingMarquee var(--marquee-duration, 6s) ease-in-out infinite;
-        }
-        @keyframes feelingMarquee {
-            0%, 12% { transform: translateX(0); }
-            45%, 55% { transform: translateX(var(--marquee-shift, 0)); }
-            88%, 100% { transform: translateX(0); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .feeling-note .feeling-entry .feeling-text.marquee .feeling-text-inner {
-                animation: none;
-            }
         }
         .feeling-note .feeling-entry .feeling-author {
             font-weight: 700;
@@ -2975,20 +2955,10 @@
             word-break: break-word;
             min-width: 0;
         }
-        .note-footer-row {
+        .note-date {
             position: absolute;
             bottom: 10px;
             right: 12px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .note-footer-row .caption-voice-play {
-            margin-top: 0;
-            width: 13px;
-            height: 13px;
-        }
-        .note-date {
             font-family: 'Quicksand', sans-serif;
             font-size: 0.65rem;
             color: var(--ink-soft);
@@ -3471,16 +3441,13 @@
             display: flex;
             flex-direction: column;
         }
-        .doodle-image-wrap {
-            position: relative;
-        }
         .doodle-image {
             width: 100%;
             aspect-ratio: 1/1;
             object-fit: contain;
             background: #fffdf7;
             display: block;
-            cursor: pointer;
+            cursor: zoom-in;
         }
         .doodle-caption-preview {
             position: static;
@@ -3517,15 +3484,10 @@
         .doodle-caption-edit::placeholder {
             color: #9C8776;
         }
-        .doodle-author-row {
+        .doodle-author-badge {
             position: absolute;
             bottom: 7px;
             left: 9px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .doodle-author-badge {
             padding: .18rem .42rem;
             border-radius: 999px;
             color: var(--white);
@@ -3537,21 +3499,12 @@
         .doodle-author-badge.author-2 {
             background: var(--sage);
         }
-        .doodle-date-row {
+        .doodle-date {
             position: absolute;
             right: 10px;
             bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .doodle-author-row .caption-voice-play,
-        .doodle-date-row .caption-voice-play {
-            margin-top: 0;
-        }
-        .doodle-date {
-            color: #6B5344;
-            font: 600 .64rem 'Quicksand', sans-serif;
+            color: var(--ink-soft);
+            font: .62rem 'Quicksand', sans-serif;
         }
         .doodle-fav,
         .doodle-remove {
@@ -3653,18 +3606,14 @@
                 margin-top: 5px;
                 font-size: .75rem;
             }
-            .doodle-author-row {
+            .doodle-author-badge {
                 left: 6px;
                 bottom: 6px;
-            }
-            .doodle-author-badge {
                 font-size: .55rem;
             }
-            .doodle-date-row {
+            .doodle-date {
                 right: 6px;
                 bottom: 7px;
-            }
-            .doodle-date {
                 font-size: .52rem;
             }
             .doodle-fav,
@@ -7092,6 +7041,61 @@
         .scratch-hint .scratch-hint-emoji {
             font-size: 1.4rem;
         }
+        /* ─── Scheduled reveal (locks a photo/doodle until a future date,
+           auto-reveals itself once that date arrives — no tapping needed,
+           unlike the scratch-card surprise above) ─── */
+        .locked-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 4px;
+            text-align: center;
+            padding: 0 10px;
+            background: linear-gradient(155deg, rgba(107, 83, 68, 0.92), rgba(60, 46, 40, 0.92));
+            backdrop-filter: blur(2px);
+        }
+        .locked-layer .locked-icon {
+            font-size: 1.5rem;
+        }
+        .locked-layer .locked-text {
+            color: #FFFDF9;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
+            font-size: 0.72rem;
+            line-height: 1.35;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+        }
+        .locked-layer .locked-hint {
+            color: rgba(255, 253, 249, 0.85);
+            font-family: 'Caveat', cursive;
+            font-size: 0.95rem;
+            line-height: 1.2;
+        }
+        .schedule-field {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .schedule-field input[type="date"] {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 0.82rem;
+            border: 1px solid var(--card-border, #E3D3C2);
+            border-radius: 8px;
+            padding: 5px 8px;
+            background: var(--white);
+            color: var(--ink);
+        }
+        body.dark-mode .schedule-field input[type="date"] {
+            background: #3a3040;
+            color: #f0dfe3;
+            border-color: rgba(255, 255, 255, .18);
+            color-scheme: dark;
+        }
         .face.front img.loaded {
             opacity: 1;
             filter: none;
@@ -7133,9 +7137,8 @@
         .cap-preview-row .cap-preview {
             padding-top: 0;
         }
-        /* Tiny inline play buttons for a photo's voice caption (left, "C")
-           and voice reply (right, "R") — no border, no padding, just a
-           small tag + icon beside the caption text. */
+        /* Tiny inline play button for a photo's voice caption — no border,
+           no padding, just a small icon beside the caption text. */
         .caption-voice-play {
             background: none;
             border: none;
@@ -7147,24 +7150,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 1px;
-            width: auto;
+            width: 17px;
             height: 17px;
             opacity: 0.75;
         }
         .caption-voice-play:hover {
             opacity: 1;
         }
-        .caption-voice-play .voice-tag {
-            font-family: 'Quicksand', sans-serif;
-            font-size: 0.55rem;
-            font-weight: 800;
-            line-height: 1;
-            letter-spacing: 0.02em;
-        }
         .caption-voice-play svg {
-            width: 13px;
-            height: 13px;
+            width: 100%;
+            height: 100%;
             display: block;
         }
         .caption-voice-play .pause-icon {
@@ -7179,12 +7174,6 @@
         .caption-voice-play.playing {
             color: var(--sage);
             opacity: 1;
-        }
-        .caption-voice-r {
-            color: var(--lavender);
-        }
-        .caption-voice-r.playing {
-            color: var(--sage);
         }
         /* Two small mic buttons on the reply slide — one re-records the
            caption's voice note, one records the voice reply. Colour tells
@@ -7280,7 +7269,7 @@
         .note-reaction-badge,
         .doodle-reaction-badge {
             cursor: pointer;
-            touch-action: pan-y;
+            touch-action: none;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
@@ -8232,13 +8221,13 @@
                     <span class="feeling-note-icon">💭</span>
                     <span class="feeling-empty-hint" id="feelingEmptyHint">tap to share how you're feeling</span>
                     <span class="feeling-entry author-j hidden" id="feelingEntryJ">
-                        <span class="feeling-text" id="feelingTextJ"><span class="feeling-text-inner" id="feelingTextInnerJ"></span></span>
+                        <span class="feeling-text" id="feelingTextJ"></span>
                         <span class="feeling-author">— J</span>
                         <button type="button" class="feeling-clear" data-feeling="j" aria-label="Delete J's feeling">×</button>
                     </span>
                     <span class="feeling-sep hidden" id="feelingSep">|</span>
                     <span class="feeling-entry author-m hidden" id="feelingEntryM">
-                        <span class="feeling-text" id="feelingTextM"><span class="feeling-text-inner" id="feelingTextInnerM"></span></span>
+                        <span class="feeling-text" id="feelingTextM"></span>
                         <span class="feeling-author">— M</span>
                         <button type="button" class="feeling-clear" data-feeling="m" aria-label="Delete M's feeling">×</button>
                     </span>
@@ -8429,6 +8418,13 @@
                       <button type="button" class="mini-mic-btn" id="doodleCaptionMic" aria-label="Record a voice caption"></button>
                     </div>
                     <div class="voice-attachment hidden" id="doodleCaptionVoice"></div>
+                    <label class="quality-toggle">
+                        <input type="checkbox" id="doodleScheduleToggle">
+                        🔒 Schedule for later (unlocks itself on a date)
+                    </label>
+                    <div class="schedule-field hidden" id="doodleScheduleField">
+                        <input type="date" id="doodleScheduleDateInput" aria-label="Unlock date">
+                    </div>
                     <div class="doodle-submit-row"><button class="doodle-submit" id="doodleSubmitBtn" type="submit">Leave a doodle</button></div>
                 </form>
             </div>
@@ -8846,6 +8842,13 @@
                     <input type="checkbox" id="surpriseToggle">
                     🎁 Make it a surprise (scratch to reveal)
                 </label>
+                <label class="quality-toggle">
+                    <input type="checkbox" id="scheduleToggle">
+                    🔒 Schedule for later (unlocks itself on a date)
+                </label>
+                <div class="schedule-field hidden" id="scheduleField">
+                    <input type="date" id="scheduleDateInput" aria-label="Unlock date">
+                </div>
             </div>
         </div>
 
@@ -8872,7 +8875,11 @@
                         <button type="button" class="glass-who-btn" data-who="J">J</button>
                         <button type="button" class="glass-who-btn" data-who="M">M</button>
                     </div>
-                    <textarea id="glassReasonInput" class="glass-reason-input" maxlength="300" placeholder="What's going on? (optional)"></textarea>
+                    <div class="voice-input-row">
+                      <textarea id="glassReasonInput" class="glass-reason-input" maxlength="300" placeholder="What's going on? (optional)"></textarea>
+                      <button type="button" class="mini-mic-btn" id="glassReasonMic" aria-label="Record a voice message for why"></button>
+                    </div>
+                    <div class="voice-attachment hidden" id="glassReasonVoice"></div>
                     <button type="button" class="add-btn glass-who-continue" id="glassWhoContinue" disabled>Continue</button>
                 </div>
                 <div class="glass-anger-choice hidden" id="glassAngerChoice">
@@ -9215,6 +9222,9 @@
             const stylePreviews = document.getElementById('stylePreviews');
             const qualityToggle = document.getElementById('qualityToggle');
             const surpriseToggle = document.getElementById('surpriseToggle');
+            const scheduleToggle = document.getElementById('scheduleToggle');
+            const scheduleField = document.getElementById('scheduleField');
+            const scheduleDateInput = document.getElementById('scheduleDateInput');
             const surpriseTextModal = document.getElementById('surpriseTextModal');
             const surpriseHintInput = document.getElementById('surpriseHintInput');
             const surpriseTextInput = document.getElementById('surpriseTextInput');
@@ -9471,86 +9481,6 @@
             const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             const supportsHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-            /* Swipe left/right on any flip-card's back panel (polaroid,
-               note, or doodle) to slide between the caption/reaction page
-               and the reply page — same effect as tapping the arrow tabs,
-               just via touch. Delegated once at the document level so it
-               automatically covers every card without per-card wiring. A
-               vertical scroll inside the panel, or a small accidental
-               drag, is ignored — only a clear, mostly-horizontal swipe
-               past the threshold counts. */
-            (function setupBackPanelSwipe() {
-                const SWIPE_THRESHOLD = 42;
-                let startX = 0,
-                    startY = 0,
-                    activePanel = null;
-                document.addEventListener('touchstart', (e) => {
-                    const panel = e.target.closest && e.target.closest('.back-panels');
-                    if (!panel) { activePanel = null;
-                        return; }
-                    activePanel = panel;
-                    startX = e.touches[0].clientX;
-                    startY = e.touches[0].clientY;
-                }, { passive: true });
-                document.addEventListener('touchend', (e) => {
-                    if (!activePanel) return;
-                    const panel = activePanel;
-                    activePanel = null;
-                    const touch = e.changedTouches[0];
-                    const dx = touch.clientX - startX;
-                    const dy = touch.clientY - startY;
-                    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.2) return;
-                    const onReplyPage = panel.classList.contains('showing-reply');
-                    const goingForward = dx < 0;
-                    // Circular navigation: front → page 1 → page 2 → front …
-                    // Swiping "forward" past the last page, or "backward"
-                    // past the first page, flips the whole card instead of
-                    // doing nothing.
-                    if (goingForward && !onReplyPage) {
-                        panel.classList.add('showing-reply');
-                    } else if (!goingForward && onReplyPage) {
-                        panel.classList.remove('showing-reply');
-                    } else {
-                        const root = panel.closest('.polaroid, .note-flip, .doodle-flip');
-                        if (root) root.classList.remove('flipped');
-                        panel.classList.remove('showing-reply');
-                    }
-                }, { passive: true });
-            })();
-
-            /* Swipe left or right (either direction) on the FRONT of any
-               polaroid, note, or doodle to flip it — same effect as
-               tapping it, just via touch. Scoped to the front only: on
-               the back, a swipe already switches between the caption and
-               reply pages (above), so this doesn't compete with that.
-               Re-dispatches a synthetic click on the exact element the
-               touch started on, so the card's own flip() handler decides
-               whether it counts (buttons, badges, and pickers are already
-               excluded there) instead of duplicating that logic here. */
-            (function setupFrontFaceSwipeFlip() {
-                const SWIPE_THRESHOLD = 40;
-                let startX = 0,
-                    startY = 0,
-                    startEl = null;
-                document.addEventListener('touchstart', (e) => {
-                    const front = e.target.closest && e.target.closest('.face.front, .note-front, .doodle-front');
-                    startEl = front ? e.target : null;
-                    if (!front) return;
-                    startX = e.touches[0].clientX;
-                    startY = e.touches[0].clientY;
-                }, { passive: true });
-                document.addEventListener('touchend', (e) => {
-                    if (!startEl) return;
-                    const el = startEl;
-                    startEl = null;
-                    const touch = e.changedTouches[0];
-                    const dx = touch.clientX - startX;
-                    const dy = touch.clientY - startY;
-                    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.2) return;
-                    el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-                }, { passive: true });
-            })();
-
             if (supportsHover && !prefersReducedMotion) {
                 let lastTrailAt = 0;
                 document.addEventListener('mousemove', (e) => {
@@ -9681,6 +9611,7 @@
                         surprise: !!row.is_surprise,
                         revealed: row.is_revealed === undefined ? true : !!row.is_revealed,
                         hintText: row.surprise_hint || '',
+                        unlockDate: row.unlock_date || null,
                         voiceUrl: row.voice_url || null,
                         voicePath: row.voice_path || null,
                         reply: row.reply || '',
@@ -9696,7 +9627,7 @@
                 maybeShowOnThisDay();
             }
 
-            async function uploadAndSave(file, isSurprise, customCaption, hintText) {
+            async function uploadAndSave(file, isSurprise, customCaption, hintText, unlockDate) {
                 const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
                 const path = `${crypto.randomUUID()}.${ext}`;
                 const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, file, { cacheControl: '3600',
@@ -9712,7 +9643,8 @@
                     is_favorite: false,
                     is_surprise: !!isSurprise,
                     is_revealed: !isSurprise,
-                    surprise_hint: isSurprise ? ((hintText && hintText.trim()) ? hintText.trim() : null) : null
+                    surprise_hint: isSurprise ? ((hintText && hintText.trim()) ? hintText.trim() : null) : null,
+                    unlock_date: unlockDate || null
                 };
                 const { data: inserted, error: insertError } = await supabase.from(TABLE).insert(record).select().single();
                 if (insertError) throw insertError;
@@ -9730,6 +9662,7 @@
                     surprise: !!inserted.is_surprise,
                     revealed: !!inserted.is_revealed,
                     hintText: inserted.surprise_hint || '',
+                    unlockDate: inserted.unlock_date || null,
                     voiceUrl: inserted.voice_url || null,
                     voicePath: inserted.voice_path || null,
                     reply: inserted.reply || '',
@@ -10071,10 +10004,7 @@
                     ${note.audio_url ? `<div class="note-voice"></div>` : ''}
                     ${note.reaction ? `<span class="note-reaction-badge">${note.reaction}</span>` : ''}
                     <span class="note-author-badge author-${effectiveAuthor}${hasSignature(effectiveAuthor) ? ' has-sig' : ''}" title="${escapeHtml(authorLabel(effectiveAuthor))}" aria-label="${escapeHtml(authorLabel(effectiveAuthor))}">${sigAvatarHTML(effectiveAuthor, 27) || (effectiveAuthor === '2' ? NOTE_AUTHOR_2_LETTER : NOTE_AUTHOR_1_LETTER)}</span>
-                    <div class="note-footer-row">
-                      ${note.reply_audio_url ? `<button type="button" class="caption-voice-play note-reply-voice-play" aria-label="Play voice reply" data-src="${note.reply_audio_url}">${CAPTION_PLAY_ICON}</button>` : ''}
-                      <span class="note-date">${dateLabel}</span>
-                    </div>
+                    <span class="note-date">${dateLabel}</span>
                   </div>
                   <div class="note-face note-back">
                     <div class="back-panels">
@@ -10109,7 +10039,6 @@
                         const player = buildVoicePlayer(note.audio_url);
                         audioEl.appendChild(player);
                     }
-                    wireCaptionPlayButton(wrap.querySelector('.note-reply-voice-play'));
                     const backPanels = wrap.querySelector('.back-panels');
                     const replyTabBtn = wrap.querySelector('.tab-arrow-next');
                     const backTabBtn = wrap.querySelector('.tab-arrow-prev');
@@ -10144,13 +10073,8 @@
                                 },
                                 onRestore: () => { note.reply_audio_url = v.url;
                                     note.reply_audio_path = v.path;
-                                    renderNoteReplyVoice(v);
-                                    ensureSimpleVoiceButton(wrap, { url: v.url, selector: '.note-reply-voice-play',
-                                        container: '.note-footer-row', ariaLabel: 'Play voice reply',
-                                        insertFirst: true }); }
+                                    renderNoteReplyVoice(v); }
                             });
-                            ensureSimpleVoiceButton(wrap, { url: null, selector: '.note-reply-voice-play',
-                                container: '.note-footer-row', ariaLabel: 'Play voice reply', insertFirst: true });
                         });
                     }
                     renderNoteReplyVoice(note.reply_audio_url ? { url: note.reply_audio_url,
@@ -10164,8 +10088,6 @@
                             await supabase.from(NOTES_TABLE).update({ reply_audio_url: url, reply_audio_path: path })
                                 .eq('id', note.id);
                             renderNoteReplyVoice({ url, path });
-                            ensureSimpleVoiceButton(wrap, { url, selector: '.note-reply-voice-play',
-                                container: '.note-footer-row', ariaLabel: 'Play voice reply', insertFirst: true });
                             if (oldPath && oldPath !== path) supabase.storage.from(VOICE_BUCKET).remove([oldPath])
                                 .catch(() => {});
                             showToast('Voice reply saved!');
@@ -10364,6 +10286,9 @@
             const doodleCaptionMic = document.getElementById('doodleCaptionMic');
             const doodleCaptionVoice = document.getElementById('doodleCaptionVoice');
             const doodleSubmitBtn = document.getElementById('doodleSubmitBtn');
+            const doodleScheduleToggle = document.getElementById('doodleScheduleToggle');
+            const doodleScheduleField = document.getElementById('doodleScheduleField');
+            const doodleScheduleDateInput = document.getElementById('doodleScheduleDateInput');
             const doodleAuthorToggle = document.getElementById('doodleAuthorToggle');
             const doodleForm = document.getElementById('doodleForm');
             const duetDoodleCaption = document.getElementById('duetDoodleCaption');
@@ -10899,25 +10824,20 @@
                     const author = String(d.author || 1),
                         date = d.created_at ? new Date(d.created_at).toLocaleDateString(undefined, { month: 'short',
                             day: 'numeric' }) : '';
+                    const doodleLocked = isDoodleLocked(d);
                     wrap.innerHTML = `
-                <div class="doodle-flip" tabindex="0" role="button" aria-label="Flip doodle">
+                <div class="doodle-flip" tabindex="0" role="button" aria-label="${doodleLocked ? 'Scheduled to unlock later' : 'Flip doodle'}">
                   <div class="doodle-face doodle-front">
                     <button class="doodle-fav" type="button">${d.favorite ? '♥' : '♡'}</button>
                     <button class="doodle-remove" type="button">✕</button>
-                    <div class="doodle-image-wrap">
-                      <img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption ? `: ${escapeHtml(d.caption)}` : ''}" loading="lazy" decoding="async">
-                      <button class="expand-btn doodle-expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>
-                    </div>
+                    ${doodleLocked ? `<div class="locked-layer"><span class="locked-icon">🔒</span><span class="locked-text">unlocks ${formatUnlockLabel(d.unlock_date)}</span></div>` : `
+                    <img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption ? `: ${escapeHtml(d.caption)}` : ''}" loading="lazy" decoding="async">
                     <div class="doodle-caption-preview">${escapeHtml(d.caption || 'A little doodle ✨')}</div>
+                    ${d.voice_url ? `<div class="note-voice doodle-caption-voice"></div>` : ''}
                     ${d.reaction ? `<span class="doodle-reaction-badge">${d.reaction}</span>` : ''}
-                    <div class="doodle-author-row">
-                      <span class="doodle-author-badge author-${author}${hasSignature(author) ? ' has-sig' : ''}">${sigAvatarHTML(author, 25) || `By ${author === '2' ? 'M' : 'J'}`}</span>
-                      ${d.voice_url ? `<button type="button" class="caption-voice-play doodle-voice-c" aria-label="Play voice caption" data-src="${d.voice_url}"><span class="voice-tag">C</span>${CAPTION_PLAY_ICON}</button>` : ''}
-                    </div>
-                    <div class="doodle-date-row">
-                      ${d.reply_audio_url ? `<button type="button" class="caption-voice-play doodle-voice-r" aria-label="Play voice reply" data-src="${d.reply_audio_url}"><span class="voice-tag">R</span>${CAPTION_PLAY_ICON}</button>` : ''}
-                      <span class="doodle-date">${date}</span>
-                    </div>
+                    <span class="doodle-author-badge author-${author}${hasSignature(author) ? ' has-sig' : ''}">${sigAvatarHTML(author, 25) || `By ${author === '2' ? 'M' : 'J'}`}</span>
+                    <span class="doodle-date">${date}</span>
+                    `}
                   </div>
                   <div class="doodle-face doodle-back">
                     <div class="back-panels">
@@ -10949,7 +10869,6 @@
               `;
                     const flip = wrap.querySelector('.doodle-flip'),
                         image = wrap.querySelector('.doodle-image'),
-                        doodleExpandBtn = wrap.querySelector('.doodle-expand-btn'),
                         fav = wrap.querySelector('.doodle-fav'),
                         remove = wrap.querySelector('.doodle-remove'),
                         backPanels = wrap.querySelector('.back-panels'),
@@ -10961,8 +10880,11 @@
                         captionEdit = wrap.querySelector('.doodle-caption-edit'),
                         back = wrap.querySelector('.note-flip-back-btn'),
                         download = wrap.querySelector('.doodle-download');
-                    wireCaptionPlayButton(wrap.querySelector('.doodle-voice-c'));
-                    wireCaptionPlayButton(wrap.querySelector('.doodle-voice-r'));
+                    const doodleCaptionVoiceEl = wrap.querySelector('.doodle-caption-voice');
+                    if (doodleCaptionVoiceEl && d.voice_url) {
+                        doodleCaptionVoiceEl.appendChild(buildVoicePlayer(d.voice_url));
+                        doodleCaptionVoiceEl.addEventListener('click', (e) => e.stopPropagation());
+                    }
                     const doodleReactionBadge = wrap.querySelector('.doodle-reaction-badge');
                     if (doodleReactionBadge) {
                         wireReactionVoiceSticker(doodleReactionBadge, {
@@ -11014,24 +10936,23 @@
                             haptic(12);
                         }
                     });
-                    flip.addEventListener('click', e => { if (e.target.closest(
-                            'button,textarea,audio,.voice-attachment,.doodle-reaction-badge')) return;
+                    flip.addEventListener('click', e => { if (doodleLocked) return;
+                        if (e.target.closest(
+                                'button,textarea,img,audio,.voice-attachment,.doodle-reaction-badge')) return;
                         flip.classList.toggle('flipped');
                         if (!flip.classList.contains('flipped')) backPanels.classList.remove('showing-reply'); });
-                    flip.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target ===
+                    flip.addEventListener('keydown', e => { if (doodleLocked) return;
+                        if ((e.key === 'Enter' || e.key === ' ') && e.target ===
                         flip) { e.preventDefault();
                             flip.classList.toggle('flipped');
                             if (!flip.classList.contains('flipped')) backPanels.classList.remove(
                                 'showing-reply'); } });
                     back.addEventListener('click', () => flip.classList.remove('flipped'));
-                    if (doodleExpandBtn) {
-                        doodleExpandBtn.addEventListener('click', (e) => { e.stopPropagation();
-                            currentList = items.map(x => ({ src: x.image_url, caption: x.caption ||
-                                'A little doodle' }));
-                            lightboxIndex = items.findIndex(x => x.id === d.id);
-                            openLightbox(lightboxIndex, 'doodle');
-                        });
-                    }
+                    if (image) image.addEventListener('click', () => {
+                        currentList = items.map(x => ({ src: x.image_url, caption: x.caption || 'A little doodle' }));
+                        lightboxIndex = items.findIndex(x => x.id === d.id);
+                        openLightbox(lightboxIndex, 'doodle');
+                    });
                     fav.addEventListener('click', async() => {
                         if (!d.favorite) {
                             const rect = fav.getBoundingClientRect();
@@ -11176,6 +11097,19 @@
             }
             setupDoodleVoiceCaption(doodleCaptionMic, doodleCaptionVoice, v => pendingSoloVoice = v);
             setupDoodleVoiceCaption(duetDoodleCaptionMic, duetDoodleCaptionVoice, v => pendingDuetVoice = v);
+            doodleScheduleToggle.addEventListener('change', () => {
+                if (doodleScheduleToggle.checked) {
+                    doodleScheduleField.classList.remove('hidden');
+                    if (!doodleScheduleDateInput.value) {
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        doodleScheduleDateInput.value = dateKey(tomorrow);
+                    }
+                    doodleScheduleDateInput.min = dateKey(new Date());
+                } else {
+                    doodleScheduleField.classList.add('hidden');
+                }
+            });
 
             doodleForm.addEventListener('submit', async e => {
                 e.preventDefault();
@@ -11199,10 +11133,14 @@
                         voice_url: pendingSoloVoice ? pendingSoloVoice.url : null,
                         voice_path: pendingSoloVoice ? pendingSoloVoice.path : null,
                         author: Number(doodleAuthor),
-                        mode: 'solo'
+                        mode: 'solo',
+                        unlock_date: (doodleScheduleToggle.checked && doodleScheduleDateInput.value) ?
+                            doodleScheduleDateInput.value : null
                     });
                     if (error) throw error;
                     doodleCaption.value = '';
+                    doodleScheduleToggle.checked = false;
+                    doodleScheduleField.classList.add('hidden');
                     clearPendingVoice('solo');
                     soloEngine.reset();
                     showToast('Doodle pinned!');
@@ -11742,6 +11680,20 @@
             });
 
             function dateKey(d) { return d.toISOString().slice(0, 10); }
+
+            function isPhotoLocked(photo) { return !!(photo.unlockDate && photo.unlockDate > dateKey(new Date())); }
+            function isDoodleLocked(d) { return !!(d.unlock_date && d.unlock_date > dateKey(new Date())); }
+
+            function formatUnlockLabel(unlockDate) {
+                if (!unlockDate) return '';
+                const target = new Date(unlockDate + 'T00:00:00');
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const days = Math.round((target - today) / 86400000);
+                if (days === 1) return 'tomorrow';
+                if (days > 1 && days <= 6) return `in ${days} days`;
+                return target.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            }
 
             function renderMoodCalendar() {
                 const now = new Date(),
@@ -14446,6 +14398,8 @@
                 glassWhoStep = document.getElementById('glassWhoStep'),
                 glassWhoOptions = document.getElementById('glassWhoOptions'),
                 glassReasonInput = document.getElementById('glassReasonInput'),
+                glassReasonMic = document.getElementById('glassReasonMic'),
+                glassReasonVoice = document.getElementById('glassReasonVoice'),
                 glassWhoContinue = document.getElementById('glassWhoContinue'),
                 glassAngerChoice = document.getElementById('glassAngerChoice'),
                 glassAngerBack = document.getElementById('glassAngerBack'),
@@ -14467,6 +14421,7 @@
                 angerHistoryEmpty = document.getElementById('angerHistoryEmpty');
             let glassSelectedWho = null;
             let glassCurrentEntryId = null;
+            let glassReasonVoiceClip = null;
             const DEFAULT_GLASS_NOTE =
                 "Hey love. Whatever just happened, it doesn't change us. Let's breathe for a second — I love you more than I'm upset right now, and I'd rather work this out together than win it. Come find me when you're ready? 🤍";
             const ANGER_LEVELS = [
@@ -14498,6 +14453,8 @@
                 glassAngerChoice.classList.add('hidden');
                 glassSelectedWho = null;
                 glassReasonInput.value = '';
+                glassReasonVoiceClip = null;
+                renderVoiceAttachment(glassReasonVoice, null, () => {});
                 glassWhoOptions.querySelectorAll('.glass-who-btn').forEach(b => b.classList.remove('active'));
                 glassWhoContinue.disabled = true;
                 glassWhoStep.classList.remove('hidden');
@@ -14526,15 +14483,37 @@
                 haptic(10);
                 if (supabase) {
                     try {
+                        const patch = { who: glassSelectedWho, reason: reason || null };
+                        if (glassReasonVoiceClip) { patch.reason_audio_url = glassReasonVoiceClip.url;
+                            patch.reason_audio_path = glassReasonVoiceClip.path; }
                         if (glassCurrentEntryId) {
-                            await supabase.from(ANGER_LOG_TABLE).update({ who: glassSelectedWho, reason: reason ||
-                                null }).eq('id', glassCurrentEntryId);
+                            await supabase.from(ANGER_LOG_TABLE).update(patch).eq('id', glassCurrentEntryId);
                         } else {
-                            const { data, error } = await supabase.from(ANGER_LOG_TABLE).insert({ who: glassSelectedWho,
-                                reason: reason || null }).select().single();
+                            const { data, error } = await supabase.from(ANGER_LOG_TABLE).insert(patch).select()
+                                .single();
                             if (!error && data) glassCurrentEntryId = data.id;
                         }
                     } catch (err) { console.error('Could not log fight entry:', err); }
+                }
+            });
+            createMiniVoiceRecorder({
+                button: glassReasonMic,
+                onSaved: async({ url, path }) => {
+                    glassReasonVoiceClip = { url, path };
+                    renderVoiceAttachment(glassReasonVoice, glassReasonVoiceClip, () => {
+                        glassReasonVoiceClip = null;
+                        renderVoiceAttachment(glassReasonVoice, null, () => {});
+                        if (glassCurrentEntryId && supabase) {
+                            supabase.from(ANGER_LOG_TABLE).update({ reason_audio_url: null, reason_audio_path: null })
+                                .eq('id', glassCurrentEntryId).then(() => {});
+                        }
+                    });
+                    if (glassCurrentEntryId && supabase) {
+                        await supabase.from(ANGER_LOG_TABLE).update({ reason_audio_url: url, reason_audio_path: path })
+                            .eq('id', glassCurrentEntryId);
+                    }
+                    showToast('Voice message added!');
+                    haptic(12);
                 }
             });
             glassAngerBack.addEventListener('click', () => {
@@ -14688,11 +14667,32 @@
                   <span class="anger-entry-date">${formatAngerDate(entry.created_at)}</span>
                 </div>
                 ${entry.reason ? `<p class="anger-entry-reason">${escapeHtml(entry.reason)}</p>` : ''}
+                ${entry.reason_audio_url ? `<div class="voice-attachment anger-entry-reason-voice"></div>` : ''}
                 <div class="anger-entry-reply-area"></div>
               `;
                 angerHistoryList.appendChild(card);
                 const deleteBtn = card.querySelector('.anger-entry-delete');
                 const replyArea = card.querySelector('.anger-entry-reply-area');
+                const reasonVoiceBox = card.querySelector('.anger-entry-reason-voice');
+                function renderReasonVoice(voice) {
+                    if (!reasonVoiceBox) return;
+                    renderVoiceAttachment(reasonVoiceBox, voice, (v) => {
+                        removeVoiceWithUndo(reasonVoiceBox, v, {
+                            label: 'Voice message removed.',
+                            onConfirmRemove: async() => {
+                                entry.reason_audio_url = null;
+                                entry.reason_audio_path = null;
+                                await supabase.from(ANGER_LOG_TABLE).update({ reason_audio_url: null,
+                                    reason_audio_path: null }).eq('id', entry.id);
+                                if (v.path) supabase.storage.from(VOICE_BUCKET).remove([v.path]).catch(() => {});
+                            },
+                            onRestore: () => { entry.reason_audio_url = v.url;
+                                entry.reason_audio_path = v.path;
+                                renderReasonVoice(v); }
+                        });
+                    });
+                }
+                if (reasonVoiceBox) renderReasonVoice({ url: entry.reason_audio_url, path: entry.reason_audio_path });
 
                 function renderReplyArea() {
                     replyArea.innerHTML = '';
@@ -15246,51 +15246,21 @@
                 });
             }
 
-            function ensureFrontVoiceButton(wrap, { url, className, side, label, ariaLabel }) {
+            function ensureCaptionPlayButton(wrap, voiceUrl) {
                 let row = wrap.querySelector('.cap-preview-row');
-                let btn = wrap.querySelector('.' + className);
-                if (!url) { if (btn) btn.remove();
+                let btn = wrap.querySelector('.caption-voice-play');
+                if (!voiceUrl) { if (btn) btn.remove();
                     return; }
                 if (!btn && row) {
                     btn = document.createElement('button');
                     btn.type = 'button';
-                    btn.className = 'caption-voice-play ' + className;
-                    btn.setAttribute('aria-label', ariaLabel);
-                    btn.innerHTML = `<span class="voice-tag">${label}</span>${CAPTION_PLAY_ICON}`;
-                    if (side === 'left') row.insertBefore(btn, row.firstChild);
-                    else row.appendChild(btn);
-                }
-                if (btn) { btn.dataset.src = url;
-                    wireCaptionPlayButton(btn); }
-            }
-
-            function ensureSimpleVoiceButton(wrap, { url, selector, container, ariaLabel, insertFirst }) {
-                let btn = wrap.querySelector(selector);
-                if (!url) { if (btn) btn.remove();
-                    return; }
-                if (!btn) {
-                    const parent = wrap.querySelector(container);
-                    if (!parent) return;
-                    btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.className = 'caption-voice-play' + selector.replace(/^\./, ' ');
-                    btn.setAttribute('aria-label', ariaLabel);
+                    btn.className = 'caption-voice-play';
+                    btn.setAttribute('aria-label', 'Play voice caption');
                     btn.innerHTML = CAPTION_PLAY_ICON;
-                    if (insertFirst) parent.insertBefore(btn, parent.firstChild);
-                    else parent.appendChild(btn);
+                    row.appendChild(btn);
                 }
-                btn.dataset.src = url;
-                wireCaptionPlayButton(btn);
-            }
-
-            function ensureCaptionPlayButton(wrap, voiceUrl) {
-                ensureFrontVoiceButton(wrap, { url: voiceUrl, className: 'caption-voice-c', side: 'left',
-                    label: 'C', ariaLabel: 'Play voice caption' });
-            }
-
-            function ensureReplyPlayButton(wrap, voiceUrl) {
-                ensureFrontVoiceButton(wrap, { url: voiceUrl, className: 'caption-voice-r', side: 'right',
-                    label: 'R', ariaLabel: 'Play voice reply' });
+                if (btn) { btn.dataset.src = voiceUrl;
+                    wireCaptionPlayButton(btn); }
             }
 
             /* ─── Voice stickers on reaction badges ───
@@ -15307,7 +15277,7 @@
                `{url,path}` — or persists `null` to clear it — and
                `bucket` defaults to VOICE_BUCKET. */
             const REACTION_STICKER_MAX_SECONDS = 9;
-            const REACTION_STICKER_HOLD_MS = 500;
+            const REACTION_STICKER_HOLD_MS = 350;
             const REACTION_STICKER_DOUBLE_TAP_MS = 350;
             let activeStickerPlayback = null;
 
@@ -15325,9 +15295,7 @@
                     audio = null,
                     heldLongEnough = false,
                     lastQuickTapAt = 0,
-                    originalText = null,
-                    holdStartX = 0,
-                    holdStartY = 0;
+                    originalText = null;
 
                 refreshStickerIndicator(badge, getUrl);
 
@@ -15448,17 +15416,7 @@
                 badge.addEventListener('pointerdown', (e) => {
                     if (e.button !== undefined && e.button !== 0) return;
                     heldLongEnough = false;
-                    holdStartX = e.clientX;
-                    holdStartY = e.clientY;
                     holdTimer = setTimeout(beginRecording, REACTION_STICKER_HOLD_MS);
-                });
-                badge.addEventListener('pointermove', (e) => {
-                    if (!holdTimer) return;
-                    const movedX = Math.abs(e.clientX - holdStartX);
-                    const movedY = Math.abs(e.clientY - holdStartY);
-                    // A real hold stays put; a scroll drags the finger —
-                    // bail out so this never eats a scroll gesture.
-                    if (movedX > 8 || movedY > 8) cancelHold();
                 });
                 ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
                     badge.addEventListener(evt, () => {
@@ -15559,8 +15517,6 @@
                 const entryM = document.getElementById('feelingEntryM');
                 const textJ = document.getElementById('feelingTextJ');
                 const textM = document.getElementById('feelingTextM');
-                const innerJ = document.getElementById('feelingTextInnerJ');
-                const innerM = document.getElementById('feelingTextInnerM');
                 const sep = document.getElementById('feelingSep');
                 const emptyHint = document.getElementById('feelingEmptyHint');
 
@@ -15568,16 +15524,14 @@
                 const hasM = feelingM && feelingM.trim();
 
                 if (hasJ) {
-                    innerJ.textContent = feelingJ.trim();
+                    textJ.textContent = feelingJ.trim();
                     entryJ.classList.remove('hidden');
-                    setupFeelingMarquee(textJ, innerJ);
                 } else {
                     entryJ.classList.add('hidden');
                 }
                 if (hasM) {
-                    innerM.textContent = feelingM.trim();
+                    textM.textContent = feelingM.trim();
                     entryM.classList.remove('hidden');
-                    setupFeelingMarquee(textM, innerM);
                 } else {
                     entryM.classList.add('hidden');
                 }
@@ -15592,24 +15546,6 @@
                     sep.classList.add('hidden');
                     emptyHint.classList.remove('hidden');
                 }
-            }
-
-            // If a feeling is too long to fit its pill, slide it back and forth
-            // (pause → reveal the tail → pause → reset) instead of clipping it
-            // with an ellipsis, so the whole thing is readable over a few
-            // seconds. J and M are measured and run independently.
-            function setupFeelingMarquee(container, inner) {
-                container.classList.remove('marquee');
-                inner.style.removeProperty('--marquee-shift');
-                inner.style.removeProperty('--marquee-duration');
-                requestAnimationFrame(() => {
-                    const overflow = inner.scrollWidth - container.clientWidth;
-                    if (overflow > 4) {
-                        inner.style.setProperty('--marquee-shift', `-${overflow}px`);
-                        inner.style.setProperty('--marquee-duration', `${Math.min(11, 4 + overflow / 35)}s`);
-                        container.classList.add('marquee');
-                    }
-                });
             }
 
             // Re-check expiry every few minutes so a feeling disappears from an
@@ -15913,7 +15849,7 @@
             /* ─── On This Day: random memory from the past ─── */
             function maybeShowOnThisDay() {
                 const eligiblePhotos = photos
-                    .filter(p => (!p.surprise || p.revealed) && p.created_at)
+                    .filter(p => (!p.surprise || p.revealed) && !isPhotoLocked(p) && p.created_at)
                     .map(p => ({ type: 'photo', id: p.id, date: p.created_at, img: p.src, caption: p.caption }));
 
                 const eligibleNotes = allNotes
@@ -16255,7 +16191,8 @@
                     closePhotoSortMenu(); });
             document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closePhotoSortMenu(); });
             surpriseBtn.addEventListener('click', () => {
-                const eligibleIndexes = currentList.map((p, i) => (p.surprise && !p.revealed) ? -1 : i).filter(i =>
+                const eligibleIndexes = currentList.map((p, i) => ((p.surprise && !p.revealed) || isPhotoLocked(p)) ?
+                    -1 : i).filter(i =>
                     i !== -1);
                 if (!eligibleIndexes.length) return;
                 const idx = eligibleIndexes[Math.floor(Math.random() * eligibleIndexes.length)];
@@ -16556,6 +16493,8 @@
             surpriseTextDone.addEventListener('click', closeSurpriseTextModal);
             surpriseToggle.addEventListener('change', () => {
                 if (surpriseToggle.checked) {
+                    scheduleToggle.checked = false;
+                    scheduleField.classList.add('hidden');
                     surpriseHintInput.value = surpriseHintText;
                     surpriseTextInput.value = surpriseCaptionText;
                     styleModal.classList.add('hidden');
@@ -16564,6 +16503,22 @@
                 } else {
                     surpriseHintText = '';
                     surpriseCaptionText = '';
+                }
+            });
+            scheduleToggle.addEventListener('change', () => {
+                if (scheduleToggle.checked) {
+                    surpriseToggle.checked = false;
+                    surpriseHintText = '';
+                    surpriseCaptionText = '';
+                    scheduleField.classList.remove('hidden');
+                    if (!scheduleDateInput.value) {
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        scheduleDateInput.value = dateKey(tomorrow);
+                    }
+                    scheduleDateInput.min = dateKey(new Date());
+                } else {
+                    scheduleField.classList.add('hidden');
                 }
             });
 
@@ -16582,6 +16537,8 @@
                             .catch(err => console.error('Could not build style preview:', err));
                     }
                     surpriseToggle.checked = false;
+                    scheduleToggle.checked = false;
+                    scheduleField.classList.add('hidden');
                     surpriseHintText = '';
                     surpriseCaptionText = '';
                     styleModal.classList.remove('hidden');
@@ -16619,6 +16576,8 @@
                 if (choice === null) { fileInput.value = ''; return; }
                 const keepOriginal = qualityToggle.checked;
                 const isSurprise = surpriseToggle.checked;
+                const unlockDate = scheduleToggle.checked && scheduleDateInput.value ? scheduleDateInput.value :
+                    null;
                 const originalBtnLabel = heroAddBtn.textContent;
                 const multi = files.length > 1;
                 let uploaded = 0;
@@ -16634,7 +16593,7 @@
                             uploadFile = new File([blob], baseName + '.jpg', { type: 'image/jpeg' });
                         }
                         const record = await uploadAndSave(uploadFile, isSurprise, isSurprise ?
-                            surpriseCaptionText : '', isSurprise ? surpriseHintText : '');
+                            surpriseCaptionText : '', isSurprise ? surpriseHintText : '', unlockDate);
                         photos.push(record);
                         render();
                         burstHearts(heroAddBtn);
@@ -16734,21 +16693,24 @@
                 const wrap = document.createElement('div');
                 wrap.className = 'polaroid-wrap';
                 wrap.style.setProperty('--tilt', randomTilt());
+                const isScheduleLocked = isPhotoLocked(photo);
+                const isScratchHidden = photo.surprise && !photo.revealed;
+                const contentHidden = isScratchHidden || isScheduleLocked;
                 wrap.innerHTML = `
               <div class="pin"></div>
-              <div class="polaroid" tabindex="0" role="button" aria-label="${(photo.surprise && !photo.revealed) ? 'Scratch to reveal the surprise' : 'Flip photo to see the note'}">
+              <div class="polaroid" tabindex="0" role="button" aria-label="${isScheduleLocked ? 'Scheduled to unlock later' : isScratchHidden ? 'Scratch to reveal the surprise' : 'Flip photo to see the note'}">
                 <div class="face front">
                   <button class="fav-heart" type="button" aria-label="Toggle favorite">${photo.favorite ? '♥' : '♡'}</button>
                   <div class="photo-frame">
                     <img src="${photo.src}" alt="A memory" loading="lazy" decoding="async">
-                    ${(photo.surprise && !photo.revealed) ? '' : `<button class="expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>`}
+                    ${contentHidden ? '' : `<button class="expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>`}
                     ${photo.mood ? `<span class="mood-badge">${photo.mood}</span>` : ''}
-                    ${(photo.surprise && !photo.revealed) ? `<canvas class="scratch-layer" aria-label="Scratch to reveal the surprise"></canvas><div class="scratch-hint"><span class="scratch-hint-emoji">🎁</span><span>${escapeHtml(photo.hintText || 'scratch to reveal')}</span></div>` : ''}
+                    ${isScratchHidden ? `<canvas class="scratch-layer" aria-label="Scratch to reveal the surprise"></canvas><div class="scratch-hint"><span class="scratch-hint-emoji">🎁</span><span>${escapeHtml(photo.hintText || 'scratch to reveal')}</span></div>` : ''}
+                    ${isScheduleLocked ? `<div class="locked-layer"><span class="locked-icon">🔒</span><span class="locked-text">unlocks ${formatUnlockLabel(photo.unlockDate)}</span></div>` : ''}
                   </div>
                   <div class="cap-preview-row">
-                    ${photo.voiceUrl && !(photo.surprise && !photo.revealed) ? `<button type="button" class="caption-voice-play caption-voice-c" aria-label="Play voice caption" data-src="${photo.voiceUrl}"><span class="voice-tag">C</span>${CAPTION_PLAY_ICON}</button>` : ''}
-                    <div class="cap-preview">${(photo.surprise && !photo.revealed) ? 'a surprise is waiting... 🎁' : escapeHtml(photo.caption)}</div>
-                    ${photo.replyAudioUrl && !(photo.surprise && !photo.revealed) ? `<button type="button" class="caption-voice-play caption-voice-r" aria-label="Play voice reply" data-src="${photo.replyAudioUrl}"><span class="voice-tag">R</span>${CAPTION_PLAY_ICON}</button>` : ''}
+                    <div class="cap-preview">${contentHidden ? (isScheduleLocked ? 'something is waiting for its day... 🔒' : 'a surprise is waiting... 🎁') : escapeHtml(photo.caption)}</div>
+                    ${photo.voiceUrl && !contentHidden ? `<button type="button" class="caption-voice-play" aria-label="Play voice caption" data-src="${photo.voiceUrl}"><svg class="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><svg class="pause-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>` : ''}
                   </div>
                 </div>
                 <div class="face back">
@@ -16834,7 +16796,7 @@
                     else photoImg.addEventListener('load', markLoaded);
                 }
 
-                wrap.querySelectorAll('.caption-voice-play').forEach(wireCaptionPlayButton);
+                wireCaptionPlayButton(wrap.querySelector('.caption-voice-play'));
 
                 replyTabBtn.addEventListener('click', (e) => { e.stopPropagation();
                     backPanels.classList.add('showing-reply'); });
@@ -16872,10 +16834,8 @@
                             onConfirmRemove: () => savePhotoReplyVoice(photo, null),
                             onRestore: () => { photo.replyAudioUrl = v.url;
                                 photo.replyAudioPath = v.path;
-                                renderPhotoReplyVoice(v);
-                                ensureReplyPlayButton(wrap, v.url); }
+                                renderPhotoReplyVoice(v); }
                         });
-                        ensureReplyPlayButton(wrap, null);
                     });
                 }
                 renderPhotoReplyVoice(photo.replyAudioUrl ? { url: photo.replyAudioUrl, path: photo.replyAudioPath } :
@@ -16884,7 +16844,6 @@
                     button: replyMicBtn,
                     onSaved: async({ url, path }) => {
                         await savePhotoReplyVoice(photo, { url, path });
-                        ensureReplyPlayButton(wrap, url);
                         renderPhotoReplyVoice({ url, path });
                         showToast('Voice reply saved!');
                         haptic(12);
@@ -16899,7 +16858,7 @@
                 });
 
                 function flip(e) {
-                    if (photo.surprise && !photo.revealed) return;
+                    if ((photo.surprise && !photo.revealed) || isPhotoLocked(photo)) return;
                     if ([textarea, replyInput, captionMicBtn, replyMicBtn, unpinBtn, favBtn, expandBtn, downloadBtn,
                             flipBackBtn, replyTabBtn, backTabBtn
                         ].includes(e.target)) return;
@@ -16913,7 +16872,7 @@
                 card.addEventListener('click', flip);
                 card.addEventListener('keydown', (e) => {
                     if ((e.key === 'Enter' || e.key === ' ') && e.target === card) {
-                        if (photo.surprise && !photo.revealed) return;
+                        if ((photo.surprise && !photo.revealed) || isPhotoLocked(photo)) return;
                         e.preventDefault();
                         card.classList.toggle('flipped');
                         if (!card.classList.contains('flipped')) backPanels.classList.remove('showing-reply');
