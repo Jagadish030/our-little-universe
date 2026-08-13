@@ -5747,18 +5747,28 @@
         .quality-toggle {
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             gap: 0.5rem;
             font-family: 'Quicksand', sans-serif;
             font-size: 0.8rem;
             color: var(--ink-soft);
             cursor: pointer;
+            text-align: left;
         }
         .quality-toggle input {
             width: 16px;
             height: 16px;
+            min-width: 16px;
             accent-color: var(--rose-deep);
             cursor: pointer;
+        }
+        .upload-toggle-group {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.55rem;
+            margin: 0 auto;
+            text-align: left;
         }
 
         .surprise-field-label {
@@ -7058,6 +7068,26 @@
             background: linear-gradient(155deg, rgba(107, 83, 68, 0.92), rgba(60, 46, 40, 0.92));
             backdrop-filter: blur(2px);
         }
+        .locked-remove-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: #FFFDF9;
+            font-size: 0.65rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .locked-remove-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
         .locked-layer .locked-icon {
             font-size: 1.5rem;
         }
@@ -7080,6 +7110,10 @@
             align-items: center;
             gap: 8px;
             margin-top: 6px;
+            justify-content: center;
+        }
+        .schedule-field.hidden {
+            display: none;
         }
         .schedule-field input[type="date"] {
             font-family: 'Quicksand', sans-serif;
@@ -8834,20 +8868,22 @@
                 <button class="style-modal-close" id="styleModalClose" type="button" aria-label="Cancel upload">✕</button>
                 <h3>How should this photo look?</h3>
                 <div class="style-previews" id="stylePreviews"></div>
-                <label class="quality-toggle">
-                    <input type="checkbox" id="qualityToggle">
-                    Keep full original quality (larger file size)
-                </label>
-                <label class="quality-toggle">
-                    <input type="checkbox" id="surpriseToggle">
-                    🎁 Make it a surprise (scratch to reveal)
-                </label>
-                <label class="quality-toggle">
-                    <input type="checkbox" id="scheduleToggle">
-                    🔒 Schedule for later (unlocks itself on a date)
-                </label>
-                <div class="schedule-field hidden" id="scheduleField">
-                    <input type="date" id="scheduleDateInput" aria-label="Unlock date">
+                <div class="upload-toggle-group">
+                    <label class="quality-toggle">
+                        <input type="checkbox" id="qualityToggle">
+                        Keep full original quality (larger file size)
+                    </label>
+                    <label class="quality-toggle">
+                        <input type="checkbox" id="surpriseToggle">
+                        🎁 Make it a surprise (scratch to reveal)
+                    </label>
+                    <label class="quality-toggle">
+                        <input type="checkbox" id="scheduleToggle">
+                        🔒 Schedule for later (unlocks itself on a date)
+                    </label>
+                    <div class="schedule-field hidden" id="scheduleField">
+                        <input type="date" id="scheduleDateInput" aria-label="Unlock date">
+                    </div>
                 </div>
             </div>
         </div>
@@ -9480,6 +9516,85 @@
 
             const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             const supportsHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+            /* Swipe left/right on any flip-card's back panel (polaroid,
+               note, or doodle) to slide between the caption/reaction page
+               and the reply page — same effect as tapping the arrow tabs,
+               just via touch. Circular: swipe right on page 1 flips back
+               to the front; swipe left on page 2 completes the loop back
+               to the front too. Delegated once at the document level so
+               it automatically covers every card without per-card wiring. */
+            (function setupBackPanelSwipe() {
+                const SWIPE_THRESHOLD = 42;
+                let startX = 0,
+                    startY = 0,
+                    activePanel = null;
+                document.addEventListener('touchstart', (e) => {
+                    const panel = e.target.closest && e.target.closest('.back-panels');
+                    if (!panel) { activePanel = null;
+                        return; }
+                    activePanel = panel;
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                }, { passive: true });
+                document.addEventListener('touchend', (e) => {
+                    if (!activePanel) return;
+                    const panel = activePanel;
+                    activePanel = null;
+                    const touch = e.changedTouches[0];
+                    const dx = touch.clientX - startX;
+                    const dy = touch.clientY - startY;
+                    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+                    const onReplyPage = panel.classList.contains('showing-reply');
+                    const goingForward = dx < 0;
+                    if (goingForward && !onReplyPage) {
+                        panel.classList.add('showing-reply');
+                    } else if (!goingForward && onReplyPage) {
+                        panel.classList.remove('showing-reply');
+                    } else {
+                        const root = panel.closest('.polaroid, .note-flip, .doodle-flip');
+                        if (root) root.classList.remove('flipped');
+                        panel.classList.remove('showing-reply');
+                    }
+                }, { passive: true });
+            })();
+
+            /* Swipe left/right on the FRONT of a card flips it to the
+               back (and vice versa on the back), as an alternative to
+               tapping. Ignores swipes that started on a button/link/input
+               so it never steals a normal tap, and ignores swipes inside
+               a back panel (setupBackPanelSwipe already owns those). */
+            (function setupFrontFaceSwipeFlip() {
+                const SWIPE_THRESHOLD = 48;
+                let startX = 0,
+                    startY = 0,
+                    activeCard = null;
+                document.addEventListener('touchstart', (e) => {
+                    const card = e.target.closest && e.target.closest('.polaroid, .note-flip, .doodle-flip');
+                    if (!card || e.target.closest('.back-panels, button, a, input, textarea, .mood-picker') || card
+                        .querySelector('.locked-layer, .scratch-layer')) {
+                        activeCard = null;
+                        return;
+                    }
+                    activeCard = card;
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                }, { passive: true });
+                document.addEventListener('touchend', (e) => {
+                    if (!activeCard) return;
+                    const card = activeCard;
+                    activeCard = null;
+                    const touch = e.changedTouches[0];
+                    const dx = touch.clientX - startX;
+                    const dy = touch.clientY - startY;
+                    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+                    card.classList.toggle('flipped');
+                    if (!card.classList.contains('flipped')) {
+                        const panel = card.querySelector('.back-panels');
+                        if (panel) panel.classList.remove('showing-reply');
+                    }
+                }, { passive: true });
+            })();
 
             if (supportsHover && !prefersReducedMotion) {
                 let lastTrailAt = 0;
@@ -10830,7 +10945,7 @@
                   <div class="doodle-face doodle-front">
                     <button class="doodle-fav" type="button">${d.favorite ? '♥' : '♡'}</button>
                     <button class="doodle-remove" type="button">✕</button>
-                    ${doodleLocked ? `<div class="locked-layer"><span class="locked-icon">🔒</span><span class="locked-text">unlocks ${formatUnlockLabel(d.unlock_date)}</span></div>` : `
+                    ${doodleLocked ? `<div class="locked-layer"><button type="button" class="locked-remove-btn" aria-label="Remove this scheduled doodle">✕</button><span class="locked-icon">🔒</span><span class="locked-text">unlocks ${formatUnlockLabel(d.unlock_date)}</span></div>` : `
                     <img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption ? `: ${escapeHtml(d.caption)}` : ''}" loading="lazy" decoding="async">
                     <div class="doodle-caption-preview">${escapeHtml(d.caption || 'A little doodle ✨')}</div>
                     ${d.voice_url ? `<div class="note-voice doodle-caption-voice"></div>` : ''}
@@ -11046,6 +11161,32 @@
                             } catch (err) { showToast('Could not remove doodle.', { type: 'error' }); }
                         }, 5000);
                         showToast('Doodle removed.', {
+                            actionLabel: 'Undo',
+                            duration: 5000,
+                            onAction: () => { clearTimeout(timer);
+                                allDoodles.splice(i, 0, d);
+                                renderDoodlesFiltered(); }
+                        });
+                    });
+                    const lockedRemoveBtn = wrap.querySelector('.locked-remove-btn');
+                    if (lockedRemoveBtn) lockedRemoveBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const i = allDoodles.findIndex(x => x.id === d.id);
+                        allDoodles.splice(i, 1);
+                        renderDoodlesFiltered();
+                        const timer = setTimeout(async() => {
+                            try {
+                                if (d.storage_path) await supabase.storage.from(DOODLES_BUCKET).remove([d
+                                    .storage_path
+                                ]);
+                                if (d.voice_path) await supabase.storage.from(VOICE_BUCKET).remove([d.voice_path]);
+                                if (d.reply_audio_path) await supabase.storage.from(VOICE_BUCKET).remove([d
+                                    .reply_audio_path
+                                ]);
+                                await supabase.from(DOODLES_TABLE).delete().eq('id', d.id);
+                            } catch (err) { showToast('Could not remove doodle.', { type: 'error' }); }
+                        }, 5000);
+                        showToast('Scheduled doodle removed.', {
                             actionLabel: 'Undo',
                             duration: 5000,
                             onAction: () => { clearTimeout(timer);
@@ -16706,7 +16847,7 @@
                     ${contentHidden ? '' : `<button class="expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>`}
                     ${photo.mood ? `<span class="mood-badge">${photo.mood}</span>` : ''}
                     ${isScratchHidden ? `<canvas class="scratch-layer" aria-label="Scratch to reveal the surprise"></canvas><div class="scratch-hint"><span class="scratch-hint-emoji">🎁</span><span>${escapeHtml(photo.hintText || 'scratch to reveal')}</span></div>` : ''}
-                    ${isScheduleLocked ? `<div class="locked-layer"><span class="locked-icon">🔒</span><span class="locked-text">unlocks ${formatUnlockLabel(photo.unlockDate)}</span></div>` : ''}
+                    ${isScheduleLocked ? `<div class="locked-layer"><button type="button" class="locked-remove-btn" aria-label="Remove this scheduled memory">✕</button><span class="locked-icon">🔒</span><span class="locked-text">unlocks ${formatUnlockLabel(photo.unlockDate)}</span></div>` : ''}
                   </div>
                   <div class="cap-preview-row">
                     <div class="cap-preview">${contentHidden ? (isScheduleLocked ? 'something is waiting for its day... 🔒' : 'a surprise is waiting... 🎁') : escapeHtml(photo.caption)}</div>
@@ -16919,6 +17060,30 @@
                         await removePhoto(photo);
                     }, UNDO_WINDOW);
                     showToast('Memory removed.', {
+                        actionLabel: 'Undo',
+                        duration: UNDO_WINDOW,
+                        onAction: () => {
+                            undone = true;
+                            clearTimeout(timer);
+                            photos.splice(idx, 0, photo);
+                            render();
+                        }
+                    });
+                });
+                const lockedRemoveBtn = wrap.querySelector('.locked-remove-btn');
+                if (lockedRemoveBtn) lockedRemoveBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const idx = photos.findIndex(p => p.id === photo.id);
+                    if (idx === -1) return;
+                    photos.splice(idx, 1);
+                    render();
+                    const UNDO_WINDOW = 5000;
+                    let undone = false;
+                    const timer = setTimeout(async() => {
+                        if (undone) return;
+                        await removePhoto(photo);
+                    }, UNDO_WINDOW);
+                    showToast('Scheduled memory removed.', {
                         actionLabel: 'Undo',
                         duration: UNDO_WINDOW,
                         onAction: () => {
