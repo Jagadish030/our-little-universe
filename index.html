@@ -5780,7 +5780,8 @@
             text-align: left;
             margin: 0 0 0.3rem;
         }
-        #surpriseHintInput {
+        #surpriseHintInput,
+        .surprise-text-input {
             width: 100%;
             box-sizing: border-box;
             font-family: 'Caveat', cursive;
@@ -5792,6 +5793,10 @@
             color: var(--ink);
             outline: none;
             margin-bottom: 1rem;
+        }
+        .schedule-field .surprise-field-label,
+        .schedule-field .surprise-text-input {
+            width: 100%;
         }
         #surpriseTextInput {
             width: 100%;
@@ -5809,11 +5814,13 @@
             margin-bottom: 1rem;
         }
         #surpriseHintInput:focus,
-        #surpriseTextInput:focus {
+        #surpriseTextInput:focus,
+        .surprise-text-input:focus {
             border-color: var(--rose-deep);
         }
         body.dark-mode #surpriseHintInput,
-        body.dark-mode #surpriseTextInput {
+        body.dark-mode #surpriseTextInput,
+        body.dark-mode .surprise-text-input {
             background: rgba(0, 0, 0, 0.18);
         }
 
@@ -7064,9 +7071,19 @@
             flex-direction: column;
             gap: 4px;
             text-align: center;
-            padding: 0 10px;
-            background: linear-gradient(155deg, rgba(107, 83, 68, 0.92), rgba(60, 46, 40, 0.92));
-            backdrop-filter: blur(2px);
+            padding: 0 14px;
+            background: linear-gradient(155deg, #4A3F6B 0%, #362C52 55%, #241B38 100%);
+        }
+        .locked-layer::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+            background-size: 22px 22px;
+            opacity: 0.12;
+        }
+        .locked-layer > * {
+            position: relative;
         }
         .locked-remove-btn {
             position: absolute;
@@ -7107,10 +7124,15 @@
         }
         .schedule-field {
             display: flex;
-            align-items: center;
-            gap: 8px;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 4px;
             margin-top: 6px;
-            justify-content: center;
+            width: 100%;
+        }
+        .schedule-field input[type="date"] {
+            align-self: center;
+            margin-bottom: 0.7rem;
         }
         .schedule-field.hidden {
             display: none;
@@ -8458,6 +8480,8 @@
                     </label>
                     <div class="schedule-field hidden" id="doodleScheduleField">
                         <input type="date" id="doodleScheduleDateInput" aria-label="Unlock date">
+                        <label class="surprise-field-label" for="doodleScheduleHintInput">Shown on the locked card, before it unlocks</label>
+                        <input type="text" id="doodleScheduleHintInput" class="surprise-text-input" maxlength="60" placeholder="something is waiting for its day...">
                     </div>
                     <div class="doodle-submit-row"><button class="doodle-submit" id="doodleSubmitBtn" type="submit">Leave a doodle</button></div>
                 </form>
@@ -8883,6 +8907,10 @@
                     </label>
                     <div class="schedule-field hidden" id="scheduleField">
                         <input type="date" id="scheduleDateInput" aria-label="Unlock date">
+                        <label class="surprise-field-label" for="scheduleHintInput">Shown on the locked card, before it unlocks</label>
+                        <input type="text" id="scheduleHintInput" class="surprise-text-input" maxlength="60" placeholder="something is waiting for its day...">
+                        <label class="surprise-field-label" for="scheduleCaptionInput">Caption shown once it unlocks</label>
+                        <input type="text" id="scheduleCaptionInput" class="surprise-text-input" maxlength="120" placeholder="a moment worth keeping ✨">
                     </div>
                 </div>
             </div>
@@ -9261,6 +9289,8 @@
             const scheduleToggle = document.getElementById('scheduleToggle');
             const scheduleField = document.getElementById('scheduleField');
             const scheduleDateInput = document.getElementById('scheduleDateInput');
+            const scheduleHintInput = document.getElementById('scheduleHintInput');
+            const scheduleCaptionInput = document.getElementById('scheduleCaptionInput');
             const surpriseTextModal = document.getElementById('surpriseTextModal');
             const surpriseHintInput = document.getElementById('surpriseHintInput');
             const surpriseTextInput = document.getElementById('surpriseTextInput');
@@ -9758,7 +9788,7 @@
                     is_favorite: false,
                     is_surprise: !!isSurprise,
                     is_revealed: !isSurprise,
-                    surprise_hint: isSurprise ? ((hintText && hintText.trim()) ? hintText.trim() : null) : null,
+                    surprise_hint: (hintText && hintText.trim()) ? hintText.trim() : null,
                     unlock_date: unlockDate || null
                 };
                 const { data: inserted, error: insertError } = await supabase.from(TABLE).insert(record).select().single();
@@ -10404,6 +10434,7 @@
             const doodleScheduleToggle = document.getElementById('doodleScheduleToggle');
             const doodleScheduleField = document.getElementById('doodleScheduleField');
             const doodleScheduleDateInput = document.getElementById('doodleScheduleDateInput');
+            const doodleScheduleHintInput = document.getElementById('doodleScheduleHintInput');
             const doodleAuthorToggle = document.getElementById('doodleAuthorToggle');
             const doodleForm = document.getElementById('doodleForm');
             const duetDoodleCaption = document.getElementById('duetDoodleCaption');
@@ -10945,7 +10976,7 @@
                   <div class="doodle-face doodle-front">
                     <button class="doodle-fav" type="button">${d.favorite ? '♥' : '♡'}</button>
                     <button class="doodle-remove" type="button">✕</button>
-                    ${doodleLocked ? `<div class="locked-layer"><button type="button" class="locked-remove-btn" aria-label="Remove this scheduled doodle">✕</button><span class="locked-icon">🔒</span><span class="locked-text">unlocks ${formatUnlockLabel(d.unlock_date)}</span></div>` : `
+                    ${doodleLocked ? `<div class="locked-layer"><button type="button" class="locked-remove-btn" aria-label="Remove this scheduled doodle">✕</button><span class="locked-icon">🔒</span><span class="locked-text">unlocks ${formatUnlockLabel(d.unlock_date)}</span>${d.unlock_hint ? `<span class="locked-hint">${escapeHtml(d.unlock_hint)}</span>` : ''}</div>` : `
                     <img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption ? `: ${escapeHtml(d.caption)}` : ''}" loading="lazy" decoding="async">
                     <div class="doodle-caption-preview">${escapeHtml(d.caption || 'A little doodle ✨')}</div>
                     ${d.voice_url ? `<div class="note-voice doodle-caption-voice"></div>` : ''}
@@ -11276,12 +11307,15 @@
                         author: Number(doodleAuthor),
                         mode: 'solo',
                         unlock_date: (doodleScheduleToggle.checked && doodleScheduleDateInput.value) ?
-                            doodleScheduleDateInput.value : null
+                            doodleScheduleDateInput.value : null,
+                        unlock_hint: (doodleScheduleToggle.checked && doodleScheduleHintInput.value.trim()) ?
+                            doodleScheduleHintInput.value.trim() : null
                     });
                     if (error) throw error;
                     doodleCaption.value = '';
                     doodleScheduleToggle.checked = false;
                     doodleScheduleField.classList.add('hidden');
+                    doodleScheduleHintInput.value = '';
                     clearPendingVoice('solo');
                     soloEngine.reset();
                     showToast('Doodle pinned!');
@@ -16680,6 +16714,8 @@
                     surpriseToggle.checked = false;
                     scheduleToggle.checked = false;
                     scheduleField.classList.add('hidden');
+                    scheduleHintInput.value = '';
+                    scheduleCaptionInput.value = '';
                     surpriseHintText = '';
                     surpriseCaptionText = '';
                     styleModal.classList.remove('hidden');
@@ -16733,8 +16769,13 @@
                             const baseName = (file.name || 'photo').replace(/\.[^.]+$/, '');
                             uploadFile = new File([blob], baseName + '.jpg', { type: 'image/jpeg' });
                         }
-                        const record = await uploadAndSave(uploadFile, isSurprise, isSurprise ?
-                            surpriseCaptionText : '', isSurprise ? surpriseHintText : '', unlockDate);
+                        const isScheduled = !!unlockDate;
+                        const captionForUpload = isSurprise ? surpriseCaptionText : (isScheduled ?
+                            scheduleCaptionInput.value.trim() : '');
+                        const hintForUpload = isSurprise ? surpriseHintText : (isScheduled ? scheduleHintInput.value
+                            .trim() : '');
+                        const record = await uploadAndSave(uploadFile, isSurprise, captionForUpload, hintForUpload,
+                            unlockDate);
                         photos.push(record);
                         render();
                         burstHearts(heroAddBtn);
@@ -16847,7 +16888,7 @@
                     ${contentHidden ? '' : `<button class="expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>`}
                     ${photo.mood ? `<span class="mood-badge">${photo.mood}</span>` : ''}
                     ${isScratchHidden ? `<canvas class="scratch-layer" aria-label="Scratch to reveal the surprise"></canvas><div class="scratch-hint"><span class="scratch-hint-emoji">🎁</span><span>${escapeHtml(photo.hintText || 'scratch to reveal')}</span></div>` : ''}
-                    ${isScheduleLocked ? `<div class="locked-layer"><button type="button" class="locked-remove-btn" aria-label="Remove this scheduled memory">✕</button><span class="locked-icon">🔒</span><span class="locked-text">unlocks ${formatUnlockLabel(photo.unlockDate)}</span></div>` : ''}
+                    ${isScheduleLocked ? `<div class="locked-layer"><button type="button" class="locked-remove-btn" aria-label="Remove this scheduled memory">✕</button><span class="locked-icon">🔒</span><span class="locked-text">unlocks ${formatUnlockLabel(photo.unlockDate)}</span>${photo.hintText ? `<span class="locked-hint">${escapeHtml(photo.hintText)}</span>` : ''}</div>` : ''}
                   </div>
                   <div class="cap-preview-row">
                     <div class="cap-preview">${contentHidden ? (isScheduleLocked ? 'something is waiting for its day... 🔒' : 'a surprise is waiting... 🎁') : escapeHtml(photo.caption)}</div>
