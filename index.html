@@ -1782,9 +1782,29 @@
         .feeling-note .feeling-entry .feeling-text {
             max-width: clamp(90px, 24vw, 240px);
             overflow: hidden;
-            text-overflow: ellipsis;
             white-space: nowrap;
             display: inline-block;
+            vertical-align: bottom;
+            -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 4px, #000 calc(100% - 4px), transparent 100%);
+            mask-image: linear-gradient(90deg, transparent 0, #000 4px, #000 calc(100% - 4px), transparent 100%);
+        }
+        .feeling-note .feeling-entry .feeling-text-inner {
+            display: inline-block;
+            white-space: nowrap;
+            will-change: transform;
+        }
+        .feeling-note .feeling-entry .feeling-text.marquee .feeling-text-inner {
+            animation: feelingMarquee var(--marquee-duration, 6s) ease-in-out infinite;
+        }
+        @keyframes feelingMarquee {
+            0%, 12% { transform: translateX(0); }
+            45%, 55% { transform: translateX(var(--marquee-shift, 0)); }
+            88%, 100% { transform: translateX(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .feeling-note .feeling-entry .feeling-text.marquee .feeling-text-inner {
+                animation: none;
+            }
         }
         .feeling-note .feeling-entry .feeling-author {
             font-weight: 700;
@@ -2955,10 +2975,20 @@
             word-break: break-word;
             min-width: 0;
         }
-        .note-date {
+        .note-footer-row {
             position: absolute;
             bottom: 10px;
             right: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .note-footer-row .caption-voice-play {
+            margin-top: 0;
+            width: 13px;
+            height: 13px;
+        }
+        .note-date {
             font-family: 'Quicksand', sans-serif;
             font-size: 0.65rem;
             color: var(--ink-soft);
@@ -3441,13 +3471,16 @@
             display: flex;
             flex-direction: column;
         }
+        .doodle-image-wrap {
+            position: relative;
+        }
         .doodle-image {
             width: 100%;
             aspect-ratio: 1/1;
             object-fit: contain;
             background: #fffdf7;
             display: block;
-            cursor: zoom-in;
+            cursor: pointer;
         }
         .doodle-caption-preview {
             position: static;
@@ -3484,10 +3517,15 @@
         .doodle-caption-edit::placeholder {
             color: #9C8776;
         }
-        .doodle-author-badge {
+        .doodle-author-row {
             position: absolute;
             bottom: 7px;
             left: 9px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .doodle-author-badge {
             padding: .18rem .42rem;
             border-radius: 999px;
             color: var(--white);
@@ -3499,11 +3537,20 @@
         .doodle-author-badge.author-2 {
             background: var(--sage);
         }
-        .doodle-date {
+        .doodle-date-row {
             position: absolute;
             right: 10px;
             bottom: 10px;
-            color: var(--ink-soft);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .doodle-author-row .caption-voice-play,
+        .doodle-date-row .caption-voice-play {
+            margin-top: 0;
+        }
+        .doodle-date {
+            color: #6B5344;
             font: .62rem 'Quicksand', sans-serif;
         }
         .doodle-fav,
@@ -3606,14 +3653,18 @@
                 margin-top: 5px;
                 font-size: .75rem;
             }
-            .doodle-author-badge {
+            .doodle-author-row {
                 left: 6px;
                 bottom: 6px;
+            }
+            .doodle-author-badge {
                 font-size: .55rem;
             }
-            .doodle-date {
+            .doodle-date-row {
                 right: 6px;
                 bottom: 7px;
+            }
+            .doodle-date {
                 font-size: .52rem;
             }
             .doodle-fav,
@@ -7206,16 +7257,24 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 17px;
+            gap: 1px;
+            width: auto;
             height: 17px;
             opacity: 0.75;
         }
         .caption-voice-play:hover {
             opacity: 1;
         }
+        .caption-voice-play .voice-tag {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 0.55rem;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: 0.02em;
+        }
         .caption-voice-play svg {
-            width: 100%;
-            height: 100%;
+            width: 13px;
+            height: 13px;
             display: block;
         }
         .caption-voice-play .pause-icon {
@@ -7325,7 +7384,7 @@
         .note-reaction-badge,
         .doodle-reaction-badge {
             cursor: pointer;
-            touch-action: none;
+            touch-action: pan-y;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
@@ -8277,13 +8336,13 @@
                     <span class="feeling-note-icon">💭</span>
                     <span class="feeling-empty-hint" id="feelingEmptyHint">tap to share how you're feeling</span>
                     <span class="feeling-entry author-j hidden" id="feelingEntryJ">
-                        <span class="feeling-text" id="feelingTextJ"></span>
+                        <span class="feeling-text" id="feelingTextJ"><span class="feeling-text-inner" id="feelingTextInnerJ"></span></span>
                         <span class="feeling-author">— J</span>
                         <button type="button" class="feeling-clear" data-feeling="j" aria-label="Delete J's feeling">×</button>
                     </span>
                     <span class="feeling-sep hidden" id="feelingSep">|</span>
                     <span class="feeling-entry author-m hidden" id="feelingEntryM">
-                        <span class="feeling-text" id="feelingTextM"></span>
+                        <span class="feeling-text" id="feelingTextM"><span class="feeling-text-inner" id="feelingTextInnerM"></span></span>
                         <span class="feeling-author">— M</span>
                         <button type="button" class="feeling-clear" data-feeling="m" aria-label="Delete M's feeling">×</button>
                     </span>
@@ -10149,7 +10208,10 @@
                     ${note.audio_url ? `<div class="note-voice"></div>` : ''}
                     ${note.reaction ? `<span class="note-reaction-badge">${note.reaction}</span>` : ''}
                     <span class="note-author-badge author-${effectiveAuthor}${hasSignature(effectiveAuthor) ? ' has-sig' : ''}" title="${escapeHtml(authorLabel(effectiveAuthor))}" aria-label="${escapeHtml(authorLabel(effectiveAuthor))}">${sigAvatarHTML(effectiveAuthor, 27) || (effectiveAuthor === '2' ? NOTE_AUTHOR_2_LETTER : NOTE_AUTHOR_1_LETTER)}</span>
-                    <span class="note-date">${dateLabel}</span>
+                    <div class="note-footer-row">
+                      ${note.reply_audio_url ? `<button type="button" class="caption-voice-play note-reply-voice-play" aria-label="Play voice reply" data-src="${note.reply_audio_url}">${CAPTION_PLAY_ICON}</button>` : ''}
+                      <span class="note-date">${dateLabel}</span>
+                    </div>
                   </div>
                   <div class="note-face note-back">
                     <div class="back-panels">
@@ -10205,6 +10267,11 @@
                     backTabBtn.addEventListener('click', (e) => { e.stopPropagation();
                         backPanels.classList.remove('showing-reply'); });
 
+                    function ensureNoteReplyVoiceButton(voiceUrl) {
+                        ensureTaggedVoiceButton(wrap, { url: voiceUrl, selector: '.note-reply-voice-play',
+                            container: '.note-footer-row', ariaLabel: 'Play voice reply', insertFirst: true });
+                    }
+                    wireCaptionPlayButton(wrap.querySelector('.note-reply-voice-play'));
                     function renderNoteReplyVoice(voice) {
                         renderVoiceAttachment(replyVoiceBox, voice, (v) => {
                             removeVoiceWithUndo(replyVoiceBox, v, {
@@ -10214,11 +10281,13 @@
                                     note.reply_audio_path = null;
                                     await supabase.from(NOTES_TABLE).update({ reply_audio_url: null,
                                         reply_audio_path: null }).eq('id', note.id);
+                                    ensureNoteReplyVoiceButton(null);
                                     if (v.path) supabase.storage.from(VOICE_BUCKET).remove([v.path]).catch(() => {});
                                 },
                                 onRestore: () => { note.reply_audio_url = v.url;
                                     note.reply_audio_path = v.path;
-                                    renderNoteReplyVoice(v); }
+                                    renderNoteReplyVoice(v);
+                                    ensureNoteReplyVoiceButton(v.url); }
                             });
                         });
                     }
@@ -10233,6 +10302,7 @@
                             await supabase.from(NOTES_TABLE).update({ reply_audio_url: url, reply_audio_path: path })
                                 .eq('id', note.id);
                             renderNoteReplyVoice({ url, path });
+                            ensureNoteReplyVoiceButton(url);
                             if (oldPath && oldPath !== path) supabase.storage.from(VOICE_BUCKET).remove([oldPath])
                                 .catch(() => {});
                             showToast('Voice reply saved!');
@@ -10977,12 +11047,20 @@
                     <button class="doodle-fav" type="button">${d.favorite ? '♥' : '♡'}</button>
                     <button class="doodle-remove" type="button">✕</button>
                     ${doodleLocked ? `<div class="locked-layer"><button type="button" class="locked-remove-btn" aria-label="Remove this scheduled doodle">✕</button><span class="locked-icon">🔒</span><span class="locked-text">unlocks ${formatUnlockLabel(d.unlock_date)}</span>${d.unlock_hint ? `<span class="locked-hint">${escapeHtml(d.unlock_hint)}</span>` : ''}</div>` : `
-                    <img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption ? `: ${escapeHtml(d.caption)}` : ''}" loading="lazy" decoding="async">
+                    <div class="doodle-image-wrap">
+                      <img class="doodle-image" src="${escapeHtml(d.image_url)}" alt="Doodle${d.caption ? `: ${escapeHtml(d.caption)}` : ''}" loading="lazy" decoding="async">
+                      <button class="expand-btn doodle-expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>
+                    </div>
                     <div class="doodle-caption-preview">${escapeHtml(d.caption || 'A little doodle ✨')}</div>
-                    ${d.voice_url ? `<div class="note-voice doodle-caption-voice"></div>` : ''}
                     ${d.reaction ? `<span class="doodle-reaction-badge">${d.reaction}</span>` : ''}
-                    <span class="doodle-author-badge author-${author}${hasSignature(author) ? ' has-sig' : ''}">${sigAvatarHTML(author, 25) || `By ${author === '2' ? 'M' : 'J'}`}</span>
-                    <span class="doodle-date">${date}</span>
+                    <div class="doodle-author-row">
+                      <span class="doodle-author-badge author-${author}${hasSignature(author) ? ' has-sig' : ''}">${sigAvatarHTML(author, 25) || `By ${author === '2' ? 'M' : 'J'}`}</span>
+                      ${d.voice_url ? `<button type="button" class="caption-voice-play caption-voice-c" aria-label="Play voice caption" data-src="${d.voice_url}"><span class="voice-tag">C</span>${CAPTION_PLAY_ICON}</button>` : ''}
+                    </div>
+                    <div class="doodle-date-row">
+                      ${d.reply_audio_url ? `<button type="button" class="caption-voice-play caption-voice-r" aria-label="Play voice reply" data-src="${d.reply_audio_url}"><span class="voice-tag">R</span>${CAPTION_PLAY_ICON}</button>` : ''}
+                      <span class="doodle-date">${date}</span>
+                    </div>
                     `}
                   </div>
                   <div class="doodle-face doodle-back">
@@ -11015,6 +11093,7 @@
               `;
                     const flip = wrap.querySelector('.doodle-flip'),
                         image = wrap.querySelector('.doodle-image'),
+                        doodleExpandBtn = wrap.querySelector('.doodle-expand-btn'),
                         fav = wrap.querySelector('.doodle-fav'),
                         remove = wrap.querySelector('.doodle-remove'),
                         backPanels = wrap.querySelector('.back-panels'),
@@ -11026,11 +11105,17 @@
                         captionEdit = wrap.querySelector('.doodle-caption-edit'),
                         back = wrap.querySelector('.note-flip-back-btn'),
                         download = wrap.querySelector('.doodle-download');
-                    const doodleCaptionVoiceEl = wrap.querySelector('.doodle-caption-voice');
-                    if (doodleCaptionVoiceEl && d.voice_url) {
-                        doodleCaptionVoiceEl.appendChild(buildVoicePlayer(d.voice_url));
-                        doodleCaptionVoiceEl.addEventListener('click', (e) => e.stopPropagation());
+                    function ensureDoodleCaptionVoiceButton(voiceUrl) {
+                        ensureTaggedVoiceButton(wrap, { url: voiceUrl, selector: '.caption-voice-c',
+                            container: '.doodle-author-row', tag: 'C', ariaLabel: 'Play voice caption' });
                     }
+                    function ensureDoodleReplyVoiceButton(voiceUrl) {
+                        ensureTaggedVoiceButton(wrap, { url: voiceUrl, selector: '.caption-voice-r',
+                            container: '.doodle-date-row', tag: 'R', ariaLabel: 'Play voice reply',
+                            insertFirst: true });
+                    }
+                    wireCaptionPlayButton(wrap.querySelector('.caption-voice-c'));
+                    wireCaptionPlayButton(wrap.querySelector('.caption-voice-r'));
                     const doodleReactionBadge = wrap.querySelector('.doodle-reaction-badge');
                     if (doodleReactionBadge) {
                         wireReactionVoiceSticker(doodleReactionBadge, {
@@ -11058,11 +11143,13 @@
                                     d.reply_audio_url = null;
                                     d.reply_audio_path = null;
                                     await updateDoodle(d, { reply_audio_url: null, reply_audio_path: null });
+                                    ensureDoodleReplyVoiceButton(null);
                                     if (v.path) supabase.storage.from(VOICE_BUCKET).remove([v.path]).catch(() => {});
                                 },
                                 onRestore: () => { d.reply_audio_url = v.url;
                                     d.reply_audio_path = v.path;
-                                    renderDoodleReplyVoice(v); }
+                                    renderDoodleReplyVoice(v);
+                                    ensureDoodleReplyVoiceButton(v.url); }
                             });
                         });
                     }
@@ -11076,15 +11163,21 @@
                             d.reply_audio_path = path;
                             await updateDoodle(d, { reply_audio_url: url, reply_audio_path: path });
                             renderDoodleReplyVoice({ url, path });
+                            ensureDoodleReplyVoiceButton(url);
                             if (oldPath && oldPath !== path) supabase.storage.from(VOICE_BUCKET).remove([oldPath])
                                 .catch(() => {});
                             showToast('Voice reply saved!');
                             haptic(12);
                         }
                     });
+                    if (doodleExpandBtn) doodleExpandBtn.addEventListener('click', (e) => { e.stopPropagation();
+                        currentList = items.map(x => ({ src: x.image_url, caption: x.caption || 'A little doodle' }));
+                        lightboxIndex = items.findIndex(x => x.id === d.id);
+                        openLightbox(lightboxIndex, 'doodle');
+                    });
                     flip.addEventListener('click', e => { if (doodleLocked) return;
                         if (e.target.closest(
-                                'button,textarea,img,audio,.voice-attachment,.doodle-reaction-badge')) return;
+                                'button,textarea,audio,.voice-attachment,.doodle-reaction-badge')) return;
                         flip.classList.toggle('flipped');
                         if (!flip.classList.contains('flipped')) backPanels.classList.remove('showing-reply'); });
                     flip.addEventListener('keydown', e => { if (doodleLocked) return;
@@ -11094,11 +11187,6 @@
                             if (!flip.classList.contains('flipped')) backPanels.classList.remove(
                                 'showing-reply'); } });
                     back.addEventListener('click', () => flip.classList.remove('flipped'));
-                    if (image) image.addEventListener('click', () => {
-                        currentList = items.map(x => ({ src: x.image_url, caption: x.caption || 'A little doodle' }));
-                        lightboxIndex = items.findIndex(x => x.id === d.id);
-                        openLightbox(lightboxIndex, 'doodle');
-                    });
                     fav.addEventListener('click', async() => {
                         if (!d.favorite) {
                             const rect = fav.getBoundingClientRect();
@@ -15421,21 +15509,43 @@
                 });
             }
 
-            function ensureCaptionPlayButton(wrap, voiceUrl) {
-                let row = wrap.querySelector('.cap-preview-row');
-                let btn = wrap.querySelector('.caption-voice-play');
-                if (!voiceUrl) { if (btn) btn.remove();
+            /* Creates/updates/removes a small front-face voice-play button.
+               `tag` is an optional letter shown beside the icon ("C" for
+               caption voice, "R" for reply voice) — omit it for a plain
+               play button (used by notes, which only ever have one voice
+               reply slot and no ambiguity to label). `selector` must be
+               unique per button so multiple can coexist on one card;
+               `insertFirst` puts it before the container's other content
+               (used for the "C" button, so it reads left-to-right as
+               C ▸ caption text, R ▸ date). */
+            function ensureTaggedVoiceButton(wrap, { url, selector, container, tag, ariaLabel, insertFirst }) {
+                let btn = wrap.querySelector(selector);
+                if (!url) { if (btn) btn.remove();
                     return; }
-                if (!btn && row) {
+                if (!btn) {
+                    const parent = wrap.querySelector(container);
+                    if (!parent) return;
                     btn = document.createElement('button');
                     btn.type = 'button';
-                    btn.className = 'caption-voice-play';
-                    btn.setAttribute('aria-label', 'Play voice caption');
-                    btn.innerHTML = CAPTION_PLAY_ICON;
-                    row.appendChild(btn);
+                    btn.className = 'caption-voice-play' + selector.replace(/^\./, ' ');
+                    btn.setAttribute('aria-label', ariaLabel);
+                    btn.innerHTML = tag ? `<span class="voice-tag">${tag}</span>${CAPTION_PLAY_ICON}` :
+                        CAPTION_PLAY_ICON;
+                    if (insertFirst) parent.insertBefore(btn, parent.firstChild);
+                    else parent.appendChild(btn);
                 }
-                if (btn) { btn.dataset.src = voiceUrl;
-                    wireCaptionPlayButton(btn); }
+                btn.dataset.src = url;
+                wireCaptionPlayButton(btn);
+            }
+
+            function ensureCaptionPlayButton(wrap, voiceUrl) {
+                ensureTaggedVoiceButton(wrap, { url: voiceUrl, selector: '.caption-voice-c',
+                    container: '.cap-preview-row', tag: 'C', ariaLabel: 'Play voice caption', insertFirst: true });
+            }
+
+            function ensureReplyPlayButton(wrap, voiceUrl) {
+                ensureTaggedVoiceButton(wrap, { url: voiceUrl, selector: '.caption-voice-r',
+                    container: '.cap-preview-row', tag: 'R', ariaLabel: 'Play voice reply' });
             }
 
             /* ─── Voice stickers on reaction badges ───
@@ -15452,7 +15562,8 @@
                `{url,path}` — or persists `null` to clear it — and
                `bucket` defaults to VOICE_BUCKET. */
             const REACTION_STICKER_MAX_SECONDS = 9;
-            const REACTION_STICKER_HOLD_MS = 350;
+            const REACTION_STICKER_HOLD_MS = 500;
+            const REACTION_STICKER_MOVE_CANCEL_PX = 8;
             const REACTION_STICKER_DOUBLE_TAP_MS = 350;
             let activeStickerPlayback = null;
 
@@ -15470,7 +15581,9 @@
                     audio = null,
                     heldLongEnough = false,
                     lastQuickTapAt = 0,
-                    originalText = null;
+                    originalText = null,
+                    startX = 0,
+                    startY = 0;
 
                 refreshStickerIndicator(badge, getUrl);
 
@@ -15591,7 +15704,14 @@
                 badge.addEventListener('pointerdown', (e) => {
                     if (e.button !== undefined && e.button !== 0) return;
                     heldLongEnough = false;
+                    startX = e.clientX;
+                    startY = e.clientY;
                     holdTimer = setTimeout(beginRecording, REACTION_STICKER_HOLD_MS);
+                });
+                badge.addEventListener('pointermove', (e) => {
+                    if (!holdTimer) return;
+                    if (Math.abs(e.clientX - startX) > REACTION_STICKER_MOVE_CANCEL_PX || Math.abs(e.clientY -
+                            startY) > REACTION_STICKER_MOVE_CANCEL_PX) cancelHold();
                 });
                 ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
                     badge.addEventListener(evt, () => {
@@ -15692,6 +15812,8 @@
                 const entryM = document.getElementById('feelingEntryM');
                 const textJ = document.getElementById('feelingTextJ');
                 const textM = document.getElementById('feelingTextM');
+                const innerJ = document.getElementById('feelingTextInnerJ');
+                const innerM = document.getElementById('feelingTextInnerM');
                 const sep = document.getElementById('feelingSep');
                 const emptyHint = document.getElementById('feelingEmptyHint');
 
@@ -15699,14 +15821,16 @@
                 const hasM = feelingM && feelingM.trim();
 
                 if (hasJ) {
-                    textJ.textContent = feelingJ.trim();
+                    innerJ.textContent = feelingJ.trim();
                     entryJ.classList.remove('hidden');
+                    setupFeelingMarquee(textJ, innerJ);
                 } else {
                     entryJ.classList.add('hidden');
                 }
                 if (hasM) {
-                    textM.textContent = feelingM.trim();
+                    innerM.textContent = feelingM.trim();
                     entryM.classList.remove('hidden');
+                    setupFeelingMarquee(textM, innerM);
                 } else {
                     entryM.classList.add('hidden');
                 }
@@ -15721,6 +15845,24 @@
                     sep.classList.add('hidden');
                     emptyHint.classList.remove('hidden');
                 }
+            }
+
+            // If a feeling is too long to fit its pill, slide it back and forth
+            // (pause → reveal the tail → pause → reset) instead of clipping it
+            // with an ellipsis, so the whole thing is readable over a few
+            // seconds. J and M are measured and run independently.
+            function setupFeelingMarquee(container, inner) {
+                container.classList.remove('marquee');
+                inner.style.removeProperty('--marquee-shift');
+                inner.style.removeProperty('--marquee-duration');
+                requestAnimationFrame(() => {
+                    const overflow = inner.scrollWidth - container.clientWidth;
+                    if (overflow > 4) {
+                        inner.style.setProperty('--marquee-shift', `-${overflow}px`);
+                        inner.style.setProperty('--marquee-duration', `${Math.min(11, 4 + overflow / 35)}s`);
+                        container.classList.add('marquee');
+                    }
+                });
             }
 
             // Re-check expiry every few minutes so a feeling disappears from an
@@ -16891,8 +17033,9 @@
                     ${isScheduleLocked ? `<div class="locked-layer"><button type="button" class="locked-remove-btn" aria-label="Remove this scheduled memory">✕</button><span class="locked-icon">🔒</span><span class="locked-text">unlocks ${formatUnlockLabel(photo.unlockDate)}</span>${photo.hintText ? `<span class="locked-hint">${escapeHtml(photo.hintText)}</span>` : ''}</div>` : ''}
                   </div>
                   <div class="cap-preview-row">
+                    ${photo.voiceUrl && !contentHidden ? `<button type="button" class="caption-voice-play caption-voice-c" aria-label="Play voice caption" data-src="${photo.voiceUrl}"><span class="voice-tag">C</span>${CAPTION_PLAY_ICON}</button>` : ''}
                     <div class="cap-preview">${contentHidden ? (isScheduleLocked ? 'something is waiting for its day... 🔒' : 'a surprise is waiting... 🎁') : escapeHtml(photo.caption)}</div>
-                    ${photo.voiceUrl && !contentHidden ? `<button type="button" class="caption-voice-play" aria-label="Play voice caption" data-src="${photo.voiceUrl}"><svg class="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><svg class="pause-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>` : ''}
+                    ${photo.replyAudioUrl && !contentHidden ? `<button type="button" class="caption-voice-play caption-voice-r" aria-label="Play voice reply" data-src="${photo.replyAudioUrl}"><span class="voice-tag">R</span>${CAPTION_PLAY_ICON}</button>` : ''}
                   </div>
                 </div>
                 <div class="face back">
@@ -16978,7 +17121,8 @@
                     else photoImg.addEventListener('load', markLoaded);
                 }
 
-                wireCaptionPlayButton(wrap.querySelector('.caption-voice-play'));
+                wireCaptionPlayButton(wrap.querySelector('.caption-voice-c'));
+                wireCaptionPlayButton(wrap.querySelector('.caption-voice-r'));
 
                 replyTabBtn.addEventListener('click', (e) => { e.stopPropagation();
                     backPanels.classList.add('showing-reply'); });
@@ -17016,8 +17160,10 @@
                             onConfirmRemove: () => savePhotoReplyVoice(photo, null),
                             onRestore: () => { photo.replyAudioUrl = v.url;
                                 photo.replyAudioPath = v.path;
-                                renderPhotoReplyVoice(v); }
+                                renderPhotoReplyVoice(v);
+                                ensureReplyPlayButton(wrap, v.url); }
                         });
+                        ensureReplyPlayButton(wrap, null);
                     });
                 }
                 renderPhotoReplyVoice(photo.replyAudioUrl ? { url: photo.replyAudioUrl, path: photo.replyAudioPath } :
@@ -17026,6 +17172,7 @@
                     button: replyMicBtn,
                     onSaved: async({ url, path }) => {
                         await savePhotoReplyVoice(photo, { url, path });
+                        ensureReplyPlayButton(wrap, url);
                         renderPhotoReplyVoice({ url, path });
                         showToast('Voice reply saved!');
                         haptic(12);
