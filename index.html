@@ -2549,8 +2549,52 @@
             padding: 3px 10px 3px 3px;
         }
         body.dark-mode .voice-player {
-            background: rgba(255, 255, 255, .07);
-            border-color: rgba(255, 255, 255, .18);
+            background: rgba(255, 255, 255, .13);
+            border-color: rgba(255, 255, 255, .32);
+        }
+        /* Caption vs. reply voice players are colour-coded by what kind of
+           voice clip they are — gold for a caption, lavender for a reply —
+           regardless of who (J or M) recorded it. Applies to both the
+           compact front-face C/R buttons and the full player on the back. */
+        .photo-caption-voice-attach .voice-player,
+        .note-voice .voice-player {
+            border-color: var(--gold);
+        }
+        .photo-caption-voice-attach .voice-player-toggle,
+        .note-voice .voice-player-toggle {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+        .photo-caption-voice-attach .voice-player-toggle.playing,
+        .note-voice .voice-player-toggle.playing {
+            background: var(--gold);
+            color: var(--white);
+        }
+        .photo-caption-voice-attach .voice-player-progress,
+        .note-voice .voice-player-progress {
+            background: var(--gold);
+        }
+        .photo-reply-voice-attach .voice-player,
+        .doodle-reply-voice .voice-player,
+        .note-reply-voice .voice-player {
+            border-color: var(--lavender);
+        }
+        .photo-reply-voice-attach .voice-player-toggle,
+        .doodle-reply-voice .voice-player-toggle,
+        .note-reply-voice .voice-player-toggle {
+            border-color: var(--lavender);
+            color: var(--lavender);
+        }
+        .photo-reply-voice-attach .voice-player-toggle.playing,
+        .doodle-reply-voice .voice-player-toggle.playing,
+        .note-reply-voice .voice-player-toggle.playing {
+            background: var(--lavender);
+            color: var(--white);
+        }
+        .photo-reply-voice-attach .voice-player-progress,
+        .doodle-reply-voice .voice-player-progress,
+        .note-reply-voice .voice-player-progress {
+            background: var(--lavender);
         }
         .voice-player-toggle {
             width: 24px;
@@ -7287,8 +7331,14 @@
             display: block;
         }
         .caption-voice-play.playing {
-            color: var(--sage);
             opacity: 1;
+        }
+        .caption-voice-c {
+            color: var(--gold);
+        }
+        .caption-voice-r,
+        .note-reply-voice-play {
+            color: var(--lavender);
         }
         /* Two small mic buttons on the reply slide — one re-records the
            caption's voice note, one records the voice reply. Colour tells
