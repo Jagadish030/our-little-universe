@@ -2544,57 +2544,50 @@
             height: 32px;
             box-sizing: border-box;
             background: rgba(255, 255, 255, .5);
-            border: 1px solid var(--card-border, #E3D3C2);
+            border: 1.5px solid var(--rose-deep);
             border-radius: 999px;
             padding: 3px 10px 3px 3px;
         }
         body.dark-mode .voice-player {
             background: rgba(255, 255, 255, .13);
-            border-color: rgba(255, 255, 255, .32);
         }
-        /* Caption vs. reply voice players are colour-coded by what kind of
-           voice clip they are — gold for a caption, lavender for a reply —
-           regardless of who (J or M) recorded it. Applies to both the
-           compact front-face C/R buttons and the full player on the back. */
+        /* Caption vs. reply voice players are colour-coded using the site's
+           existing J/M shades — sage for a caption, rose for a reply —
+           regardless of who (J or M) actually recorded it. Rose is also
+           the default border above, so a reply needs no extra override;
+           only caption contexts need to be switched to sage. Covers both
+           the compact front-face C/R buttons and the full player, on
+           saved cards and in the compose-form "attach a voice caption"
+           preview alike, so nothing is left with an unstyled border. */
         .photo-caption-voice-attach .voice-player,
-        .note-voice .voice-player {
-            border-color: var(--gold);
+        .note-voice .voice-player,
+        #doodleCaptionVoice .voice-player,
+        #duetDoodleCaptionVoice .voice-player,
+        #relayCaptionVoice .voice-player {
+            border-color: var(--sage);
         }
         .photo-caption-voice-attach .voice-player-toggle,
-        .note-voice .voice-player-toggle {
-            border-color: var(--gold);
-            color: var(--gold);
+        .note-voice .voice-player-toggle,
+        #doodleCaptionVoice .voice-player-toggle,
+        #duetDoodleCaptionVoice .voice-player-toggle,
+        #relayCaptionVoice .voice-player-toggle {
+            border-color: var(--sage);
+            color: var(--sage);
         }
         .photo-caption-voice-attach .voice-player-toggle.playing,
-        .note-voice .voice-player-toggle.playing {
-            background: var(--gold);
+        .note-voice .voice-player-toggle.playing,
+        #doodleCaptionVoice .voice-player-toggle.playing,
+        #duetDoodleCaptionVoice .voice-player-toggle.playing,
+        #relayCaptionVoice .voice-player-toggle.playing {
+            background: var(--sage);
             color: var(--white);
         }
         .photo-caption-voice-attach .voice-player-progress,
-        .note-voice .voice-player-progress {
-            background: var(--gold);
-        }
-        .photo-reply-voice-attach .voice-player,
-        .doodle-reply-voice .voice-player,
-        .note-reply-voice .voice-player {
-            border-color: var(--lavender);
-        }
-        .photo-reply-voice-attach .voice-player-toggle,
-        .doodle-reply-voice .voice-player-toggle,
-        .note-reply-voice .voice-player-toggle {
-            border-color: var(--lavender);
-            color: var(--lavender);
-        }
-        .photo-reply-voice-attach .voice-player-toggle.playing,
-        .doodle-reply-voice .voice-player-toggle.playing,
-        .note-reply-voice .voice-player-toggle.playing {
-            background: var(--lavender);
-            color: var(--white);
-        }
-        .photo-reply-voice-attach .voice-player-progress,
-        .doodle-reply-voice .voice-player-progress,
-        .note-reply-voice .voice-player-progress {
-            background: var(--lavender);
+        .note-voice .voice-player-progress,
+        #doodleCaptionVoice .voice-player-progress,
+        #duetDoodleCaptionVoice .voice-player-progress,
+        #relayCaptionVoice .voice-player-progress {
+            background: var(--sage);
         }
         .voice-player-toggle {
             width: 24px;
@@ -2627,6 +2620,16 @@
         }
         body.dark-mode .voice-player-toggle.playing {
             background: var(--rose-deep);
+            color: var(--white);
+        }
+        body.dark-mode .photo-caption-voice-attach .voice-player-toggle,
+        body.dark-mode .note-voice .voice-player-toggle {
+            border-color: var(--sage);
+            color: var(--sage);
+        }
+        body.dark-mode .photo-caption-voice-attach .voice-player-toggle.playing,
+        body.dark-mode .note-voice .voice-player-toggle.playing {
+            background: var(--sage);
             color: var(--white);
         }
         .voice-player-track {
@@ -7334,11 +7337,11 @@
             opacity: 1;
         }
         .caption-voice-c {
-            color: var(--gold);
+            color: var(--sage);
         }
         .caption-voice-r,
         .note-reply-voice-play {
-            color: var(--lavender);
+            color: var(--rose-deep);
         }
         /* Two small mic buttons on the reply slide — one re-records the
            caption's voice note, one records the voice reply. Colour tells
