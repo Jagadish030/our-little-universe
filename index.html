@@ -2191,6 +2191,253 @@
         .feature-menu.open .menu-caret {
             transform: rotate(180deg);
         }
+        /* ─── Cloud notifications ───
+           A small thought-bubble badge tucked into the top-right corner
+           of its button (not centered-above) so it never needs much
+           vertical clearance and never collides with the row above it.
+           A little trail of two shrinking circles connects it back to
+           the button, like a classic comic thought bubble. Says who
+           added what; stays up the whole time you're in that section and
+           only clears once you leave (see enterScope/leaveScope in JS).
+           Tapping the bubble itself just peeks behind it for a moment —
+           it doesn't mark anything as seen. Only ever shown for things
+           added after this feature shipped (NOTIF_LAUNCH_AT), so nothing
+           old gets a cloud retroactively. */
+        .notif-host {
+            position: relative;
+            overflow: visible;
+        }
+        .notif-cloud {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            z-index: 40;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity .25s ease, visibility .25s;
+        }
+        .notif-cloud.show {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            animation: notifCloudFloat 3.6s ease-in-out infinite;
+        }
+        .notif-cloud .cloud-stem {
+            position: absolute;
+            right: 9px;
+            bottom: -5px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--glass-bg-strong, rgba(255, 255, 255, .92));
+            border: 1px solid var(--glass-border);
+        }
+        .notif-cloud .cloud-stem::after {
+            content: '';
+            position: absolute;
+            right: 4px;
+            bottom: -7px;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: var(--glass-bg-strong, rgba(255, 255, 255, .92));
+            border: 1px solid var(--glass-border);
+        }
+        .notif-cloud .cloud-body {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            max-width: 150px;
+            background: var(--glass-bg-strong, rgba(255, 255, 255, .95));
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px 14px 4px 14px;
+            padding: 6px 10px;
+            font-family: 'Quicksand', sans-serif;
+            font-size: .64rem;
+            line-height: 1.25;
+            color: var(--ink);
+            white-space: normal;
+            box-shadow: 0 6px 16px var(--shadow);
+            cursor: pointer;
+        }
+        .notif-cloud.dismissing {
+            animation: none;
+            pointer-events: none;
+        }
+        .notif-cloud.dismissing .cloud-body,
+        .notif-cloud.dismissing .cloud-stem,
+        .notif-cloud.dismissing .cloud-stem::after {
+            animation: cloudDissipate .55s ease forwards;
+        }
+        .notif-cloud-inline {
+            position: static;
+            display: none;
+            align-items: center;
+            margin-left: 6px;
+        }
+        .notif-cloud-inline.show {
+            display: inline-flex;
+        }
+        .notif-cloud-inline .cloud-stem {
+            display: none;
+        }
+        .notif-cloud-inline .cloud-body {
+            max-width: none;
+            padding: 3px 9px;
+            font-size: .58rem;
+            border-radius: 999px;
+            cursor: default;
+        }
+        @keyframes notifCloudFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        @keyframes notifCloudFloatCenter {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-4px); }
+        }
+        @keyframes cloudDissipate {
+            0% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+            100% { opacity: 0; transform: scale(1.7) translateY(-16px); filter: blur(5px); }
+        }
+        @keyframes cloudDissipateCenter {
+            0% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); filter: blur(0); }
+            100% { opacity: 0; transform: translateX(-50%) scale(1.7) translateY(-16px); filter: blur(5px); }
+        }
+        .notif-name {
+            font-weight: 800;
+            margin-right: 2px;
+        }
+        .notif-name.who-j {
+            color: var(--rose-deep);
+        }
+        .notif-name.who-m {
+            color: var(--sage);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .notif-cloud.show {
+                animation: none;
+            }
+            .notif-cloud.dismissing .cloud-body,
+            .notif-cloud.dismissing .cloud-stem,
+            .notif-cloud.dismissing .cloud-stem::after {
+                animation: none;
+                opacity: 0;
+            }
+        }
+
+        /* ─── New-item cloud tag ───
+           Sits on an individual note/doodle/bucket/capsule item that was
+           added after the feature shipped and that you haven't seen
+           yet. Centered at the top rather than pinned to a corner, so it
+           never sits on top of the favorite heart (notes/doodles) or the
+           checkbox (bucket list) that already live in the corners. Kept
+           fully inside the card's own bounds (never a negative offset)
+           because these cards use content-visibility: auto, which clips
+           anything positioned outside their box. */
+        .new-item-cloud {
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 8;
+            display: inline-flex;
+            align-items: center;
+            background: var(--rose-deep);
+            color: var(--white);
+            font-family: 'Quicksand', sans-serif;
+            font-size: .56rem;
+            font-weight: 800;
+            letter-spacing: .04em;
+            padding: 3px 8px;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .22);
+            cursor: pointer;
+            animation: notifCloudFloatCenter 3.6s ease-in-out infinite;
+        }
+        .new-item-cloud.dismissing {
+            animation: cloudDissipateCenter .5s ease forwards;
+            pointer-events: none;
+        }
+
+        /* ─── NEW badge on Solo / Duet / Relay mode cards ─── */
+        .game-choice-btn {
+            position: relative;
+            overflow: visible;
+        }
+        .mode-notif-cloud {
+            position: absolute;
+            top: -8px;
+            right: -6px;
+            background: var(--rose-deep);
+            color: var(--white);
+            font-family: 'Quicksand', sans-serif;
+            font-size: .56rem;
+            font-weight: 800;
+            letter-spacing: .04em;
+            padding: 3px 8px;
+            border-radius: 10px 10px 3px 10px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .22);
+            display: none;
+            animation: notifCloudFloat 3.6s ease-in-out infinite;
+        }
+        .mode-notif-cloud.show {
+            display: inline-flex;
+        }
+
+        /* ─── Cracked-glass fight button ───
+           The button matches the other pill buttons (outline, not
+           filled) so it doesn't stand out until something's actually
+           wrong — then the cracked state takes over. The crack radiates
+           from a single impact point near the hammer icon with
+           varied-length shards for a more organic shatter, and a faint
+           icy highlight to sell the glass. */
+        .break-glass-btn.is-cracked {
+            position: relative;
+            overflow: visible;
+            background: linear-gradient(155deg, #dfe8ec 0%, #aebfc7 100%);
+            color: #384249;
+            animation: crackShake 0.5s ease-in-out 1;
+        }
+        .break-glass-btn.is-cracked::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background:
+                linear-gradient(112deg, transparent calc(38% - 1px), rgba(50, 55, 60, .6) 38%, transparent calc(38% + 1px)),
+                linear-gradient(78deg, transparent calc(52% - 1px), rgba(50, 55, 60, .5) 52%, transparent calc(52% + 1px)),
+                linear-gradient(146deg, transparent calc(24% - 1px), rgba(50, 55, 60, .45) 24%, transparent calc(24% + 1px)),
+                linear-gradient(15deg, transparent calc(66% - 1px), rgba(50, 55, 60, .4) 66%, transparent calc(66% + 1px)),
+                linear-gradient(96deg, transparent calc(45% - 1px), rgba(50, 55, 60, .35) 45%, transparent calc(45% + 1px)),
+                radial-gradient(circle at 38% 46%, rgba(255, 255, 255, .5) 0%, transparent 4%);
+            pointer-events: none;
+        }
+        body.dark-mode .break-glass-btn.is-cracked::after {
+            background:
+                linear-gradient(112deg, transparent calc(38% - 1px), rgba(0, 0, 0, .65) 38%, transparent calc(38% + 1px)),
+                linear-gradient(78deg, transparent calc(52% - 1px), rgba(0, 0, 0, .55) 52%, transparent calc(52% + 1px)),
+                linear-gradient(146deg, transparent calc(24% - 1px), rgba(0, 0, 0, .5) 24%, transparent calc(24% + 1px)),
+                linear-gradient(15deg, transparent calc(66% - 1px), rgba(0, 0, 0, .45) 66%, transparent calc(66% + 1px)),
+                linear-gradient(96deg, transparent calc(45% - 1px), rgba(0, 0, 0, .4) 45%, transparent calc(45% + 1px)),
+                radial-gradient(circle at 38% 46%, rgba(255, 255, 255, .25) 0%, transparent 4%);
+        }
+        @keyframes crackShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-2px); }
+            40% { transform: translateX(2px); }
+            60% { transform: translateX(-1px); }
+            80% { transform: translateX(1px); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .break-glass-btn.is-cracked {
+                animation: none;
+            }
+        }
+
         .feature-menu-popover {
             position: absolute;
             top: calc(100% + .55rem);
@@ -2681,6 +2928,207 @@
         body.dark-mode .voice-attachment-remove {
             background: #3a3040;
             color: #e9dde2;
+        }
+
+        /* ─── Expanded voice player: long-press (or click-and-hold) any
+           small voice player to open a big, easy-to-tap version with a
+           speed selector. Works with mouse or touch since it's built on
+           pointer events. ─── */
+        .expanded-player-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+            background: rgba(30, 20, 30, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .expanded-player-overlay.hidden {
+            display: none;
+        }
+        .expanded-player-card {
+            position: relative;
+            width: min(380px, 100%);
+            background: var(--white);
+            border-radius: 22px;
+            padding: 2.2rem 1.7rem 1.7rem;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, .4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.1rem;
+        }
+        body.dark-mode .expanded-player-card {
+            background: #2b2233;
+        }
+        .expanded-player-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(107, 83, 68, .12);
+            color: var(--ink-soft);
+            font-size: .8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background .15s ease, transform .1s ease;
+        }
+        .expanded-player-close:hover {
+            background: rgba(107, 83, 68, .22);
+        }
+        .expanded-player-close:active {
+            transform: scale(.9);
+        }
+        body.dark-mode .expanded-player-close {
+            background: rgba(255, 255, 255, .12);
+            color: #e9dde2;
+        }
+        body.dark-mode .expanded-player-close:hover {
+            background: rgba(255, 255, 255, .22);
+        }
+        .expanded-player-toggle {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            border: 2px solid var(--rose-deep);
+            background: var(--white);
+            color: var(--rose-deep);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background .15s ease, color .15s ease;
+        }
+        body.dark-mode .expanded-player-toggle {
+            background: #3a3040;
+        }
+        .expanded-player-toggle svg {
+            width: 30px;
+            height: 30px;
+        }
+        .expanded-player-toggle.playing {
+            background: var(--rose-deep);
+            color: var(--white);
+        }
+        .expanded-player-toggle:hover {
+            background: rgba(107, 83, 68, .08);
+        }
+        .expanded-player-toggle.playing:hover {
+            background: var(--rose-deep);
+            filter: brightness(1.08);
+        }
+        .expanded-player-toggle:active {
+            transform: scale(.94);
+        }
+        /* Caption clips are green (sage) to match the mini player; reply
+           clips stay on the default pink so expanded and mini always agree. */
+        .expanded-player-card.accent-caption .expanded-player-toggle {
+            border-color: var(--sage);
+            color: var(--sage);
+        }
+        .expanded-player-card.accent-caption .expanded-player-toggle.playing {
+            background: var(--sage);
+            color: var(--white);
+        }
+        .expanded-player-card.accent-caption .expanded-player-toggle.playing:hover {
+            background: var(--sage);
+        }
+        body.dark-mode .expanded-player-toggle:hover {
+            background: rgba(255, 255, 255, .08);
+        }
+        .expanded-player-track {
+            width: 100%;
+            height: 12px;
+            border-radius: 6px;
+            background: rgba(107, 83, 68, .15);
+            position: relative;
+            cursor: pointer;
+        }
+        body.dark-mode .expanded-player-track {
+            background: rgba(255, 255, 255, .15);
+        }
+        .expanded-player-progress {
+            position: absolute;
+            inset: 0;
+            width: 0%;
+            background: var(--rose-deep);
+            border-radius: 6px;
+            pointer-events: none;
+        }
+        .expanded-player-card.accent-caption .expanded-player-progress {
+            background: var(--sage);
+        }
+        .expanded-player-time {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-family: 'Quicksand', sans-serif;
+            font-size: .8rem;
+            color: var(--ink-soft);
+            margin-top: -0.6rem;
+        }
+        .expanded-player-speeds {
+            display: flex;
+            gap: .4rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .expanded-player-speeds button {
+            font-family: 'Quicksand', sans-serif;
+            font-size: .75rem;
+            font-weight: 700;
+            padding: .45rem .75rem;
+            border-radius: 999px;
+            border: 1px solid var(--card-border, #E3D3C2);
+            background: var(--white);
+            color: var(--ink-soft);
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: background .15s ease, color .15s ease, border-color .15s ease, transform .1s ease;
+        }
+        .expanded-player-speeds button:hover {
+            border-color: var(--rose-deep);
+            color: var(--rose-deep);
+        }
+        .expanded-player-speeds button:active {
+            transform: scale(.92);
+        }
+        .expanded-player-card.accent-caption .expanded-player-speeds button:hover {
+            border-color: var(--sage);
+            color: var(--sage);
+        }
+        body.dark-mode .expanded-player-speeds button {
+            background: #3a3040;
+            color: #e9dde2;
+            border-color: rgba(255, 255, 255, .18);
+        }
+        body.dark-mode .expanded-player-speeds button:hover {
+            border-color: var(--rose-deep);
+            color: #f0dfe3;
+        }
+        .expanded-player-speeds button.active {
+            background: var(--rose-deep);
+            color: var(--white);
+            border-color: var(--rose-deep);
+        }
+        .expanded-player-speeds button.active:hover {
+            color: var(--white);
+        }
+        .expanded-player-card.accent-caption .expanded-player-speeds button.active {
+            background: var(--sage);
+            border-color: var(--sage);
+        }
+        @media (min-width: 640px) {
+            .expanded-player-card {
+                padding: 2.6rem 2.2rem 2rem;
+            }
         }
 
         /* ─── Sliding back panels (note/caption ↔ reply), shared by
@@ -4105,6 +4553,7 @@
         }
         .capsule-item,
         .bucket-item {
+            position: relative;
             padding: .7rem .8rem;
             border-radius: 10px;
             background: rgba(255, 249, 232, .72);
@@ -4362,7 +4811,7 @@
         }
 
         .break-glass-btn {
-            background: rgba(217, 138, 147, .12);
+            background: var(--white);
         }
         .glass-modal {
             position: fixed;
@@ -7611,7 +8060,12 @@
         }
         .face.back .photo-reply-input {
             font-size: 1.15rem;
-            height: 120px;
+            height: 52px;
+            max-height: 52px;
+            flex-shrink: 0;
+        }
+        .back-panel-reply {
+            overflow-y: auto;
         }
         .face.back textarea:focus {
             outline: none;
@@ -8294,6 +8748,7 @@
     <div class="top-right-controls" id="topRightControls">
         <button type="button" class="top-right-btn" id="signatureBtn" title="Draw or type your signature" aria-label="Draw or type your signature">✍️</button>
         <button type="button" class="top-right-btn" id="presenceSwitchBtn" title="Change whose device this is" aria-label="Change whose device this is">⚙️</button>
+        <button type="button" class="top-right-btn" id="lockToggleBtn" title="Lock the page" aria-label="Lock the page">🔒</button>
     </div>
 
     <div class="pass-gate" id="passGate">
@@ -8411,10 +8866,10 @@
             </div>
 
             <div class="hero-actions">
-                <button class="add-btn" id="heroAddBtn">+ Pin a new memory</button>
+                <span class="notif-host"><button class="add-btn" id="heroAddBtn">+ Pin a new memory</button><span class="notif-cloud" id="memoriesNotifCloud"><span class="cloud-stem"></span><span class="cloud-body"><span class="notif-name"></span></span></span></span>
                 <button class="fav-filter-btn" id="favFilterBtn" type="button">♡ Favorites only</button>
                 <button class="fav-filter-btn" id="surpriseBtn" type="button">Surprise me 🎲</button>
-                <button class="fav-filter-btn break-glass-btn" id="breakGlassBtn" type="button">🔨 In case of a fight</button>
+                <span class="notif-host"><button class="fav-filter-btn break-glass-btn" id="breakGlassBtn" type="button">🔨 In case of a fight</button><span class="notif-cloud" id="fightNotifCloud"><span class="cloud-stem"></span><span class="cloud-body"><span class="notif-name"></span></span></span></span>
                 <button class="music-btn" id="musicBtn" type="button" aria-label="Turn on music">🎵</button>
                 <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">🌙</button>
                 <div class="accent-picker">
@@ -8472,14 +8927,14 @@
                         <button class="photo-sort-option" type="button" role="menuitemradio" aria-checked="false" data-sort="shuffle">Shuffle</button>
                     </div>
                 </div>
-                <button class="fav-filter-btn" id="notesToggleBtn" type="button">Love notes 💌</button>
+                <span class="notif-host"><button class="fav-filter-btn" id="notesToggleBtn" type="button">Love notes 💌</button><span class="notif-cloud" id="notesNotifCloud"><span class="cloud-stem"></span><span class="cloud-body"><span class="notif-name"></span></span></span></span>
                 <div class="feature-menu" id="featureMenu">
-                    <button class="fav-filter-btn feature-menu-trigger" id="featureMenuBtn" type="button" aria-expanded="false" aria-controls="featureMenuPopover">Little things <span class="menu-caret">⌄</span></button>
+                    <span class="notif-host"><button class="fav-filter-btn feature-menu-trigger" id="featureMenuBtn" type="button" aria-expanded="false" aria-controls="featureMenuPopover">Little things <span class="menu-caret">⌄</span></button><span class="notif-cloud" id="littleThingsNotifCloud"><span class="cloud-stem"></span><span class="cloud-body"><span class="notif-name"></span></span></span></span>
                     <div class="feature-menu-popover" id="featureMenuPopover">
-                        <button id="doodlesToggleBtn" type="button">✏️ Doodles Wall</button>
-                        <button id="moodsToggleBtn" type="button">🗓️ Mood Calendar</button>
-                        <button id="capsulesToggleBtn" type="button">⏳ Time Capsules</button>
-                        <button id="bucketToggleBtn" type="button">✨ Our Bucket List</button>
+                        <button id="doodlesToggleBtn" type="button" class="notif-host">✏️ Doodles Wall<span class="notif-cloud notif-cloud-inline" id="doodlesNotifCloud"><span class="cloud-stem"></span><span class="cloud-body"><span class="notif-name"></span></span></span></button>
+                        <button id="moodsToggleBtn" type="button" class="notif-host">🗓️ Mood Calendar<span class="notif-cloud notif-cloud-inline" id="moodsNotifCloud"><span class="cloud-stem"></span><span class="cloud-body"><span class="notif-name"></span></span></span></button>
+                        <button id="capsulesToggleBtn" type="button" class="notif-host">⏳ Time Capsules<span class="notif-cloud notif-cloud-inline" id="capsulesNotifCloud"><span class="cloud-stem"></span><span class="cloud-body"><span class="notif-name"></span></span></span></button>
+                        <button id="bucketToggleBtn" type="button" class="notif-host">✨ Our Bucket List<span class="notif-cloud notif-cloud-inline" id="bucketNotifCloud"><span class="cloud-stem"></span><span class="cloud-body"><span class="notif-name"></span></span></span></button>
                         <button id="constellationToggleBtn" type="button">✦ Memory Constellation</button>
                         <button id="gamesToggleBtn" type="button">🎮 Mini Games</button>
                         <button id="specialDaysToggleBtn" type="button">🎀 Special Days</button>
@@ -8553,9 +9008,9 @@
             <div class="game-chooser" id="doodleModeChooser">
                 <p>Draw on your own, live together, or pass one piece back and forth.</p>
                 <div class="game-choice-row">
-                    <button type="button" class="game-choice-btn" id="chooseDoodleSolo">🎨<span>Solo</span><small>draw on your own</small></button>
-                    <button type="button" class="game-choice-btn" id="chooseDoodleDuet">👥<span>Duet</span><small>draw together, live</small></button>
-                    <button type="button" class="game-choice-btn" id="chooseDoodleRelay">🤝<span>Relay</span><small>pass it back and forth</small></button>
+                    <button type="button" class="game-choice-btn" id="chooseDoodleSolo">🎨<span>Solo</span><small>draw on your own</small><span class="mode-notif-cloud" id="doodleSoloModeCloud">NEW</span></button>
+                    <button type="button" class="game-choice-btn" id="chooseDoodleDuet">👥<span>Duet</span><small>draw together, live</small><span class="mode-notif-cloud" id="doodleDuetModeCloud">NEW</span></button>
+                    <button type="button" class="game-choice-btn" id="chooseDoodleRelay">🤝<span>Relay</span><small>pass it back and forth</small><span class="mode-notif-cloud" id="doodleRelayModeCloud">NEW</span></button>
                 </div>
             </div>
 
@@ -9541,9 +9996,17 @@
                 }
             }
 
-            function unlockSite() {
+            const UNLOCK_SESSION_KEY = 'ourLittleUniverseUnlockedSession';
+
+            function unlockSite({ instant } = {}) {
+                sessionStorage.setItem(UNLOCK_SESSION_KEY, '1');
                 siteContent.classList.remove('hidden');
                 init();
+                if (instant) {
+                    passGate.classList.add('hidden', 'unlocking');
+                    passForm.classList.add('unlocked');
+                    return;
+                }
                 passForm.classList.add('unlocked');
                 setTimeout(celebrateVaultUnlock, 520);
                 setTimeout(() => passGate.classList.add('unlocking'), 720);
@@ -9555,6 +10018,30 @@
                     });
                 }, 1300);
             }
+
+            /* Locking, whether from the lock icon or the secret long-press,
+               is a hard reset back to the passcode gate — it clears the
+               "unlocked this session" flag (so a refresh won't sneak back
+               in) and hides the site content again. Refreshing the page on
+               its own never locks it — only this, or actually closing the
+               tab/browser (sessionStorage clears on its own then). */
+            function lockSite() {
+                if (passGate.classList.contains('hidden') === false) return;
+                sessionStorage.removeItem(UNLOCK_SESSION_KEY);
+                siteContent.classList.add('hidden');
+                passForm.classList.remove('unlocked', 'shake');
+                passGate.classList.remove('unlocking', 'hidden');
+                passInput.value = '';
+                passError.textContent = '';
+                lightVaultStars();
+                prevMoonFilled = 0;
+                haptic([15, 40, 15, 40, 15]);
+                setTimeout(() => passInput.focus(), 250);
+            }
+
+            /* Deferred to the end of this IIFE (not called from here
+               directly) — init() and other functions it depends on need
+               every const in this script to be defined first. */
 
             passForm.addEventListener('submit', async(e) => {
                 e.preventDefault();
@@ -9574,6 +10061,26 @@
                     passInput.focus();
                 }
             });
+
+            const lockToggleBtn = document.getElementById('lockToggleBtn');
+            if (lockToggleBtn) lockToggleBtn.addEventListener('click', lockSite);
+
+            /* Secret shortcut: long-pressing "Surprise me" also locks the
+               page. The long-press timer suppresses the button's normal
+               click so it doesn't also jump to a random photo. */
+            let surpriseLongPressTimer = null;
+            let surpriseLongPressFired = false;
+            surpriseBtn.addEventListener('pointerdown', () => {
+                surpriseLongPressFired = false;
+                surpriseLongPressTimer = setTimeout(() => {
+                    surpriseLongPressFired = true;
+                    lockSite();
+                }, 650);
+            });
+            ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => surpriseBtn.addEventListener(ev, () => {
+                clearTimeout(surpriseLongPressTimer);
+            }));
+
 
             /* ─── Days together ─── */
             function renderDaysTogether() {
@@ -9873,7 +10380,10 @@
                         voicePath: row.voice_path || null,
                         reply: row.reply || '',
                         replyAudioUrl: row.reply_audio_url || null,
-                        replyAudioPath: row.reply_audio_path || null
+                        replyAudioPath: row.reply_audio_path || null,
+                        author: row.author || 1,
+                        seen_by_j: row.seen_by_j,
+                        seen_by_m: row.seen_by_m
                     }));
                 } catch (err) {
                     console.error('Could not load memories from the cloud:', err);
@@ -9901,7 +10411,10 @@
                     is_surprise: !!isSurprise,
                     is_revealed: !isSurprise,
                     surprise_hint: (hintText && hintText.trim()) ? hintText.trim() : null,
-                    unlock_date: unlockDate || null
+                    unlock_date: unlockDate || null,
+                    author: myAuthorNum(),
+                    seen_by_j: myLetter() === 'J',
+                    seen_by_m: myLetter() === 'M'
                 };
                 const { data: inserted, error: insertError } = await supabase.from(TABLE).insert(record).select().single();
                 if (insertError) throw insertError;
@@ -10294,9 +10807,19 @@
                     const flipEl = wrap.querySelector('.note-flip');
                     const favBtn = wrap.querySelector('.note-fav');
                     const removeBtn = wrap.querySelector('.note-remove');
+                    wireNewItemCloud(wrap.querySelector('.note-front'), note, {
+                        seenField: `seen_by_${myFieldSuffix()}`,
+                        scope: 'notes',
+                        onMarkSeen: () => {
+                            const col = `seen_by_${myFieldSuffix()}`;
+                            note[col] = true;
+                            if (supabase) supabase.from(NOTES_TABLE).update({ [col]: true }).eq('id', note.id).then(
+                                () => {});
+                        }
+                    });
                     const audioEl = wrap.querySelector('.note-voice');
                     if (audioEl && note.audio_url) {
-                        const player = buildVoicePlayer(note.audio_url);
+                        const player = buildVoicePlayer(note.audio_url, 'caption');
                         audioEl.appendChild(player);
                     }
                     const backPanels = wrap.querySelector('.back-panels');
@@ -10493,9 +11016,11 @@
                     scrollToSection(notesWall);
                     if (!notesLoaded) { notesLoaded = true;
                         loadNotes(); }
-                }
+                    enterScope('notes');
+                } else if (currentOpenScope === 'notes') { leaveScope(); }
             });
-            notesCloseBtn.addEventListener('click', () => notesWall.classList.add('hidden'));
+            notesCloseBtn.addEventListener('click', () => { notesWall.classList.add('hidden');
+                if (currentOpenScope === 'notes') leaveScope(); });
             notesFavFilterBtn.addEventListener('click', () => {
                 notesShowFavoritesOnly = !notesShowFavoritesOnly;
                 notesFavFilterBtn.classList.toggle('active', notesShowFavoritesOnly);
@@ -10521,7 +11046,9 @@
                 if (!message || !supabase) return;
                 haptic(12);
                 try {
-                    await supabase.from(NOTES_TABLE).insert({ message, author: currentNoteAuthor });
+                    const isM = String(currentNoteAuthor) === '2';
+                    await supabase.from(NOTES_TABLE).insert({ message, author: currentNoteAuthor, seen_by_j: !isM,
+                        seen_by_m: isM });
                     noteInput.value = '';
                     loadNotes();
                 } catch (err) {
@@ -11031,6 +11558,7 @@
                     allDoodles = data || [];
                     doodlesSkeletonShown = false;
                     renderDoodlesFiltered();
+                    updateDoodleModeBadges();
                 } catch (err) {
                     console.error('Could not load doodles:', err);
                     showToast('Could not load doodles. Run the doodles setup SQL first.', { type: 'error' });
@@ -11158,6 +11686,17 @@
                         captionEdit = wrap.querySelector('.doodle-caption-edit'),
                         back = wrap.querySelector('.note-flip-back-btn'),
                         download = wrap.querySelector('.doodle-download');
+                    if (!doodleLocked) {
+                        wireNewItemCloud(wrap.querySelector('.doodle-front'), d, {
+                            seenField: `seen_by_${myFieldSuffix()}`,
+                            scope: 'doodles',
+                            onMarkSeen: () => {
+                                const col = `seen_by_${myFieldSuffix()}`;
+                                d[col] = true;
+                                updateDoodle(d, { [col]: true });
+                            }
+                        });
+                    }
                     function ensureDoodleCaptionVoiceButton(voiceUrl) {
                         ensureTaggedVoiceButton(wrap, { url: voiceUrl, selector: '.caption-voice-c',
                             container: '.doodle-author-row', tag: 'C', ariaLabel: 'Play voice caption' });
@@ -11447,6 +11986,8 @@
                         voice_path: pendingSoloVoice ? pendingSoloVoice.path : null,
                         author: Number(doodleAuthor),
                         mode: 'solo',
+                        seen_by_j: Number(doodleAuthor) !== 2,
+                        seen_by_m: Number(doodleAuthor) === 2,
                         unlock_date: (doodleScheduleToggle.checked && doodleScheduleDateInput.value) ?
                             doodleScheduleDateInput.value : null,
                         unlock_hint: (doodleScheduleToggle.checked && doodleScheduleHintInput.value.trim()) ?
@@ -11488,7 +12029,9 @@
                         voice_url: pendingDuetVoice ? pendingDuetVoice.url : null,
                         voice_path: pendingDuetVoice ? pendingDuetVoice.path : null,
                         author: Number(duetDoodleAuthor),
-                        mode: 'duet'
+                        mode: 'duet',
+                        seen_by_j: Number(duetDoodleAuthor) !== 2,
+                        seen_by_m: Number(duetDoodleAuthor) === 2
                     });
                     if (error) throw error;
                     duetDoodleCaption.value = '';
@@ -11627,10 +12170,11 @@
                 haptic(15);
                 try {
                     const imageUrl = await uploadRelaySnapshot();
+                    const finisher = Number(getIdentity());
                     const { error } = await supabase.from(DOODLES_TABLE).insert({ image_url: imageUrl, storage_path:
                         null, caption: relayCaption.value.trim() || null, voice_url: pendingRelayVoice ?
                         pendingRelayVoice.url : null, voice_path: pendingRelayVoice ? pendingRelayVoice.path : null,
-                        author: Number(getIdentity()), mode: 'relay' });
+                        author: finisher, mode: 'relay', seen_by_j: finisher !== 2, seen_by_m: finisher === 2 });
                     if (error) throw error;
                     const starter = Number(getIdentity()) === 2 ? 2 : 1;
                     await supabase.from(RELAY_STATE_TABLE).upsert({ id: 1, image_url: null, turn: starter,
@@ -11659,6 +12203,7 @@
                 doodleFullscreen.exit();
                 duetDoodleFullscreen.exit();
                 relayDoodleFullscreen.exit();
+                updateDoodleModeBadges();
             }
 
             function openDoodleSolo() {
@@ -11730,11 +12275,16 @@
                 doodlesWall.classList.toggle('hidden');
                 if (opening) { notesWall.classList.add('hidden');
                     showDoodleModeChooser();
-                    scrollToSection(doodlesWall); }
+                    scrollToSection(doodlesWall);
+                    enterScope('doodles');
+                    if (!doodlesLoaded) { doodlesLoaded = true;
+                        loadDoodles(); }
+                } else if (currentOpenScope === 'doodles') { leaveScope(); }
             });
             doodlesCloseBtn.addEventListener('click', () => {
                 doodlesWall.classList.add('hidden');
                 resetDoodleCanvasOverlays();
+                if (currentOpenScope === 'doodles') leaveScope();
             });
             notesToggleBtn.addEventListener('click', () => doodlesWall.classList.add('hidden'));
             doodlesFavFilterBtn.addEventListener('click', () => {
@@ -11881,15 +12431,19 @@
                 });
             }
 
-            function closeExtras() { extrasWalls.forEach(w => w.classList.add('hidden')); }
+            function closeExtras() {
+                extrasWalls.forEach(w => w.classList.add('hidden'));
+                if (currentOpenScope && currentOpenScope !== 'notes' && currentOpenScope !== 'doodles') leaveScope();
+            }
 
-            function openExtra(wall) {
+            function openExtra(wall, scope) {
                 closeFeatureMenuInstantly();
                 closeExtras();
                 notesWall.classList.add('hidden');
                 doodlesWall.classList.add('hidden');
                 wall.classList.remove('hidden');
                 scrollToSection(wall);
+                if (scope) enterScope(scope);
             }
             const littleThingsWalls = [doodlesWall, moodsWall, capsulesWall, bucketWall, constellationWall, gamesWall,
                 specialDaysWall
@@ -11898,6 +12452,7 @@
             function openLittleThing(index) {
                 const wall = littleThingsWalls[(index + littleThingsWalls.length) % littleThingsWalls.length];
                 if (wall === doodlesWall) {
+                    if (currentOpenScope && currentOpenScope !== 'doodles') leaveScope();
                     closeExtras();
                     notesWall.classList.add('hidden');
                     doodlesWall.classList.remove('hidden');
@@ -11905,8 +12460,13 @@
                     scrollToSection(doodlesWall);
                     if (!doodlesLoaded) { doodlesLoaded = true;
                         loadDoodles(); }
+                    enterScope('doodles');
                 } else {
-                    openExtra(wall);
+                    let scope = null;
+                    if (wall === moodsWall) scope = 'mood';
+                    else if (wall === capsulesWall) scope = 'capsules';
+                    else if (wall === bucketWall) scope = 'bucket';
+                    openExtra(wall, scope);
                     if (wall === moodsWall) loadMoods();
                     if (wall === capsulesWall) loadCapsules();
                     if (wall === bucketWall) loadBucket();
@@ -12033,16 +12593,23 @@
                     b.className = 'calendar-day' + (key === today ? ' today' : '');
                     b.dataset.date = key;
                     let inner = `${day}`;
+                    let dayIsNew = false;
                     if (entries.length) {
                         inner += `<span class="day-moods">`;
                         const sorted = [...entries].sort((a, b) => (a.author || 1) - (b.author || 1));
                         sorted.forEach(e => {
                             inner +=
                                 `<span class="day-mood author-${e.author || 1}">${e.mood}</span>`;
+                            if (Number(e.author || 1) === otherAuthorNum() && e.created_at && e.created_at >
+                                lastSeenFor('mood')) dayIsNew = true;
                         });
                         inner += `</span>`;
                     }
                     b.innerHTML = inner;
+                    if (dayIsNew) { const tag = document.createElement('span');
+                        tag.className = 'new-item-cloud';
+                        tag.textContent = 'NEW';
+                        b.appendChild(tag); }
                     b.addEventListener('click', () => saveCalendarMood(key));
                     moodCalendar.appendChild(b);
                 }
@@ -12121,6 +12688,16 @@
                         renderCapsules();
                         showToast('Time capsule deleted.');
                     });
+                    wireNewItemCloud(li, c, {
+                        seenField: `seen_by_${myFieldSuffix()}`,
+                        scope: 'capsules',
+                        onMarkSeen: () => {
+                            const col = `seen_by_${myFieldSuffix()}`;
+                            c[col] = true;
+                            if (supabase) supabase.from(CAPSULES_TABLE).update({ [col]: true }).eq('id', c.id).then(
+                                () => {});
+                        }
+                    });
                     capsuleList.appendChild(li);
                 });
             }
@@ -12141,10 +12718,13 @@
                 e.preventDefault();
                 if (!supabase) return;
                 haptic(12);
+                const isM = Number(capsuleAuthor) === 2;
                 const { data, error } = await supabase.from(CAPSULES_TABLE).insert({
                     unlock_date: capsuleDate.value,
                     message: capsuleMessage.value.trim(),
-                    author: Number(capsuleAuthor)
+                    author: Number(capsuleAuthor),
+                    seen_by_j: !isM,
+                    seen_by_m: isM
                 }).select().single();
                 if (error) { showToast('Could not seal that capsule.', { type: 'error' }); return; }
                 allCapsules.push(data);
@@ -12178,6 +12758,16 @@
                         allBucketItems = allBucketItems.filter(x => x.id !== item.id);
                         renderBucket();
                     });
+                    wireNewItemCloud(li, item, {
+                        seenField: `seen_by_${myFieldSuffix()}`,
+                        scope: 'bucket',
+                        onMarkSeen: () => {
+                            const col = `seen_by_${myFieldSuffix()}`;
+                            item[col] = true;
+                            if (supabase) supabase.from(BUCKET_LIST_TABLE).update({ [col]: true }).eq('id', item.id)
+                                .then(() => {});
+                        }
+                    });
                     bucketList.appendChild(li);
                 });
             }
@@ -12198,9 +12788,12 @@
                 e.preventDefault();
                 if (!supabase) return;
                 haptic(12);
+                const isM = Number(bucketAuthor) === 2;
                 const { data, error } = await supabase.from(BUCKET_LIST_TABLE).insert({
                     item: bucketInput.value.trim(),
-                    author: Number(bucketAuthor)
+                    author: Number(bucketAuthor),
+                    seen_by_j: !isM,
+                    seen_by_m: isM
                 }).select().single();
                 if (error) { showToast('Could not add that wish.', { type: 'error' }); return; }
                 allBucketItems.unshift(data);
@@ -12231,11 +12824,11 @@
                     constellationSky.appendChild(star);
                 });
             }
-            moodsToggleBtn.addEventListener('click', () => { openExtra(moodsWall);
+            moodsToggleBtn.addEventListener('click', () => { openExtra(moodsWall, 'mood');
                 loadMoods(); });
-            capsulesToggleBtn.addEventListener('click', () => { openExtra(capsulesWall);
+            capsulesToggleBtn.addEventListener('click', () => { openExtra(capsulesWall, 'capsules');
                 loadCapsules(); });
-            bucketToggleBtn.addEventListener('click', () => { openExtra(bucketWall);
+            bucketToggleBtn.addEventListener('click', () => { openExtra(bucketWall, 'bucket');
                 loadBucket(); });
             constellationToggleBtn.addEventListener('click', () => { openExtra(constellationWall);
                 renderConstellation(); });
@@ -15179,10 +15772,13 @@
                 glassModal.classList.add('hidden');
                 angerHistoryModal.classList.remove('hidden');
                 loadAngerHistory();
+                enterScope('fight');
+                document.getElementById('breakGlassBtn')?.classList.remove('is-cracked');
             });
             function closeAngerHistory() {
                 angerHistoryModal.classList.add('hidden');
                 glassModal.classList.remove('hidden');
+                if (currentOpenScope === 'fight') leaveScope();
             }
             angerHistoryClose.addEventListener('click', closeAngerHistory);
             angerHistoryBack.addEventListener('click', closeAngerHistory);
@@ -15288,11 +15884,14 @@
                     const { data: urlData } = supabase.storage.from(VOICE_BUCKET).getPublicUrl(path);
                     const typedLabel = noteInput.value.trim();
                     const message = typedLabel ? `🎤 ${typedLabel}` : '🎤 Voice note';
+                    const isM = String(currentNoteAuthor) === '2';
                     await supabase.from(NOTES_TABLE).insert({
                         message,
                         audio_url: urlData.publicUrl,
                         audio_path: path,
-                        author: currentNoteAuthor
+                        author: currentNoteAuthor,
+                        seen_by_j: !isM,
+                        seen_by_m: isM
                     });
                     noteInput.value = '';
                     showToast('Voice note saved!');
@@ -15420,12 +16019,127 @@
                 return `${m}:${String(sec).padStart(2, '0')}`;
             }
 
+            let expandedPlayerEl = null;
+            let expandedPlayerCleanup = null;
+
+            function ensureExpandedPlayerEl() {
+                if (expandedPlayerEl) return expandedPlayerEl;
+                const overlay = document.createElement('div');
+                overlay.className = 'expanded-player-overlay hidden';
+                overlay.innerHTML = `
+                <div class="expanded-player-card">
+                  <button type="button" class="expanded-player-close" aria-label="Close">✕</button>
+                  <button type="button" class="expanded-player-toggle" aria-label="Play"></button>
+                  <div class="expanded-player-track"><div class="expanded-player-progress"></div></div>
+                  <div class="expanded-player-time"><span class="ep-current">0:00</span><span class="ep-total">0:00</span></div>
+                  <div class="expanded-player-speeds">
+                    <button type="button" data-speed="0.25">0.25x</button>
+                    <button type="button" data-speed="0.5">0.5x</button>
+                    <button type="button" data-speed="1" class="active">1x</button>
+                    <button type="button" data-speed="1.5">1.5x</button>
+                    <button type="button" data-speed="2">2x</button>
+                  </div>
+                </div>
+              `;
+                document.body.appendChild(overlay);
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) closeExpandedPlayer(); });
+                overlay.querySelector('.expanded-player-close').addEventListener('click', closeExpandedPlayer);
+                expandedPlayerEl = overlay;
+                return overlay;
+            }
+
+            function closeExpandedPlayer() {
+                if (!expandedPlayerEl) return;
+                expandedPlayerEl.classList.add('hidden');
+                if (expandedPlayerCleanup) { expandedPlayerCleanup();
+                    expandedPlayerCleanup = null; }
+            }
+
+            function openExpandedPlayer(audio, accent) {
+                if (!audio) return;
+                const overlay = ensureExpandedPlayerEl();
+                if (expandedPlayerCleanup) { expandedPlayerCleanup();
+                    expandedPlayerCleanup = null; }
+                const card = overlay.querySelector('.expanded-player-card');
+                card.className = 'expanded-player-card' + (accent === 'caption' ? ' accent-caption' : '');
+                const toggle = overlay.querySelector('.expanded-player-toggle');
+                const track = overlay.querySelector('.expanded-player-track');
+                const progress = overlay.querySelector('.expanded-player-progress');
+                const curEl = overlay.querySelector('.ep-current');
+                const totalEl = overlay.querySelector('.ep-total');
+                const speedBtns = overlay.querySelectorAll('.expanded-player-speeds button');
+
+                function updatePlayIcon() {
+                    toggle.innerHTML = audio.paused ? PLAY_ICON_SVG : PAUSE_ICON_SVG;
+                    toggle.classList.toggle('playing', !audio.paused);
+                    toggle.setAttribute('aria-label', audio.paused ? 'Play' : 'Pause');
+                }
+
+                function updateProgress() {
+                    if (isFinite(audio.duration) && audio.duration > 0) {
+                        progress.style.width = ((audio.currentTime / audio.duration) * 100) + '%';
+                        curEl.textContent = formatVoiceTime(audio.currentTime);
+                        totalEl.textContent = formatVoiceTime(audio.duration);
+                    }
+                }
+
+                function onToggleClick(e) {
+                    e.stopPropagation();
+                    if (audio.paused) {
+                        if (activeVoicePlayerAudio && activeVoicePlayerAudio !== audio) activeVoicePlayerAudio
+                            .pause();
+                        audio.play().catch(() => {});
+                        activeVoicePlayerAudio = audio;
+                    } else {
+                        audio.pause();
+                    }
+                }
+
+                function onTrackClick(e) {
+                    const rect = track.getBoundingClientRect();
+                    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+                    if (isFinite(audio.duration)) audio.currentTime = ratio * audio.duration;
+                }
+
+                function onSpeedClick(e) {
+                    const val = parseFloat(e.currentTarget.dataset.speed);
+                    audio.playbackRate = val;
+                    speedBtns.forEach(b => b.classList.toggle('active', b === e.currentTarget));
+                }
+                toggle.addEventListener('click', onToggleClick);
+                track.addEventListener('click', onTrackClick);
+                audio.addEventListener('play', updatePlayIcon);
+                audio.addEventListener('pause', updatePlayIcon);
+                audio.addEventListener('timeupdate', updateProgress);
+                audio.addEventListener('loadedmetadata', updateProgress);
+                speedBtns.forEach(b => b.addEventListener('click', onSpeedClick));
+
+                updatePlayIcon();
+                updateProgress();
+                audio.playbackRate = 1;
+                speedBtns.forEach(b => b.classList.toggle('active', b.dataset.speed === '1'));
+
+                overlay.classList.remove('hidden');
+                if (typeof haptic === 'function') haptic(10);
+
+                expandedPlayerCleanup = () => {
+                    toggle.removeEventListener('click', onToggleClick);
+                    track.removeEventListener('click', onTrackClick);
+                    audio.removeEventListener('play', updatePlayIcon);
+                    audio.removeEventListener('pause', updatePlayIcon);
+                    audio.removeEventListener('timeupdate', updateProgress);
+                    audio.removeEventListener('loadedmetadata', updateProgress);
+                    speedBtns.forEach(b => b.removeEventListener('click', onSpeedClick));
+                };
+            }
+
             /* Builds a small themed play/seek widget for a voice clip,
                replacing the native browser <audio controls> UI. Only one
                clip plays at a time across the whole page. */
-            function buildVoicePlayer(url) {
+            function buildVoicePlayer(url, accent) {
                 const wrap = document.createElement('div');
                 wrap.className = 'voice-player';
+                if (accent) wrap.dataset.accent = accent;
                 const toggle = document.createElement('button');
                 toggle.type = 'button';
                 toggle.className = 'voice-player-toggle';
@@ -15444,7 +16158,7 @@
                 wrap.appendChild(time);
 
                 const audio = new Audio(url);
-                audio.preload = 'none';
+                audio.preload = 'metadata';
 
                 function setPlayingUI(playing) {
                     toggle.innerHTML = playing ? PAUSE_ICON_SVG : PLAY_ICON_SVG;
@@ -15468,18 +16182,45 @@
                     progress.style.width = '0%';
                     time.textContent = formatVoiceTime(audio.duration || 0); });
                 audio.addEventListener('timeupdate', () => {
-                    if (audio.duration) progress.style.width = ((audio.currentTime / audio.duration) * 100) + '%';
-                    time.textContent = formatVoiceTime(audio.duration ? audio.duration - audio.currentTime : 0);
+                    if (isFinite(audio.duration)) progress.style.width = ((audio.currentTime / audio.duration) *
+                        100) + '%';
+                    if (isFinite(audio.duration)) time.textContent = formatVoiceTime(audio.duration - audio
+                        .currentTime);
                 });
-                audio.addEventListener('loadedmetadata', () => { time.textContent = formatVoiceTime(audio
-                    .duration); });
+                // Recordings from MediaRecorder (webm/opus) often report
+                // duration as Infinity until playback forces the browser
+                // to compute it — this seeks to the end and back once to
+                // force that calculation immediately, so the real length
+                // shows up before the person ever presses play.
+                function resolveDuration() {
+                    if (isFinite(audio.duration)) { time.textContent = formatVoiceTime(audio.duration);
+                        return; }
+                    const onTimeUpdate = () => {
+                        audio.removeEventListener('timeupdate', onTimeUpdate);
+                        audio.currentTime = 0;
+                        time.textContent = formatVoiceTime(audio.duration);
+                    };
+                    audio.addEventListener('timeupdate', onTimeUpdate);
+                    audio.currentTime = 1e101;
+                }
+                audio.addEventListener('loadedmetadata', resolveDuration);
+                audio.addEventListener('durationchange', resolveDuration);
                 track.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const rect = track.getBoundingClientRect();
                     const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
-                    if (audio.duration) audio.currentTime = ratio * audio.duration;
+                    if (isFinite(audio.duration)) audio.currentTime = ratio * audio.duration;
                 });
                 wrap.addEventListener('click', (e) => e.stopPropagation());
+                let pressTimer = null,
+                    longPressed = false;
+                wrap.addEventListener('pointerdown', () => {
+                    longPressed = false;
+                    pressTimer = setTimeout(() => { longPressed = true;
+                        openExpandedPlayer(audio, wrap.dataset.accent || ''); }, 480);
+                });
+                ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => wrap.addEventListener(evt, () =>
+                    clearTimeout(pressTimer)));
                 wrap._audio = audio;
                 return wrap;
             }
@@ -15491,7 +16232,8 @@
                 if (!voice || !voice.url) { container.classList.add('hidden');
                     return; }
                 container.classList.remove('hidden');
-                const player = buildVoicePlayer(voice.url);
+                const isReplyContext = /reply/i.test(container.className);
+                const player = buildVoicePlayer(voice.url, isReplyContext ? 'reply' : 'caption');
                 container._playerAudio = player._audio;
                 const removeBtn = document.createElement('button');
                 removeBtn.type = 'button';
@@ -16561,6 +17303,8 @@
                     closePhotoSortMenu(); });
             document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closePhotoSortMenu(); });
             surpriseBtn.addEventListener('click', () => {
+                if (surpriseLongPressFired) { surpriseLongPressFired = false;
+                    return; }
                 const eligibleIndexes = currentList.map((p, i) => ((p.surprise && !p.revealed) || isPhotoLocked(p)) ?
                     -1 : i).filter(i =>
                     i !== -1);
@@ -17397,6 +18141,16 @@
                     expandBtn.addEventListener('click', (e) => { e.stopPropagation();
                         openLightbox(index); });
                 }
+                wireNewItemCloud(card, photo, {
+                    seenField: `seen_by_${myFieldSuffix()}`,
+                    mode: 'visibility',
+                    onMarkSeen: () => {
+                        const col = `seen_by_${myFieldSuffix()}`;
+                        photo[col] = true;
+                        if (supabase) supabase.from(TABLE).update({ [col]: true }).eq('id', photo.id).then(() => {});
+                        markScopeSeen('memories');
+                    }
+                });
                 return wrap;
             }
 
@@ -17412,6 +18166,7 @@
                 showLightboxPhoto();
                 lightbox.classList.remove('hidden');
                 document.addEventListener('keydown', handleLightboxKeys);
+                if (kind === 'photo') markScopeSeen('memories');
             }
 
             function closeLightbox() {
@@ -17472,6 +18227,237 @@
                 presenceSwitchBtn = document.getElementById('presenceSwitchBtn');
 
             function getIdentity() { return localStorage.getItem(IDENTITY_KEY); }
+
+            /* ─── Cloud notifications ───
+               "J added a love note" style clouds on the nav buttons, plus
+               a small "NEW" cloud tag on the individual item once you get
+               there. Both are per-viewer: J's cloud clears only for J,
+               M's only for M. Nothing before NOTIF_LAUNCH_AT ever shows a
+               cloud, so existing content doesn't suddenly light up.
+
+               A cloud stays up for the whole time you're inside that
+               section (see enterScope/leaveScope) and only actually gets
+               marked seen — persisted to the DB — once you leave. Tapping
+               a cloud directly just dissipates it for THIS visit so you
+               can see what's behind it; since that's not persisted, a
+               reload brings it right back if you never actually went in
+               and looked. */
+            const NOTIF_LAUNCH_AT = '2026-08-15T00:00:00Z';
+            const NOTIF_STATE_TABLE = 'notif_state';
+            let notifState = {};
+            let currentOpenScope = null;
+            const dismissedThisSession = new Set();
+
+            function myAuthorNum() { return Number(getIdentity()) === 2 ? 2 : 1; }
+            function otherAuthorNum() { return myAuthorNum() === 2 ? 1 : 2; }
+            function myLetter() { return myAuthorNum() === 2 ? 'M' : 'J'; }
+            function otherLetter() { return myLetter() === 'J' ? 'M' : 'J'; }
+            function myFieldSuffix() { return myLetter().toLowerCase(); }
+            function otherFieldSuffix() { return otherLetter().toLowerCase(); }
+
+            async function loadNotifState() {
+                if (!supabase || !getIdentity()) return;
+                try {
+                    const { data, error } = await supabase.from(NOTIF_STATE_TABLE).select('*').eq('viewer',
+                        myAuthorNum());
+                    if (error) throw error;
+                    notifState = {};
+                    (data || []).forEach(r => { notifState[r.scope] = r.last_seen_at; });
+                } catch (e) { console.error('Could not load notif state:', e); }
+            }
+
+            function lastSeenFor(scope) {
+                const stored = notifState[scope];
+                return (stored && stored > NOTIF_LAUNCH_AT) ? stored : NOTIF_LAUNCH_AT;
+            }
+
+            /* Call when a section is opened — just remembers it's the
+               active one. Does NOT mark it seen or hide its cloud, so the
+               cloud stays visible the whole time you're browsing inside. */
+            function enterScope(scope) {
+                currentOpenScope = scope;
+            }
+
+            /* Call when leaving/closing a section (or switching to a
+               different one). Clears any still-showing NEW tags for that
+               section (you were in there, that counts as seen) and marks
+               the section itself seen now. */
+            function leaveScope() {
+                if (currentOpenScope) { clearAllForScope(currentOpenScope);
+                    markScopeSeen(currentOpenScope);
+                    currentOpenScope = null; }
+            }
+
+            async function markScopeSeen(scope) {
+                if (!supabase || !getIdentity()) return;
+                const now = new Date().toISOString();
+                notifState[scope] = now;
+                hideNavCloud(scope);
+                dismissedThisSession.delete(scope);
+                try {
+                    await supabase.from(NOTIF_STATE_TABLE).upsert({ viewer: myAuthorNum(), scope, last_seen_at: now },
+                        { onConflict: 'viewer,scope' });
+                } catch (e) { console.error('Could not save notif state:', e); }
+                refreshNavClouds();
+            }
+
+            const NOTIF_CLOUD_IDS = { notes: 'notesNotifCloud', doodles: 'doodlesNotifCloud', mood:
+                'moodsNotifCloud', bucket: 'bucketNotifCloud', capsules: 'capsulesNotifCloud', fight:
+                'fightNotifCloud', little_things: 'littleThingsNotifCloud', memories: 'memoriesNotifCloud' };
+
+            function setCloudMessage(cloudEl, who, verb) {
+                const nameEl = cloudEl.querySelector('.notif-name');
+                nameEl.textContent = who;
+                nameEl.className = 'notif-name ' + (who === 'J' ? 'who-j' : 'who-m');
+                const body = cloudEl.querySelector('.cloud-body');
+                body.querySelector('.notif-text')?.remove();
+                const textSpan = document.createElement('span');
+                textSpan.className = 'notif-text';
+                textSpan.textContent = ' ' + verb;
+                body.appendChild(textSpan);
+            }
+
+            function showNavCloud(scope, who, verb) {
+                if (dismissedThisSession.has(scope)) return;
+                const el = document.getElementById(NOTIF_CLOUD_IDS[scope]);
+                if (!el) return;
+                el.classList.remove('dismissing');
+                setCloudMessage(el, who, verb);
+                el.classList.add('show');
+            }
+
+            function hideNavCloud(scope) {
+                const el = document.getElementById(NOTIF_CLOUD_IDS[scope]);
+                if (el) el.classList.remove('show', 'dismissing');
+            }
+
+            /* Tap-to-peek: dissipates a cloud for this page visit only,
+               without marking its scope as seen — a reload brings it
+               right back if the section was never actually opened.
+               Only 'show' is cleared afterward — 'dismissing' is left in
+               place so the dissipated (invisible) state sticks instead
+               of the cloud instantly snapping back to visible for a
+               frame while the parent's own fade-out transition plays.
+               'dismissing' gets cleared cleanly the next time
+               showNavCloud() actually brings it back. */
+            function dismissCloudForNow(scope) {
+                const el = document.getElementById(NOTIF_CLOUD_IDS[scope]);
+                if (!el || !el.classList.contains('show')) return;
+                dismissedThisSession.add(scope);
+                el.classList.add('dismissing');
+                setTimeout(() => { el.classList.remove('show'); }, 550);
+            }
+
+            document.addEventListener('click', (e) => {
+                const cloud = e.target.closest('.notif-cloud.show:not(.notif-cloud-inline)');
+                if (!cloud || !cloud.id) return;
+                const scope = Object.keys(NOTIF_CLOUD_IDS).find(k => NOTIF_CLOUD_IDS[k] === cloud.id);
+                if (!scope) return;
+                e.stopPropagation();
+                e.preventDefault();
+                dismissCloudForNow(scope);
+            }, true);
+
+            /* Attaches a small "NEW" cloud to a freshly-rendered card/row if
+               it (a) was authored by the other person, (b) was created
+               after NOTIF_LAUNCH_AT, and (c) hasn't been seen by me yet.
+               Two clearing strategies:
+               - mode:'visibility' (used for photos, which have no
+                 dedicated open/close section) — clears once the item has
+                 actually been visible on screen for a moment, so
+                 scrolling to it is enough.
+               - default (notes/doodles/bucket/capsules, which live
+                 inside a section you open and close) — stays up the
+                 whole time you're browsing, and only clears when you
+                 either open/interact with that specific card, or leave
+                 the section entirely (registered against `scope` and
+                 flushed by leaveScope()).
+               Tapping the tag itself instead just dissipates it for a
+               peek, without marking it seen. */
+            const scopeNewItemClears = {};
+
+            function registerScopeClear(scope, fn) {
+                if (!scope) return;
+                (scopeNewItemClears[scope] = scopeNewItemClears[scope] || []).push(fn);
+            }
+
+            function unregisterScopeClear(scope, fn) {
+                if (!scope || !scopeNewItemClears[scope]) return;
+                scopeNewItemClears[scope] = scopeNewItemClears[scope].filter(f => f !== fn);
+            }
+
+            function clearAllForScope(scope) {
+                const fns = scopeNewItemClears[scope] || [];
+                scopeNewItemClears[scope] = [];
+                fns.forEach(fn => fn());
+            }
+
+            function wireNewItemCloud(hostEl, item, { seenField, onMarkSeen, scope, mode }) {
+                if (!hostEl || !item) return;
+                const isOther = Number(item.author || 1) === otherAuthorNum();
+                const isFresh = item.created_at && item.created_at > NOTIF_LAUNCH_AT;
+                const isUnseen = !item[seenField];
+                if (!isOther || !isFresh || !isUnseen) return;
+                const tag = document.createElement('span');
+                tag.className = 'new-item-cloud';
+                tag.textContent = 'NEW';
+                hostEl.appendChild(tag);
+                let cleared = false;
+                let dwellTimer = null;
+                let observer = null;
+                const clear = () => {
+                    if (cleared) return;
+                    cleared = true;
+                    if (dwellTimer) clearTimeout(dwellTimer);
+                    if (observer) observer.disconnect();
+                    hostEl.removeEventListener('click', clear);
+                    if (scope) unregisterScopeClear(scope, clear);
+                    tag.remove();
+                    onMarkSeen();
+                };
+                hostEl.addEventListener('click', clear);
+                if (mode === 'visibility') {
+                    observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                dwellTimer = setTimeout(clear, 700);
+                            } else if (dwellTimer) { clearTimeout(dwellTimer);
+                                dwellTimer = null; }
+                        });
+                    }, { threshold: 0.6 });
+                    observer.observe(hostEl);
+                } else if (scope) {
+                    registerScopeClear(scope, clear);
+                }
+                tag.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    if (dwellTimer) { clearTimeout(dwellTimer);
+                        dwellTimer = null; }
+                    if (observer) observer.disconnect();
+                    if (scope) unregisterScopeClear(scope, clear);
+                    tag.classList.add('dismissing');
+                    setTimeout(() => { tag.remove();
+                        hostEl.removeEventListener('click', clear); }, 500);
+                });
+            }
+
+            /* NEW badges on the Solo / Duet / Relay mode cards, so you know
+               which mode the new doodle actually landed in. Computed
+               client-side from whatever's already loaded — no extra
+               query. */
+            function updateDoodleModeBadges() {
+                const els = { solo: document.getElementById('doodleSoloModeCloud'), duet: document.getElementById(
+                    'doodleDuetModeCloud'), relay: document.getElementById('doodleRelayModeCloud') };
+                ['solo', 'duet', 'relay'].forEach(mode => {
+                    const el = els[mode];
+                    if (!el) return;
+                    const hasNew = (allDoodles || []).some(d => (d.mode || 'solo') === mode && Number(d.author ||
+                        1) === otherAuthorNum() && d.created_at && d.created_at > NOTIF_LAUNCH_AT && !d[
+                        `seen_by_${myFieldSuffix()}`]);
+                    el.classList.toggle('show', hasNew);
+                });
+            }
 
             function applyIdentityToToggles(identity) {
                 AUTHOR_KEYS_12.forEach(k => localStorage.setItem(k, identity));
@@ -17837,6 +18823,51 @@
                 startPresence();
                 startSettingsRealtime();
                 startSignaturesRealtime();
+                if (getIdentity()) { await loadNotifState();
+                    refreshNavClouds(); }
+            }
+            setInterval(() => { if (!document.hidden && getIdentity()) refreshNavClouds(); }, 3 * 60 * 1000);
+
+            async function refreshNavClouds() {
+                if (!supabase || !getIdentity()) return;
+                const other = otherAuthorNum();
+                const checkTable = async(table, scope, verb) => {
+                    try {
+                        const { count, error } = await supabase.from(table).select('*', { count: 'exact', head: true
+                            }).eq('author', other).gt('created_at', lastSeenFor(scope));
+                        if (error) throw error;
+                        const isNew = (count || 0) > 0;
+                        if (isNew) showNavCloud(scope, otherLetter(), verb);
+                        else hideNavCloud(scope);
+                        return isNew;
+                    } catch (e) { console.error(`Could not check ${scope} for a notification:`, e); return false; }
+                };
+                const [notesNew, doodlesNew, moodsNew, bucketNew, capsulesNew] = await Promise.all([
+                    checkTable(NOTES_TABLE, 'notes', 'added a love note'),
+                    checkTable(DOODLES_TABLE, 'doodles', 'added a doodle'),
+                    checkTable(MOODS_TABLE, 'mood', 'added a mood'),
+                    checkTable(BUCKET_LIST_TABLE, 'bucket', 'added a bucket list wish'),
+                    checkTable(CAPSULES_TABLE, 'capsules', 'added a time capsule'),
+                    checkTable(TABLE, 'memories', 'added a picture')
+                ]);
+                updateDoodleModeBadges();
+                if (doodlesNew || moodsNew || bucketNew || capsulesNew) {
+                    showNavCloud('little_things', otherLetter(), 'added a little thing');
+                } else {
+                    hideNavCloud('little_things');
+                }
+
+                try {
+                    const otherW = otherLetter();
+                    const { count, error } = await supabase.from(ANGER_LOG_TABLE).select('id', { count: 'exact',
+                        head: true }).eq('who', otherW).gt('created_at', lastSeenFor('fight'));
+                    if (error) throw error;
+                    const isNew = (count || 0) > 0;
+                    const btn = document.getElementById('breakGlassBtn');
+                    if (btn) btn.classList.toggle('is-cracked', isNew);
+                    if (isNew) showNavCloud('fight', otherW, 'is angry, check out why');
+                    else hideNavCloud('fight');
+                } catch (e) { console.error('Could not check the fight log for a notification:', e); }
             }
 
             let lastIsMobile = window.innerWidth <= 480;
@@ -17849,6 +18880,16 @@
                         if (initialized) render(); }
                 }, 200);
             });
+
+            /* Everything above is now defined, so it's safe to skip
+               straight past the passcode gate if this browser session
+               already unlocked it earlier (a plain refresh shouldn't
+               make you re-enter the passcode — only actually closing the
+               tab/browser does, since sessionStorage clears itself
+               then). */
+            if (sessionStorage.getItem(UNLOCK_SESSION_KEY) === '1') {
+                unlockSite({ instant: true });
+            }
         })();
 
         if ('serviceWorker' in navigator) {
