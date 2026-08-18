@@ -1785,6 +1785,10 @@
             white-space: nowrap;
             display: inline-block;
             vertical-align: bottom;
+        }
+        /* Only fade the edges when the text actually needs to scroll to be
+           read in full — short feelings that already fit stay crisp. */
+        .feeling-note .feeling-entry .feeling-text.marquee {
             -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 4px, #000 calc(100% - 4px), transparent 100%);
             mask-image: linear-gradient(90deg, transparent 0, #000 4px, #000 calc(100% - 4px), transparent 100%);
         }
@@ -2107,7 +2111,8 @@
             top: calc(100% + .55rem);
             left: 50%;
             width: 220px;
-            transform: translate(-50%, -8px) scale(.96);
+            --popover-shift: 0px;
+            transform: translate(calc(-50% + var(--popover-shift)), -8px) scale(.96);
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
@@ -2124,7 +2129,7 @@
             opacity: 1;
             visibility: visible;
             pointer-events: auto;
-            transform: translate(-50%, 0) scale(1);
+            transform: translate(calc(-50% + var(--popover-shift)), 0) scale(1);
         }
         .photo-sort-option {
             width: 100%;
@@ -2442,7 +2447,8 @@
             position: absolute;
             top: calc(100% + .55rem);
             left: 50%;
-            transform: translateX(-50%) translateY(-8px) scale(.96);
+            --popover-shift: 0px;
+            transform: translateX(calc(-50% + var(--popover-shift))) translateY(-8px) scale(.96);
             width: min(275px, calc(100vw - 2rem));
             opacity: 0;
             visibility: hidden;
@@ -2460,7 +2466,7 @@
             opacity: 1;
             visibility: visible;
             pointer-events: auto;
-            transform: translateX(-50%) translateY(0) scale(1);
+            transform: translateX(calc(-50% + var(--popover-shift))) translateY(0) scale(1);
         }
         .feature-menu-popover button {
             width: 100%;
@@ -12346,6 +12352,26 @@
                 bucketAuthorToggle = document.getElementById('bucketAuthorToggle'),
                 calendarPrev = document.getElementById('calendarPrev'),
                 calendarNext = document.getElementById('calendarNext');
+            /* Keeps a centered popover from spilling past the edge of the
+               viewport on wide/desktop screens, where the trigger button
+               can end up sitting well off-center within its row (e.g.
+               the last button in a wrapped row). Measures the popover
+               post-layout and nudges it back in bounds via a CSS
+               custom property rather than fighting the centering
+               transform directly. */
+            function keepPopoverInViewport(popoverEl) {
+                popoverEl.style.setProperty('--popover-shift', '0px');
+                requestAnimationFrame(() => {
+                    const rect = popoverEl.getBoundingClientRect();
+                    const margin = 12;
+                    let shift = 0;
+                    if (rect.left < margin) shift = margin - rect.left;
+                    else if (rect.right > window.innerWidth - margin) shift = (window.innerWidth - margin) - rect
+                        .right;
+                    popoverEl.style.setProperty('--popover-shift', shift + 'px');
+                });
+            }
+
             const featureMenu = document.getElementById('featureMenu'),
                 featureMenuBtn = document.getElementById('featureMenuBtn'),
                 featureMenuPopover = document.getElementById('featureMenuPopover');
@@ -12357,7 +12383,10 @@
                     featureMenuRow.style.marginBottom = (featureMenuPopover.scrollHeight + 20) + 'px';
                 } else { featureMenuRow.style.marginBottom = ''; }
             }
-            window.addEventListener('resize', () => { if (featureMenu.classList.contains('open')) updateFeatureMenuSpacing(); });
+            window.addEventListener('resize', () => { if (featureMenu.classList.contains('open')) {
+                    updateFeatureMenuSpacing();
+                    keepPopoverInViewport(featureMenuPopover);
+                } });
             const capsuleForm = document.getElementById('capsuleForm'),
                 capsuleDate = document.getElementById('capsuleDate'),
                 capsuleMessage = document.getElementById('capsuleMessage'),
@@ -12405,6 +12434,7 @@
                 featureMenu.classList.toggle('open', opening);
                 featureMenuBtn.setAttribute('aria-expanded', String(opening));
                 updateFeatureMenuSpacing();
+                if (opening) keepPopoverInViewport(featureMenuPopover);
             });
             featureMenu.addEventListener('click', (e) => { if (e.target.closest('#featureMenuPopover button'))
                     closeFeatureMenu(); });
@@ -17286,6 +17316,7 @@
             photoSortBtn.addEventListener('click', () => {
                 const isOpen = photoSortMenu.classList.toggle('open');
                 photoSortBtn.setAttribute('aria-expanded', String(isOpen));
+                if (isOpen) keepPopoverInViewport(photoSortMenu.querySelector('.photo-sort-popover'));
             });
             photoSortOptions.forEach(option => option.addEventListener('click', () => {
                 sortMode = option.dataset.sort;
