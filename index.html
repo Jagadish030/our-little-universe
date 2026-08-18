@@ -2282,6 +2282,7 @@
             display: none;
             align-items: center;
             margin-left: 6px;
+            vertical-align: middle;
         }
         .notif-cloud-inline.show {
             display: inline-flex;
@@ -2478,6 +2479,12 @@
             padding: .65rem .75rem;
             cursor: pointer;
             font: 600 .82rem 'Quicksand', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            justify-content: space-between;
+            white-space: nowrap;
+            overflow: hidden;
         }
         .feature-menu-popover button:hover,
         .feature-menu-popover button:focus-visible {
@@ -2501,6 +2508,13 @@
             }
             .feature-menu.open .feature-menu-popover {
                 transform: translateX(-50%) translateY(0) scale(1);
+            }
+            /* Keep label and inline cloud close together on narrow screens */
+            .feature-menu-popover button {
+                justify-content: flex-start;
+            }
+            .feature-menu-popover button .notif-cloud-inline {
+                margin-left: .6rem;
             }
         }
 
@@ -18877,7 +18891,7 @@
                     checkTable(NOTES_TABLE, 'notes', 'added a love note'),
                     checkTable(DOODLES_TABLE, 'doodles', 'added a doodle'),
                     checkTable(MOODS_TABLE, 'mood', 'added a mood'),
-                    checkTable(BUCKET_LIST_TABLE, 'bucket', 'added a bucket list wish'),
+                    checkTable(BUCKET_LIST_TABLE, 'bucket', 'added a bucket list'),
                     checkTable(CAPSULES_TABLE, 'capsules', 'added a time capsule'),
                     checkTable(TABLE, 'memories', 'added a picture')
                 ]);
