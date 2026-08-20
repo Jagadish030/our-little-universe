@@ -1373,6 +1373,308 @@
         .chat-voice-preview.hidden {
             display: none;
         }
+        /* ─── Reply / edit compose context bar (shown above the input
+           while replying to or editing a message) ─── */
+        .chat-compose-context {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            padding: .5rem .9rem;
+            border-top: 1px solid var(--card-border);
+        }
+        .chat-compose-context.hidden {
+            display: none;
+        }
+        .chat-compose-context-bar {
+            width: 3px;
+            align-self: stretch;
+            border-radius: 2px;
+            background: var(--rose-deep);
+            flex-shrink: 0;
+        }
+        .chat-compose-context.editing .chat-compose-context-bar {
+            background: var(--gold, #d4a544);
+        }
+        .chat-compose-context-body {
+            flex: 1;
+            min-width: 0;
+        }
+        .chat-compose-context-label {
+            font: 700 .7rem 'Quicksand', sans-serif;
+            color: var(--rose-deep);
+        }
+        .chat-compose-context.editing .chat-compose-context-label {
+            color: #b8860b;
+        }
+        body.dark-mode .chat-compose-context.editing .chat-compose-context-label {
+            color: #e0c069;
+        }
+        .chat-compose-context-text {
+            font-size: .78rem;
+            color: var(--ink-soft);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .chat-compose-context button {
+            border: none;
+            background: rgba(107, 83, 68, .12);
+            color: var(--ink-soft);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        body.dark-mode .chat-compose-context button {
+            background: rgba(255, 255, 255, .12);
+            color: #e9dde2;
+        }
+        /* ─── Reply quote shown inside a bubble ─── */
+        .chat-reply-quote {
+            display: block;
+            margin-bottom: .3rem;
+            padding: .3rem .55rem;
+            border-left: 2.5px solid var(--rose-deep);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, .38);
+            cursor: pointer;
+            max-width: 100%;
+        }
+        body.dark-mode .chat-reply-quote {
+            background: rgba(255, 255, 255, .1);
+        }
+        .chat-bubble-row.theirs .chat-reply-quote {
+            border-left-color: var(--ink-soft);
+        }
+        .chat-reply-quote-sender {
+            display: block;
+            font: 700 .68rem 'Quicksand', sans-serif;
+            color: var(--rose-deep);
+        }
+        .chat-bubble-row.theirs .chat-reply-quote-sender {
+            color: var(--ink);
+        }
+        .chat-reply-quote-text {
+            display: block;
+            font-size: .72rem;
+            color: var(--ink-soft);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .chat-reply-quote.missing {
+            opacity: .6;
+            font-style: italic;
+            cursor: default;
+        }
+        .chat-bubble-row.reply-flash .chat-bubble {
+            animation: chatReplyFlash 1s ease;
+        }
+        @keyframes chatReplyFlash {
+            0%, 100% {
+                box-shadow: 0 2px 6px rgba(0, 0, 0, .08);
+            }
+            30% {
+                box-shadow: 0 0 0 3px var(--rose-deep);
+            }
+        }
+        /* ─── Seen ticks, sat right on the bubble ─── */
+        .chat-bubble-ticks {
+            display: inline-flex;
+            margin-left: 4px;
+            font-size: .68rem;
+            color: var(--ink-soft);
+            vertical-align: middle;
+        }
+        .chat-bubble-ticks.seen {
+            color: #4a9fe0;
+        }
+        body.dark-mode .chat-bubble-ticks.seen {
+            color: #86caff;
+        }
+        /* ─── (edited) tag ─── */
+        .chat-bubble-edited-tag {
+            font-style: italic;
+            opacity: .75;
+            margin-left: 3px;
+        }
+        /* ─── Date separators ─── */
+        .chat-date-sep {
+            align-self: center;
+            margin: .35rem 0;
+            padding: .28rem .85rem;
+            border-radius: 999px;
+            background: rgba(107, 83, 68, .09);
+            color: var(--ink-soft);
+            font: 700 .68rem 'Quicksand', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+        body.dark-mode .chat-date-sep {
+            background: rgba(255, 255, 255, .09);
+        }
+        /* ─── Typing indicator bubble ─── */
+        .chat-typing-row {
+            align-self: flex-start;
+            display: none;
+        }
+        .chat-typing-row.visible {
+            display: flex;
+        }
+        .chat-typing-bubble {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            padding: .6rem .8rem;
+            border-radius: 16px;
+            border-bottom-left-radius: 4px;
+            background: var(--glass-bg-strong);
+            border: 1px solid var(--card-border);
+        }
+        .chat-typing-bubble span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--ink-soft);
+            opacity: .5;
+            animation: chatTypingBounce 1.2s infinite ease-in-out;
+        }
+        .chat-typing-bubble span:nth-child(2) {
+            animation-delay: .15s;
+        }
+        .chat-typing-bubble span:nth-child(3) {
+            animation-delay: .3s;
+        }
+        @keyframes chatTypingBounce {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: .5;
+            }
+
+            30% {
+                transform: translateY(-4px);
+                opacity: 1;
+            }
+        }
+        /* ─── In-chat search ─── */
+        .chat-search-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(107, 83, 68, .12);
+            color: var(--ink-soft);
+            cursor: pointer;
+            flex-shrink: 0;
+            font-size: .9rem;
+            transition: background .15s ease, color .15s ease, transform .15s ease;
+        }
+        body.dark-mode .chat-search-btn {
+            background: rgba(255, 255, 255, .12);
+            color: #e9dde2;
+        }
+        .chat-search-btn:hover,
+        .chat-search-btn.active {
+            background: rgba(219, 125, 143, .3);
+            color: var(--rose-deep);
+            transform: scale(1.06);
+        }
+        .chat-search-bar {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .55rem .9rem;
+            border-bottom: 1px solid var(--card-border);
+            background: var(--glass-bg-strong);
+            flex-shrink: 0;
+        }
+        .chat-search-bar.hidden {
+            display: none;
+        }
+        .chat-search-bar input {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            border-radius: 999px;
+            background: rgba(107, 83, 68, .1);
+            color: var(--ink);
+            font: 500 .85rem 'Quicksand', sans-serif;
+            padding: .4rem .8rem;
+            outline: none;
+        }
+        body.dark-mode .chat-search-bar input {
+            background: rgba(255, 255, 255, .1);
+        }
+        .chat-search-count {
+            font-size: .7rem;
+            color: var(--ink-soft);
+            white-space: nowrap;
+            flex-shrink: 0;
+            min-width: 3.2em;
+            text-align: center;
+        }
+        .chat-search-nav {
+            display: flex;
+            gap: .2rem;
+            flex-shrink: 0;
+        }
+        .chat-search-nav button,
+        .chat-search-close {
+            border: none;
+            background: rgba(107, 83, 68, .12);
+            color: var(--ink-soft);
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-size: .78rem;
+        }
+        body.dark-mode .chat-search-nav button,
+        body.dark-mode .chat-search-close {
+            background: rgba(255, 255, 255, .12);
+            color: #e9dde2;
+        }
+        mark.chat-search-hit {
+            background: rgba(255, 214, 102, .6);
+            color: inherit;
+            border-radius: 2px;
+            padding: 0 1px;
+        }
+        mark.chat-search-hit.active {
+            background: var(--rose-deep);
+            color: #fff;
+        }
+        /* ─── Swipe-to-reply ─── */
+        .chat-bubble-row {
+            position: relative;
+            /* Let the browser keep handling vertical scroll natively,
+               but leave horizontal movement to our own JS instead of
+               having the browser claim the whole gesture for scrolling
+               and cut the drag off with a pointercancel before it can
+               register as a swipe. */
+            touch-action: pan-y;
+        }
+        .chat-bubble-row .chat-bubble-content {
+            transition: transform .18s ease;
+        }
+        .chat-bubble-row.swiping .chat-bubble-content {
+            transition: none;
+        }
+        .chat-swipe-reply-icon {
+            position: absolute;
+            top: 50%;
+            left: 2px;
+            transform: translateY(-50%);
+            opacity: 0;
+            font-size: 1.1rem;
+            color: var(--rose-deep);
+            pointer-events: none;
+        }
         .chat-input-row {
             display: flex;
             align-items: center;
@@ -9629,9 +9931,19 @@
                     <p class="chat-presence" id="chatPresence"></p>
                 </div>
                 <div class="chat-panel-header-actions">
+                    <button type="button" class="chat-search-btn" id="chatSearchBtn" aria-label="Search this chat" title="Search">🔍</button>
                     <button type="button" class="chat-panel-expand" id="chatPanelExpand" aria-label="Expand to full screen" title="Full screen">⛶</button>
                     <button type="button" class="chat-panel-close" id="chatPanelClose" aria-label="Close chat">✕</button>
                 </div>
+            </div>
+            <div class="chat-search-bar hidden" id="chatSearchBar">
+                <input type="text" id="chatSearchInput" placeholder="Search messages…" autocomplete="off" />
+                <span class="chat-search-count" id="chatSearchCount"></span>
+                <div class="chat-search-nav">
+                    <button type="button" id="chatSearchPrev" aria-label="Previous match">▲</button>
+                    <button type="button" id="chatSearchNext" aria-label="Next match">▼</button>
+                </div>
+                <button type="button" class="chat-search-close" id="chatSearchClose" aria-label="Close search">✕</button>
             </div>
             <div class="chat-select-bar hidden" id="chatSelectBar">
                 <button type="button" id="chatSelectCancel" aria-label="Cancel selection">✕</button>
@@ -9643,6 +9955,11 @@
             </div>
             <div class="chat-messages" id="chatMessages">
                 <div class="chat-empty-hint" id="chatEmptyHint">No messages yet — say hi ♡</div>
+                <div class="chat-typing-row" id="chatTypingRow" aria-hidden="true">
+                    <div class="chat-bubble-content">
+                        <div class="chat-typing-bubble"><span></span><span></span><span></span></div>
+                    </div>
+                </div>
             </div>
             <div class="chat-image-preview hidden" id="chatImagePreview">
                 <img id="chatImagePreviewImg" alt="">
@@ -9652,6 +9969,14 @@
                 <span>🎙️</span>
                 <div class="chat-voice-preview-player" id="chatVoicePreviewPlayer"></div>
                 <button type="button" id="chatVoicePreviewRemove" aria-label="Remove voice message">✕</button>
+            </div>
+            <div class="chat-compose-context hidden" id="chatComposeContext">
+                <span class="chat-compose-context-bar"></span>
+                <div class="chat-compose-context-body">
+                    <span class="chat-compose-context-label" id="chatComposeContextLabel"></span>
+                    <span class="chat-compose-context-text" id="chatComposeContextText"></span>
+                </div>
+                <button type="button" id="chatComposeContextCancel" aria-label="Cancel">✕</button>
             </div>
             <form class="chat-input-row" id="chatInputForm">
                 <button type="button" class="chat-attach-btn" id="chatAttachBtn" aria-label="Attach a photo">📷</button>
@@ -19716,7 +20041,36 @@
                 'checking the Mood Calendar', bucket: 'in the Bucket List', capsules: 'looking through Time Capsules',
                 fight: 'in the fight history', memories: 'looking at pictures' };
 
+            /* ─── Typing indicator ───
+               Rides the same presence channel as everything else in
+               SCOPE_ACTIVITY_LABELS — no extra table, no extra
+               subscription. We only actually broadcast on the two state
+               transitions (idle→typing, typing→idle) rather than on
+               every keystroke, so it doesn't spam the realtime channel. */
+            const CHAT_TYPING_ACTIVITY = 'typing…';
+            const CHAT_TYPING_IDLE_MS = 2500;
+            function startChatTyping() {
+                if (!chatIsTyping) { chatIsTyping = true;
+                    setMyActivity(CHAT_TYPING_ACTIVITY); }
+                clearTimeout(chatTypingIdleTimer);
+                chatTypingIdleTimer = setTimeout(stopChatTyping, CHAT_TYPING_IDLE_MS);
+            }
+            function stopChatTyping() {
+                clearTimeout(chatTypingIdleTimer);
+                if (chatIsTyping) { chatIsTyping = false;
+                    setMyActivity(''); }
+            }
+
+            function updateChatTypingRow() {
+                const typingRow = document.getElementById('chatTypingRow');
+                if (!typingRow) return;
+                const show = chatOpen && partnerIsOnline && partnerActivity === CHAT_TYPING_ACTIVITY;
+                typingRow.classList.toggle('visible', show);
+                if (show) chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+            }
+
             async function updateChatPresenceUI() {
+                updateChatTypingRow();
                 if (!chatPresence) return;
                 const partnerName = otherLetter();
                 if (partnerIsOnline) {
@@ -19812,6 +20166,17 @@
             const chatSelectCopy = document.getElementById('chatSelectCopy');
             const chatSelectDelete = document.getElementById('chatSelectDelete');
             const chatVoicePreviewPlayer = document.getElementById('chatVoicePreviewPlayer');
+            const chatComposeContext = document.getElementById('chatComposeContext');
+            const chatComposeContextLabel = document.getElementById('chatComposeContextLabel');
+            const chatComposeContextText = document.getElementById('chatComposeContextText');
+            const chatComposeContextCancel = document.getElementById('chatComposeContextCancel');
+            const chatSearchBtn = document.getElementById('chatSearchBtn');
+            const chatSearchBar = document.getElementById('chatSearchBar');
+            const chatSearchInput = document.getElementById('chatSearchInput');
+            const chatSearchCount = document.getElementById('chatSearchCount');
+            const chatSearchPrev = document.getElementById('chatSearchPrev');
+            const chatSearchNext = document.getElementById('chatSearchNext');
+            const chatSearchClose = document.getElementById('chatSearchClose');
 
             let chatData = [];
             let chatOpen = false;
@@ -19824,11 +20189,64 @@
             let chatSelectMode = false;
             let chatSelectedIds = new Set();
             let chatRealtimeChannel = null;
+            let chatReplyTarget = null;
+            let chatEditTarget = null;
+            let chatSearchOpen = false;
+            let chatSearchQuery = '';
+            let chatSearchMatches = [];
+            let chatSearchIndex = -1;
+            let chatIsTyping = false;
+            let chatTypingIdleTimer = null;
+            const CHAT_EDIT_WINDOW_MS = 5 * 60 * 1000;
 
             function updateChatBadge() {
                 const count = chatData.filter(m => m.recipient === myLetter() && !m.read_by_recipient).length;
                 chatUnreadBadge.textContent = count > 99 ? '99+' : String(count);
                 chatUnreadBadge.classList.toggle('hidden', count === 0);
+            }
+
+            /* Formats a message's date into a WhatsApp-style separator
+               label: "Today", "Yesterday", or a full date further back. */
+            function chatDateLabel(iso) {
+                const d = new Date(iso);
+                const now = new Date();
+                const startOf = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+                const diffDays = Math.round((startOf(now) - startOf(d)) / 86400000);
+                if (diffDays === 0) return 'Today';
+                if (diffDays === 1) return 'Yesterday';
+                const sameYear = d.getFullYear() === now.getFullYear();
+                return d.toLocaleDateString([], sameYear ?
+                    { weekday: 'long', month: 'short', day: 'numeric' } :
+                    { month: 'short', day: 'numeric', year: 'numeric' });
+            }
+            function chatDayKey(iso) {
+                const d = new Date(iso);
+                return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+            }
+
+            /* A short one-line preview used both for the reply-quote shown
+               inside a bubble and the reply-context bar above the input —
+               mirrors how the message itself renders (photo/voice/text). */
+            function chatMessagePreview(msg) {
+                if (msg.content_text) return msg.content_text;
+                if (msg.image_url) return '📷 Photo';
+                if (msg.voice_url) return '🎤 Voice message';
+                return 'Message';
+            }
+
+            /* Wraps every case-insensitive occurrence of the active search
+               query in <mark>, escaping the rest of the text first so the
+               highlighting can't be used to inject markup. The currently
+               focused match (by message id) gets the brighter "active"
+               style so the person can see which hit next/prev landed on. */
+            function chatHighlightSearch(text, isActiveMsg) {
+                const escaped = escapeHtml(text);
+                if (!chatSearchQuery) return escaped;
+                const q = chatSearchQuery.trim();
+                if (!q) return escaped;
+                const escQ = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const re = new RegExp(escQ.replace(/\\ /g, '\\s+'), 'ig');
+                return escaped.replace(re, m => `<mark class="chat-search-hit${isActiveMsg ? ' active' : ''}">${m}</mark>`);
             }
 
             /* A message only shows its time stamp when it's the first in a
@@ -19847,18 +20265,41 @@
                     `<img src="${escapeHtml(msg.image_url)}" alt="photo" loading="lazy">` : '';
                 const voiceHtml = msg.voice_url ?
                     `<div class="chat-bubble-voice" data-voice-url="${escapeHtml(msg.voice_url)}"></div>` : '';
+                const isActiveMsg = chatSearchOpen && chatSearchMatches[chatSearchIndex] === msg.id;
                 const textHtml = msg.content_text ?
-                    `<span class="chat-bubble-text">${escapeHtml(msg.content_text)}</span>` : '';
+                    `<span class="chat-bubble-text">${chatHighlightSearch(msg.content_text, isActiveMsg)}</span>` :
+                    '';
+                const editedHtml = msg.edited_at ? '<span class="chat-bubble-edited-tag">(edited)</span>' : '';
                 const reactionHtml = msg.reaction ? `<span class="chat-bubble-reaction">${msg.reaction}</span>` :
                     '';
                 const pinMarkHtml = msg.pinned ? '<span class="pin-mark">📌</span>' : '';
+                let ticksHtml = '';
+                if (mine) {
+                    ticksHtml = msg.read_by_recipient ?
+                        '<span class="chat-bubble-ticks seen" title="Seen">✓✓</span>' :
+                        '<span class="chat-bubble-ticks" title="Sent">✓</span>';
+                }
                 const metaHtml = !grouped ?
-                    `<div class="chat-bubble-meta">${pinMarkHtml}<span>${who} · ${time}</span></div>` :
-                    (msg.pinned ? `<div class="chat-bubble-meta grouped-meta">${pinMarkHtml}</div>` : '');
+                    `<div class="chat-bubble-meta">${pinMarkHtml}<span>${who} · ${time}</span>${editedHtml}${ticksHtml}</div>` :
+                    (msg.pinned || mine ?
+                        `<div class="chat-bubble-meta grouped-meta">${pinMarkHtml}${editedHtml}${ticksHtml}</div>` :
+                        '');
+                let replyHtml = '';
+                if (msg.reply_to_id) {
+                    const original = chatData.find(m => String(m.id) === String(msg.reply_to_id));
+                    const previewText = original ? chatMessagePreview(original) : (msg.reply_preview_text ||
+                        'Message');
+                    const previewSender = (original ? original.sender : msg.reply_preview_sender) === myLetter() ?
+                        'You' : otherLetter();
+                    replyHtml = original ?
+                        `<span class="chat-reply-quote" data-jump-to="${escapeHtml(String(msg.reply_to_id))}"><span class="chat-reply-quote-sender">${escapeHtml(previewSender)}</span><span class="chat-reply-quote-text">${escapeHtml(previewText)}</span></span>` :
+                        `<span class="chat-reply-quote missing"><span class="chat-reply-quote-sender">${escapeHtml(previewSender)}</span><span class="chat-reply-quote-text">${escapeHtml(previewText)}</span></span>`;
+                }
                 return `<div class="chat-bubble-row ${mine ? 'mine' : 'theirs'}${msg.pinned ? ' pinned' : ''}" data-id="${msg.id}">
                     <span class="chat-select-check"></span>
+                    <span class="chat-swipe-reply-icon" aria-hidden="true">↩️</span>
                     <div class="chat-bubble-content">
-                        <div class="chat-bubble">${imgHtml}${voiceHtml}${textHtml}${reactionHtml}</div>
+                        <div class="chat-bubble">${replyHtml}${imgHtml}${voiceHtml}${textHtml}${reactionHtml}</div>
                         ${metaHtml}
                     </div>
                 </div>`;
@@ -19867,18 +20308,31 @@
             function renderChatMessages() {
                 const wasNearBottom = chatMessagesEl.scrollHeight - chatMessagesEl.scrollTop - chatMessagesEl
                     .clientHeight < 120;
-                chatMessagesEl.querySelectorAll('.chat-bubble-row').forEach(el => el.remove());
+                chatMessagesEl.querySelectorAll('.chat-bubble-row, .chat-date-sep').forEach(el => el.remove());
                 chatEmptyHint.classList.toggle('hidden', chatData.length > 0);
                 const frag = document.createDocumentFragment();
                 const wrap = document.createElement('div');
-                wrap.innerHTML = chatData.map((m, i) => chatBubbleHtml(m, i > 0 ? chatData[i - 1] : null)).join(
-                    '');
+                let html = '';
+                let lastDayKey = null;
+                chatData.forEach((m, i) => {
+                    const dayKey = chatDayKey(m.created_at);
+                    if (dayKey !== lastDayKey) {
+                        html += `<div class="chat-date-sep">${chatDateLabel(m.created_at)}</div>`;
+                        lastDayKey = dayKey;
+                    }
+                    html += chatBubbleHtml(m, i > 0 ? chatData[i - 1] : null);
+                });
+                wrap.innerHTML = html;
                 Array.from(wrap.children).forEach(child => frag.appendChild(child));
-                chatMessagesEl.appendChild(frag);
+                const typingRow = document.getElementById('chatTypingRow');
+                chatMessagesEl.insertBefore(frag, typingRow || null);
                 chatMessagesEl.querySelectorAll('.chat-bubble-row').forEach(row => {
                     if (chatSelectedIds.has(String(row.dataset.id))) row.classList.add('selected');
                     row.addEventListener('click', (e) => {
                         if (chatSelectMode) { chatToggleSelectRow(row.dataset.id);
+                            return; }
+                        const quote = e.target.closest('.chat-reply-quote[data-jump-to]');
+                        if (quote) { chatJumpToMessage(quote.dataset.jumpTo);
                             return; }
                         if (e.target.tagName === 'IMG') {
                             const img = e.target;
@@ -19891,8 +20345,21 @@
                     if (voiceHolder) voiceHolder.appendChild(buildVoicePlayer(voiceHolder.dataset.voiceUrl,
                         'caption'));
                     wireChatLongPress(row);
+                    wireChatSwipeReply(row);
                 });
                 if (wasNearBottom) chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+            }
+
+            /* Scrolls to and briefly flashes the message a reply-quote
+               points at — a no-op if it isn't loaded (e.g. it's since
+               scrolled out of the loaded window, which for this app's
+               chat size in practice won't happen). */
+            function chatJumpToMessage(id) {
+                const target = chatMessagesEl.querySelector(`.chat-bubble-row[data-id="${CSS.escape(String(id))}"]`);
+                if (!target) return;
+                target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                target.classList.add('reply-flash');
+                setTimeout(() => target.classList.remove('reply-flash'), 1000);
             }
 
             /* ─── Select mode: pick several messages at once to copy or
@@ -19902,6 +20369,9 @@
                 chatSelectedIds = new Set(id != null ? [String(id)] : []);
                 chatPanel.classList.add('selecting');
                 chatSelectBar.classList.remove('hidden');
+                if (chatSearchOpen) closeChatSearch();
+                if (chatReplyTarget) cancelChatReply();
+                if (chatEditTarget) cancelChatEdit();
                 renderChatMessages();
                 updateChatSelectBar();
             }
@@ -19973,6 +20443,81 @@
                     if (!chatSelectMode) openChatMessageMenu(row); });
             }
 
+            /* Swipe a bubble sideways to reply — common on every mobile
+               chat app. Only takes over once the drag is clearly more
+               horizontal than vertical (so it never fights the message
+               list's own up/down scroll), and only for touch/pen — mouse
+               drags are left alone. Cancels the long-press timer the
+               moment it starts tracking, same as any other movement. */
+            function wireChatSwipeReply(row) {
+                const content = row.querySelector('.chat-bubble-content');
+                const icon = row.querySelector('.chat-swipe-reply-icon');
+                if (!content) return;
+                const THRESHOLD = 56;
+                const MAX = 78;
+                let tracking = false,
+                    committed = false,
+                    startX = 0,
+                    startY = 0,
+                    pointerId = null;
+                row.addEventListener('pointerdown', (e) => {
+                    if (e.pointerType === 'mouse' || chatSelectMode) return;
+                    tracking = true;
+                    committed = false;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    pointerId = e.pointerId;
+                });
+                row.addEventListener('pointermove', (e) => {
+                    if (!tracking || e.pointerId !== pointerId) return;
+                    const dx = e.clientX - startX,
+                        dy = e.clientY - startY;
+                    if (!committed) {
+                        if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy)) return;
+                        committed = true;
+                        row.classList.add('swiping');
+                        /* Claim the gesture once we're sure it's a
+                           horizontal swipe, so the browser's own touch
+                           handling (which can otherwise decide this is a
+                           scroll and cut the drag off early with a
+                           pointercancel) leaves it alone from here on. */
+                        try { row.setPointerCapture(pointerId); } catch (err) {}
+                    }
+                    const clamped = Math.max(0, Math.min(MAX, dx));
+                    content.style.transform = `translateX(${clamped}px)`;
+                    if (icon) icon.style.opacity = String(Math.min(1, clamped / THRESHOLD));
+                });
+                function endSwipe(e) {
+                    if (!tracking || e.pointerId !== pointerId) return;
+                    tracking = false;
+                    if (!committed) return;
+                    committed = false;
+                    row.classList.remove('swiping');
+                    try { row.releasePointerCapture(pointerId); } catch (err) {}
+                    const dx = e.clientX - startX;
+                    content.style.transform = '';
+                    if (icon) icon.style.opacity = '0';
+                    if (dx >= THRESHOLD) {
+                        haptic(10);
+                        const msg = chatData.find(m => String(m.id) === String(row.dataset.id));
+                        // Same "temp-" guard as the menu's Reply button —
+                        // a message that hasn't finished sending yet is
+                        // still using a local placeholder id, not its
+                        // real database id, so it can't be replied to
+                        // until that round trip finishes.
+                        if (msg && !String(msg.id).startsWith('temp-')) startChatReply(msg);
+                    }
+                }
+                row.addEventListener('pointerup', endSwipe);
+                row.addEventListener('pointercancel', () => {
+                    tracking = false;
+                    committed = false;
+                    row.classList.remove('swiping');
+                    content.style.transform = '';
+                    if (icon) icon.style.opacity = '0';
+                });
+            }
+
             /* Builds the WhatsApp-style dropdown: a row of 5 quick emoji
                reactions (most-recently-used, falling back to a default
                set) plus a "+" that — like every other reaction picker
@@ -19999,10 +20544,22 @@
                 const fixedRowHtml = fixed.map(reactionBtn).join('');
                 const recentRowHtml = recentExtra.map(reactionBtn).join('');
                 let actionsHtml = '';
+                /* Replying to / editing a message needs its real
+                   database id — a message that hasn't finished its
+                   round trip yet is still using a local "temp-"
+                   placeholder id, so those two actions are hidden until
+                   it's confirmed (usually under a second). Everything
+                   else about it still works fine in the meantime. */
+                const confirmed = !String(msg.id).startsWith('temp-');
+                if (confirmed) actionsHtml += `<button type="button" data-action="reply">↩️ Reply</button>`;
                 if (msg.content_text) actionsHtml +=
                     `<button type="button" data-action="copy">📋 Copy message</button>`;
                 actionsHtml += `<button type="button" data-action="select">☑️ Select messages</button>`;
                 actionsHtml += `<button type="button" data-action="pin">${msg.pinned ? '📌 Unpin' : '⭐ Pin / star this'}</button>`;
+                if (confirmed && mine && msg.content_text && !msg.voice_url && !msg.image_url && (Date.now() -
+                        new Date(msg.created_at).getTime()) < CHAT_EDIT_WINDOW_MS) {
+                    actionsHtml += `<button type="button" data-action="edit">✏️ Edit</button>`;
+                }
                 actionsHtml += `<button type="button" data-action="delete-me">🗑️ Delete for me</button>`;
                 if (mine) actionsHtml +=
                     `<button type="button" data-action="delete-everyone">🗑️ Delete for everyone</button>`;
@@ -20057,35 +20614,67 @@
                 closeChatPinMenu();
             });
 
+            const CHAT_DELETE_UNDO_MS = 5000;
+
             async function chatDeleteForMe(msg) {
-                const myCol = `deleted_for_${myFieldSuffix()}`;
-                const otherCol = `deleted_for_${otherLetter().toLowerCase()}`;
-                const otherAlreadyDeleted = !!msg[otherCol];
+                const idx = chatData.findIndex(m => m.id === msg.id);
                 chatData = chatData.filter(m => m.id !== msg.id);
                 renderChatMessages();
                 updateChatBadge();
-                if (!supabase) return;
-                try {
-                    if (otherAlreadyDeleted) {
-                        if (msg.image_path) await supabase.storage.from(CHAT_BUCKET).remove([msg.image_path]);
-                        if (msg.voice_path) await supabase.storage.from(VOICE_BUCKET).remove([msg.voice_path]);
-                        await supabase.from(CHAT_TABLE).delete().eq('id', msg.id);
-                    } else {
-                        await supabase.from(CHAT_TABLE).update({ [myCol]: true }).eq('id', msg.id);
+                let undone = false;
+                const timer = setTimeout(async() => {
+                    if (undone || !supabase) return;
+                    const myCol = `deleted_for_${myFieldSuffix()}`;
+                    const otherCol = `deleted_for_${otherLetter().toLowerCase()}`;
+                    const otherAlreadyDeleted = !!msg[otherCol];
+                    try {
+                        if (otherAlreadyDeleted) {
+                            if (msg.image_path) await supabase.storage.from(CHAT_BUCKET).remove([msg.image_path]);
+                            if (msg.voice_path) await supabase.storage.from(VOICE_BUCKET).remove([msg.voice_path]);
+                            await supabase.from(CHAT_TABLE).delete().eq('id', msg.id);
+                        } else {
+                            await supabase.from(CHAT_TABLE).update({ [myCol]: true }).eq('id', msg.id);
+                        }
+                    } catch (e) { console.error('Could not delete message:', e); }
+                }, CHAT_DELETE_UNDO_MS);
+                showToast('Message deleted.', {
+                    actionLabel: 'Undo',
+                    duration: CHAT_DELETE_UNDO_MS,
+                    onAction: () => {
+                        undone = true;
+                        clearTimeout(timer);
+                        chatData.splice(Math.min(idx, chatData.length), 0, msg);
+                        renderChatMessages();
+                        updateChatBadge();
                     }
-                } catch (e) { console.error('Could not delete message:', e); }
+                });
             }
 
             async function chatDeleteForEveryone(msg) {
+                const idx = chatData.findIndex(m => m.id === msg.id);
                 chatData = chatData.filter(m => m.id !== msg.id);
                 renderChatMessages();
                 updateChatBadge();
-                if (!supabase) return;
-                try {
-                    if (msg.image_path) await supabase.storage.from(CHAT_BUCKET).remove([msg.image_path]);
-                    if (msg.voice_path) await supabase.storage.from(VOICE_BUCKET).remove([msg.voice_path]);
-                    await supabase.from(CHAT_TABLE).delete().eq('id', msg.id);
-                } catch (e) { console.error('Could not delete message:', e); }
+                let undone = false;
+                const timer = setTimeout(async() => {
+                    if (undone || !supabase) return;
+                    try {
+                        if (msg.image_path) await supabase.storage.from(CHAT_BUCKET).remove([msg.image_path]);
+                        if (msg.voice_path) await supabase.storage.from(VOICE_BUCKET).remove([msg.voice_path]);
+                        await supabase.from(CHAT_TABLE).delete().eq('id', msg.id);
+                    } catch (e) { console.error('Could not delete message:', e); }
+                }, CHAT_DELETE_UNDO_MS);
+                showToast('Message deleted for everyone.', {
+                    actionLabel: 'Undo',
+                    duration: CHAT_DELETE_UNDO_MS,
+                    onAction: () => {
+                        undone = true;
+                        clearTimeout(timer);
+                        chatData.splice(Math.min(idx, chatData.length), 0, msg);
+                        renderChatMessages();
+                        updateChatBadge();
+                    }
+                });
             }
 
             async function applyChatReaction(msg, r) {
@@ -20099,6 +20688,127 @@
                     await supabase.from(CHAT_TABLE).update({ reaction: newReaction }).eq('id', msg.id);
                 } catch (err) { console.error('Could not save reaction:', err); }
             }
+
+            /* ─── Reply / edit compose context ─── */
+            function refreshChatComposeContext() {
+                if (chatEditTarget) {
+                    chatComposeContext.classList.remove('hidden');
+                    chatComposeContext.classList.add('editing');
+                    chatComposeContextLabel.textContent = 'Editing message';
+                    chatComposeContextText.textContent = chatMessagePreview(chatEditTarget);
+                } else if (chatReplyTarget) {
+                    chatComposeContext.classList.remove('hidden');
+                    chatComposeContext.classList.remove('editing');
+                    chatComposeContextLabel.textContent = `Replying to ${chatReplyTarget.sender === myLetter() ? 'yourself' : otherLetter()}`;
+                    chatComposeContextText.textContent = chatMessagePreview(chatReplyTarget);
+                } else {
+                    chatComposeContext.classList.add('hidden');
+                }
+            }
+            function startChatReply(msg) {
+                chatEditTarget = null;
+                chatReplyTarget = msg;
+                refreshChatComposeContext();
+                chatTextInput.focus();
+            }
+            function cancelChatReply() {
+                chatReplyTarget = null;
+                refreshChatComposeContext();
+            }
+            function startChatEdit(msg) {
+                chatReplyTarget = null;
+                chatEditTarget = msg;
+                chatTextInput.value = msg.content_text || '';
+                refreshChatComposeContext();
+                chatTextInput.focus();
+            }
+            function cancelChatEdit() {
+                chatEditTarget = null;
+                chatTextInput.value = '';
+                refreshChatComposeContext();
+            }
+            chatComposeContextCancel.addEventListener('click', () => {
+                if (chatEditTarget) cancelChatEdit();
+                else cancelChatReply();
+            });
+
+            /* ─── In-chat search ───
+               Client-side over the already-loaded chatData (this chat's
+               history is small enough that there's no need for a server
+               round trip). Matches are collected in chronological order;
+               next/prev just walks the array and re-renders so the
+               active hit gets the brighter highlight, then scrolls it
+               into view. */
+            function chatComputeSearchMatches() {
+                const q = chatSearchQuery.trim().toLowerCase();
+                if (!q) return [];
+                return chatData.filter(m => m.content_text && m.content_text.toLowerCase().includes(q)).map(m => m
+                    .id);
+            }
+            function updateChatSearchCount() {
+                chatSearchCount.textContent = chatSearchMatches.length ?
+                    `${chatSearchIndex + 1}/${chatSearchMatches.length}` :
+                    (chatSearchQuery.trim() ? '0/0' : '');
+            }
+            function chatScrollToActiveMatch() {
+                if (chatSearchIndex < 0 || !chatSearchMatches.length) return;
+                const id = chatSearchMatches[chatSearchIndex];
+                const row = chatMessagesEl.querySelector(`.chat-bubble-row[data-id="${CSS.escape(String(id))}"]`);
+                if (row) row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            }
+            function runChatSearch() {
+                chatSearchQuery = chatSearchInput.value;
+                chatSearchMatches = chatComputeSearchMatches();
+                chatSearchIndex = chatSearchMatches.length ? 0 : -1;
+                updateChatSearchCount();
+                renderChatMessages();
+                chatScrollToActiveMatch();
+            }
+            function chatSearchStep(dir) {
+                if (!chatSearchMatches.length) return;
+                chatSearchIndex = (chatSearchIndex + dir + chatSearchMatches.length) % chatSearchMatches.length;
+                updateChatSearchCount();
+                renderChatMessages();
+                chatScrollToActiveMatch();
+            }
+            function openChatSearch() {
+                chatSearchOpen = true;
+                chatSearchBtn.classList.add('active');
+                chatSearchBar.classList.remove('hidden');
+                if (chatSelectMode) exitChatSelectMode();
+                chatSearchInput.value = '';
+                chatSearchQuery = '';
+                chatSearchMatches = [];
+                chatSearchIndex = -1;
+                updateChatSearchCount();
+                setTimeout(() => chatSearchInput.focus(), 50);
+            }
+            function closeChatSearch() {
+                chatSearchOpen = false;
+                chatSearchBtn.classList.remove('active');
+                chatSearchBar.classList.add('hidden');
+                chatSearchQuery = '';
+                chatSearchMatches = [];
+                chatSearchIndex = -1;
+                renderChatMessages();
+            }
+            chatSearchBtn.addEventListener('click', () => {
+                if (chatSearchOpen) closeChatSearch();
+                else openChatSearch();
+            });
+            chatSearchClose.addEventListener('click', closeChatSearch);
+            let chatSearchDebounce = null;
+            chatSearchInput.addEventListener('input', () => {
+                clearTimeout(chatSearchDebounce);
+                chatSearchDebounce = setTimeout(runChatSearch, 150);
+            });
+            chatSearchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault();
+                    chatSearchStep(e.shiftKey ? -1 : 1); }
+                else if (e.key === 'Escape') closeChatSearch();
+            });
+            chatSearchPrev.addEventListener('click', () => chatSearchStep(-1));
+            chatSearchNext.addEventListener('click', () => chatSearchStep(1));
 
             chatPinMenu.addEventListener('click', async(e) => {
                 if (!chatPinTarget || !supabase) return;
@@ -20116,6 +20826,12 @@
                     if (!msg.content_text) return;
                     try { await navigator.clipboard.writeText(msg.content_text);
                         showToast('Copied ♡'); } catch (err) { showToast("Couldn't copy that.", { type: 'error' }); }
+                } else if (action === 'reply') {
+                    closeChatPinMenu();
+                    startChatReply(msg);
+                } else if (action === 'edit') {
+                    closeChatPinMenu();
+                    startChatEdit(msg);
                 } else if (action === 'pin') {
                     const newPinned = !msg.pinned;
                     msg.pinned = newPinned;
@@ -20316,7 +21032,9 @@
                 chatPanel.classList.add('hidden');
                 document.body.style.overflow = '';
                 if (chatSelectMode) exitChatSelectMode();
+                if (chatSearchOpen) closeChatSearch();
                 closeChatPinMenu();
+                stopChatTyping();
                 chatPanelPreKeyboardRect = null;
             }
 
@@ -20505,6 +21223,12 @@
             chatTextInput.addEventListener('blur', () => {
                 setTimeout(keepChatPanelAboveKeyboard, 250);
                 setTimeout(keepChatPanelAboveKeyboard, 450);
+                stopChatTyping();
+            });
+            chatTextInput.addEventListener('input', () => {
+                if (chatEditTarget) return; // editing an old message isn't "typing" a new one
+                if (chatTextInput.value) startChatTyping();
+                else stopChatTyping();
             });
 
             /* Tap anywhere outside the panel to close it — skipped in
@@ -20694,9 +21418,38 @@
                 e.preventDefault();
                 if (!supabase || !getIdentity()) return;
                 const text = chatTextInput.value.trim();
+
+                /* ─── Editing an existing message: a plain update, no
+                   new row, no reply/attachment handling. ─── */
+                if (chatEditTarget) {
+                    const editMsg = chatEditTarget;
+                    if (!text) return;
+                    chatEditTarget = null;
+                    chatTextInput.value = '';
+                    refreshChatComposeContext();
+                    stopChatTyping();
+                    const prevText = editMsg.content_text;
+                    const prevEdited = editMsg.edited_at;
+                    editMsg.content_text = text;
+                    editMsg.edited_at = new Date().toISOString();
+                    renderChatMessages();
+                    try {
+                        await supabase.from(CHAT_TABLE).update({ content_text: text, edited_at: editMsg.edited_at })
+                            .eq('id', editMsg.id);
+                    } catch (err) {
+                        console.error('Could not save the edit:', err);
+                        editMsg.content_text = prevText;
+                        editMsg.edited_at = prevEdited;
+                        renderChatMessages();
+                        showToast("Couldn't save that edit — try again?", { type: 'error' });
+                    }
+                    return;
+                }
+
                 const file = chatPendingImageFile;
                 const voice = chatPendingVoice;
                 if (!text && !file && !voice) return;
+                const replyingTo = chatReplyTarget;
                 chatTextInput.value = '';
                 chatImagePreview.classList.add('hidden');
                 chatPendingImageFile = null;
@@ -20704,10 +21457,18 @@
                 chatVoicePreviewPlayer.innerHTML = '';
                 chatVoicePreview.classList.add('hidden');
                 chatPendingVoice = null;
+                chatReplyTarget = null;
+                refreshChatComposeContext();
+                stopChatTyping();
                 const record = { chat_id: CHAT_ID, sender: myLetter(), recipient: otherLetter(), content_text: text ||
                         null, content_type: voice ? 'voice' : (file ? 'image' : 'text'), read_by_recipient: false };
                 if (voice) { record.voice_url = voice.url;
                     record.voice_path = voice.path; }
+                if (replyingTo) {
+                    record.reply_to_id = replyingTo.id;
+                    record.reply_preview_sender = replyingTo.sender;
+                    record.reply_preview_text = chatMessagePreview(replyingTo).slice(0, 120);
+                }
                 // Optimistic local echo: show the bubble immediately
                 // instead of waiting on a round trip to the database
                 // and back through realtime — it's replaced in place
@@ -20742,7 +21503,23 @@
                     console.error('Could not send message:', err);
                     chatData = chatData.filter(m => m.id !== tempId);
                     renderChatMessages();
-                    showToast("Couldn't send that — try again?", { type: 'error' });
+                    // Put back what they typed (and the reply-context bar,
+                    // if any) so a failed send doesn't lose the message —
+                    // they can just hit send again instead of retyping.
+                    if (text) chatTextInput.value = text;
+                    if (replyingTo) { chatReplyTarget = replyingTo;
+                        refreshChatComposeContext(); }
+                    // Show the actual database error instead of a generic
+                    // message — there's no console on a phone, so this is
+                    // the only way to see what's really failing. A
+                    // missing-column error usually means the
+                    // 38_chat_reply_edit.sql migration hasn't reached
+                    // this database yet (or Supabase's API schema cache
+                    // hasn't picked it up — that can lag a minute or two
+                    // behind the SQL editor even after "Success").
+                    const detail = (err && (err.message || err.details || err.hint || err.code || '')) + '';
+                    showToast(detail ? `Couldn't send: ${detail.slice(0, 140)}` : "Couldn't send that — try again?", {
+                        type: 'error', duration: 8000 });
                 }
             });
 
