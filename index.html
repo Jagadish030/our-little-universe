@@ -712,6 +712,797 @@
                 display: none;
             }
         }
+
+        /* ─── Chat ───
+           A side icon that's always present (unlike the compliment
+           envelope, which only shows on wider screens) — sits on the
+           opposite edge so the two never collide. Tapping it slides a
+           full-panel chat in from the bottom; tapping it again (icon
+           stays put) closes it. */
+        .chat-fab {
+            position: fixed;
+            top: 62%;
+            left: -22px;
+            z-index: 900;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, .6);
+            background: linear-gradient(135deg, var(--sage), var(--rose));
+            box-shadow: 0 3px 6px rgba(0, 0, 0, .3), 0 10px 22px rgba(0, 0, 0, .28);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            cursor: grab;
+            padding: 0;
+            touch-action: none;
+            transition: opacity .3s ease, box-shadow .2s ease;
+        }
+        .chat-fab.dragging {
+            cursor: grabbing;
+            box-shadow: 0 8px 22px rgba(0, 0, 0, .4);
+        }
+        .chat-fab.idle {
+            opacity: .45;
+        }
+        .chat-fab:active {
+            transform: scale(.94);
+        }
+        .chat-fab-icon {
+            margin-left: 12px;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .25));
+        }
+        .chat-unread-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 5px;
+            border-radius: 999px;
+            background: #e0455a;
+            color: #fff;
+            font: 800 .68rem/20px 'Quicksand', sans-serif;
+            text-align: center;
+            border: 2px solid var(--paper);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, .3);
+        }
+        .chat-unread-badge.hidden {
+            display: none;
+        }
+        body.dark-mode .chat-unread-badge {
+            border-color: var(--paper-deep);
+        }
+
+        .chat-panel {
+            position: fixed;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            background: var(--paper);
+            border: 1.5px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 22px 60px rgba(0, 0, 0, .5), 0 2px 0 rgba(255, 255, 255, .04) inset;
+            overflow: hidden;
+            opacity: 0;
+            transform: scale(.88) translateY(16px);
+            transition: opacity .28s cubic-bezier(.2, .8, .3, 1), transform .28s cubic-bezier(.2, .8, .3, 1),
+                border-radius .28s ease;
+        }
+        .chat-panel:not(.hidden) {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+        .chat-panel.hidden {
+            /* keep it in the DOM (transition needs it) but out of the way */
+            pointer-events: none;
+        }
+        .chat-panel.dragging,
+        .chat-panel.resizing {
+            transition: none !important;
+        }
+        .chat-panel.fullscreen {
+            border-radius: 0;
+            border-width: 0;
+        }
+        .chat-panel-draghandle {
+            align-self: center;
+            width: 92px;
+            height: 22px;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            cursor: grab;
+            touch-action: none;
+            position: relative;
+            z-index: 7;
+            border-radius: 999px;
+        }
+        .chat-panel-draghandle:active {
+            cursor: grabbing;
+        }
+        .chat-panel-draghandle::before {
+            content: '';
+            width: 42px;
+            height: 5px;
+            border-radius: 999px;
+            background: rgba(107, 83, 68, .3);
+            transition: background .15s ease, width .15s ease;
+        }
+        .chat-panel-draghandle:hover::before,
+        .chat-panel-draghandle:active::before {
+            background: var(--rose-deep);
+            width: 50px;
+        }
+        body.dark-mode .chat-panel-draghandle::before {
+            background: rgba(255, 255, 255, .3);
+        }
+        body.dark-mode .chat-panel-draghandle:hover::before,
+        body.dark-mode .chat-panel-draghandle:active::before {
+            background: var(--rose);
+        }
+        .chat-panel.fullscreen .chat-panel-draghandle {
+            display: none;
+        }
+        .chat-resize-handle {
+            position: absolute;
+            z-index: 5;
+            touch-action: none;
+        }
+        .chat-resize-handle::after {
+            content: '';
+            position: absolute;
+            pointer-events: none;
+            background: rgba(107, 83, 68, .32);
+            border-radius: 999px;
+            opacity: .7;
+            transition: opacity .15s ease, background .15s ease;
+        }
+        .chat-resize-handle:hover::after,
+        .chat-resize-handle:active::after {
+            opacity: 1;
+            background: var(--rose-deep);
+        }
+        body.dark-mode .chat-resize-handle::after {
+            background: rgba(255, 255, 255, .34);
+        }
+        body.dark-mode .chat-resize-handle:hover::after,
+        body.dark-mode .chat-resize-handle:active::after {
+            background: var(--rose);
+        }
+        .chat-resize-handle.s {
+            left: 18px;
+            right: 18px;
+            height: 9px;
+            bottom: -4px;
+            cursor: ns-resize;
+        }
+        .chat-resize-handle.s::after {
+            left: 50%;
+            top: 50%;
+            width: 30px;
+            height: 4px;
+            transform: translate(-50%, -50%);
+        }
+        .chat-resize-handle.e,
+        .chat-resize-handle.w {
+            top: 18px;
+            bottom: 18px;
+            width: 9px;
+            cursor: ew-resize;
+        }
+        .chat-resize-handle.e {
+            right: -4px;
+        }
+        .chat-resize-handle.w {
+            left: -4px;
+        }
+        .chat-resize-handle.e::after,
+        .chat-resize-handle.w::after {
+            top: 50%;
+            left: 50%;
+            width: 3px;
+            height: 26px;
+            transform: translate(-50%, -50%);
+        }
+        .chat-resize-handle.ne,
+        .chat-resize-handle.nw,
+        .chat-resize-handle.se,
+        .chat-resize-handle.sw {
+            width: 20px;
+            height: 20px;
+        }
+        .chat-resize-handle.ne {
+            top: -4px;
+            right: -4px;
+            cursor: nesw-resize;
+        }
+        .chat-resize-handle.nw {
+            top: -4px;
+            left: -4px;
+            cursor: nwse-resize;
+        }
+        .chat-resize-handle.se {
+            bottom: -4px;
+            right: -4px;
+            cursor: nwse-resize;
+        }
+        .chat-resize-handle.sw {
+            bottom: -4px;
+            left: -4px;
+            cursor: nesw-resize;
+        }
+        /* Corner grips get a permanently-visible little diagonal mark
+           (not just on hover) since corners are the most natural place
+           to grab and a plain invisible strip there was easy to miss. */
+        .chat-resize-handle.ne::after,
+        .chat-resize-handle.nw::after,
+        .chat-resize-handle.se::after,
+        .chat-resize-handle.sw::after {
+            opacity: .55;
+            width: 9px;
+            height: 9px;
+            background: none;
+            border-radius: 0;
+        }
+        .chat-resize-handle.se::after {
+            right: 5px;
+            bottom: 5px;
+            border-right: 2px solid rgba(107, 83, 68, .45);
+            border-bottom: 2px solid rgba(107, 83, 68, .45);
+            border-radius: 0 0 3px 0;
+        }
+        .chat-resize-handle.sw::after {
+            left: 5px;
+            bottom: 5px;
+            border-left: 2px solid rgba(107, 83, 68, .45);
+            border-bottom: 2px solid rgba(107, 83, 68, .45);
+            border-radius: 0 0 0 3px;
+        }
+        .chat-resize-handle.ne::after {
+            right: 5px;
+            top: 5px;
+            border-right: 2px solid rgba(107, 83, 68, .45);
+            border-top: 2px solid rgba(107, 83, 68, .45);
+            border-radius: 0 3px 0 0;
+        }
+        .chat-resize-handle.nw::after {
+            left: 5px;
+            top: 5px;
+            border-left: 2px solid rgba(107, 83, 68, .45);
+            border-top: 2px solid rgba(107, 83, 68, .45);
+            border-radius: 3px 0 0 0;
+        }
+        .chat-resize-handle.ne:hover::after,
+        .chat-resize-handle.nw:hover::after,
+        .chat-resize-handle.se:hover::after,
+        .chat-resize-handle.sw:hover::after {
+            opacity: 1;
+        }
+        body.dark-mode .chat-resize-handle.se::after,
+        body.dark-mode .chat-resize-handle.sw::after,
+        body.dark-mode .chat-resize-handle.ne::after,
+        body.dark-mode .chat-resize-handle.nw::after {
+            border-color: rgba(255, 255, 255, .5);
+        }
+        .chat-panel.fullscreen .chat-resize-handle {
+            display: none;
+        }
+        .chat-panel-header-actions {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            flex-shrink: 0;
+        }
+        .chat-panel-expand {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(107, 83, 68, .12);
+            color: var(--ink-soft);
+            cursor: pointer;
+            font-size: .95rem;
+            flex-shrink: 0;
+            transition: background .15s ease, color .15s ease, transform .15s ease;
+        }
+        body.dark-mode .chat-panel-expand {
+            background: rgba(255, 255, 255, .12);
+            color: #e9dde2;
+        }
+        .chat-panel-expand:hover {
+            background: rgba(219, 125, 143, .3);
+            color: var(--rose-deep);
+            transform: scale(1.06);
+        }
+        body.dark-mode .chat-panel-expand:hover {
+            background: rgba(217, 163, 177, .3);
+            color: #ffd7e0;
+        }
+        .chat-panel-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: .6rem;
+            padding: max(1rem, env(safe-area-inset-top)) 1.1rem .8rem;
+            border-bottom: 1px solid var(--card-border);
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+        .chat-panel-heading h3 {
+            margin: 0;
+            font-family: 'Caveat', cursive;
+            font-size: 1.6rem;
+            color: var(--ink);
+        }
+        .chat-presence {
+            margin: .1rem 0 0;
+            font-size: .74rem;
+            color: var(--ink-soft);
+            min-height: 1em;
+        }
+        .chat-presence.live::before {
+            content: '●';
+            color: var(--sage);
+            margin-right: 4px;
+            font-size: .6rem;
+            vertical-align: middle;
+        }
+        .chat-panel-close {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(107, 83, 68, .12);
+            color: var(--ink-soft);
+            cursor: pointer;
+            font-size: .85rem;
+            transition: background .15s ease, color .15s ease, transform .15s ease;
+        }
+        body.dark-mode .chat-panel-close {
+            background: rgba(255, 255, 255, .12);
+            color: #e9dde2;
+        }
+        .chat-panel-close:hover {
+            background: rgba(224, 69, 90, .18);
+            color: #e0455a;
+            transform: scale(1.06);
+        }
+        body.dark-mode .chat-panel-close:hover {
+            background: rgba(224, 69, 90, .3);
+            color: #ffb4c0;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem .9rem;
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+            -webkit-overflow-scrolling: touch;
+        }
+        .chat-empty-hint {
+            margin: auto;
+            color: var(--ink-soft);
+            font-size: .85rem;
+            text-align: center;
+        }
+        .chat-empty-hint.hidden {
+            display: none;
+        }
+        .chat-bubble-row {
+            display: flex;
+            align-items: flex-end;
+            gap: .4rem;
+            max-width: 78%;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+        .chat-bubble-row.mine {
+            align-self: flex-end;
+            justify-content: flex-end;
+        }
+        .chat-bubble-row.theirs {
+            align-self: flex-start;
+            justify-content: flex-start;
+        }
+        .chat-bubble-content {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .chat-bubble-row.mine .chat-bubble-content {
+            align-items: flex-end;
+        }
+        .chat-bubble-row.theirs .chat-bubble-content {
+            align-items: flex-start;
+        }
+        .chat-bubble {
+            position: relative;
+            border-radius: 16px;
+            padding: .55rem .8rem;
+            font-size: .88rem;
+            line-height: 1.4;
+            word-break: break-word;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, .08);
+        }
+        .chat-bubble-row.mine .chat-bubble {
+            background: var(--rose);
+            color: var(--ink);
+            border: 1px solid rgba(217, 138, 147, .3);
+            border-bottom-right-radius: 4px;
+        }
+        body.dark-mode .chat-bubble-row.mine .chat-bubble {
+            background: rgba(217, 163, 177, .32);
+            color: var(--ink);
+            border: 1px solid rgba(217, 163, 177, .45);
+        }
+        .chat-bubble-row.theirs .chat-bubble {
+            background: var(--glass-bg-strong);
+            color: var(--ink);
+            border: 1px solid var(--card-border);
+            border-bottom-left-radius: 4px;
+        }
+        .chat-bubble img {
+            display: block;
+            max-width: 100%;
+            width: 190px;
+            border-radius: 10px;
+            cursor: pointer;
+            -webkit-touch-callout: none;
+        }
+        .chat-bubble img+.chat-bubble-text {
+            margin-top: .4rem;
+        }
+        .chat-bubble-meta {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 2px;
+            font-size: .62rem;
+            color: var(--ink-soft);
+        }
+        .chat-bubble-meta .pin-mark {
+            color: var(--rose-deep);
+        }
+        .chat-bubble-row.pinned .chat-bubble {
+            outline: 2px solid var(--gold);
+            outline-offset: 1px;
+        }
+        .chat-bubble-voice {
+            display: block;
+            min-width: 190px;
+        }
+        .chat-bubble-voice .voice-player {
+            width: 100%;
+            height: 38px;
+            background: rgba(255, 255, 255, .55);
+            border: none;
+            padding: 4px 12px 4px 4px;
+            box-shadow: inset 0 0 0 1px rgba(107, 83, 68, .12);
+        }
+        body.dark-mode .chat-bubble-voice .voice-player {
+            background: rgba(255, 255, 255, .16);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14);
+        }
+        .chat-bubble-row.theirs .chat-bubble-voice .voice-player {
+            background: rgba(107, 83, 68, .07);
+        }
+        body.dark-mode .chat-bubble-row.theirs .chat-bubble-voice .voice-player {
+            background: rgba(255, 255, 255, .1);
+        }
+        .chat-bubble-voice .voice-player-toggle {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+        }
+        .chat-bubble-voice .voice-player-toggle svg {
+            width: 12px;
+            height: 12px;
+        }
+        .chat-bubble-voice+.chat-bubble-text {
+            margin-top: .4rem;
+        }
+        .chat-voice-preview-player {
+            flex: 1;
+            min-width: 0;
+        }
+        .chat-voice-preview-player .voice-player {
+            height: 34px;
+        }
+        .chat-bubble-reaction {
+            position: absolute;
+            bottom: -11px;
+            right: -6px;
+            background: var(--paper);
+            border: 1px solid var(--card-border);
+            border-radius: 999px;
+            font-size: .8rem;
+            line-height: 1;
+            padding: 3px 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, .18);
+        }
+        .chat-bubble-row.theirs .chat-bubble-reaction {
+            right: auto;
+            left: -6px;
+        }
+        body.dark-mode .chat-bubble-reaction {
+            background: var(--paper-deep);
+        }
+        .chat-bubble-meta.grouped-meta {
+            margin-top: -1px;
+        }
+        /* ─── Select mode ─── */
+        .chat-select-bar {
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            padding: .6rem .9rem;
+            border-bottom: 1px solid var(--card-border);
+            background: var(--glass-bg-strong);
+            flex-shrink: 0;
+        }
+        .chat-select-bar.hidden {
+            display: none;
+        }
+        .chat-select-bar #chatSelectCancel {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(107, 83, 68, .12);
+            color: var(--ink-soft);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        body.dark-mode .chat-select-bar #chatSelectCancel {
+            background: rgba(255, 255, 255, .12);
+            color: #e9dde2;
+        }
+        .chat-select-bar #chatSelectCount {
+            flex: 1;
+            font: 700 .85rem 'Quicksand', sans-serif;
+            color: var(--ink);
+        }
+        .chat-select-actions {
+            display: flex;
+            gap: .4rem;
+        }
+        .chat-select-actions button {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(219, 125, 143, .18);
+            color: var(--rose-deep);
+            cursor: pointer;
+            font-size: .95rem;
+            transition: background .15s ease, transform .15s ease;
+        }
+        .chat-select-actions button:hover {
+            background: rgba(219, 125, 143, .3);
+            transform: scale(1.06);
+        }
+        .chat-select-actions button:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+        .chat-select-check {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 1.5px solid var(--rose-deep);
+            background: var(--white);
+            flex-shrink: 0;
+            font-size: .68rem;
+            color: transparent;
+            cursor: pointer;
+        }
+        body.dark-mode .chat-select-check {
+            background: var(--paper-deep);
+        }
+        .chat-panel.selecting .chat-bubble-row {
+            max-width: 92%;
+            cursor: pointer;
+        }
+        .chat-panel.selecting .chat-select-check {
+            display: flex;
+        }
+        .chat-bubble-row.selected .chat-select-check {
+            background: var(--rose-deep);
+            color: var(--white);
+        }
+        .chat-bubble-row.selected .chat-bubble {
+            outline: 2px solid var(--rose-deep);
+            outline-offset: 1px;
+        }
+        .chat-image-preview {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            padding: .5rem .9rem;
+            border-top: 1px solid var(--card-border);
+        }
+        .chat-image-preview img {
+            width: 46px;
+            height: 46px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .chat-image-preview button {
+            border: none;
+            background: rgba(224, 69, 90, .15);
+            color: #e0455a;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .chat-image-preview.hidden {
+            display: none;
+        }
+        .chat-voice-preview {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            padding: .5rem .9rem;
+            border-top: 1px solid var(--card-border);
+            font-size: .82rem;
+            color: var(--ink-soft);
+        }
+        .chat-voice-preview button {
+            border: none;
+            background: rgba(224, 69, 90, .15);
+            color: #e0455a;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            cursor: pointer;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+        .chat-voice-preview.hidden {
+            display: none;
+        }
+        .chat-input-row {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .7rem .9rem max(.7rem, env(safe-area-inset-bottom));
+            border-top: 1px solid var(--card-border);
+            background: var(--glass-bg-strong);
+        }
+        .chat-attach-btn,
+        .chat-send-btn {
+            flex-shrink: 0;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(107, 83, 68, .1);
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background .15s ease, transform .15s ease, filter .15s ease;
+        }
+        .chat-attach-btn:hover {
+            background: rgba(107, 83, 68, .2);
+            transform: scale(1.06);
+        }
+        body.dark-mode .chat-attach-btn:hover {
+            background: rgba(255, 255, 255, .22);
+        }
+        .chat-send-btn {
+            background: var(--rose-deep);
+            color: var(--white);
+        }
+        .chat-send-btn:hover {
+            filter: brightness(1.1);
+            transform: scale(1.06);
+        }
+        .chat-mic-btn.mini-mic-btn {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            flex-shrink: 0;
+        }
+        .chat-mic-btn svg {
+            width: 17px;
+            height: 17px;
+        }
+        .chat-mic-btn.recording {
+            background: #e0455a;
+            color: var(--white);
+        }
+        .chat-input-row input[type="text"] {
+            flex: 1;
+            min-width: 0;
+            border: 1px solid var(--card-border);
+            border-radius: 999px;
+            padding: .6rem 1rem;
+            font: 500 .88rem 'Quicksand', sans-serif;
+            background: var(--white);
+            color: var(--ink);
+        }
+        .chat-pin-menu {
+            position: fixed;
+            z-index: 2160;
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, .3);
+            overflow: hidden;
+        }
+        .chat-pin-menu.hidden {
+            display: none;
+        }
+        .chat-pin-menu button {
+            border: none;
+            background: transparent;
+            color: var(--ink);
+            font: 600 .82rem 'Quicksand', sans-serif;
+            padding: .6rem 1rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .chat-pin-menu button:hover {
+            background: rgba(219, 125, 143, .16);
+        }
+        .chat-msg-menu-reactions {
+            display: flex;
+            gap: .2rem;
+            padding: .45rem .5rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .chat-msg-menu-reactions.chat-msg-menu-reactions-fixed.has-recent {
+            border-bottom: none;
+            padding-bottom: .25rem;
+        }
+        .chat-msg-menu-reactions-recent {
+            padding-top: 0;
+        }
+        .chat-msg-menu-reactions button {
+            padding: .2rem .4rem;
+            font-size: 1.2rem;
+            line-height: 1;
+            border-radius: 8px;
+        }
+        .chat-msg-menu-reactions button.active {
+            background: rgba(219, 125, 143, .28);
+        }
+        .chat-msg-menu-reactions .reaction-plus-wrap {
+            --plus-size: 26px;
+        }
+        .chat-msg-menu-actions {
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-msg-menu-actions button {
+            text-align: left;
+        }
+        @media (max-width:480px) {
+            .chat-fab {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+            .chat-fab-icon {
+                margin-left: 10px;
+            }
+        }
         button,
         a,
         input,
@@ -2282,10 +3073,10 @@
             display: none;
             align-items: center;
             margin-left: 6px;
-            vertical-align: middle;
         }
         .notif-cloud-inline.show {
             display: inline-flex;
+            flex-shrink: 0;
         }
         .notif-cloud-inline .cloud-stem {
             display: none;
@@ -2481,10 +3272,9 @@
             font: 600 .82rem 'Quicksand', sans-serif;
             display: flex;
             align-items: center;
-            gap: .5rem;
-            justify-content: space-between;
+            flex-wrap: nowrap;
+            gap: .3rem;
             white-space: nowrap;
-            overflow: hidden;
         }
         .feature-menu-popover button:hover,
         .feature-menu-popover button:focus-visible {
@@ -2508,13 +3298,6 @@
             }
             .feature-menu.open .feature-menu-popover {
                 transform: translateX(-50%) translateY(0) scale(1);
-            }
-            /* Keep label and inline cloud close together on narrow screens */
-            .feature-menu-popover button {
-                justify-content: flex-start;
-            }
-            .feature-menu-popover button .notif-cloud-inline {
-                margin-left: .6rem;
             }
         }
 
@@ -8833,6 +9616,60 @@
             <p id="envelopeNoteText"></p>
         </div>
 
+        <!-- ─── Chat ─── -->
+        <button type="button" class="chat-fab" id="chatFabBtn" aria-label="Open chat" title="Chat">
+            <span class="chat-fab-icon">💬</span>
+            <span class="chat-unread-badge hidden" id="chatUnreadBadge">0</span>
+        </button>
+        <div class="chat-panel hidden" id="chatPanel" role="dialog" aria-label="Chat">
+            <div class="chat-panel-draghandle" id="chatPanelDragHandle" aria-hidden="true"></div>
+            <div class="chat-panel-header">
+                <div class="chat-panel-heading">
+                    <h3>Chat</h3>
+                    <p class="chat-presence" id="chatPresence"></p>
+                </div>
+                <div class="chat-panel-header-actions">
+                    <button type="button" class="chat-panel-expand" id="chatPanelExpand" aria-label="Expand to full screen" title="Full screen">⛶</button>
+                    <button type="button" class="chat-panel-close" id="chatPanelClose" aria-label="Close chat">✕</button>
+                </div>
+            </div>
+            <div class="chat-select-bar hidden" id="chatSelectBar">
+                <button type="button" id="chatSelectCancel" aria-label="Cancel selection">✕</button>
+                <span id="chatSelectCount">0 selected</span>
+                <div class="chat-select-actions">
+                    <button type="button" id="chatSelectCopy" aria-label="Copy selected messages">📋</button>
+                    <button type="button" id="chatSelectDelete" aria-label="Delete selected messages">🗑️</button>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-empty-hint" id="chatEmptyHint">No messages yet — say hi ♡</div>
+            </div>
+            <div class="chat-image-preview hidden" id="chatImagePreview">
+                <img id="chatImagePreviewImg" alt="">
+                <button type="button" id="chatImagePreviewRemove" aria-label="Remove photo">✕</button>
+            </div>
+            <div class="chat-voice-preview hidden" id="chatVoicePreview">
+                <span>🎙️</span>
+                <div class="chat-voice-preview-player" id="chatVoicePreviewPlayer"></div>
+                <button type="button" id="chatVoicePreviewRemove" aria-label="Remove voice message">✕</button>
+            </div>
+            <form class="chat-input-row" id="chatInputForm">
+                <button type="button" class="chat-attach-btn" id="chatAttachBtn" aria-label="Attach a photo">📷</button>
+                <input type="file" id="chatImageInput" accept="image/*" hidden />
+                <button type="button" class="mini-mic-btn chat-mic-btn" id="chatMicBtn" aria-label="Record a voice message"></button>
+                <input type="text" id="chatTextInput" name="chat-message-9f2k" placeholder="Type a message…" maxlength="500" autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true" data-lpignore="true" data-1p-ignore data-form-type="other" />
+                <button type="submit" class="chat-send-btn" id="chatSendBtn" aria-label="Send">➤</button>
+            </form>
+            <span class="chat-resize-handle s" data-edge="s"></span>
+            <span class="chat-resize-handle e" data-edge="e"></span>
+            <span class="chat-resize-handle w" data-edge="w"></span>
+            <span class="chat-resize-handle ne" data-edge="ne"></span>
+            <span class="chat-resize-handle nw" data-edge="nw"></span>
+            <span class="chat-resize-handle se" data-edge="se"></span>
+            <span class="chat-resize-handle sw" data-edge="sw"></span>
+        </div>
+        <div class="chat-pin-menu hidden" id="chatPinMenu"></div>
+
         <!-- ─── Shake compliment modal ─── -->
         <div class="shake-compliment-modal hidden" id="shakeComplimentModal">
             <div class="shake-compliment-card">
@@ -12219,6 +13056,7 @@
                 doodleDuetView.classList.add('hidden');
                 doodleRelayView.classList.add('hidden');
                 doodlesGalleryArea.classList.add('hidden');
+                if (currentOpenScope === 'doodles') setMyActivity(SCOPE_ACTIVITY_LABELS.doodles);
                 resetDoodleCanvasOverlays();
                 doodleFullscreen.exit();
                 duetDoodleFullscreen.exit();
@@ -12235,6 +13073,7 @@
                 currentDoodleMode = 'solo';
                 doodlesGridLabel.textContent = 'Solo doodles';
                 knownDoodleIds = null;
+                setMyActivity('drawing a solo doodle');
                 resetDoodleCanvasOverlays();
                 soloEngine.setupCanvas();
                 if (!soloOverlayHandler) {
@@ -12254,6 +13093,7 @@
                 currentDoodleMode = 'duet';
                 doodlesGridLabel.textContent = 'Duet doodles';
                 knownDoodleIds = null;
+                setMyActivity('drawing in Duet doodles');
                 resetDoodleCanvasOverlays();
                 duetEngine.setupCanvas();
                 if (!duetOverlayHandler) {
@@ -12274,6 +13114,7 @@
                 currentDoodleMode = 'relay';
                 doodlesGridLabel.textContent = 'Relay doodles';
                 knownDoodleIds = null;
+                setMyActivity('taking their turn in Relay doodles');
                 resetDoodleCanvasOverlays();
                 relayEngine.setupCanvas();
                 if (!relayOverlayHandler) {
@@ -18321,6 +19162,7 @@
                cloud stays visible the whole time you're browsing inside. */
             function enterScope(scope) {
                 currentOpenScope = scope;
+                setMyActivity(SCOPE_ACTIVITY_LABELS[scope] || '');
             }
 
             /* Call when leaving/closing a section (or switching to a
@@ -18330,7 +19172,8 @@
             function leaveScope() {
                 if (currentOpenScope) { clearAllForScope(currentOpenScope);
                     markScopeSeen(currentOpenScope);
-                    currentOpenScope = null; }
+                    currentOpenScope = null;
+                    setMyActivity(''); }
             }
 
             async function markScopeSeen(scope) {
@@ -18812,6 +19655,11 @@
                 } catch (e) { presenceText.textContent = `${partnerName} isn't here right now`; }
             }
 
+            let presenceChannel = null;
+            let myCurrentActivity = '';
+            let partnerActivity = '';
+            let partnerIsOnline = false;
+
             function startPresence() {
                 if (!supabase) return;
                 try {
@@ -18820,21 +19668,27 @@
                     const channel = supabase.channel('our-little-universe-presence', {
                         config: { presence: { key: presenceId } }
                     });
+                    presenceChannel = channel;
                     channel.on('presence', { event: 'sync' }, () => {
                         const state = channel.presenceState();
                         let partnerOnline = false,
                             partnerIdentity = myIdentity === '2' ? '1' : '2';
+                        partnerActivity = '';
                         Object.values(state).forEach(entries => entries.forEach(e => {
                             if (myIdentity && e.identity && String(e.identity) !== String(myIdentity)) {
                                 partnerOnline = true;
                                 partnerIdentity = String(e.identity);
+                                if (e.activity) partnerActivity = e.activity;
                             }
                         }));
+                        partnerIsOnline = partnerOnline;
                         updatePresenceUI(partnerOnline, myIdentity, partnerIdentity);
+                        updateChatPresenceUI();
                     });
                     channel.subscribe(async(status) => {
                         if (status === 'SUBSCRIBED') {
-                            await channel.track({ identity: myIdentity, online_at: new Date().toISOString() });
+                            await channel.track({ identity: myIdentity, online_at: new Date().toISOString(),
+                                activity: myCurrentActivity });
                             touchLastSeen(myIdentity);
                             clearInterval(presenceHeartbeatInterval);
                             presenceHeartbeatInterval = setInterval(() => touchLastSeen(myIdentity), 25000);
@@ -18846,6 +19700,43 @@
                 } catch (err) { console.error('Could not start live presence:', err); }
             }
 
+            /* Broadcasts a short "what I'm doing" string over the same
+               presence channel used for online/offline status — no extra
+               table needed, and it updates the moment you move around
+               since it rides the same realtime connection. */
+            function setMyActivity(text) {
+                myCurrentActivity = text || '';
+                if (presenceChannel) {
+                    presenceChannel.track({ identity: getIdentity(), online_at: new Date().toISOString(),
+                        activity: myCurrentActivity }).catch(() => {});
+                }
+            }
+
+            const SCOPE_ACTIVITY_LABELS = { notes: 'writing in Love Notes', doodles: 'in the Doodles Wall', mood:
+                'checking the Mood Calendar', bucket: 'in the Bucket List', capsules: 'looking through Time Capsules',
+                fight: 'in the fight history', memories: 'looking at pictures' };
+
+            async function updateChatPresenceUI() {
+                if (!chatPresence) return;
+                const partnerName = otherLetter();
+                if (partnerIsOnline) {
+                    chatPresence.textContent = partnerActivity ? `${partnerName} is ${partnerActivity}` :
+                        `${partnerName} is here 🟢`;
+                    chatPresence.classList.add('live');
+                    return;
+                }
+                chatPresence.classList.remove('live');
+                if (!supabase) { chatPresence.textContent = `${partnerName} isn't here right now`;
+                    return; }
+                try {
+                    const { data } = await supabase.from(PRESENCE_LAST_SEEN_TABLE).select('last_seen').eq(
+                        'identity', otherAuthorNum()).maybeSingle();
+                    chatPresence.textContent = data && data.last_seen ?
+                        `${partnerName} was last here ${timeAgoShort(data.last_seen)}` :
+                        `${partnerName} isn't here right now`;
+                } catch (e) { chatPresence.textContent = `${partnerName} isn't here right now`; }
+            }
+
             function startSettingsRealtime() {
                 if (!supabase) return;
                 supabase.channel('site-settings-live')
@@ -18853,6 +19744,1009 @@
                         () => loadSiteSettings())
                     .subscribe();
             }
+
+            /* ─── Chat ───
+               Real-time text + photo messages between the two of you.
+               Unpinned messages (and their photos) quietly age out after
+               2 days so storage doesn't grow forever — pin anything you
+               want to keep past that with a long-press. */
+            const CHAT_TABLE = 'chat_messages';
+            const CHAT_BUCKET = 'chat-images';
+            /* This table's chat_id column defaults to a brand-new random
+               UUID on every insert unless we set it ourselves — so every
+               message must explicitly use this same fixed id, or each
+               row ends up in its own disconnected "conversation". */
+            const CHAT_ID = '00000000-0000-0000-0000-000000000001';
+            const CHAT_RECENT_KEY = 'ourLittleUniverseChatRecentEmojis';
+            const CHAT_DEFAULT_QUICK = ['😂', '💕', '😙', '😢', '😮'];
+
+
+            /* Recent quick-emoji list, persisted in localStorage so the
+               5 quick reactions + the "Recent" tray in the picker reflect
+               what this person actually reaches for over time. */
+            function getChatRecentEmojis() {
+                try {
+                    const raw = localStorage.getItem(CHAT_RECENT_KEY);
+                    const arr = raw ? JSON.parse(raw) : [];
+                    return Array.isArray(arr) ? arr.filter(e => typeof e === 'string') : [];
+                } catch (e) { return []; }
+            }
+            function pushChatRecentEmoji(emoji) {
+                let list = getChatRecentEmojis().filter(e => e !== emoji);
+                list.unshift(emoji);
+                if (list.length > 30) list = list.slice(0, 30);
+                try { localStorage.setItem(CHAT_RECENT_KEY, JSON.stringify(list)); } catch (e) {}
+            }
+            /* Row 1 never changes — it's always these 5. Row 2 shows
+               whatever you've actually reacted with recently, but only
+               the ones that aren't already sitting in row 1 (no point
+               showing the same emoji twice). */
+            function chatFixedEmojis() { return CHAT_DEFAULT_QUICK; }
+            function chatRecentExtraEmojis() {
+                return getChatRecentEmojis().filter(e => !CHAT_DEFAULT_QUICK.includes(e)).slice(0, 5);
+            }
+
+            const chatFabBtn = document.getElementById('chatFabBtn');
+            const chatUnreadBadge = document.getElementById('chatUnreadBadge');
+            const chatPanel = document.getElementById('chatPanel');
+            const chatMessagesEl = document.getElementById('chatMessages');
+            const chatEmptyHint = document.getElementById('chatEmptyHint');
+            const chatInputForm = document.getElementById('chatInputForm');
+            const chatTextInput = document.getElementById('chatTextInput');
+            const chatAttachBtn = document.getElementById('chatAttachBtn');
+            const chatMicBtn = document.getElementById('chatMicBtn');
+            const chatVoicePreview = document.getElementById('chatVoicePreview');
+            const chatVoicePreviewRemove = document.getElementById('chatVoicePreviewRemove');
+            const chatImageInput = document.getElementById('chatImageInput');
+            const chatImagePreview = document.getElementById('chatImagePreview');
+            const chatImagePreviewImg = document.getElementById('chatImagePreviewImg');
+            const chatImagePreviewRemove = document.getElementById('chatImagePreviewRemove');
+            const chatPanelClose = document.getElementById('chatPanelClose');
+            const chatPanelExpand = document.getElementById('chatPanelExpand');
+            const chatPanelDragHandle = document.getElementById('chatPanelDragHandle');
+            const chatPresence = document.getElementById('chatPresence');
+            const chatPinMenu = document.getElementById('chatPinMenu');
+            const chatSelectBar = document.getElementById('chatSelectBar');
+            const chatSelectCancel = document.getElementById('chatSelectCancel');
+            const chatSelectCount = document.getElementById('chatSelectCount');
+            const chatSelectCopy = document.getElementById('chatSelectCopy');
+            const chatSelectDelete = document.getElementById('chatSelectDelete');
+            const chatVoicePreviewPlayer = document.getElementById('chatVoicePreviewPlayer');
+
+            let chatData = [];
+            let chatOpen = false;
+            let chatLoaded = false;
+            let chatPendingImageFile = null;
+            let chatPendingVoice = null;
+            let chatPinTarget = null;
+            let chatPinTargetRow = null;
+            let chatLongPressTimer = null;
+            let chatSelectMode = false;
+            let chatSelectedIds = new Set();
+            let chatRealtimeChannel = null;
+
+            function updateChatBadge() {
+                const count = chatData.filter(m => m.recipient === myLetter() && !m.read_by_recipient).length;
+                chatUnreadBadge.textContent = count > 99 ? '99+' : String(count);
+                chatUnreadBadge.classList.toggle('hidden', count === 0);
+            }
+
+            /* A message only shows its time stamp when it's the first in a
+               run of consecutive messages from the same sender that land
+               on the same displayed minute — the rest of that run stays
+               quiet, WhatsApp-style, so the thread doesn't repeat the
+               same time over and over. */
+            function chatBubbleHtml(msg, prevMsg) {
+                const mine = msg.sender === myLetter();
+                const who = msg.sender === 'M' ? 'M' : 'J';
+                const time = new Date(msg.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                const prevTime = prevMsg ? new Date(prevMsg.created_at).toLocaleTimeString([], { hour: 'numeric',
+                    minute: '2-digit' }) : null;
+                const grouped = !!prevMsg && prevMsg.sender === msg.sender && prevTime === time;
+                const imgHtml = msg.image_url ?
+                    `<img src="${escapeHtml(msg.image_url)}" alt="photo" loading="lazy">` : '';
+                const voiceHtml = msg.voice_url ?
+                    `<div class="chat-bubble-voice" data-voice-url="${escapeHtml(msg.voice_url)}"></div>` : '';
+                const textHtml = msg.content_text ?
+                    `<span class="chat-bubble-text">${escapeHtml(msg.content_text)}</span>` : '';
+                const reactionHtml = msg.reaction ? `<span class="chat-bubble-reaction">${msg.reaction}</span>` :
+                    '';
+                const pinMarkHtml = msg.pinned ? '<span class="pin-mark">📌</span>' : '';
+                const metaHtml = !grouped ?
+                    `<div class="chat-bubble-meta">${pinMarkHtml}<span>${who} · ${time}</span></div>` :
+                    (msg.pinned ? `<div class="chat-bubble-meta grouped-meta">${pinMarkHtml}</div>` : '');
+                return `<div class="chat-bubble-row ${mine ? 'mine' : 'theirs'}${msg.pinned ? ' pinned' : ''}" data-id="${msg.id}">
+                    <span class="chat-select-check"></span>
+                    <div class="chat-bubble-content">
+                        <div class="chat-bubble">${imgHtml}${voiceHtml}${textHtml}${reactionHtml}</div>
+                        ${metaHtml}
+                    </div>
+                </div>`;
+            }
+
+            function renderChatMessages() {
+                const wasNearBottom = chatMessagesEl.scrollHeight - chatMessagesEl.scrollTop - chatMessagesEl
+                    .clientHeight < 120;
+                chatMessagesEl.querySelectorAll('.chat-bubble-row').forEach(el => el.remove());
+                chatEmptyHint.classList.toggle('hidden', chatData.length > 0);
+                const frag = document.createDocumentFragment();
+                const wrap = document.createElement('div');
+                wrap.innerHTML = chatData.map((m, i) => chatBubbleHtml(m, i > 0 ? chatData[i - 1] : null)).join(
+                    '');
+                Array.from(wrap.children).forEach(child => frag.appendChild(child));
+                chatMessagesEl.appendChild(frag);
+                chatMessagesEl.querySelectorAll('.chat-bubble-row').forEach(row => {
+                    if (chatSelectedIds.has(String(row.dataset.id))) row.classList.add('selected');
+                    row.addEventListener('click', (e) => {
+                        if (chatSelectMode) { chatToggleSelectRow(row.dataset.id);
+                            return; }
+                        if (e.target.tagName === 'IMG') {
+                            const img = e.target;
+                            const w = window.open('', '_blank');
+                            if (w) w.document.write(
+                                `<title>Photo</title><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh;"><img src="${img.src}" style="max-width:100%;max-height:100%;"></body>`
+                            ); }
+                    });
+                    const voiceHolder = row.querySelector('.chat-bubble-voice');
+                    if (voiceHolder) voiceHolder.appendChild(buildVoicePlayer(voiceHolder.dataset.voiceUrl,
+                        'caption'));
+                    wireChatLongPress(row);
+                });
+                if (wasNearBottom) chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+            }
+
+            /* ─── Select mode: pick several messages at once to copy or
+               delete together, entered from a single message's dropdown. */
+            function enterChatSelectMode(id) {
+                chatSelectMode = true;
+                chatSelectedIds = new Set(id != null ? [String(id)] : []);
+                chatPanel.classList.add('selecting');
+                chatSelectBar.classList.remove('hidden');
+                renderChatMessages();
+                updateChatSelectBar();
+            }
+
+            function exitChatSelectMode() {
+                chatSelectMode = false;
+                chatSelectedIds.clear();
+                chatPanel.classList.remove('selecting');
+                chatSelectBar.classList.add('hidden');
+                renderChatMessages();
+            }
+
+            function chatToggleSelectRow(id) {
+                const key = String(id);
+                if (chatSelectedIds.has(key)) chatSelectedIds.delete(key);
+                else chatSelectedIds.add(key);
+                if (chatSelectedIds.size === 0) { exitChatSelectMode();
+                    return; }
+                renderChatMessages();
+                updateChatSelectBar();
+            }
+
+            function updateChatSelectBar() {
+                const n = chatSelectedIds.size;
+                chatSelectCount.textContent = `${n} selected`;
+                const selectedMsgs = chatData.filter(m => chatSelectedIds.has(String(m.id)));
+                chatSelectCopy.disabled = !selectedMsgs.some(m => m.content_text);
+            }
+
+            chatSelectCancel.addEventListener('click', exitChatSelectMode);
+            chatSelectCopy.addEventListener('click', async() => {
+                const selectedMsgs = chatData.filter(m => chatSelectedIds.has(String(m.id)))
+                    .filter(m => m.content_text).map(m => m.content_text);
+                if (!selectedMsgs.length) { showToast('Nothing to copy in that selection.', { type: 'error' });
+                    return; }
+                try {
+                    await navigator.clipboard.writeText(selectedMsgs.join('\n'));
+                    showToast('Copied ♡');
+                } catch (err) { showToast("Couldn't copy that.", { type: 'error' }); }
+            });
+            chatSelectDelete.addEventListener('click', async() => {
+                const selectedMsgs = chatData.filter(m => chatSelectedIds.has(String(m.id)));
+                if (!selectedMsgs.length) return;
+                const allMine = selectedMsgs.every(m => m.sender === myLetter());
+                exitChatSelectMode();
+                for (const m of selectedMsgs) {
+                    if (allMine) await chatDeleteForEveryone(m);
+                    else await chatDeleteForMe(m);
+                }
+            });
+
+            /* Touch/pen: press-and-hold opens the message menu.
+               Mouse (desktop): a plain click-and-hold does NOT open it —
+               right-click (contextmenu) does instead, so dragging to
+               select/scroll with a mouse never misfires the menu. */
+            function wireChatLongPress(row) {
+                const start = (e) => {
+                    if (e.pointerType === 'mouse' || chatSelectMode) return;
+                    chatLongPressTimer = setTimeout(() => {
+                        haptic(15);
+                        openChatMessageMenu(row);
+                    }, 550);
+                };
+                const cancel = () => clearTimeout(chatLongPressTimer);
+                row.addEventListener('pointerdown', start);
+                ['pointerup', 'pointerleave', 'pointercancel', 'pointermove'].forEach(ev => row.addEventListener(
+                    ev, cancel));
+                row.addEventListener('contextmenu', (e) => { e.preventDefault();
+                    if (!chatSelectMode) openChatMessageMenu(row); });
+            }
+
+            /* Builds the WhatsApp-style dropdown: a row of 5 quick emoji
+               reactions (most-recently-used, falling back to a default
+               set) plus a "+" that — like every other reaction picker
+               in this app — focuses a hidden input and hands off to
+               your device's own emoji keyboard, so literally every
+               emoji on your phone/computer is available (with its own
+               built-in "recently used" row) without us maintaining a
+               giant list. Tapping an already-picked custom emoji again
+               removes it and brings the "+" back. Then Copy / Select /
+               Pin / Delete-for-me / Delete-for-everyone (own messages
+               only) below. Positioned beside the message it belongs to. */
+            function openChatMessageMenu(row) {
+                const id = row.dataset.id;
+                const msg = chatData.find(m => String(m.id) === String(id));
+                if (!msg) return;
+                chatPinTarget = msg;
+                chatPinTargetRow = row;
+                const mine = msg.sender === myLetter();
+                const fixed = chatFixedEmojis();
+                const recentExtra = chatRecentExtraEmojis();
+                const allShown = fixed.concat(recentExtra);
+                const reactionBtn = r =>
+                    `<button type="button" data-chat-reaction="${r}" class="${msg.reaction === r ? 'active' : ''}" aria-label="React ${r}">${r}</button>`;
+                const fixedRowHtml = fixed.map(reactionBtn).join('');
+                const recentRowHtml = recentExtra.map(reactionBtn).join('');
+                let actionsHtml = '';
+                if (msg.content_text) actionsHtml +=
+                    `<button type="button" data-action="copy">📋 Copy message</button>`;
+                actionsHtml += `<button type="button" data-action="select">☑️ Select messages</button>`;
+                actionsHtml += `<button type="button" data-action="pin">${msg.pinned ? '📌 Unpin' : '⭐ Pin / star this'}</button>`;
+                actionsHtml += `<button type="button" data-action="delete-me">🗑️ Delete for me</button>`;
+                if (mine) actionsHtml +=
+                    `<button type="button" data-action="delete-everyone">🗑️ Delete for everyone</button>`;
+                chatPinMenu.innerHTML =
+                    `<div class="chat-msg-menu-reactions chat-msg-menu-reactions-fixed${recentExtra.length ? ' has-recent' : ''}">${fixedRowHtml}${customEmojiPickerHtml(msg.reaction, allShown)}</div>${recentExtra.length ? `<div class="chat-msg-menu-reactions chat-msg-menu-reactions-recent">${recentRowHtml}</div>` : ''}<div class="chat-msg-menu-actions">${actionsHtml}</div>`;
+                chatPinMenu.classList.remove('hidden');
+                positionChatPinMenu(row, mine);
+                const customInput = chatPinMenu.querySelector('.reaction-plus-input');
+                if (customInput) {
+                    customInput.addEventListener('click', e => e.stopPropagation());
+                    customInput.addEventListener('input', async() => {
+                        const val = customInput.value.trim();
+                        customInput.value = '';
+                        customInput.blur();
+                        if (val) await applyChatReaction(msg, val);
+                    });
+                }
+                const customBtn = chatPinMenu.querySelector('.reaction-plus-btn');
+                if (customBtn) customBtn.addEventListener('click', async(e) => {
+                    e.stopPropagation();
+                    if (msg.reaction && !allShown.includes(msg.reaction)) await applyChatReaction(msg, msg.reaction);
+                });
+            }
+
+            function positionChatPinMenu(row, mine) {
+                const rowRect = row.getBoundingClientRect();
+                const menuRect = chatPinMenu.getBoundingClientRect();
+                let left = mine ? rowRect.left - menuRect.width - 10 : rowRect.right + 10;
+                if (left < 8) left = Math.max(8, rowRect.left);
+                if (left + menuRect.width > window.innerWidth - 8) left = window.innerWidth - menuRect.width - 8;
+                let top = rowRect.top - 6;
+                if (top + menuRect.height > window.innerHeight - 8) top = window.innerHeight - menuRect.height - 8;
+                if (top < 8) top = 8;
+                chatPinMenu.style.left = Math.max(8, left) + 'px';
+                chatPinMenu.style.top = top + 'px';
+            }
+
+            function closeChatPinMenu() {
+                chatPinMenu.classList.add('hidden');
+                chatPinMenu.innerHTML = '';
+                chatPinTarget = null;
+                chatPinTargetRow = null;
+            }
+            /* Defensive: stop the outside-click-closes listener below from
+               ever seeing clicks that originate inside the menu, instead
+               of relying solely on a contains() check (which is what let
+               stray clicks inside the dropdown close the whole thing
+               before — see the capture-phase note further down too). */
+            chatPinMenu.addEventListener('click', (e) => e.stopPropagation());
+            document.addEventListener('click', (e) => {
+                if (chatPinMenu.contains(e.target)) return;
+                closeChatPinMenu();
+            });
+
+            async function chatDeleteForMe(msg) {
+                const myCol = `deleted_for_${myFieldSuffix()}`;
+                const otherCol = `deleted_for_${otherLetter().toLowerCase()}`;
+                const otherAlreadyDeleted = !!msg[otherCol];
+                chatData = chatData.filter(m => m.id !== msg.id);
+                renderChatMessages();
+                updateChatBadge();
+                if (!supabase) return;
+                try {
+                    if (otherAlreadyDeleted) {
+                        if (msg.image_path) await supabase.storage.from(CHAT_BUCKET).remove([msg.image_path]);
+                        if (msg.voice_path) await supabase.storage.from(VOICE_BUCKET).remove([msg.voice_path]);
+                        await supabase.from(CHAT_TABLE).delete().eq('id', msg.id);
+                    } else {
+                        await supabase.from(CHAT_TABLE).update({ [myCol]: true }).eq('id', msg.id);
+                    }
+                } catch (e) { console.error('Could not delete message:', e); }
+            }
+
+            async function chatDeleteForEveryone(msg) {
+                chatData = chatData.filter(m => m.id !== msg.id);
+                renderChatMessages();
+                updateChatBadge();
+                if (!supabase) return;
+                try {
+                    if (msg.image_path) await supabase.storage.from(CHAT_BUCKET).remove([msg.image_path]);
+                    if (msg.voice_path) await supabase.storage.from(VOICE_BUCKET).remove([msg.voice_path]);
+                    await supabase.from(CHAT_TABLE).delete().eq('id', msg.id);
+                } catch (e) { console.error('Could not delete message:', e); }
+            }
+
+            async function applyChatReaction(msg, r) {
+                const newReaction = msg.reaction === r ? null : r;
+                msg.reaction = newReaction;
+                if (newReaction) pushChatRecentEmoji(newReaction);
+                renderChatMessages();
+                closeChatPinMenu();
+                if (!supabase) return;
+                try {
+                    await supabase.from(CHAT_TABLE).update({ reaction: newReaction }).eq('id', msg.id);
+                } catch (err) { console.error('Could not save reaction:', err); }
+            }
+
+            chatPinMenu.addEventListener('click', async(e) => {
+                if (!chatPinTarget || !supabase) return;
+                const msg = chatPinTarget;
+                const reactBtn = e.target.closest('[data-chat-reaction]');
+                if (reactBtn) {
+                    await applyChatReaction(msg, reactBtn.dataset.chatReaction);
+                    return;
+                }
+                const actionBtn = e.target.closest('[data-action]');
+                if (!actionBtn) return;
+                const action = actionBtn.dataset.action;
+                if (action === 'copy') {
+                    closeChatPinMenu();
+                    if (!msg.content_text) return;
+                    try { await navigator.clipboard.writeText(msg.content_text);
+                        showToast('Copied ♡'); } catch (err) { showToast("Couldn't copy that.", { type: 'error' }); }
+                } else if (action === 'pin') {
+                    const newPinned = !msg.pinned;
+                    msg.pinned = newPinned;
+                    renderChatMessages();
+                    closeChatPinMenu();
+                    try {
+                        await supabase.from(CHAT_TABLE).update({ pinned: newPinned }).eq('id', msg.id);
+                    } catch (err) { console.error('Could not update pin:', err); }
+                } else if (action === 'select') {
+                    closeChatPinMenu();
+                    enterChatSelectMode(msg.id);
+                } else if (action === 'delete-me') {
+                    closeChatPinMenu();
+                    await chatDeleteForMe(msg);
+                } else if (action === 'delete-everyone') {
+                    closeChatPinMenu();
+                    await chatDeleteForEveryone(msg);
+                }
+            });
+
+            async function loadChatMessages() {
+                if (!supabase) return;
+                try {
+                    const nowIso = new Date().toISOString();
+                    const { data, error } = await supabase.from(CHAT_TABLE).select('*').eq('chat_id', CHAT_ID).or(
+                        `pinned.eq.true,expires_at.is.null,expires_at.gt.${nowIso}`).eq(
+                        `deleted_for_${myFieldSuffix()}`, false).order('created_at', { ascending: true });
+                    if (error) throw error;
+                    chatData = data || [];
+                    renderChatMessages();
+                    updateChatBadge();
+                } catch (err) { console.error('Could not load chat:', err); }
+            }
+
+            /* This table already auto-sets expires_at on insert and has
+               its own server-side job that deletes expired rows (see
+               the chat_set_expires_at / chat_delete_expired_messages
+               functions), so there's no client-side sweep to run here —
+               it would only fight with that. We just make sure any
+               image/voice files left behind by rows the server already
+               deleted eventually get cleared out. */
+            async function cleanupExpiredChat() {
+                if (!supabase) return;
+                try {
+                    const nowIso = new Date().toISOString();
+                    const { data, error } = await supabase.from(CHAT_TABLE).select(
+                        'id, image_path, voice_path').eq('chat_id', CHAT_ID).eq('pinned', false).lt('expires_at',
+                        nowIso);
+                    if (error || !data || !data.length) return;
+                    const imgPaths = data.filter(r => r.image_path).map(r => r.image_path);
+                    const voicePaths = data.filter(r => r.voice_path).map(r => r.voice_path);
+                    if (imgPaths.length) await supabase.storage.from(CHAT_BUCKET).remove(imgPaths);
+                    if (voicePaths.length) await supabase.storage.from(VOICE_BUCKET).remove(voicePaths);
+                } catch (err) { console.error('Could not clean up old chat files:', err); }
+            }
+
+            /* Two delivery paths run side by side:
+               - `broadcast` is a plain WebSocket message we fire the
+                 instant our own insert succeeds — it reaches the other
+                 tab in well under what postgres_changes needs, since
+                 that path waits on the database's write-ahead log
+                 before Supabase notices the row and replays it out.
+               - `postgres_changes` stays subscribed as the durable
+                 fallback (covers reactions/pins/deletes too, and
+                 catches anything the broadcast missed, e.g. a dropped
+                 connection). Both paths dedupe against chatData by id,
+                 so whichever arrives first wins and the other is a
+                 no-op. */
+            function chatIngestIncoming(row, myDeletedCol) {
+                if (!row || row.chat_id !== CHAT_ID || row[myDeletedCol]) return;
+                if (chatData.some(m => String(m.id) === String(row.id))) return;
+                chatData.push(row);
+                renderChatMessages();
+                updateChatBadge();
+                if (chatOpen && row.sender === otherLetter()) markChatSeen();
+                if (row.sender === otherLetter()) haptic(8);
+            }
+
+            function startChatRealtime() {
+                if (!supabase || chatChannelStarted) return;
+                chatChannelStarted = true;
+                const myDeletedCol = `deleted_for_${myFieldSuffix()}`;
+                chatRealtimeChannel = supabase.channel('chat-messages-live')
+                    .on('broadcast', { event: 'new_message' }, (payload) => {
+                        chatIngestIncoming(payload.payload, myDeletedCol);
+                    })
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: CHAT_TABLE }, (payload) => {
+                        chatIngestIncoming(payload.new, myDeletedCol);
+                    })
+                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: CHAT_TABLE }, (payload) => {
+                        if (payload.new.chat_id !== CHAT_ID || payload.new[myDeletedCol]) {
+                            chatData = chatData.filter(m => m.id !== payload.new.id);
+                        } else {
+                            const idx = chatData.findIndex(m => m.id === payload.new.id);
+                            if (idx !== -1) chatData[idx] = payload.new;
+                            else chatData.push(payload.new);
+                        }
+                        renderChatMessages();
+                        updateChatBadge();
+                    })
+                    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: CHAT_TABLE }, (payload) => {
+                        chatData = chatData.filter(m => m.id !== payload.old.id);
+                        renderChatMessages();
+                        updateChatBadge();
+                    })
+                    .subscribe();
+            }
+            let chatChannelStarted = false;
+
+            async function markChatSeen() {
+                if (!supabase || !getIdentity()) return;
+                const unseenIds = chatData.filter(m => m.recipient === myLetter() && !m.read_by_recipient).map(m =>
+                    m.id);
+                if (!unseenIds.length) return;
+                unseenIds.forEach(id => { const m = chatData.find(x => x.id === id);
+                    if (m) m.read_by_recipient = true; });
+                updateChatBadge();
+                try {
+                    await supabase.from(CHAT_TABLE).update({ read_by_recipient: true }).in('id', unseenIds);
+                } catch (e) { console.error('Could not mark chat seen:', e); }
+            }
+
+            /* ─── Chat panel: position + size are fully JS-driven (not
+               CSS classes) so it can be dragged and resized freely, then
+               remembered for next time. */
+            const CHAT_PANEL_POS_KEY = 'ourLittleUniverseChatPanelRect';
+            const CHAT_PANEL_MIN_W = 300;
+            const CHAT_PANEL_MIN_H = 360;
+            let chatPanelPreFullscreen = null;
+
+            function chatPanelDefaultSize() {
+                return {
+                    w: Math.min(360, window.innerWidth * .9),
+                    h: Math.min(480, window.innerHeight * .68)
+                };
+            }
+            function loadChatPanelRect() {
+                try {
+                    const saved = JSON.parse(localStorage.getItem(CHAT_PANEL_POS_KEY) || 'null');
+                    if (saved && ['left', 'top', 'w', 'h'].every(k => typeof saved[k] === 'number')) return saved;
+                } catch (e) {}
+                return null;
+            }
+            function saveChatPanelRect(left, top, w, h) {
+                try { localStorage.setItem(CHAT_PANEL_POS_KEY, JSON.stringify({ left, top, w, h })); } catch (e) {}
+            }
+            function clampChatPanelRect(left, top, w, h) {
+                w = Math.max(CHAT_PANEL_MIN_W, Math.min(w, window.innerWidth - 16));
+                h = Math.max(CHAT_PANEL_MIN_H, Math.min(h, window.innerHeight - 16));
+                left = Math.max(8, Math.min(left, window.innerWidth - w - 8));
+                top = Math.max(8, Math.min(top, window.innerHeight - h - 8));
+                return { left, top, w, h };
+            }
+            function applyChatPanelRect(left, top, w, h) {
+                chatPanel.style.left = left + 'px';
+                chatPanel.style.top = top + 'px';
+                chatPanel.style.width = w + 'px';
+                chatPanel.style.height = h + 'px';
+            }
+            function positionChatPanelForOpen() {
+                const saved = loadChatPanelRect();
+                if (saved) { const r = clampChatPanelRect(saved.left, saved.top, saved.w, saved.h);
+                    applyChatPanelRect(r.left, r.top, r.w, r.h);
+                    return; }
+                const { w, h } = chatPanelDefaultSize();
+                const side = (chatFabBtn.dataset.side === 'right') ? 'right' : 'left';
+                const top = Math.max(8, (window.innerHeight - h) / 2);
+                const margin = Math.max(20, window.innerWidth * .04);
+                const left = side === 'right' ? window.innerWidth - w - margin : margin;
+                const r = clampChatPanelRect(left, top, w, h);
+                applyChatPanelRect(r.left, r.top, r.w, r.h);
+            }
+
+            function openChatPanel() {
+                chatOpen = true;
+                chatPanel.classList.remove('fullscreen');
+                chatPanelExpand.textContent = '⛶';
+                chatPanelExpand.setAttribute('aria-label', 'Expand to full screen');
+                chatPanelExpand.title = 'Full screen';
+                /* Set the final position/size FIRST, while still hidden
+                   (opacity 0) — then reveal on the next frame so the fade
+                   + pop-in transition animates cleanly from that exact
+                   spot instead of the panel jumping there mid-fade. */
+                positionChatPanelForOpen();
+                requestAnimationFrame(() => chatPanel.classList.remove('hidden'));
+                document.body.style.overflow = 'hidden';
+                if (!chatLoaded) { chatLoaded = true;
+                    loadChatMessages();
+                    cleanupExpiredChat(); }
+                startChatRealtime();
+                updateChatPresenceUI();
+                markChatSeen();
+                setTimeout(() => chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight, 60);
+            }
+
+            function closeChatPanel() {
+                chatOpen = false;
+                chatPanel.classList.add('hidden');
+                document.body.style.overflow = '';
+                if (chatSelectMode) exitChatSelectMode();
+                closeChatPinMenu();
+                chatPanelPreKeyboardRect = null;
+            }
+
+            chatPanelClose.addEventListener('click', closeChatPanel);
+            chatPanelExpand.addEventListener('click', () => {
+                const goingFull = !chatPanel.classList.contains('fullscreen');
+                if (goingFull) {
+                    const rect = chatPanel.getBoundingClientRect();
+                    chatPanelPreFullscreen = { left: rect.left, top: rect.top, w: rect.width, h: rect.height };
+                    chatPanel.classList.add('fullscreen');
+                    applyChatPanelRect(0, 0, window.innerWidth, window.innerHeight);
+                } else {
+                    chatPanel.classList.remove('fullscreen');
+                    let back = chatPanelPreFullscreen;
+                    if (!back) { const { w, h } = chatPanelDefaultSize();
+                        back = { left: (window.innerWidth - w) / 2, top: (window.innerHeight - h) / 2, w, h }; }
+                    const r = clampChatPanelRect(back.left, back.top, back.w, back.h);
+                    applyChatPanelRect(r.left, r.top, r.w, r.h);
+                    saveChatPanelRect(r.left, r.top, r.w, r.h);
+                }
+                chatPanelExpand.textContent = goingFull ? '–' : '⛶';
+                chatPanelExpand.setAttribute('aria-label', goingFull ? 'Minimize chat' : 'Expand to full screen');
+                chatPanelExpand.title = goingFull ? 'Minimize' : 'Full screen';
+            });
+
+            /* Drag-to-move via the little handle bar at the top. */
+            let chatPanelDragging = false,
+                chatPanelDragStartX = 0,
+                chatPanelDragStartY = 0,
+                chatPanelStartLeft = 0,
+                chatPanelStartTop = 0,
+                chatPanelDragPointerId = null;
+            chatPanelDragHandle.addEventListener('pointerdown', (e) => {
+                if (chatPanel.classList.contains('fullscreen')) return;
+                chatPanelDragging = true;
+                chatPanelDragPointerId = e.pointerId;
+                chatPanelDragStartX = e.clientX;
+                chatPanelDragStartY = e.clientY;
+                const rect = chatPanel.getBoundingClientRect();
+                chatPanelStartLeft = rect.left;
+                chatPanelStartTop = rect.top;
+                chatPanel.classList.add('dragging');
+                try { chatPanelDragHandle.setPointerCapture(e.pointerId); } catch (err) {}
+            });
+            chatPanelDragHandle.addEventListener('pointermove', (e) => {
+                if (!chatPanelDragging) return;
+                const dx = e.clientX - chatPanelDragStartX,
+                    dy = e.clientY - chatPanelDragStartY;
+                const w = chatPanel.offsetWidth,
+                    h = chatPanel.offsetHeight;
+                const r = clampChatPanelRect(chatPanelStartLeft + dx, chatPanelStartTop + dy, w, h);
+                applyChatPanelRect(r.left, r.top, r.w, r.h);
+            });
+            function chatPanelDragEnd() {
+                if (!chatPanelDragging) return;
+                chatPanelDragging = false;
+                chatPanel.classList.remove('dragging');
+                const rect = chatPanel.getBoundingClientRect();
+                saveChatPanelRect(rect.left, rect.top, rect.width, rect.height);
+                if (chatPanelPreKeyboardRect) chatPanelPreKeyboardRect = { left: rect.left, top: rect.top, w: rect
+                        .width, h: rect.height };
+            }
+            chatPanelDragHandle.addEventListener('pointerup', chatPanelDragEnd);
+            chatPanelDragHandle.addEventListener('pointercancel', chatPanelDragEnd);
+
+            /* Resize by dragging any of the 8 edge/corner handles. */
+            chatPanel.querySelectorAll('.chat-resize-handle').forEach(handle => {
+                const edge = handle.dataset.edge;
+                let resizing = false,
+                    startX = 0,
+                    startY = 0,
+                    startLeft = 0,
+                    startTop = 0,
+                    startW = 0,
+                    startH = 0;
+                handle.addEventListener('pointerdown', (e) => {
+                    if (chatPanel.classList.contains('fullscreen')) return;
+                    resizing = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    const rect = chatPanel.getBoundingClientRect();
+                    startLeft = rect.left;
+                    startTop = rect.top;
+                    startW = rect.width;
+                    startH = rect.height;
+                    chatPanel.classList.add('resizing');
+                    try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+                    e.stopPropagation();
+                });
+                handle.addEventListener('pointermove', (e) => {
+                    if (!resizing) return;
+                    const dx = e.clientX - startX,
+                        dy = e.clientY - startY;
+                    let left = startLeft,
+                        top = startTop,
+                        w = startW,
+                        h = startH;
+                    if (edge.includes('e')) w = startW + dx;
+                    if (edge.includes('s')) h = startH + dy;
+                    if (edge.includes('w')) { w = startW - dx;
+                        left = startLeft + dx; }
+                    if (edge.includes('n')) { h = startH - dy;
+                        top = startTop + dy; }
+                    if (w < CHAT_PANEL_MIN_W) { if (edge.includes('w')) left = startLeft + (startW -
+                            CHAT_PANEL_MIN_W);
+                        w = CHAT_PANEL_MIN_W; }
+                    if (h < CHAT_PANEL_MIN_H) { if (edge.includes('n')) top = startTop + (startH -
+                            CHAT_PANEL_MIN_H);
+                        h = CHAT_PANEL_MIN_H; }
+                    const r = clampChatPanelRect(left, top, w, h);
+                    applyChatPanelRect(r.left, r.top, r.w, r.h);
+                });
+                function resizeEnd() {
+                    if (!resizing) return;
+                    resizing = false;
+                    chatPanel.classList.remove('resizing');
+                    const rect = chatPanel.getBoundingClientRect();
+                    saveChatPanelRect(rect.left, rect.top, rect.width, rect.height);
+                    if (chatPanelPreKeyboardRect) chatPanelPreKeyboardRect = { left: rect.left, top: rect.top,
+                        w: rect.width, h: rect.height };
+                }
+                handle.addEventListener('pointerup', resizeEnd);
+                handle.addEventListener('pointercancel', resizeEnd);
+            });
+
+            /* Keep the panel on-screen if the window itself is resized. */
+            window.addEventListener('resize', () => {
+                if (!chatOpen || chatPanel.classList.contains('fullscreen')) return;
+                const rect = chatPanel.getBoundingClientRect();
+                const r = clampChatPanelRect(rect.left, rect.top, rect.width, rect.height);
+                applyChatPanelRect(r.left, r.top, r.w, r.h);
+            });
+
+            /* Mobile on-screen keyboards shrink the visible area without
+               shrinking window.innerHeight the same way, which is what
+               made the panel ride up out of view with the newest
+               messages hidden behind the keyboard. visualViewport
+               reports the actual visible area, so we use that instead —
+               re-fitting the panel (any size, popup or full screen)
+               inside it and snapping straight back to the latest
+               message every time the keyboard opens or closes — then
+               putting it back exactly where it was once the keyboard
+               closes again, instead of leaving it shrunk. */
+            let chatPanelPreKeyboardRect = null;
+            function keepChatPanelAboveKeyboard() {
+                if (!chatOpen) return;
+                const vv = window.visualViewport;
+                const visibleH = vv ? vv.height : window.innerHeight;
+                const keyboardOpen = visibleH < window.innerHeight - 80;
+
+                if (chatPanel.classList.contains('fullscreen')) {
+                    applyChatPanelRect(0, 0, window.innerWidth, visibleH);
+                    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+                    return;
+                }
+
+                if (keyboardOpen) {
+                    if (!chatPanelPreKeyboardRect) {
+                        const rect = chatPanel.getBoundingClientRect();
+                        chatPanelPreKeyboardRect = { left: rect.left, top: rect.top, w: rect.width, h: rect
+                            .height };
+                    }
+                    const base = chatPanelPreKeyboardRect;
+                    let top = base.top,
+                        h = base.h;
+                    if (h > visibleH - 16) h = visibleH - 16;
+                    if (top + h > visibleH - 8) top = Math.max(8, visibleH - h - 8);
+                    applyChatPanelRect(base.left, top, base.w, h);
+                } else if (chatPanelPreKeyboardRect) {
+                    const r = clampChatPanelRect(chatPanelPreKeyboardRect.left, chatPanelPreKeyboardRect.top,
+                        chatPanelPreKeyboardRect.w, chatPanelPreKeyboardRect.h);
+                    applyChatPanelRect(r.left, r.top, r.w, r.h);
+                    chatPanelPreKeyboardRect = null;
+                }
+                chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+            }
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', keepChatPanelAboveKeyboard);
+            }
+            chatTextInput.addEventListener('focus', () => {
+                /* The keyboard animates in over ~150-300ms; re-fit once
+                   it's actually settled rather than mid-animation. */
+                setTimeout(keepChatPanelAboveKeyboard, 250);
+                setTimeout(keepChatPanelAboveKeyboard, 450);
+            });
+            chatTextInput.addEventListener('blur', () => {
+                setTimeout(keepChatPanelAboveKeyboard, 250);
+                setTimeout(keepChatPanelAboveKeyboard, 450);
+            });
+
+            /* Tap anywhere outside the panel to close it — skipped in
+               full screen (there's no "outside" to tap) and for clicks
+               inside anything the panel spawns above itself (the
+               message dropdown, the expanded voice player).
+               IMPORTANT: this runs on the CAPTURE phase, not bubble.
+               Several in-panel actions (selecting a row, picking a
+               reaction) re-render the message list *before* bubbling
+               reaches here — which detaches the original click target
+               from the DOM and makes a bubble-phase `.contains()` check
+               wrongly report "outside". Capture runs first, while the
+               target is still attached, so the check is accurate. */
+            document.addEventListener('click', (e) => {
+                if (!chatOpen || chatPanel.classList.contains('fullscreen')) return;
+                if (chatPanel.contains(e.target) || chatFabBtn.contains(e.target) || chatPinMenu.contains(e
+                        .target)) return;
+                const expandedOverlay = document.querySelector('.expanded-player-overlay');
+                if (expandedOverlay && expandedOverlay.contains(e.target)) return;
+                closeChatPanel();
+            }, true);
+
+            /* ─── Chat FAB: draggable, edge-snapping, auto-tucks-away ───
+               Drag it anywhere; on release it settles to whichever side
+               (left/right) it's closer to, peeking out a bit. If it's
+               left untouched for 10s it tucks in further and fades so it
+               never sits on top of what you're reading. A tap (no real
+               movement) opens/closes the chat panel like before; a real
+               drag never triggers that. Position is remembered per
+               device via localStorage. */
+            const CHAT_FAB_POS_KEY = 'ourLittleUniverseChatFabPos';
+            const CHAT_FAB_REST_HIDDEN = .35; // fraction tucked behind the edge while "awake"
+            const CHAT_FAB_IDLE_HIDDEN = .52; // fraction tucked behind the edge once idle (~half)
+            const CHAT_FAB_MOVE_THRESHOLD = 6;
+            let chatFabIdleTimer = null;
+
+            function chatFabWidth() { return chatFabBtn.offsetWidth || 56; }
+
+            function loadChatFabPos() {
+                try {
+                    const saved = JSON.parse(localStorage.getItem(CHAT_FAB_POS_KEY) || 'null');
+                    if (saved && (saved.side === 'left' || saved.side === 'right') && typeof saved.topPct ===
+                        'number') return saved;
+                } catch (e) {}
+                return { side: 'left', topPct: 62 };
+            }
+
+            function saveChatFabPos(side, topPct) {
+                try { localStorage.setItem(CHAT_FAB_POS_KEY, JSON.stringify({ side, topPct })); } catch (e) {}
+            }
+
+            function applyChatFabPosition(side, topPx, idle) {
+                const w = chatFabWidth();
+                const hiddenPx = w * (idle ? CHAT_FAB_IDLE_HIDDEN : CHAT_FAB_REST_HIDDEN);
+                const clampedTop = Math.max(8, Math.min(window.innerHeight - w - 8, topPx));
+                chatFabBtn.style.top = clampedTop + 'px';
+                if (side === 'left') { chatFabBtn.style.left = (-hiddenPx) + 'px';
+                    chatFabBtn.style.right = 'auto'; } else { chatFabBtn.style.right = (-hiddenPx) + 'px';
+                    chatFabBtn.style.left = 'auto'; }
+                chatFabBtn.dataset.side = side;
+                chatFabBtn.classList.toggle('idle', !!idle);
+            }
+
+            function scheduleChatFabIdle() {
+                clearTimeout(chatFabIdleTimer);
+                chatFabIdleTimer = setTimeout(() => {
+                    const side = chatFabBtn.dataset.side || 'left';
+                    applyChatFabPosition(side, parseFloat(chatFabBtn.style.top) || 0, true);
+                }, 5000);
+            }
+
+            function wakeChatFab() {
+                const side = chatFabBtn.dataset.side || 'left';
+                applyChatFabPosition(side, parseFloat(chatFabBtn.style.top) || 0, false);
+                scheduleChatFabIdle();
+            }
+
+            (function initChatFab() {
+                const pos = loadChatFabPos();
+                const topPx = (pos.topPct / 100) * window.innerHeight;
+                applyChatFabPosition(pos.side, topPx, false);
+                scheduleChatFabIdle();
+            })();
+
+            let chatFabDragging = false,
+                chatFabMoved = false,
+                chatFabStartX = 0,
+                chatFabStartY = 0,
+                chatFabStartTop = 0,
+                chatFabPointerId = null;
+
+            chatFabBtn.addEventListener('pointerdown', (e) => {
+                chatFabDragging = true;
+                chatFabMoved = false;
+                chatFabPointerId = e.pointerId;
+                chatFabStartX = e.clientX;
+                chatFabStartY = e.clientY;
+                chatFabStartTop = parseFloat(chatFabBtn.style.top) || 0;
+                chatFabBtn.classList.add('dragging');
+                clearTimeout(chatFabIdleTimer);
+                chatFabBtn.classList.remove('idle');
+                try { chatFabBtn.setPointerCapture(e.pointerId); } catch (err) {}
+            });
+            chatFabBtn.addEventListener('pointermove', (e) => {
+                if (!chatFabDragging) return;
+                const dx = e.clientX - chatFabStartX,
+                    dy = e.clientY - chatFabStartY;
+                if (!chatFabMoved && (Math.abs(dx) > CHAT_FAB_MOVE_THRESHOLD || Math.abs(dy) >
+                        CHAT_FAB_MOVE_THRESHOLD)) chatFabMoved = true;
+                if (!chatFabMoved) return;
+                const w = chatFabWidth();
+                const newTop = Math.max(8, Math.min(window.innerHeight - w - 8, chatFabStartTop + dy));
+                chatFabBtn.style.top = newTop + 'px';
+                if (e.clientX < window.innerWidth / 2) {
+                    chatFabBtn.style.left = Math.max(-w * .2, Math.min(window.innerWidth - w, e.clientX - w / 2)) +
+                        'px';
+                    chatFabBtn.style.right = 'auto';
+                } else {
+                    chatFabBtn.style.right = Math.max(-w * .2, Math.min(window.innerWidth - w, window.innerWidth -
+                        e.clientX - w / 2)) + 'px';
+                    chatFabBtn.style.left = 'auto';
+                }
+            });
+            chatFabBtn.addEventListener('pointerup', (e) => {
+                if (!chatFabDragging) return;
+                chatFabDragging = false;
+                chatFabBtn.classList.remove('dragging');
+                try { chatFabBtn.releasePointerCapture(chatFabPointerId); } catch (err) {}
+                if (!chatFabMoved) {
+                    if (chatOpen) closeChatPanel();
+                    else openChatPanel();
+                    wakeChatFab();
+                    return;
+                }
+                const side = e.clientX < window.innerWidth / 2 ? 'left' : 'right';
+                const top = parseFloat(chatFabBtn.style.top) || 0;
+                chatFabBtn.style.transition = 'left .32s cubic-bezier(.3,.8,.3,1), right .32s cubic-bezier(.3,.8,.3,1), opacity .3s ease';
+                applyChatFabPosition(side, top, false);
+                saveChatFabPos(side, (top / window.innerHeight) * 100);
+                setTimeout(() => { chatFabBtn.style.transition = ''; }, 340);
+                scheduleChatFabIdle();
+                haptic(10);
+            });
+            chatFabBtn.addEventListener('pointercancel', () => { chatFabDragging = false;
+                chatFabBtn.classList.remove('dragging'); });
+            chatFabBtn.addEventListener('pointerenter', wakeChatFab);
+
+            chatAttachBtn.addEventListener('click', () => chatImageInput.click());
+            chatImageInput.addEventListener('change', () => {
+                const file = chatImageInput.files[0];
+                if (!file) return;
+                chatPendingImageFile = file;
+                chatImagePreviewImg.src = URL.createObjectURL(file);
+                chatImagePreview.classList.remove('hidden');
+            });
+            chatImagePreviewRemove.addEventListener('click', () => {
+                chatPendingImageFile = null;
+                chatImageInput.value = '';
+                chatImagePreview.classList.add('hidden');
+            });
+
+            /* ─── Chat voice messages ───
+               Reuses the same mini-recorder + voice-notes bucket the
+               rest of the app already uses. Recording attaches as a
+               pending clip (like a pending photo) that goes out with
+               the next send. */
+            createMiniVoiceRecorder({
+                button: chatMicBtn,
+                bucket: VOICE_BUCKET,
+                maxSeconds: 120,
+                onSaved: (voice) => {
+                    chatPendingVoice = voice;
+                    chatVoicePreviewPlayer.innerHTML = '';
+                    chatVoicePreviewPlayer.appendChild(buildVoicePlayer(voice.url, 'caption'));
+                    chatVoicePreview.classList.remove('hidden');
+                }
+            });
+            chatVoicePreviewRemove.addEventListener('click', () => {
+                if (chatPendingVoice && chatPendingVoice.path) supabase.storage.from(VOICE_BUCKET).remove([
+                    chatPendingVoice.path]).catch(() => {});
+                chatPendingVoice = null;
+                chatVoicePreviewPlayer.innerHTML = '';
+                chatVoicePreview.classList.add('hidden');
+            });
+
+            chatInputForm.addEventListener('submit', async(e) => {
+                e.preventDefault();
+                if (!supabase || !getIdentity()) return;
+                const text = chatTextInput.value.trim();
+                const file = chatPendingImageFile;
+                const voice = chatPendingVoice;
+                if (!text && !file && !voice) return;
+                chatTextInput.value = '';
+                chatImagePreview.classList.add('hidden');
+                chatPendingImageFile = null;
+                chatImageInput.value = '';
+                chatVoicePreviewPlayer.innerHTML = '';
+                chatVoicePreview.classList.add('hidden');
+                chatPendingVoice = null;
+                const record = { chat_id: CHAT_ID, sender: myLetter(), recipient: otherLetter(), content_text: text ||
+                        null, content_type: voice ? 'voice' : (file ? 'image' : 'text'), read_by_recipient: false };
+                if (voice) { record.voice_url = voice.url;
+                    record.voice_path = voice.path; }
+                // Optimistic local echo: show the bubble immediately
+                // instead of waiting on a round trip to the database
+                // and back through realtime — it's replaced in place
+                // once the real row comes back (or removed if the send
+                // fails).
+                const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+                const optimisticMsg = { ...record, id: tempId, created_at: new Date().toISOString(), pinned: false,
+                    reaction: null, deleted_for_j: false, deleted_for_m: false,
+                    image_url: file ? URL.createObjectURL(file) : null };
+                chatData.push(optimisticMsg);
+                renderChatMessages();
+                try {
+                    if (file) {
+                        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+                        const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+                        const { error: upErr } = await supabase.storage.from(CHAT_BUCKET).upload(path, file);
+                        if (upErr) throw upErr;
+                        const { data: urlData } = supabase.storage.from(CHAT_BUCKET).getPublicUrl(path);
+                        record.image_url = urlData.publicUrl;
+                        record.image_path = path;
+                    }
+                    const { data: inserted, error: insertErr } = await supabase.from(CHAT_TABLE).insert(record)
+                        .select().single();
+                    if (insertErr) throw insertErr;
+                    const idx = chatData.findIndex(m => m.id === tempId);
+                    if (idx !== -1) chatData[idx] = inserted;
+                    else chatData.push(inserted);
+                    renderChatMessages();
+                    if (chatRealtimeChannel) chatRealtimeChannel.send({ type: 'broadcast', event: 'new_message',
+                        payload: inserted });
+                } catch (err) {
+                    console.error('Could not send message:', err);
+                    chatData = chatData.filter(m => m.id !== tempId);
+                    renderChatMessages();
+                    showToast("Couldn't send that — try again?", { type: 'error' });
+                }
+            });
+
+            document.addEventListener('visibilitychange', () => { if (!document.hidden && chatOpen) markChatSeen(); });
 
             let initialized = false;
 
@@ -18869,7 +20763,12 @@
                 startSettingsRealtime();
                 startSignaturesRealtime();
                 if (getIdentity()) { await loadNotifState();
-                    refreshNavClouds(); }
+                    refreshNavClouds();
+                    chatLoaded = true;
+                    loadChatMessages();
+                    startChatRealtime();
+                    cleanupExpiredChat();
+                }
             }
             setInterval(() => { if (!document.hidden && getIdentity()) refreshNavClouds(); }, 3 * 60 * 1000);
 
@@ -18891,8 +20790,8 @@
                     checkTable(NOTES_TABLE, 'notes', 'added a love note'),
                     checkTable(DOODLES_TABLE, 'doodles', 'added a doodle'),
                     checkTable(MOODS_TABLE, 'mood', 'added a mood'),
-                    checkTable(BUCKET_LIST_TABLE, 'bucket', 'added a bucket list'),
-                    checkTable(CAPSULES_TABLE, 'capsules', 'added a time capsule'),
+                    checkTable(BUCKET_LIST_TABLE, 'bucket', 'added a wish'),
+                    checkTable(CAPSULES_TABLE, 'capsules', 'added a capsule'),
                     checkTable(TABLE, 'memories', 'added a picture')
                 ]);
                 updateDoodleModeBadges();
