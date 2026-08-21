@@ -21593,7 +21593,18 @@
                 }
             });
 
-            document.addEventListener('visibilitychange', () => { if (!document.hidden && chatOpen) markChatSeen(); });
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden || !getIdentity()) return;
+                // Mobile browsers often suspend JS (and the realtime
+                // websocket with it) while the tab/app is backgrounded,
+                // so coming back from a notification or app-switch can
+                // otherwise show a stale chat until a manual reload.
+                // Refetching here (and nav clouds, so bubbles aren't
+                // stale either) closes that gap.
+                if (chatLoaded) loadChatMessages();
+                refreshNavClouds();
+                if (chatOpen) markChatSeen();
+            });
 
             let initialized = false;
 
@@ -21622,6 +21633,7 @@
             async function refreshNavClouds() {
                 if (!supabase || !getIdentity()) return;
                 const other = otherAuthorNum();
+                const me = myAuthorNum();
                 const checkTable = async(table, scope, verb) => {
                     try {
                         const { count, error } = await supabase.from(table).select('*', { count: 'exact', head: true
@@ -21633,13 +21645,37 @@
                         return isNew;
                     } catch (e) { console.error(`Could not check ${scope} for a notification:`, e); return false; }
                 };
+                /* Like checkTable, but also checks whether your partner
+                   responded (replied/reacted) to something YOU posted —
+                   those rows have author = me, not author = other, so
+                   they need their own query against responded_at rather
+                   than created_at. If both happened, the response is
+                   shown since it's the more actionable one. */
+                const checkScope = async(table, scope, newVerb, responseVerb) => {
+                    try {
+                        const [newRes, respRes] = await Promise.all([
+                            supabase.from(table).select('*', { count: 'exact', head: true }).eq('author', other).gt(
+                                'created_at', lastSeenFor(scope)),
+                            supabase.from(table).select('*', { count: 'exact', head: true }).eq('author', me).not(
+                                'responded_at', 'is', null).gt('responded_at', lastSeenFor(scope))
+                        ]);
+                        if (newRes.error) throw newRes.error;
+                        if (respRes.error) throw respRes.error;
+                        const hasNew = (newRes.count || 0) > 0;
+                        const hasResponse = (respRes.count || 0) > 0;
+                        if (hasResponse) showNavCloud(scope, otherLetter(), responseVerb);
+                        else if (hasNew) showNavCloud(scope, otherLetter(), newVerb);
+                        else hideNavCloud(scope);
+                        return hasNew || hasResponse;
+                    } catch (e) { console.error(`Could not check ${scope} for a notification:`, e); return false; }
+                };
                 const [notesNew, doodlesNew, moodsNew, bucketNew, capsulesNew] = await Promise.all([
-                    checkTable(NOTES_TABLE, 'notes', 'added a love note'),
-                    checkTable(DOODLES_TABLE, 'doodles', 'added a doodle'),
+                    checkScope(NOTES_TABLE, 'notes', 'added a love note', 'replied to your note'),
+                    checkScope(DOODLES_TABLE, 'doodles', 'added a doodle', 'responded to your doodle'),
                     checkTable(MOODS_TABLE, 'mood', 'added a mood'),
                     checkTable(BUCKET_LIST_TABLE, 'bucket', 'added a wish'),
                     checkTable(CAPSULES_TABLE, 'capsules', 'added a capsule'),
-                    checkTable(TABLE, 'memories', 'added a picture')
+                    checkScope(TABLE, 'memories', 'added a picture', 'replied to your memory')
                 ]);
                 updateDoodleModeBadges();
                 if (doodlesNew || moodsNew || bucketNew || capsulesNew) {
@@ -21650,13 +21686,22 @@
 
                 try {
                     const otherW = otherLetter();
-                    const { count, error } = await supabase.from(ANGER_LOG_TABLE).select('id', { count: 'exact',
-                        head: true }).eq('who', otherW).gt('created_at', lastSeenFor('fight'));
-                    if (error) throw error;
-                    const isNew = (count || 0) > 0;
+                    const meW = myLetter();
+                    const [newRes, respRes] = await Promise.all([
+                        supabase.from(ANGER_LOG_TABLE).select('id', { count: 'exact', head: true }).eq('who',
+                            otherW).gt('created_at', lastSeenFor('fight')),
+                        supabase.from(ANGER_LOG_TABLE).select('id', { count: 'exact', head: true }).eq('who',
+                            meW).not('responded_at', 'is', null).gt('responded_at', lastSeenFor('fight'))
+                    ]);
+                    if (newRes.error) throw newRes.error;
+                    if (respRes.error) throw respRes.error;
+                    const hasNew = (newRes.count || 0) > 0;
+                    const hasResponse = (respRes.count || 0) > 0;
+                    const isNew = hasNew || hasResponse;
                     const btn = document.getElementById('breakGlassBtn');
                     if (btn) btn.classList.toggle('is-cracked', isNew);
-                    if (isNew) showNavCloud('fight', otherW, 'is angry, check out why');
+                    if (hasResponse) showNavCloud('fight', otherW, 'left something to cool you off');
+                    else if (hasNew) showNavCloud('fight', otherW, 'is angry, check out why');
                     else hideNavCloud('fight');
                 } catch (e) { console.error('Could not check the fight log for a notification:', e); }
             }
