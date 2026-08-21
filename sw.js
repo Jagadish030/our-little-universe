@@ -64,6 +64,7 @@ self.addEventListener('push', (event) => {
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      if (data.alwaysShow) return self.registration.showNotification(title, options);
       const isAppFocused = clientList.some((client) => client.focused);
       if (isAppFocused) return; // someone's already looking at it — skip the notification
       return self.registration.showNotification(title, options);
