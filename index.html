@@ -713,6 +713,394 @@
             }
         }
 
+        /* ─── Magic Wand ───
+           Full-screen webcam + fingertip-tracking overlay opened from
+           the Little Things menu. Self-contained styling (mw- prefix)
+           so it can't clash with anything else on the page. Video is
+           drawn onto the canvas itself (not shown as a separate
+           element) so effects, photo capture, and video recording all
+           come from one consistent, always-in-sync surface. */
+        .magic-wand-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: #05070a;
+            overflow: hidden;
+        }
+        .magic-wand-overlay[hidden] { display: none; }
+        #mwCanvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .hidden { display: none !important; }
+
+        .mw-start-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 32px;
+            background: #05070a;
+            color: #fff;
+        }
+        .mw-start-icon {
+            width: 68px;
+            height: 68px;
+            margin-bottom: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--sage), var(--rose-deep));
+            box-shadow: 0 10px 28px rgba(217, 138, 147, .35);
+            animation: mwIconFloat 3.2s ease-in-out infinite;
+        }
+        .mw-start-icon svg { width: 32px;
+            height: 32px; }
+        @keyframes mwIconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .mw-start-screen h2 { margin: 0 0 10px;
+            font-size: 1.5rem;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700; }
+        .mw-start-screen p { margin: 0 0 26px;
+            color: rgba(255, 255, 255, .65);
+            max-width: 320px;
+            font-size: .92rem;
+            line-height: 1.5; }
+        .mw-start-btn {
+            border: none;
+            background: linear-gradient(135deg, var(--sage), var(--rose-deep));
+            color: #fff;
+            padding: 14px 32px;
+            border-radius: 999px;
+            font-family: 'Quicksand', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 24px rgba(217, 138, 147, .4);
+            transition: transform .22s cubic-bezier(.34, 1.56, .64, 1), box-shadow .22s ease, filter .22s ease;
+        }
+        .mw-start-btn svg { width: 19px;
+            height: 19px;
+            flex-shrink: 0; }
+        @media (hover: hover) {
+            .mw-start-btn:hover {
+                transform: translateY(-3px) scale(1.03);
+                box-shadow: 0 14px 30px rgba(217, 138, 147, .55);
+                filter: brightness(1.06);
+            }
+        }
+        .mw-start-btn:active { transform: scale(.96); }
+        .mw-start-note {
+            margin-top: 16px !important;
+            font-size: .78rem !important;
+            color: rgba(255, 255, 255, .4) !important;
+        }
+
+        .magic-wand-topbar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: max(14px, env(safe-area-inset-top)) 14px 14px;
+            z-index: 2;
+        }
+        .mw-mode-group {
+            display: flex;
+            gap: 8px;
+        }
+        .mw-topbar-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .mw-mode-btn, .mw-icon-btn {
+            border: 1px solid rgba(255, 255, 255, .28);
+            background: rgba(20, 22, 28, .55);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: #fff;
+            border-radius: 999px;
+            font-family: 'Quicksand', sans-serif;
+            cursor: pointer;
+            transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), box-shadow .2s ease, background .2s ease, border-color .2s ease;
+        }
+        .mw-mode-btn {
+            padding: 8px 16px 8px 12px;
+            font-size: .85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .mw-mode-btn svg { width: 16px;
+            height: 16px;
+            flex-shrink: 0; }
+        .mw-mode-btn.active {
+            background: linear-gradient(135deg, var(--sage), var(--rose-deep));
+            border-color: transparent;
+            box-shadow: 0 6px 18px rgba(217, 138, 147, .4);
+        }
+        @media (hover: hover) {
+            .mw-mode-btn:not(.active):hover, .mw-icon-btn:hover {
+                transform: translateY(-2px);
+                background: rgba(255, 255, 255, .16);
+                border-color: rgba(255, 255, 255, .5);
+            }
+            .mw-mode-btn.active:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 9px 22px rgba(217, 138, 147, .55);
+            }
+        }
+        .mw-mode-btn:active, .mw-icon-btn:active { transform: scale(.92); }
+        .mw-icon-btn {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mw-icon-btn svg { width: 17px;
+            height: 17px; }
+        .magic-wand-hint {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 108px;
+            text-align: center;
+            color: rgba(255, 255, 255, .8);
+            font-size: .85rem;
+            padding: 0 24px;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .mw-bottom-controls {
+            position: absolute;
+            bottom: max(22px, env(safe-area-inset-bottom));
+            left: 0;
+            right: 0;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 26px;
+        }
+        .mw-round-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, .28);
+            background: rgba(20, 22, 28, .6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), box-shadow .2s ease, background .2s ease, border-color .2s ease;
+        }
+        .mw-round-btn svg { width: 21px;
+            height: 21px; }
+        @media (hover: hover) {
+            .mw-round-btn:hover {
+                transform: translateY(-3px) scale(1.06);
+                background: rgba(255, 255, 255, .16);
+                border-color: rgba(255, 255, 255, .5);
+                box-shadow: 0 10px 22px rgba(0, 0, 0, .35);
+            }
+            .mw-capture-btn:hover {
+                box-shadow: 0 12px 26px rgba(217, 138, 147, .55);
+            }
+        }
+        .mw-round-btn:active { transform: scale(.9); }
+        .mw-capture-btn {
+            width: 66px;
+            height: 66px;
+            background: linear-gradient(135deg, var(--sage), var(--rose-deep));
+            border-color: transparent;
+            box-shadow: 0 8px 20px rgba(217, 138, 147, .4);
+        }
+        .mw-capture-btn svg { width: 25px;
+            height: 25px; }
+        .mw-record-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #e5484d;
+            transition: border-radius .2s ease, transform .2s ease;
+        }
+        .mw-round-btn.recording .mw-record-dot {
+            border-radius: 6px;
+            transform: scale(.85);
+        }
+        .mw-round-btn.recording {
+            border-color: rgba(229, 72, 77, .6);
+            animation: mwPulse 1.2s infinite;
+        }
+        @keyframes mwPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(229, 72, 77, .55); }
+            50% { box-shadow: 0 0 0 10px rgba(229, 72, 77, 0); }
+        }
+
+        .mw-save-panel {
+            position: absolute;
+            inset: 0;
+            z-index: 4;
+            background: rgba(5, 7, 10, .92);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            padding: 24px;
+        }
+        .mw-save-preview {
+            max-width: min(78vw, 320px);
+            max-height: 42vh;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, .25);
+        }
+        .mw-save-preview img, .mw-save-preview video {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #mwCaptionInput {
+            width: min(78vw, 320px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, .3);
+            background: rgba(255, 255, 255, .08);
+            color: #fff;
+            padding: 10px 12px;
+            font-size: .9rem;
+            resize: none;
+            min-height: 44px;
+        }
+        #mwCaptionInput::placeholder { color: rgba(255, 255, 255, .45); }
+        .mw-save-actions { display: flex;
+            gap: 12px; }
+        .mw-save-actions button {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 22px;
+            font-size: .9rem;
+            cursor: pointer;
+        }
+        .mw-save-actions button:not(.primary) {
+            background: rgba(255, 255, 255, .12);
+            color: #fff;
+        }
+        .mw-save-actions button.primary {
+            background: linear-gradient(135deg, var(--sage), var(--rose));
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .mw-gallery {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            background: #0b0d10;
+            display: flex;
+            flex-direction: column;
+        }
+        .mw-gallery-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: max(14px, env(safe-area-inset-top)) 16px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, .1);
+        }
+        .mw-gallery-header h3 { margin: 0;
+            color: #fff;
+            font-size: 1.05rem; }
+        .mw-gallery-grid {
+            flex: 1;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 14px;
+        }
+        .mw-gallery-empty {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: rgba(255, 255, 255, .5);
+            padding: 40px 20px;
+            font-size: .9rem;
+        }
+        .mw-creation-card {
+            background: rgba(255, 255, 255, .06);
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, .1);
+        }
+        .mw-creation-card img, .mw-creation-card video {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            display: block;
+        }
+        .mw-creation-body {
+            padding: 10px;
+            color: #fff;
+        }
+        .mw-creation-caption {
+            font-size: .82rem;
+            margin: 0 0 6px;
+            word-break: break-word;
+        }
+        .mw-creation-reply {
+            font-size: .78rem;
+            color: rgba(255, 255, 255, .6);
+            margin: 0 0 8px;
+            font-style: italic;
+            word-break: break-word;
+        }
+        .mw-creation-reply-input {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, .25);
+            background: rgba(255, 255, 255, .08);
+            color: #fff;
+            padding: 6px 8px;
+            font-size: .78rem;
+            margin-bottom: 6px;
+        }
+        .mw-creation-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .mw-creation-actions button {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, .7);
+            font-size: .95rem;
+            cursor: pointer;
+            padding: 2px 4px;
+        }
+        .mw-creation-actions button.pinned { color: #ffd166; }
+
         /* ─── Chat ───
            A side icon that's always present (unlike the compliment
            envelope, which only shows on wider screens) — sits on the
@@ -9933,6 +10321,77 @@
             <span class="chat-fab-icon">💬</span>
             <span class="chat-unread-badge hidden" id="chatUnreadBadge">0</span>
         </button>
+
+        <!-- ─── Magic Wand ─── -->
+        <div class="magic-wand-overlay" id="magicWandOverlay" hidden>
+            <video id="mwVideo" autoplay playsinline muted class="hidden"></video>
+            <canvas id="mwCanvas"></canvas>
+
+            <div class="mw-start-screen" id="mwStartScreen">
+                <div class="mw-start-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20L15 9"/><path d="M17.5 6.5l1 1"/><path d="M13 3l1 1"/><path d="M19 9l1 1"/><path d="M20 3l.6 1.4L22 5l-1.4.6L20 7l-.6-1.4L18 5l1.4-.6L20 3z"/></svg>
+                </div>
+                <h2>Magic Wand</h2>
+                <p>Point your index finger at the camera and draw flowers or a constellation in the air.</p>
+                <button type="button" class="mw-start-btn" id="mwStartBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20L15 9"/><path d="M17.5 6.5l1 1"/><path d="M13 3l1 1"/><path d="M19 9l1 1"/></svg>
+                    Start Camera
+                </button>
+                <p class="mw-start-note">You can save your favorite creations as a photo or a short video.</p>
+            </div>
+
+            <div class="magic-wand-topbar hidden" id="mwTopbar">
+                <div class="mw-mode-group">
+                    <button type="button" class="mw-mode-btn active" data-mode="flowers">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1.66 0 3 1.57 3 3.5 0 1.22-.53 2.3-1.34 2.95A3.5 3.5 0 1116 15.66 3.5 3.5 0 0112 19a3.5 3.5 0 01-4-3.34 3.5 3.5 0 013.34-8.21A3.49 3.49 0 0112 2z" opacity=".95"/><circle cx="12" cy="12" r="2.1" fill="#fff"/></svg>
+                        Flowers
+                    </button>
+                    <button type="button" class="mw-mode-btn" data-mode="constellation">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/><path d="M19 14l.7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7z" opacity=".85"/></svg>
+                        Constellation
+                    </button>
+                </div>
+                <div class="mw-topbar-actions">
+                    <button type="button" class="mw-icon-btn" id="mwGalleryBtn" aria-label="Saved creations" title="Saved creations">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6" fill="#fff" stroke="none"/><path d="M3 16l5-5 4 4 3-3 6 6"/></svg>
+                    </button>
+                    <button type="button" class="mw-icon-btn" id="mwCloseBtn" aria-label="Close">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <p class="magic-wand-hint hidden" id="mwHint">Point to draw · Hold your fist to light stars · Open your hand to clear</p>
+
+            <div class="mw-bottom-controls hidden" id="mwBottomControls">
+                <button type="button" class="mw-round-btn" id="mwClearBtn" aria-label="Clear" title="Clear">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18.5 9.5L14 5 4.5 14.5a2 2 0 000 2.8l1.7 1.7a2 2 0 002.8 0z"/><path d="M10 19h9"/><path d="M8.5 11l4 4"/></svg>
+                </button>
+                <button type="button" class="mw-round-btn mw-capture-btn" id="mwPhotoBtn" aria-label="Take a photo" title="Take a photo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5a1.5 1.5 0 011.5-1.5h2l1.2-1.8a1.5 1.5 0 011.25-.7h4.1a1.5 1.5 0 011.25.7L16.5 7h2A1.5 1.5 0 0120 8.5v9A1.5 1.5 0 0118.5 19h-13A1.5 1.5 0 014 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg>
+                </button>
+                <button type="button" class="mw-round-btn" id="mwVideoBtn" aria-label="Record a video" title="Record a video"><span class="mw-record-dot"></span></button>
+            </div>
+
+            <div class="mw-save-panel hidden" id="mwSavePanel">
+                <div class="mw-save-preview" id="mwSavePreview"></div>
+                <textarea id="mwCaptionInput" placeholder="Add a caption (optional)" maxlength="200"></textarea>
+                <div class="mw-save-actions">
+                    <button type="button" id="mwDiscardBtn">Discard</button>
+                    <button type="button" id="mwSaveBtn" class="primary">Save</button>
+                </div>
+            </div>
+
+            <div class="mw-gallery hidden" id="mwGallery">
+                <div class="mw-gallery-header">
+                    <h3>🪄 Magic Wand Creations</h3>
+                    <button type="button" class="mw-icon-btn" id="mwGalleryBackBtn" aria-label="Back">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+                    </button>
+                </div>
+                <div class="mw-gallery-grid" id="mwGalleryGrid"></div>
+            </div>
+        </div>
         <div class="chat-panel hidden" id="chatPanel" role="dialog" aria-label="Chat">
             <div class="chat-panel-draghandle" id="chatPanelDragHandle" aria-hidden="true"></div>
             <div class="chat-panel-header">
@@ -10131,6 +10590,7 @@
                         <button id="constellationToggleBtn" type="button">✦ Memory Constellation</button>
                         <button id="gamesToggleBtn" type="button">🎮 Mini Games</button>
                         <button id="specialDaysToggleBtn" type="button">🎀 Special Days</button>
+                        <button id="magicWandToggleBtn" type="button">🪄 Magic Wand</button>
                     </div>
                 </div>
             </div>
@@ -21834,6 +22294,807 @@
             });
 
             window.addEventListener('load', () => setTimeout(updateNotifBtnState, 800));
+
+            /* ─── Magic Wand ───
+               A playful webcam toy: tracks your index fingertip (via
+               MediaPipe Hands, loaded from a CDN only when this is
+               first opened) and leaves a trail of flowers or a
+               hand-drawn constellation behind it. Lives inside the
+               main closure (not its own top-level IIFE) so it can
+               save captures via the same supabase/myAuthorNum/etc.
+               used everywhere else on the site.
+               Video + effects are drawn onto ONE canvas (the <video>
+               element itself stays hidden, used only as a frame
+               source) — this keeps what you see, what gets tracked,
+               and what gets saved all in the same coordinate space,
+               so nothing drifts out of alignment. */
+            (function() {
+                const MW_TABLE = 'magic_wand_creations';
+                const MW_BUCKET = 'magic-wand';
+
+                const toggleBtn = document.getElementById('magicWandToggleBtn');
+                const overlay = document.getElementById('magicWandOverlay');
+                if (!toggleBtn || !overlay) return;
+
+                const video = document.getElementById('mwVideo');
+                const canvas = document.getElementById('mwCanvas');
+                const ctx = canvas.getContext('2d');
+                const startScreen = document.getElementById('mwStartScreen');
+                const startBtn = document.getElementById('mwStartBtn');
+                const topbar = document.getElementById('mwTopbar');
+                const closeBtn = document.getElementById('mwCloseBtn');
+                const galleryBtn = document.getElementById('mwGalleryBtn');
+                const galleryBackBtn = document.getElementById('mwGalleryBackBtn');
+                const gallery = document.getElementById('mwGallery');
+                const galleryGrid = document.getElementById('mwGalleryGrid');
+                const hint = document.getElementById('mwHint');
+                const bottomControls = document.getElementById('mwBottomControls');
+                const clearBtn = document.getElementById('mwClearBtn');
+                const photoBtn = document.getElementById('mwPhotoBtn');
+                const videoBtn = document.getElementById('mwVideoBtn');
+                const savePanel = document.getElementById('mwSavePanel');
+                const savePreview = document.getElementById('mwSavePreview');
+                const captionInput = document.getElementById('mwCaptionInput');
+                const discardBtn = document.getElementById('mwDiscardBtn');
+                const saveBtn = document.getElementById('mwSaveBtn');
+                const modeBtns = overlay.querySelectorAll('.mw-mode-btn');
+
+                let mode = 'flowers';
+                let handsLib = null;
+                let handsInstance = null;
+                let stream = null;
+                let rafId = null;
+                let sendLoopActive = false;
+                let lastFlowerAt = 0;
+                let particles = []; // flowers: {x,y,size,rot,hue,species,born,vx,vy,rotSpeed}
+                let stars = []; // constellation points: {x,y,born,vx,vy}
+                let cover = null; // {scale, offsetX, offsetY, dispW, dispH} for the current video/canvas fit
+                let lastLandmarks = null; // most recent 21-point hand landmarks, for the skeleton overlay
+
+                /* ─── Gesture recognition ───
+                   MediaPipe hands returns 21 landmarks for ANY hand
+                   shape it can see — a fist gives just as many points
+                   as a pointing finger. So "a hand was detected" is
+                   NOT the same as "the index finger is pointing", and
+                   drawing off raw landmark presence (the old bug) draws
+                   for a closed fist, a flat palm, the back of the hand,
+                   anything. We classify the actual finger pose instead:
+                     'point' → index finger extended, other three curled
+                     'open'  → all four fingers extended (flat hand)
+                     'fist'  → no fingers extended (closed fist)
+                     'other' → any ambiguous shape — ignored entirely
+                   Extension is measured as tip-distance-from-wrist vs
+                   pip-distance-from-wrist, which stays correct no matter
+                   how the hand is rotated (front, back, sideways). */
+                function dist3(a, b) {
+                    return Math.hypot(a.x - b.x, a.y - b.y, (a.z || 0) - (b.z || 0));
+                }
+                function isFingerExtended(lm, pipIdx, tipIdx) {
+                    const wrist = lm[0];
+                    return dist3(wrist, lm[tipIdx]) > dist3(wrist, lm[pipIdx]) * 1.15;
+                }
+                function classifyHandPose(lm) {
+                    const indexExt = isFingerExtended(lm, 6, 8);
+                    const middleExt = isFingerExtended(lm, 10, 12);
+                    const ringExt = isFingerExtended(lm, 14, 16);
+                    const pinkyExt = isFingerExtended(lm, 18, 20);
+                    const extCount = [indexExt, middleExt, ringExt, pinkyExt].filter(Boolean).length;
+                    if (indexExt && extCount === 1) return 'point';
+                    if (extCount === 4) return 'open';
+                    if (extCount === 0) return 'fist';
+                    return 'other';
+                }
+
+                /* ─── Hand skeleton overlay ───
+                   Draws the same 21-point rig MediaPipe tracks, so the
+                   person can see exactly what the camera is reading —
+                   independent of which gesture is currently active. */
+                const HAND_CONNECTIONS = [
+                    [0, 1], [1, 2], [2, 3], [3, 4],
+                    [0, 5], [5, 6], [6, 7], [7, 8],
+                    [5, 9], [9, 10], [10, 11], [11, 12],
+                    [9, 13], [13, 14], [14, 15], [15, 16],
+                    [13, 17], [17, 18], [18, 19], [19, 20],
+                    [0, 17]
+                ];
+                function drawHandSkeleton(lm) {
+                    const pts = lm.map(p => mapPoint(p.x, p.y));
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+                    ctx.lineWidth = 1.5;
+                    HAND_CONNECTIONS.forEach(([a, b]) => {
+                        ctx.beginPath();
+                        ctx.moveTo(pts[a].x, pts[a].y);
+                        ctx.lineTo(pts[b].x, pts[b].y);
+                        ctx.stroke();
+                    });
+                    pts.forEach((p, i) => {
+                        ctx.beginPath();
+                        ctx.fillStyle = i === 8 ? 'rgba(255,190,230,0.95)' : 'rgba(255,255,255,0.85)';
+                        ctx.arc(p.x, p.y, i === 8 ? 5 : 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    ctx.restore();
+                }
+
+                // Trail persistence: creations now stay on screen until
+                // an explicit open-hand gesture, at which point they
+                // dissipate over CLEAR_DURATION ms instead of vanishing
+                // instantly or fading on their own timer. Each item gets
+                // an outward "throw" velocity assigned once, at the
+                // moment clearing starts, so it scatters rather than
+                // just fading in place.
+                const CLEAR_DURATION = 750;
+                let clearing = false;
+                let clearStartAt = 0;
+                function beginClear() {
+                    if (clearing || (!particles.length && !stars.length)) return;
+                    clearing = true;
+                    clearStartAt = performance.now();
+                    fistLitIndex = 0;
+                    if (mode === 'flowers') {
+                        // each flower gets its own random fling — a scatter
+                        particles.forEach(item => {
+                            const angle = Math.random() * Math.PI * 2;
+                            const speed = 90 + Math.random() * 140;
+                            item.vx = Math.cos(angle) * speed;
+                            item.vy = Math.sin(angle) * speed - 60; // slight upward bias
+                            item.rotSpeed = (Math.random() - 0.5) * 6;
+                        });
+                    } else {
+                        // stars all streak off together in ONE shared
+                        // direction, like a single shooting-star sweep,
+                        // rather than scattering every which way
+                        const angle = Math.random() * Math.PI * 2;
+                        const dirX = Math.cos(angle),
+                            dirY = Math.sin(angle);
+                        stars.forEach(item => {
+                            const speed = 700 + Math.random() * 200;
+                            item.vx = dirX * speed;
+                            item.vy = dirY * speed;
+                        });
+                    }
+                }
+
+                // Constellation dwell-to-place: a star only gets planted
+                // once the fingertip holds roughly still for DWELL_TIME —
+                // moving the finger just travels, it doesn't paint a
+                // continuous trail of stars behind it.
+                const DWELL_RADIUS = 20; // px the tip may drift and still count as "held"
+                const DWELL_TIME = 300; // ms of holding still before a star is placed
+                let dwellPos = null;
+                let dwellStart = 0;
+                let dwellPlaced = false;
+
+                // Fist → "light" placed stars, oldest to newest, for as
+                // long as the fist is held. Re-closing the fist replays
+                // the sequence from the start.
+                const FIST_LIGHT_INTERVAL = 180;
+                let fistLitIndex = 0;
+                let fistLitLastAt = 0;
+
+                let mediaRecorder = null;
+                let recordedChunks = [];
+                let pendingCapture = null; // { kind: 'photo'|'video', blob }
+
+                function resizeCanvas() {
+                    canvas.width = overlay.clientWidth;
+                    canvas.height = overlay.clientHeight;
+                    cover = null;
+                }
+
+                function computeCover() {
+                    const vw = video.videoWidth,
+                        vh = video.videoHeight;
+                    if (!vw || !vh) return null;
+                    const cw = canvas.width,
+                        ch = canvas.height;
+                    const scale = Math.max(cw / vw, ch / vh);
+                    const dispW = vw * scale,
+                        dispH = vh * scale;
+                    return { scale, offsetX: (cw - dispW) / 2, offsetY: (ch - dispH) / 2, dispW, dispH };
+                }
+
+                /* Converts a normalized (0-1) landmark coordinate from
+                   the RAW (unmirrored) camera frame into the exact
+                   mirrored pixel position it appears at on screen —
+                   accounting for the same object-fit:cover crop the
+                   video itself gets, so the drawn effect always lines
+                   up with your actual fingertip. */
+                function mapPoint(xNorm, yNorm) {
+                    if (!cover) return { x: (1 - xNorm) * canvas.width, y: yNorm * canvas.height };
+                    const px = xNorm * cover.dispW + cover.offsetX;
+                    const py = yNorm * cover.dispH + cover.offsetY;
+                    return { x: canvas.width - px, y: py };
+                }
+
+                function loadScript(src) {
+                    return new Promise((resolve, reject) => {
+                        const existing = document.querySelector(`script[src="${src}"]`);
+                        if (existing) {
+                            if (existing.dataset.loaded === 'true') resolve();
+                            else existing.addEventListener('load', resolve);
+                            return;
+                        }
+                        const s = document.createElement('script');
+                        s.src = src;
+                        s.crossOrigin = 'anonymous';
+                        s.onload = () => { s.dataset.loaded = 'true';
+                            resolve(); };
+                        s.onerror = reject;
+                        document.head.appendChild(s);
+                    });
+                }
+
+                async function ensureHandsLoaded() {
+                    if (handsLib) return handsLib;
+                    await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js');
+                    handsLib = window.Hands;
+                    return handsLib;
+                }
+
+                /* ─── Flower species ───
+                   A handful of procedural shapes so the trail doesn't
+                   look like one flower copy-pasted everywhere. Swap any
+                   of these for an image-based drawImage() call later if
+                   you want hand-drawn/SVG artwork instead — species is
+                   already threaded through particle → drawFlower so
+                   that's a localized change. */
+                const FLOWER_SPECIES = ['round', 'daisy', 'star', 'bud'];
+
+                function drawFlowerRound(size, hue) {
+                    for (let i = 0; i < 5; i++) {
+                        ctx.beginPath();
+                        ctx.fillStyle = `hsl(${hue}, 80%, 72%)`;
+                        ctx.ellipse(0, -size * 0.55, size * 0.4, size * 0.65, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.rotate((Math.PI * 2) / 5);
+                    }
+                    ctx.beginPath();
+                    ctx.fillStyle = `hsl(${(hue + 40) % 360}, 90%, 65%)`;
+                    ctx.arc(0, 0, size * 0.32, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                function drawFlowerDaisy(size, hue) {
+                    for (let i = 0; i < 8; i++) {
+                        ctx.beginPath();
+                        ctx.fillStyle = '#fff';
+                        ctx.ellipse(0, -size * 0.5, size * 0.16, size * 0.5, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.rotate((Math.PI * 2) / 8);
+                    }
+                    ctx.beginPath();
+                    ctx.fillStyle = `hsl(${(hue + 45) % 360}, 95%, 55%)`;
+                    ctx.arc(0, 0, size * 0.28, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                function drawFlowerStar(size, hue) {
+                    ctx.beginPath();
+                    ctx.fillStyle = `hsl(${hue}, 85%, 68%)`;
+                    for (let i = 0; i < 10; i++) {
+                        const r = i % 2 === 0 ? size * 0.6 : size * 0.24;
+                        const a = (Math.PI * 2 * i) / 10;
+                        const px = Math.sin(a) * r,
+                            py = -Math.cos(a) * r;
+                        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                function drawFlowerBud(size, hue) {
+                    ctx.beginPath();
+                    ctx.fillStyle = `hsl(${(hue + 90) % 360}, 55%, 45%)`;
+                    ctx.ellipse(0, size * 0.1, size * 0.22, size * 0.42, Math.PI / 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.fillStyle = `hsl(${hue}, 80%, 70%)`;
+                    ctx.ellipse(0, -size * 0.25, size * 0.3, size * 0.42, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                function drawFlower(x, y, size, rot, hue, alpha, species) {
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(rot);
+                    ctx.globalAlpha = alpha;
+                    switch (species) {
+                        case 'daisy':
+                            drawFlowerDaisy(size, hue);
+                            break;
+                        case 'star':
+                            drawFlowerStar(size, hue);
+                            break;
+                        case 'bud':
+                            drawFlowerBud(size, hue);
+                            break;
+                        default:
+                            drawFlowerRound(size, hue);
+                    }
+                    ctx.restore();
+                }
+
+                function drawSparkle(x, y, size, color, glowColor, glowBlur, alpha) {
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    ctx.translate(x, y);
+                    ctx.shadowColor = glowColor;
+                    ctx.shadowBlur = glowBlur;
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -size);
+                    ctx.quadraticCurveTo(size * 0.16, -size * 0.16, size, 0);
+                    ctx.quadraticCurveTo(size * 0.16, size * 0.16, 0, size);
+                    ctx.quadraticCurveTo(-size * 0.16, size * 0.16, -size, 0);
+                    ctx.quadraticCurveTo(-size * 0.16, -size * 0.16, 0, -size);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                function render() {
+                    rafId = requestAnimationFrame(render);
+                    if (!cover) cover = computeCover();
+
+                    // Fully clear every frame — the live camera image
+                    // is redrawn fresh each time, so nothing ever
+                    // accumulates into an opaque overlay.
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    if (video.readyState >= 2 && cover) {
+                        ctx.save();
+                        ctx.translate(canvas.width, 0);
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(video, cover.offsetX, cover.offsetY, cover.dispW, cover.dispH);
+                        ctx.restore();
+                    }
+
+                    const now = performance.now();
+
+                    if (lastLandmarks) drawHandSkeleton(lastLandmarks);
+
+                    // Creations persist indefinitely while being drawn.
+                    // The only thing that removes them is an open-hand
+                    // gesture, which starts this throw-and-fade
+                    // transition (see beginClear / onHandsResults) —
+                    // each item flies outward on the vx/vy assigned the
+                    // moment clearing began, fading as it goes.
+                    let clearT = 0;
+                    if (clearing) {
+                        clearT = (now - clearStartAt) / CLEAR_DURATION;
+                        if (clearT >= 1) {
+                            particles = [];
+                            stars = [];
+                            clearing = false;
+                            clearT = 0;
+                        }
+                    }
+                    const clearAlpha = 1 - clearT;
+
+                    if (mode === 'flowers') {
+                        particles.forEach(p => {
+                            // brief pop-in on placement, then holds at
+                            // full size/opacity until cleared
+                            const growth = Math.min((now - p.born) / 220, 1);
+                            const size = p.size * (0.7 + growth * 0.3);
+                            const px = clearing ? p.x + p.vx * clearT : p.x;
+                            const py = clearing ? p.y + p.vy * clearT + 260 * clearT * clearT : p.y; // gentle arc as it's tossed
+                            const rot = clearing ? p.rot + p.rotSpeed * clearT : p.rot;
+                            drawFlower(px, py, size, rot, p.hue, clearAlpha, p.species);
+                        });
+                    } else {
+                        // Connecting lines only make sense for the
+                        // settled constellation — once a wish is being
+                        // made (clearing), each star flies its own way.
+                        if (!clearing) {
+                            ctx.lineWidth = 1.5;
+                            for (let i = 1; i < stars.length; i++) {
+                                const a = stars[i - 1],
+                                    b = stars[i];
+                                ctx.strokeStyle = 'rgba(200, 220, 255, 0.5)';
+                                ctx.beginPath();
+                                ctx.moveTo(a.x, a.y);
+                                ctx.lineTo(b.x, b.y);
+                                ctx.stroke();
+                            }
+                        }
+                        stars.forEach((s, i) => {
+                            // Straight-line exit — all stars share the
+                            // same vx/vy direction (assigned once in
+                            // beginClear), so the whole constellation
+                            // sweeps off in one direction together
+                            // instead of scattering or falling.
+                            const sx = clearing ? s.x + s.vx * clearT : s.x;
+                            const sy = clearing ? s.y + s.vy * clearT : s.y;
+                            const lit = !clearing && i < fistLitIndex;
+                            const size = clearing ? 15 : (lit ? 15 : 11);
+
+                            if (clearing) {
+                                // Elongated comet tail behind the sparkle,
+                                // opposite its direction of travel, faded
+                                // out with a gradient so it reads as a
+                                // streak rather than a single line.
+                                const len = Math.hypot(s.vx, s.vy) * 0.12;
+                                const dx = s.vx / (Math.hypot(s.vx, s.vy) || 1);
+                                const dy = s.vy / (Math.hypot(s.vx, s.vy) || 1);
+                                const tx = sx - dx * len,
+                                    ty = sy - dy * len;
+                                const grad = ctx.createLinearGradient(sx, sy, tx, ty);
+                                grad.addColorStop(0, `rgba(255, 214, 110, ${0.9 * clearAlpha})`);
+                                grad.addColorStop(1, 'rgba(255, 214, 110, 0)');
+                                ctx.save();
+                                ctx.strokeStyle = grad;
+                                ctx.lineWidth = 3;
+                                ctx.lineCap = 'round';
+                                ctx.beginPath();
+                                ctx.moveTo(sx, sy);
+                                ctx.lineTo(tx, ty);
+                                ctx.stroke();
+                                ctx.restore();
+                            }
+
+                            drawSparkle(
+                                sx, sy, size,
+                                clearing ? '#ffce5a' : (lit ? '#fff6d8' : '#fff'),
+                                clearing ? '#ffce5a' : (lit ? '#ffe38a' : '#fff'),
+                                clearing ? 16 : (lit ? 20 : 9),
+                                clearAlpha
+                            );
+                        });
+                    }
+                }
+
+                function onFingertipFlower(x, y, now) {
+                    if (now - lastFlowerAt > 90) {
+                        lastFlowerAt = now;
+                        particles.push({
+                            x, y,
+                            size: 14 + Math.random() * 10,
+                            rot: Math.random() * Math.PI * 2,
+                            hue: 300 + Math.random() * 80,
+                            species: FLOWER_SPECIES[Math.floor(Math.random() * FLOWER_SPECIES.length)],
+                            born: now
+                        });
+                    }
+                }
+
+                function onFingertipConstellation(x, y, now) {
+                    if (!dwellPos || Math.hypot(x - dwellPos.x, y - dwellPos.y) > DWELL_RADIUS) {
+                        // moved too far — start a fresh hold at the new spot
+                        dwellPos = { x, y };
+                        dwellStart = now;
+                        dwellPlaced = false;
+                        return;
+                    }
+                    if (!dwellPlaced && now - dwellStart > DWELL_TIME) {
+                        dwellPlaced = true;
+                        stars.push({ x: dwellPos.x, y: dwellPos.y, born: now });
+                    }
+                }
+
+                function onHandsResults(results) {
+                    const handDetected = !!(results.multiHandLandmarks && results.multiHandLandmarks.length);
+                    hint.classList.toggle('hidden', handDetected);
+                    lastLandmarks = handDetected ? results.multiHandLandmarks[0] : null;
+                    if (!handDetected) {
+                        dwellPos = null;
+                        fistLitIndex = 0;
+                        return;
+                    }
+
+                    const lm = lastLandmarks;
+                    const pose = classifyHandPose(lm);
+                    const now = performance.now();
+
+                    if (pose === 'point') {
+                        // Pointing again cancels an in-progress clear so
+                        // new drawing doesn't fight a scattering trail.
+                        if (clearing) clearing = false;
+                        fistLitIndex = 0;
+                        const tip = lm[8]; // index fingertip
+                        const { x, y } = mapPoint(tip.x, tip.y);
+                        if (mode === 'flowers') onFingertipFlower(x, y, now);
+                        else onFingertipConstellation(x, y, now);
+                    } else if (pose === 'fist') {
+                        dwellPos = null;
+                        // Hold a fist to light the stars you've placed,
+                        // oldest first; re-closing the fist replays it.
+                        if (mode === 'constellation' && stars.length) {
+                            if (fistLitIndex === 0) fistLitLastAt = now;
+                            if (fistLitIndex < stars.length && now - fistLitLastAt > FIST_LIGHT_INTERVAL) {
+                                fistLitIndex++;
+                                fistLitLastAt = now;
+                            }
+                        }
+                    } else if (pose === 'open') {
+                        dwellPos = null;
+                        beginClear();
+                    } else {
+                        // ambiguous shape — leave everything exactly as
+                        // it is, draw and light nothing new
+                        dwellPos = null;
+                        fistLitIndex = 0;
+                    }
+                }
+
+                async function sendFrameLoop() {
+                    if (!sendLoopActive || !handsInstance || video.readyState < 2) {
+                        if (sendLoopActive) requestAnimationFrame(sendFrameLoop);
+                        return;
+                    }
+                    await handsInstance.send({ image: video });
+                    requestAnimationFrame(sendFrameLoop);
+                }
+
+                async function startCamera() {
+                    startScreen.classList.add('hidden');
+                    hint.textContent = 'Loading the magic… ✨';
+                    hint.classList.remove('hidden');
+                    resizeCanvas();
+                    render();
+
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+                        video.srcObject = stream;
+                        await video.play();
+                        await new Promise(resolve => {
+                            if (video.readyState >= 2) return resolve();
+                            video.onloadedmetadata = resolve;
+                        });
+                        cover = computeCover();
+                    } catch (err) {
+                        console.error('Camera access failed:', err);
+                        hint.textContent = "Couldn't access the camera — check your browser's camera permission for this site.";
+                        startScreen.classList.remove('hidden');
+                        return;
+                    }
+
+                    topbar.classList.remove('hidden');
+                    bottomControls.classList.remove('hidden');
+                    hint.textContent = 'Point to draw · Hold your fist to light stars · Open your hand to clear';
+
+                    try {
+                        await ensureHandsLoaded();
+                        if (!handsInstance) {
+                            handsInstance = new handsLib({
+                                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+                            });
+                            handsInstance.setOptions({
+                                maxNumHands: 1,
+                                modelComplexity: 1,
+                                minDetectionConfidence: 0.6,
+                                minTrackingConfidence: 0.6
+                            });
+                            handsInstance.onResults(onHandsResults);
+                        }
+                        sendLoopActive = true;
+                        sendFrameLoop();
+                    } catch (err) {
+                        console.error('Hand tracking failed to load:', err);
+                        hint.textContent = 'Could not load hand tracking — check your connection and try again.';
+                    }
+                }
+
+                function openWand() {
+                    overlay.hidden = false;
+                    particles = [];
+                    stars = [];
+                    clearing = false;
+                    dwellPos = null;
+                    fistLitIndex = 0;
+                    lastLandmarks = null;
+                    startScreen.classList.remove('hidden');
+                    topbar.classList.add('hidden');
+                    bottomControls.classList.add('hidden');
+                    hint.classList.add('hidden');
+                    gallery.classList.add('hidden');
+                    savePanel.classList.add('hidden');
+                }
+
+                function stopCameraAndTracking() {
+                    sendLoopActive = false;
+                    if (rafId) cancelAnimationFrame(rafId);
+                    rafId = null;
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+                    if (stream) { stream.getTracks().forEach(t => t.stop());
+                        stream = null; }
+                    video.srcObject = null;
+                }
+
+                function closeWand() {
+                    stopCameraAndTracking();
+                    overlay.hidden = true;
+                }
+
+                toggleBtn.addEventListener('click', openWand);
+                startBtn.addEventListener('click', startCamera);
+                closeBtn.addEventListener('click', closeWand);
+                clearBtn.addEventListener('click', () => { particles = [];
+                    stars = [];
+                    clearing = false;
+                    dwellPos = null;
+                    fistLitIndex = 0; });
+                modeBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        mode = btn.dataset.mode;
+                        modeBtns.forEach(b => b.classList.toggle('active', b === btn));
+                        particles = [];
+                        stars = [];
+                        clearing = false;
+                        dwellPos = null;
+                        fistLitIndex = 0;
+                    });
+                });
+                window.addEventListener('resize', () => { if (!overlay.hidden) resizeCanvas(); });
+
+                /* ─── Capture: photo ─── */
+                photoBtn.addEventListener('click', () => {
+                    canvas.toBlob((blob) => {
+                        if (!blob) return;
+                        pendingCapture = { kind: 'photo', blob };
+                        const url = URL.createObjectURL(blob);
+                        savePreview.innerHTML = `<img src="${url}" alt="Your creation">`;
+                        captionInput.value = '';
+                        savePanel.classList.remove('hidden');
+                    }, 'image/png');
+                });
+
+                /* ─── Capture: video ─── */
+                videoBtn.addEventListener('click', () => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                        return;
+                    }
+                    const canvasStream = canvas.captureStream(30);
+                    recordedChunks = [];
+                    let options = { mimeType: 'video/webm;codecs=vp9' };
+                    if (!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/webm' };
+                    try {
+                        mediaRecorder = new MediaRecorder(canvasStream, options);
+                    } catch (err) {
+                        console.error('Recording not supported:', err);
+                        if (typeof showToast === 'function') showToast('Video recording is not supported on this browser.');
+                        return;
+                    }
+                    mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size) recordedChunks.push(e.data); };
+                    mediaRecorder.onstop = () => {
+                        videoBtn.classList.remove('recording');
+                        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                        pendingCapture = { kind: 'video', blob };
+                        const url = URL.createObjectURL(blob);
+                        savePreview.innerHTML = `<video src="${url}" controls autoplay loop muted playsinline></video>`;
+                        captionInput.value = '';
+                        savePanel.classList.remove('hidden');
+                    };
+                    mediaRecorder.start();
+                    videoBtn.classList.add('recording');
+                    // Auto-stop after 8 seconds so nobody accidentally
+                    // records something huge.
+                    setTimeout(() => { if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop(); },
+                        8000);
+                });
+
+                discardBtn.addEventListener('click', () => {
+                    pendingCapture = null;
+                    savePreview.innerHTML = '';
+                    savePanel.classList.add('hidden');
+                });
+
+                saveBtn.addEventListener('click', async () => {
+                    if (!pendingCapture || !supabase || !getIdentity()) return;
+                    saveBtn.disabled = true;
+                    saveBtn.textContent = 'Saving…';
+                    try {
+                        const ext = pendingCapture.kind === 'photo' ? 'png' : 'webm';
+                        const path = `${pendingCapture.kind}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+                        const { error: uploadError } = await supabase.storage.from(MW_BUCKET).upload(path,
+                            pendingCapture.blob, {
+                                contentType: pendingCapture.kind === 'photo' ? 'image/png' : 'video/webm'
+                            });
+                        if (uploadError) throw uploadError;
+                        const { data: pub } = supabase.storage.from(MW_BUCKET).getPublicUrl(path);
+                        const { error: insertError } = await supabase.from(MW_TABLE).insert({
+                            author: myAuthorNum(),
+                            kind: pendingCapture.kind,
+                            media_url: pub.publicUrl,
+                            media_path: path,
+                            caption: captionInput.value.trim() || null
+                        });
+                        if (insertError) throw insertError;
+                        if (typeof showToast === 'function') showToast('Saved to your Magic Wand creations ✓');
+                        pendingCapture = null;
+                        savePreview.innerHTML = '';
+                        savePanel.classList.add('hidden');
+                    } catch (err) {
+                        console.error('Could not save creation:', err);
+                        if (typeof showToast === 'function') showToast('Could not save that — try again.');
+                    } finally {
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Save';
+                    }
+                });
+
+                /* ─── Gallery ─── */
+                function creationCardHtml(item) {
+                    const media = item.kind === 'photo' ?
+                        `<img src="${escapeHtml(item.media_url)}" alt="A magic wand photo" loading="lazy">` :
+                        `<video src="${escapeHtml(item.media_url)}" controls muted playsinline></video>`;
+                    const canReply = Number(item.author) !== myAuthorNum();
+                    return `
+                        <div class="mw-creation-card" data-id="${item.id}">
+                            ${media}
+                            <div class="mw-creation-body">
+                                ${item.caption ? `<p class="mw-creation-caption">${escapeHtml(item.caption)}</p>` : ''}
+                                ${item.reply ? `<p class="mw-creation-reply">💬 ${escapeHtml(item.reply)}</p>` : (canReply ?
+                                    `<input type="text" class="mw-creation-reply-input" placeholder="Leave a reply…" maxlength="200">` :
+                                    '')}
+                                <div class="mw-creation-actions">
+                                    <button type="button" class="mw-pin-btn ${item.pinned ? 'pinned' : ''}" title="${item.pinned ? 'Unpin' : 'Pin'}">${item.pinned ? '★' : '☆'}</button>
+                                    <button type="button" class="mw-delete-btn" title="Delete">🗑️</button>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+
+                async function loadGallery() {
+                    galleryGrid.innerHTML = '<div class="mw-gallery-empty">Loading…</div>';
+                    if (!supabase) return;
+                    try {
+                        const { data, error } = await supabase.from(MW_TABLE).select('*').order('pinned', {
+                            ascending: false
+                        }).order('created_at', { ascending: false });
+                        if (error) throw error;
+                        if (!data || !data.length) {
+                            galleryGrid.innerHTML =
+                                '<div class="mw-gallery-empty">No creations saved yet — cast a spell and tap 📸 or ⏺️ to save one!</div>';
+                            return;
+                        }
+                        galleryGrid.innerHTML = data.map(creationCardHtml).join('');
+                        galleryGrid.querySelectorAll('.mw-creation-card').forEach((card) => {
+                            const id = card.dataset.id;
+                            const item = data.find(d => String(d.id) === id);
+                            const pinBtn = card.querySelector('.mw-pin-btn');
+                            const delBtn = card.querySelector('.mw-delete-btn');
+                            const replyInput = card.querySelector('.mw-creation-reply-input');
+
+                            pinBtn.addEventListener('click', async () => {
+                                const { error } = await supabase.from(MW_TABLE).update({ pinned: !item.pinned }).eq(
+                                    'id', item.id);
+                                if (!error) loadGallery();
+                            });
+                            delBtn.addEventListener('click', async () => {
+                                if (!confirm('Delete this creation?')) return;
+                                await supabase.storage.from(MW_BUCKET).remove([item.media_path]);
+                                const { error } = await supabase.from(MW_TABLE).delete().eq('id', item.id);
+                                if (!error) loadGallery();
+                            });
+                            if (replyInput) {
+                                replyInput.addEventListener('keydown', async (e) => {
+                                    if (e.key !== 'Enter') return;
+                                    const val = replyInput.value.trim();
+                                    if (!val) return;
+                                    replyInput.disabled = true;
+                                    const { error } = await supabase.from(MW_TABLE).update({ reply: val }).eq('id',
+                                        item.id);
+                                    if (!error) loadGallery();
+                                    else replyInput.disabled = false;
+                                });
+                            }
+                        });
+                    } catch (err) {
+                        console.error('Could not load Magic Wand gallery:', err);
+                        galleryGrid.innerHTML = '<div class="mw-gallery-empty">Could not load your creations.</div>';
+                    }
+                }
+
+                galleryBtn.addEventListener('click', () => {
+                    gallery.classList.remove('hidden');
+                    loadGallery();
+                });
+                galleryBackBtn.addEventListener('click', () => gallery.classList.add('hidden'));
+            })();
         })();
 
         if ('serviceWorker' in navigator) {
@@ -21843,6 +23104,7 @@
                 });
             });
         }
+
     </script>
     <div class="secret-note" id="secretNote" aria-live="polite"><span>you found our little secret ✨</span></div>
     <script>
