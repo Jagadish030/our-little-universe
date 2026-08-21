@@ -9941,6 +9941,7 @@
                     <p class="chat-presence" id="chatPresence"></p>
                 </div>
                 <div class="chat-panel-header-actions">
+                    <button type="button" class="chat-search-btn" id="chatNotifBtn" aria-label="Turn on notifications" title="Turn on notifications">🔕</button>
                     <button type="button" class="chat-search-btn" id="chatSearchBtn" aria-label="Search this chat" title="Search">🔍</button>
                     <button type="button" class="chat-panel-expand" id="chatPanelExpand" aria-label="Expand to full screen" title="Full screen">⛶</button>
                     <button type="button" class="chat-panel-close" id="chatPanelClose" aria-label="Close chat">✕</button>
@@ -11109,6 +11110,10 @@
                 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjdGx6cWxjaGlqd3J4cnhubW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MDg1NTksImV4cCI6MjA5OTQ4NDU1OX0.5cEM69NsRjiN2d1XqzFcqVmSp8Db0AqxRr6wLJmm5Yc';
             const BUCKET = 'photos';
             const TABLE = 'memories';
+
+            // Push notifications — public key only (safe to be visible in
+            // the page source, that's how VAPID is designed to work).
+            const VAPID_PUBLIC_KEY = 'BNcu8NSKdtSuinS7I2lj5qtpmkqbppPthO62lEBq__VMIX9iIO9N6pmkiCeYdX_-w81UARYTPSMXK9CHW1qDf4Q';
 
             const isConfigured = SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY.length > 20;
             const supabase = isConfigured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
@@ -21685,6 +21690,114 @@
                 });
             });
         }
+
+        /* ─── Push notifications ───
+           Lets each person opt in on their own device so the other
+           person's messages can pop a system notification even when
+           the tab/app is closed. Purely additive: if the browser
+           doesn't support push, or permission is denied, chat keeps
+           working exactly as before. */
+        (function() {
+            const PUSH_TABLE = 'push_subscriptions';
+
+            function urlBase64ToUint8Array(base64String) {
+                const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+                const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+                const rawData = atob(base64);
+                return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+            }
+
+            function pushSupported() {
+                return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+            }
+
+            async function currentSubscription() {
+                if (!pushSupported()) return null;
+                const reg = await navigator.serviceWorker.ready;
+                return reg.pushManager.getSubscription();
+            }
+
+            async function updateNotifBtnState() {
+                const btn = document.getElementById('chatNotifBtn');
+                if (!btn) return;
+                if (!pushSupported()) { btn.classList.add('hidden'); return; }
+                if (Notification.permission === 'denied') {
+                    btn.textContent = '🔕';
+                    btn.title = 'Notifications blocked — enable them in your browser/site settings';
+                    return;
+                }
+                const sub = await currentSubscription();
+                if (sub) {
+                    btn.textContent = '🔔';
+                    btn.title = 'Notifications on — tap to turn off on this device';
+                } else {
+                    btn.textContent = '🔕';
+                    btn.title = 'Turn on notifications for new messages';
+                }
+            }
+
+            async function subscribeToPush() {
+                if (!pushSupported()) { if (typeof showToast === 'function') showToast('This browser can\'t receive push notifications.'); return; }
+                if (!getIdentity() || !supabase) return;
+                try {
+                    const permission = await Notification.requestPermission();
+                    if (permission !== 'granted') {
+                        if (typeof showToast === 'function') showToast('Notifications stayed off — you can turn them on later.');
+                        return updateNotifBtnState();
+                    }
+                    const reg = await navigator.serviceWorker.ready;
+                    let sub = await reg.pushManager.getSubscription();
+                    if (!sub) {
+                        sub = await reg.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+                        });
+                    }
+                    const json = sub.toJSON();
+                    const { error } = await supabase.from(PUSH_TABLE).upsert({
+                        author: myAuthorNum(),
+                        endpoint: json.endpoint,
+                        p256dh: json.keys.p256dh,
+                        auth: json.keys.auth
+                    }, { onConflict: 'endpoint' });
+                    if (error) throw error;
+                    if (typeof showToast === 'function') showToast('Notifications turned on ✓');
+                } catch (err) {
+                    console.error('Could not enable push notifications:', err);
+                    if (typeof showToast === 'function') showToast('Could not turn on notifications — try again.');
+                }
+                updateNotifBtnState();
+            }
+
+            async function unsubscribeFromPush() {
+                try {
+                    const sub = await currentSubscription();
+                    if (sub) {
+                        const endpoint = sub.endpoint;
+                        await sub.unsubscribe();
+                        if (supabase) await supabase.from(PUSH_TABLE).delete().eq('endpoint', endpoint);
+                    }
+                    if (typeof showToast === 'function') showToast('Notifications turned off for this device.');
+                } catch (err) {
+                    console.error('Could not turn off push notifications:', err);
+                }
+                updateNotifBtnState();
+            }
+
+            document.addEventListener('click', async (e) => {
+                const btn = e.target.closest('#chatNotifBtn');
+                if (!btn) return;
+                if (Notification.permission === 'denied') {
+                    if (typeof showToast === 'function') showToast('Notifications are blocked for this site — enable them in your browser settings first.');
+                    return;
+                }
+                const sub = await currentSubscription();
+                if (sub) await unsubscribeFromPush();
+                else await subscribeToPush();
+            });
+
+            window.addEventListener('load', () => setTimeout(updateNotifBtnState, 800));
+        })();
     </script>
     <div class="secret-note" id="secretNote" aria-live="polite"><span>you found our little secret ✨</span></div>
     <script>
