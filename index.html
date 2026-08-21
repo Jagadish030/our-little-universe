@@ -21681,23 +21681,15 @@
             if (sessionStorage.getItem(UNLOCK_SESSION_KEY) === '1') {
                 unlockSite({ instant: true });
             }
-        })();
 
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch((err) => {
-                    console.error('Service worker registration failed:', err);
-                });
-            });
-        }
-
-        /* ─── Push notifications ───
-           Lets each person opt in on their own device so the other
-           person's messages can pop a system notification even when
-           the tab/app is closed. Purely additive: if the browser
-           doesn't support push, or permission is denied, chat keeps
-           working exactly as before. */
-        (function() {
+            /* ─── Push notifications ───
+               Lets each person opt in on their own device so the other
+               person's messages can pop a system notification even when
+               the tab/app is closed. Purely additive: if the browser
+               doesn't support push, or permission is denied, chat keeps
+               working exactly as before.
+               This lives inside the main closure (not a separate IIFE)
+               so it can see getIdentity/supabase/myAuthorNum/showToast. */
             const PUSH_TABLE = 'push_subscriptions';
 
             function urlBase64ToUint8Array(base64String) {
@@ -21798,6 +21790,14 @@
 
             window.addEventListener('load', () => setTimeout(updateNotifBtnState, 800));
         })();
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch((err) => {
+                    console.error('Service worker registration failed:', err);
+                });
+            });
+        }
     </script>
     <div class="secret-note" id="secretNote" aria-live="polite"><span>you found our little secret ✨</span></div>
     <script>
