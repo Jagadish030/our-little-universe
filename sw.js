@@ -39,8 +39,11 @@ self.addEventListener('fetch', (event) => {
 });
 
 /* ─── Push notifications ───
-   Fires a system notification when a push arrives (even with the
-   tab/app closed), and handles what happens when it's tapped. */
+   Fires a system notification when a push arrives — but only if
+   nobody's actually looking at the app right now. If a tab is open
+   and focused, the in-app chat (via Realtime) already shows the
+   message, so a system notification on top of that would be
+   redundant/annoying. */
 self.addEventListener('push', (event) => {
   let data = {};
   try {
@@ -59,7 +62,13 @@ self.addEventListener('push', (event) => {
     data: { url: data.url || './' }
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      const isAppFocused = clientList.some((client) => client.focused);
+      if (isAppFocused) return; // someone's already looking at it — skip the notification
+      return self.registration.showNotification(title, options);
+    })
+  );
 });
 
 self.addEventListener('notificationclick', (event) => {
