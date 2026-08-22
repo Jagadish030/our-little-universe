@@ -723,6 +723,8 @@
         .magic-wand-overlay {
             position: fixed;
             inset: 0;
+            height: 100vh;
+            height: 100dvh;
             z-index: 2000;
             background: #05070a;
             overflow: hidden;
@@ -803,10 +805,45 @@
             }
         }
         .mw-start-btn:active { transform: scale(.96); }
+        .mw-start-close-btn {
+            position: absolute;
+            top: max(14px, env(safe-area-inset-top));
+            right: 14px;
+        }
+        .mw-start-gallery-btn {
+            margin-top: 14px;
+            border: 1px solid rgba(255, 255, 255, .3);
+            background: rgba(255, 255, 255, .08);
+            color: #fff;
+            padding: 11px 22px;
+            border-radius: 999px;
+            font-family: 'Quicksand', sans-serif;
+            font-size: .88rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .mw-start-gallery-btn svg { width: 16px;
+            height: 16px;
+            flex-shrink: 0; }
+        @media (hover: hover) {
+            .mw-start-gallery-btn:hover { background: rgba(255, 255, 255, .14); }
+        }
         .mw-start-note {
             margin-top: 16px !important;
             font-size: .78rem !important;
             color: rgba(255, 255, 255, .4) !important;
+        }
+
+        /* Prevents the page underneath from scrolling (and briefly
+           showing through at the edges on mobile) while the overlay
+           is open. */
+        body.mw-scroll-locked {
+            overflow: hidden !important;
+            height: 100vh;
+            height: 100dvh;
         }
 
         .magic-wand-topbar {
@@ -1018,6 +1055,8 @@
         .mw-gallery {
             position: absolute;
             inset: 0;
+            height: 100vh;
+            height: 100dvh;
             z-index: 3;
             background: #0b0d10;
             display: flex;
@@ -1027,77 +1066,104 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: max(14px, env(safe-area-inset-top)) 16px 12px;
+            padding: max(14px, env(safe-area-inset-top)) 16px 14px;
             border-bottom: 1px solid rgba(255, 255, 255, .1);
+            flex-shrink: 0;
         }
-        .mw-gallery-header h3 { margin: 0;
+        .mw-gallery-header h3 {
+            margin: 0;
             color: #fff;
-            font-size: 1.05rem; }
+            font-size: 1.05rem;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
+        }
         .mw-gallery-grid {
             flex: 1;
+            min-height: 0;
             overflow-y: auto;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            padding: 14px;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 16px;
+            padding-bottom: max(24px, env(safe-area-inset-bottom));
+            scrollbar-width: thin;
+            scrollbar-color: var(--rose-deep) transparent;
+        }
+        .mw-gallery-grid::-webkit-scrollbar { width: 5px; }
+        .mw-gallery-grid::-webkit-scrollbar-track { background: transparent; }
+        .mw-gallery-grid::-webkit-scrollbar-thumb {
+            background: var(--rose-deep);
+            opacity: .4;
+            border-radius: 3px;
         }
         .mw-gallery-empty {
-            grid-column: 1 / -1;
             text-align: center;
             color: rgba(255, 255, 255, .5);
-            padding: 40px 20px;
+            padding: 60px 20px;
             font-size: .9rem;
+            line-height: 1.6;
         }
         .mw-creation-card {
-            background: rgba(255, 255, 255, .06);
-            border-radius: 14px;
+            background: rgba(255, 255, 255, .05);
+            border-radius: 18px;
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, .1);
+            flex-shrink: 0;
         }
         .mw-creation-card img, .mw-creation-card video {
             width: 100%;
-            aspect-ratio: 1 / 1;
+            max-height: 46vh;
             object-fit: cover;
             display: block;
+            background: #000;
         }
         .mw-creation-body {
-            padding: 10px;
+            padding: 12px 14px 14px;
             color: #fff;
         }
         .mw-creation-caption {
-            font-size: .82rem;
-            margin: 0 0 6px;
+            font-size: .9rem;
+            margin: 0 0 8px;
             word-break: break-word;
+            line-height: 1.4;
         }
         .mw-creation-reply {
-            font-size: .78rem;
-            color: rgba(255, 255, 255, .6);
-            margin: 0 0 8px;
+            font-size: .82rem;
+            color: rgba(255, 255, 255, .65);
+            margin: 0 0 10px;
             font-style: italic;
             word-break: break-word;
+            background: rgba(255, 255, 255, .06);
+            border-radius: 10px;
+            padding: 8px 10px;
         }
         .mw-creation-reply-input {
             width: 100%;
-            border-radius: 8px;
+            box-sizing: border-box;
+            border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, .25);
             background: rgba(255, 255, 255, .08);
             color: #fff;
-            padding: 6px 8px;
-            font-size: .78rem;
-            margin-bottom: 6px;
+            padding: 8px 10px;
+            font-size: .82rem;
+            margin-bottom: 10px;
         }
         .mw-creation-actions {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, .08);
         }
         .mw-creation-actions button {
             background: none;
             border: none;
-            color: rgba(255, 255, 255, .7);
-            font-size: .95rem;
+            color: rgba(255, 255, 255, .75);
+            font-size: 1.15rem;
             cursor: pointer;
-            padding: 2px 4px;
+            padding: 4px 6px;
+            line-height: 1;
         }
         .mw-creation-actions button.pinned { color: #ffd166; }
 
@@ -1872,7 +1938,20 @@
                 box-shadow: 0 0 0 3px var(--rose-deep);
             }
         }
-        /* ─── Seen ticks, sat right on the bubble ─── */
+        /* ─── Deep-link highlight ───
+           Briefly glows whichever card a notification tap jumps to,
+           so it's obvious which one triggered the notification. */
+        .deep-link-highlight {
+            animation: deepLinkGlow 2.2s ease-out;
+        }
+        @keyframes deepLinkGlow {
+            0% { box-shadow: 0 0 0 4px var(--rose-deep); }
+            100% { box-shadow: 0 0 0 0 transparent; }
+        }
+
+        /* ─── Seen ticks, sat right on the bubble ───
+           Three states: sent (single ✓), delivered (double ✓✓, same
+           muted color as sent), seen (double ✓✓, colored). */
         .chat-bubble-ticks {
             display: inline-flex;
             margin-left: 4px;
@@ -2224,6 +2303,32 @@
             overflow-x: hidden;
             min-height: 100vh;
             overflow-anchor: none;
+        }
+
+        /* ─── Site-wide scrollbar ───
+           Applies the same thin rose scrollbar everywhere by default
+           (main page, any scrollable panel, textarea, etc.) so nothing
+           falls back to a default chunky OS scrollbar. Anything that
+           wants a DIFFERENT look (like fully hidden) still can — a
+           more specific selector declared after this always wins. */
+        html {
+            scrollbar-width: thin;
+            scrollbar-color: var(--rose-deep) transparent;
+        }
+        *::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        *::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        *::-webkit-scrollbar-thumb {
+            background: var(--rose-deep);
+            opacity: .35;
+            border-radius: 3px;
+        }
+        *::-webkit-scrollbar-thumb:hover {
+            opacity: .55;
         }
 
         .pass-gate {
@@ -10328,6 +10433,9 @@
             <canvas id="mwCanvas"></canvas>
 
             <div class="mw-start-screen" id="mwStartScreen">
+                <button type="button" class="mw-icon-btn mw-start-close-btn" id="mwStartCloseBtn" aria-label="Close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
                 <div class="mw-start-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20L15 9"/><path d="M17.5 6.5l1 1"/><path d="M13 3l1 1"/><path d="M19 9l1 1"/><path d="M20 3l.6 1.4L22 5l-1.4.6L20 7l-.6-1.4L18 5l1.4-.6L20 3z"/></svg>
                 </div>
@@ -10336,6 +10444,10 @@
                 <button type="button" class="mw-start-btn" id="mwStartBtn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20L15 9"/><path d="M17.5 6.5l1 1"/><path d="M13 3l1 1"/><path d="M19 9l1 1"/></svg>
                     Start Camera
+                </button>
+                <button type="button" class="mw-start-gallery-btn" id="mwStartGalleryBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6" fill="#fff" stroke="none"/><path d="M3 16l5-5 4 4 3-3 6 6"/></svg>
+                    View saved creations
                 </button>
                 <p class="mw-start-note">You can save your favorite creations as a photo or a short video.</p>
             </div>
@@ -10589,8 +10701,8 @@
                         <button id="bucketToggleBtn" type="button" class="notif-host">✨ Our Bucket List<span class="notif-cloud notif-cloud-inline" id="bucketNotifCloud"><span class="cloud-stem"></span><span class="cloud-body"><span class="notif-name"></span></span></span></button>
                         <button id="constellationToggleBtn" type="button">✦ Memory Constellation</button>
                         <button id="gamesToggleBtn" type="button">🎮 Mini Games</button>
-                        <button id="specialDaysToggleBtn" type="button">🎀 Special Days</button>
                         <button id="magicWandToggleBtn" type="button">🪄 Magic Wand</button>
+                        <button id="specialDaysToggleBtn" type="button">🎀 Special Days</button>
                     </div>
                 </div>
             </div>
@@ -12416,6 +12528,7 @@
                 notes.forEach(note => {
                     const wrap = document.createElement('div');
                     wrap.className = 'note-wrap';
+                    wrap.dataset.id = note.id;
                     wrap.style.setProperty('--nt', (Math.random() * 6 - 3).toFixed(1) + 'deg');
                     const dateLabel = note.created_at ? new Date(note.created_at).toLocaleDateString(undefined, {
                         month: 'short',
@@ -13274,6 +13387,7 @@
                     const wrap = document.createElement('div');
                     wrap.className = 'doodle-wrap' + ((!isFirstRender && !knownDoodleIds.has(d.id)) ?
                         ' doodle-wrap-enter' : '');
+                    wrap.dataset.id = d.id;
                     wrap.style.setProperty('--nt', (Math.random() * 6 - 3).toFixed(1) + 'deg');
                     const author = String(d.author || 1),
                         date = d.created_at ? new Date(d.created_at).toLocaleDateString(undefined, { month: 'short',
@@ -17253,6 +17367,7 @@
             function renderAngerEntry(entry) {
                 const card = document.createElement('div');
                 card.className = 'anger-entry';
+                card.dataset.id = entry.id;
                 const hasReply = !!(entry.cooldown_text || entry.cooldown_audio_url);
                 card.innerHTML = `
                 <button type="button" class="anger-entry-delete" aria-label="Delete entry">✕</button>
@@ -19499,6 +19614,7 @@
             function buildPolaroid(photo, index, animate) {
                 const wrap = document.createElement('div');
                 wrap.className = 'polaroid-wrap';
+                wrap.dataset.id = photo.id;
                 wrap.style.setProperty('--tilt', randomTilt());
                 const isScheduleLocked = isPhotoLocked(photo);
                 const isScratchHidden = photo.surprise && !photo.revealed;
@@ -20771,6 +20887,8 @@
                 if (mine) {
                     ticksHtml = msg.read_by_recipient ?
                         '<span class="chat-bubble-ticks seen" title="Seen">✓✓</span>' :
+                        msg.delivered_at ?
+                        '<span class="chat-bubble-ticks" title="Delivered">✓✓</span>' :
                         '<span class="chat-bubble-ticks" title="Sent">✓</span>';
                 }
                 const metaHtml = !grouped ?
@@ -22321,6 +22439,8 @@
                 const ctx = canvas.getContext('2d');
                 const startScreen = document.getElementById('mwStartScreen');
                 const startBtn = document.getElementById('mwStartBtn');
+                const startCloseBtn = document.getElementById('mwStartCloseBtn');
+                const startGalleryBtn = document.getElementById('mwStartGalleryBtn');
                 const topbar = document.getElementById('mwTopbar');
                 const closeBtn = document.getElementById('mwCloseBtn');
                 const galleryBtn = document.getElementById('mwGalleryBtn');
@@ -22350,6 +22470,7 @@
                 let stars = []; // constellation points: {x,y,born,vx,vy}
                 let cover = null; // {scale, offsetX, offsetY, dispW, dispH} for the current video/canvas fit
                 let lastLandmarks = null; // most recent 21-point hand landmarks, for the skeleton overlay
+                let cameraStarted = false; // false until Start Camera succeeds — lets the gallery be opened straight from the start screen without a camera prompt
 
                 /* ─── Gesture recognition ───
                    MediaPipe hands returns 21 landmarks for ANY hand
@@ -22853,6 +22974,7 @@
 
                     topbar.classList.remove('hidden');
                     bottomControls.classList.remove('hidden');
+                    cameraStarted = true;
                     hint.textContent = 'Point to draw · Hold your fist to light stars · Open your hand to clear';
 
                     try {
@@ -22879,12 +23001,14 @@
 
                 function openWand() {
                     overlay.hidden = false;
+                    document.body.classList.add('mw-scroll-locked');
                     particles = [];
                     stars = [];
                     clearing = false;
                     dwellPos = null;
                     fistLitIndex = 0;
                     lastLandmarks = null;
+                    cameraStarted = false;
                     startScreen.classList.remove('hidden');
                     topbar.classList.add('hidden');
                     bottomControls.classList.add('hidden');
@@ -22906,11 +23030,13 @@
                 function closeWand() {
                     stopCameraAndTracking();
                     overlay.hidden = true;
+                    document.body.classList.remove('mw-scroll-locked');
                 }
 
                 toggleBtn.addEventListener('click', openWand);
                 startBtn.addEventListener('click', startCamera);
                 closeBtn.addEventListener('click', closeWand);
+                startCloseBtn.addEventListener('click', closeWand);
                 clearBtn.addEventListener('click', () => { particles = [];
                     stars = [];
                     clearing = false;
@@ -23089,12 +23215,129 @@
                     }
                 }
 
-                galleryBtn.addEventListener('click', () => {
+                function openGallery() {
+                    startScreen.classList.add('hidden');
                     gallery.classList.remove('hidden');
                     loadGallery();
+                }
+                galleryBtn.addEventListener('click', openGallery);
+                startGalleryBtn.addEventListener('click', openGallery);
+                galleryBackBtn.addEventListener('click', () => {
+                    gallery.classList.add('hidden');
+                    if (!cameraStarted) startScreen.classList.remove('hidden');
                 });
-                galleryBackBtn.addEventListener('click', () => gallery.classList.add('hidden'));
             })();
+
+            /* ─── Notification deep-link routing ───
+               Opens the right section (and, for replies, the right
+               specific card's reply view) when a push notification is
+               tapped. Two delivery paths:
+               1. App already open in a tab — the service worker
+                  postMessages us directly (see sw.js), no reload.
+               2. App opened FRESH from a notification (no tab open
+                  yet) — we read the same info back out of the URL's
+                  query string once, on load. */
+            function scrollAndOpenCard(container, id, wantReply, flipSelector) {
+                if (!container || !id) return;
+                let attempts = 0;
+                const tryFind = () => {
+                    attempts++;
+                    const card = container.querySelector(`[data-id="${CSS.escape(String(id))}"]`);
+                    if (card) {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        if (flipSelector) {
+                            const flipEl = card.querySelector(flipSelector) || card;
+                            flipEl.classList.add('flipped');
+                            if (wantReply) {
+                                const backPanels = card.querySelector('.back-panels');
+                                if (backPanels) backPanels.classList.add('showing-reply');
+                            }
+                        }
+                        card.classList.add('deep-link-highlight');
+                        setTimeout(() => card.classList.remove('deep-link-highlight'), 2200);
+                        return;
+                    }
+                    if (attempts < 25) setTimeout(tryFind, 200);
+                };
+                tryFind();
+            }
+
+            function handleNotificationDeepLink({ scope, id, reply }) {
+                if (!scope) return;
+                const wantReply = reply === true || reply === '1' || reply === 1;
+
+                if (scope === 'chat') {
+                    if (chatPanel.classList.contains('hidden')) chatFabBtn.click();
+                    return;
+                }
+
+                if (scope === 'notes') {
+                    if (notesWall.classList.contains('hidden')) {
+                        notesWall.classList.remove('hidden');
+                        scrollToSection(notesWall);
+                        if (!notesLoaded) { notesLoaded = true;
+                            loadNotes(); }
+                        enterScope('notes');
+                    }
+                    if (id) scrollAndOpenCard(notesWall, id, wantReply, '.note-flip');
+                    return;
+                }
+
+                if (scope === 'doodles') {
+                    if (doodlesWall.classList.contains('hidden')) {
+                        notesWall.classList.add('hidden');
+                        doodlesWall.classList.remove('hidden');
+                        scrollToSection(doodlesWall);
+                        enterScope('doodles');
+                        if (!doodlesLoaded) { doodlesLoaded = true;
+                            loadDoodles(); }
+                    }
+                    if (id) scrollAndOpenCard(doodlesWall, id, wantReply, '.doodle-flip');
+                    return;
+                }
+
+                if (scope === 'mood') {
+                    openExtra(moodsWall, 'mood');
+                    loadMoods();
+                    return;
+                }
+
+                if (scope === 'bucket') {
+                    openExtra(bucketWall, 'bucket');
+                    loadBucket();
+                    return;
+                }
+
+                if (scope === 'memories') {
+                    if (id) scrollAndOpenCard(document, id, wantReply, '.polaroid');
+                    return;
+                }
+
+                if (scope === 'fight') {
+                    glassModal.classList.add('hidden');
+                    angerHistoryModal.classList.remove('hidden');
+                    loadAngerHistory();
+                    enterScope('fight');
+                    document.getElementById('breakGlassBtn')?.classList.remove('is-cracked');
+                    if (id) scrollAndOpenCard(angerHistoryList, id, false, null);
+                    return;
+                }
+            }
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    if (event.data && event.data.type === 'mw-deep-link') handleNotificationDeepLink(event.data);
+                });
+            }
+            window.addEventListener('load', () => {
+                const params = new URLSearchParams(window.location.search);
+                const scope = params.get('open');
+                if (!scope) return;
+                setTimeout(() => {
+                    handleNotificationDeepLink({ scope, id: params.get('id'), reply: params.get('reply') === '1' });
+                    window.history.replaceState({}, '', window.location.pathname);
+                }, 600); // let the app's own init() finish first
+            });
         })();
 
         if ('serviceWorker' in navigator) {

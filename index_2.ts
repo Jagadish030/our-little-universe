@@ -2,12 +2,8 @@
 //
 // Triggered by Database Webhooks on UPDATE for: memories, love_notes,
 // doodles, and anger_log. Notifies the ORIGINAL author when their
-// partner replies to or reacts on the thing they posted — the
-// opposite direction from send-activity-push, which notifies about
-// the original post itself.
-//
-// Uses the SAME secrets as the other two push functions — no new
-// secrets needed.
+// partner replies to or reacts on the thing they posted, and tells
+// the frontend to open straight to that specific item's reply view.
 
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -15,7 +11,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY")!;
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")!;
 const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") || "mailto:example@example.com";
-const SITE_URL = Deno.env.get("SITE_URL") || "/";
+const SITE_URL = (Deno.env.get("SITE_URL") || "/").replace(/\/$/, "");
 
 webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
@@ -33,6 +29,16 @@ function otherAuthorNum(n: number) {
 }
 function letterFor(n: number) {
     return n === 2 ? "M" : "J";
+}
+// Same scope keys the frontend already uses for enterScope()/lastSeenFor().
+function scopeFor(table: string): string {
+    switch (table) {
+        case "memories": return "memories";
+        case "love_notes": return "notes";
+        case "doodles": return "doodles";
+        case "anger_log": return "fight";
+        default: return table;
+    }
 }
 
 type ResponseEvent = { recipient: number; title: string; body: string; tagSuffix: string };
@@ -97,12 +103,21 @@ function describeResponseEvents(
     return events;
 }
 
-async function sendToAuthor(recipient: number, title: string, body: string, tag: string) {
+async function sendToAuthor(recipient: number, title: string, body: string, tag: string, scope: string, id: unknown) {
     const { data: subs, error } = await supabase.from("push_subscriptions").select("*").eq("author", recipient);
     if (error) throw error;
     if (!subs || subs.length === 0) return;
 
-    const notificationPayload = JSON.stringify({ title, body, url: SITE_URL, tag, alwaysShow: true });
+    const notificationPayload = JSON.stringify({
+        title,
+        body,
+        url: `${SITE_URL}/?open=${scope}&id=${id}&reply=1`,
+        scope,
+        id,
+        reply: true,
+        tag,
+        alwaysShow: true,
+    });
 
     await Promise.all(
         subs.map(async (sub) => {
@@ -129,9 +144,10 @@ Deno.serve(async (req) => {
             return new Response("ignored", { status: 200 });
         }
 
+        const scope = scopeFor(table);
         const events = describeResponseEvents(table, record, old_record);
         for (const ev of events) {
-            await sendToAuthor(ev.recipient, ev.title, ev.body, `response-${table}-${ev.tagSuffix}-${record.id}`);
+            await sendToAuthor(ev.recipient, ev.title, ev.body, `response-${table}-${ev.tagSuffix}-${record.id}`, scope, record.id);
         }
 
         return new Response("sent", { status: 200 });

@@ -1,18 +1,10 @@
 // Supabase Edge Function: send-chat-push
 //
 // Triggered by a Database Webhook on chat_messages INSERT.
-// Looks up the recipient's saved push subscription(s) and sends them
-// a system notification via the Web Push protocol.
-//
-// Required secrets (set with `supabase secrets set`, see the setup
-// guide for the exact commands):
-//   VAPID_PUBLIC_KEY
-//   VAPID_PRIVATE_KEY
-//   VAPID_SUBJECT        (e.g. "mailto:you@example.com")
-//   SUPABASE_URL              (already provided automatically)
-//   SUPABASE_SERVICE_ROLE_KEY (already provided automatically)
-//   SITE_URL              (optional, e.g. "https://yoursite.com" — used
-//                          so tapping a notification opens the right page)
+// Looks up the recipient's saved push subscription(s), sends them a
+// system notification via the Web Push protocol, and marks the
+// message as "delivered" (for the double-tick) once the push service
+// has accepted it.
 
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -20,7 +12,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY")!;
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")!;
 const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") || "mailto:example@example.com";
-const SITE_URL = Deno.env.get("SITE_URL") || "/";
+const SITE_URL = (Deno.env.get("SITE_URL") || "/").replace(/\/$/, "");
 
 webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
@@ -65,9 +57,12 @@ Deno.serve(async (req) => {
         const notificationPayload = JSON.stringify({
             title: `${senderLetter} sent a message`,
             body: messagePreview(record),
-            url: SITE_URL,
+            url: `${SITE_URL}/?open=chat`,
+            scope: "chat",
             tag: "chat-message",
         });
+
+        let anySuccess = false;
 
         await Promise.all(
             subs.map(async (sub) => {
@@ -77,6 +72,7 @@ Deno.serve(async (req) => {
                 };
                 try {
                     await webpush.sendNotification(pushSubscription, notificationPayload);
+                    anySuccess = true;
                 } catch (err: unknown) {
                     const statusCode = (err as { statusCode?: number })?.statusCode;
                     // 404/410 = the browser revoked or expired this
@@ -89,6 +85,20 @@ Deno.serve(async (req) => {
                 }
             })
         );
+
+        // The push service accepted the notification for delivery —
+        // that's the closest thing to "it reached her device" we can
+        // confirm from the server side, so this is what lights up the
+        // (plain, uncolored) double tick. Being SEEN — the colored
+        // double tick — stays a separate, client-side update for
+        // whenever she actually opens the chat.
+        if (anySuccess) {
+            await supabase
+                .from("chat_messages")
+                .update({ delivered_at: new Date().toISOString() })
+                .eq("id", record.id)
+                .is("delivered_at", null);
+        }
 
         return new Response("sent", { status: 200 });
     } catch (err) {

@@ -1,12 +1,10 @@
 // Supabase Edge Function: send-activity-push
 //
 // Triggered by Database Webhooks on INSERT for: memories, love_notes,
-// doodles, and anger_log. One shared function — it looks at
-// payload.table to decide what happened and who should be notified.
-//
-// Uses the SAME secrets as send-chat-push (VAPID_PUBLIC_KEY,
-// VAPID_PRIVATE_KEY, VAPID_SUBJECT, SITE_URL) — no new secrets needed
-// since they're set per-project, not per-function.
+// doodles, bucket_list, daily_moods, and anger_log. One shared
+// function — it looks at payload.table to decide what happened, who
+// should be notified, and which screen tapping the notification
+// should open.
 
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -14,7 +12,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY")!;
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")!;
 const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") || "mailto:example@example.com";
-const SITE_URL = Deno.env.get("SITE_URL") || "/";
+const SITE_URL = (Deno.env.get("SITE_URL") || "/").replace(/\/$/, "");
 
 webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
@@ -37,6 +35,21 @@ function otherAuthorNum(n: number) {
 
 function letterFor(n: number) {
     return n === 2 ? "M" : "J";
+}
+
+// The scope name the FRONTEND uses to know which section to open —
+// must match the scope keys already used by enterScope()/lastSeenFor()
+// on the site (notes, doodles, mood, bucket, memories, fight).
+function scopeFor(table: string): string | null {
+    switch (table) {
+        case "memories": return "memories";
+        case "love_notes": return "notes";
+        case "doodles": return "doodles";
+        case "bucket_list": return "bucket";
+        case "daily_moods": return "mood";
+        case "anger_log": return "fight";
+        default: return null;
+    }
 }
 
 // Builds the { title, body } for each table. Returns null for a
@@ -88,6 +101,7 @@ Deno.serve(async (req) => {
         if (!event) return new Response("unrecognized table", { status: 200 });
 
         const recipient = recipientAuthorNum(table, record);
+        const scope = scopeFor(table);
 
         const { data: subs, error } = await supabase
             .from("push_subscriptions")
@@ -100,7 +114,9 @@ Deno.serve(async (req) => {
         const notificationPayload = JSON.stringify({
             title: event.title,
             body: event.body,
-            url: SITE_URL,
+            url: `${SITE_URL}/?open=${scope}&id=${record.id}`,
+            scope,
+            id: record.id,
             tag: `activity-${table}`,
             alwaysShow: true,
         });
