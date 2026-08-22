@@ -1082,11 +1082,11 @@
             min-height: 0;
             overflow-y: auto;
             overflow-x: hidden;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 3px;
-            padding: 3px;
-            padding-bottom: max(16px, env(safe-area-inset-bottom));
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 16px;
+            padding-bottom: max(24px, env(safe-area-inset-bottom));
             scrollbar-width: thin;
             scrollbar-color: var(--rose-deep) transparent;
         }
@@ -1098,134 +1098,79 @@
             border-radius: 3px;
         }
         .mw-gallery-empty {
-            grid-column: 1 / -1;
             text-align: center;
             color: rgba(255, 255, 255, .5);
             padding: 60px 20px;
             font-size: .9rem;
             line-height: 1.6;
         }
-        .mw-creation-thumb {
-            position: relative;
-            display: block;
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            border: none;
-            padding: 0;
-            margin: 0;
-            border-radius: 6px;
+        .mw-creation-card {
+            background: rgba(255, 255, 255, .05);
+            border-radius: 18px;
             overflow: hidden;
-            background: #14161b;
-            cursor: pointer;
-            transition: transform .18s cubic-bezier(.34, 1.56, .64, 1), filter .18s ease;
+            border: 1px solid rgba(255, 255, 255, .1);
+            flex-shrink: 0;
         }
-        .mw-creation-thumb img, .mw-creation-thumb video {
+        .mw-creation-media-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            background: #000;
+            cursor: zoom-in;
+        }
+        .mw-creation-media-wrap img, .mw-creation-media-wrap video {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: block;
-            pointer-events: none;
         }
-        @media (hover: hover) {
-            .mw-creation-thumb:hover {
-                transform: scale(1.03);
-                filter: brightness(1.08);
-                z-index: 1;
-            }
-        }
-        .mw-creation-thumb:active { transform: scale(.96); }
-        .mw-thumb-badge {
+        .mw-creation-media-wrap .mw-thumb-badge {
             position: absolute;
-            width: 22px;
-            height: 22px;
+            width: 26px;
+            height: 26px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            background: rgba(0, 0, 0, .5);
+            background: rgba(0, 0, 0, .55);
             backdrop-filter: blur(3px);
             pointer-events: none;
         }
-        .mw-thumb-badge svg { width: 12px;
-            height: 12px; }
-        .mw-thumb-pin {
-            top: 6px;
-            right: 6px;
-            color: #ffd166;
-        }
-        .mw-thumb-video {
-            bottom: 6px;
-            right: 6px;
-            color: #fff;
-        }
+        .mw-creation-media-wrap .mw-thumb-badge svg { width: 13px;
+            height: 13px; }
+        .mw-thumb-video { bottom: 8px;
+            right: 8px;
+            color: #fff; }
 
-        /* ─── Lightbox ─── */
+        /* ─── Fullscreen media viewer ───
+           Bare-bones on purpose: tapping a card's photo/video opens
+           this with nothing but the media itself, edge to edge — no
+           caption, no buttons, no top bar. Tap it again to leave. */
         .mw-lightbox {
             position: absolute;
             inset: 0;
             z-index: 4;
-            background: #05070a;
+            background: #000;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-out;
         }
         .mw-lightbox.hidden { display: none; }
-        .mw-lightbox-topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: max(14px, env(safe-area-inset-top)) 14px 10px;
-            flex-shrink: 0;
-        }
-        .mw-lightbox-media {
-            flex: 1;
-            min-height: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            padding: 0 8px;
-        }
+        .mw-lightbox-media { max-width: 100%;
+            max-height: 100%; }
         .mw-lightbox-media img, .mw-lightbox-media video {
-            max-width: 100%;
-            max-height: 100%;
+            display: block;
+            max-width: 100vw;
+            max-height: 100vh;
             object-fit: contain;
-            border-radius: 10px;
         }
-        .mw-lightbox-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, .25);
-            background: rgba(20, 22, 28, .55);
-            backdrop-filter: blur(8px);
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), background .2s ease;
+
+        .mw-creation-date {
+            font-size: .74rem;
+            color: rgba(255, 255, 255, .45);
+            margin: 0 0 8px;
         }
-        .mw-lightbox-nav svg { width: 18px;
-            height: 18px; }
-        .mw-lightbox-nav.prev { left: 10px; }
-        .mw-lightbox-nav.next { right: 10px; }
-        @media (hover: hover) {
-            .mw-lightbox-nav:hover { background: rgba(255, 255, 255, .16);
-                transform: translateY(-50%) scale(1.08); }
-        }
-        .mw-lightbox-nav:active { transform: translateY(-50%) scale(.9); }
-        .mw-lightbox-nav[disabled] { opacity: .25;
-            pointer-events: none; }
-        .mw-lightbox-body {
-            flex-shrink: 0;
-            padding: 12px 18px max(16px, env(safe-area-inset-bottom));
-            color: #fff;
-        }
-        .mw-lightbox-body .mw-creation-caption { color: #fff; }
-        .mw-lightbox-body .mw-creation-reply { color: rgba(255, 255, 255, .65); }
 
         .mw-creation-body {
             padding: 12px 14px 14px;
@@ -1260,21 +1205,44 @@
         }
         .mw-creation-actions {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 8px;
+            gap: 10px;
+            padding-top: 10px;
             border-top: 1px solid rgba(255, 255, 255, .08);
         }
-        .mw-creation-actions button {
-            background: none;
-            border: none;
-            color: rgba(255, 255, 255, .75);
-            font-size: 1.15rem;
+        .mw-pill-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border: 1px solid rgba(255, 255, 255, .25);
+            background: rgba(255, 255, 255, .06);
+            color: #fff;
+            border-radius: 999px;
+            padding: 9px 14px;
+            font-family: 'Quicksand', sans-serif;
+            font-size: .82rem;
+            font-weight: 600;
             cursor: pointer;
-            padding: 4px 6px;
-            line-height: 1;
+            transition: transform .18s cubic-bezier(.34, 1.56, .64, 1), background .18s ease, border-color .18s ease, box-shadow .18s ease;
         }
-        .mw-creation-actions button.pinned { color: #ffd166; }
+        .mw-pill-btn svg { width: 14px;
+            height: 14px;
+            flex-shrink: 0; }
+        .mw-delete-btn:hover, .mw-delete-btn:active { color: #ff8a8f; }
+        @media (hover: hover) {
+            .mw-pill-btn:hover {
+                transform: translateY(-2px);
+                background: rgba(255, 255, 255, .14);
+                border-color: rgba(255, 255, 255, .5);
+            }
+            .mw-delete-btn:hover {
+                background: rgba(229, 72, 77, .16);
+                border-color: rgba(229, 72, 77, .5);
+            }
+        }
+        .mw-pill-btn:active { transform: scale(.95); }
+
 
         /* ─── Chat ───
            A side icon that's always present (unlike the compliment
@@ -10614,21 +10582,7 @@
             </div>
 
             <div class="mw-lightbox hidden" id="mwLightbox">
-                <div class="mw-lightbox-topbar">
-                    <span></span>
-                    <button type="button" class="mw-icon-btn" id="mwLightboxCloseBtn" aria-label="Close">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-                    </button>
-                </div>
-                <div class="mw-lightbox-media" id="mwLightboxMedia">
-                    <button type="button" class="mw-lightbox-nav prev" id="mwLightboxPrevBtn" aria-label="Previous">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
-                    </button>
-                    <button type="button" class="mw-lightbox-nav next" id="mwLightboxNextBtn" aria-label="Next">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
-                    </button>
-                </div>
-                <div class="mw-lightbox-body" id="mwLightboxBody"></div>
+                <div class="mw-lightbox-media" id="mwLightboxMedia"></div>
             </div>
         </div>
         <div class="chat-panel hidden" id="chatPanel" role="dialog" aria-label="Chat">
@@ -22576,10 +22530,6 @@
                 const galleryGrid = document.getElementById('mwGalleryGrid');
                 const lightbox = document.getElementById('mwLightbox');
                 const lightboxMedia = document.getElementById('mwLightboxMedia');
-                const lightboxBody = document.getElementById('mwLightboxBody');
-                const lightboxCloseBtn = document.getElementById('mwLightboxCloseBtn');
-                const lightboxPrevBtn = document.getElementById('mwLightboxPrevBtn');
-                const lightboxNextBtn = document.getElementById('mwLightboxNextBtn');
                 const hint = document.getElementById('mwHint');
                 const bottomControls = document.getElementById('mwBottomControls');
                 const clearBtn = document.getElementById('mwClearBtn');
@@ -23278,28 +23228,85 @@
 
                 /* ─── Gallery ─── */
                 let galleryData = [];
-                let lightboxIndex = -1;
 
-                function creationThumbHtml(item) {
+                function formatCreationDate(iso) {
+                    if (!iso) return '';
+                    const d = new Date(iso);
+                    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) +
+                        ' · ' + d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+                }
+
+                function extFromUrl(url, fallback) {
+                    try {
+                        const m = new URL(url).pathname.match(/\.([a-zA-Z0-9]+)$/);
+                        return m ? m[1] : fallback;
+                    } catch (e) { return fallback; }
+                }
+
+                async function saveCreationToPhone(item, btn) {
+                    const original = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = 'Saving…';
+                    try {
+                        const res = await fetch(item.media_url);
+                        const blob = await res.blob();
+                        const ext = extFromUrl(item.media_url, item.kind === 'video' ? 'webm' : 'jpg');
+                        const a = document.createElement('a');
+                        const url = URL.createObjectURL(blob);
+                        a.href = url;
+                        a.download = `magic-wand-${item.id}.${ext}`;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        URL.revokeObjectURL(url);
+                    } catch (err) {
+                        console.error('Could not save creation, opening it in a new tab instead:', err);
+                        window.open(item.media_url, '_blank');
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = original;
+                    }
+                }
+
+                function creationCardHtml(item) {
                     const isVideo = item.kind === 'video';
                     const media = isVideo ?
                         `<video src="${escapeHtml(item.media_url)}" muted playsinline preload="metadata"></video>` :
                         `<img src="${escapeHtml(item.media_url)}" alt="A magic wand creation" loading="lazy">`;
+                    const canReply = Number(item.author) !== myAuthorNum();
                     return `
-                        <button type="button" class="mw-creation-thumb" data-id="${item.id}">
-                            ${media}
-                            ${isVideo ? `<span class="mw-thumb-badge mw-thumb-video"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>` : ''}
-                            ${item.pinned ? `<span class="mw-thumb-badge mw-thumb-pin"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.86L12 17.77l-6.18 3.23L7 14.14 2 9.27l7.1-1.01z"/></svg></span>` : ''}
-                        </button>`;
+                        <div class="mw-creation-card" data-id="${item.id}">
+                            <div class="mw-creation-media-wrap">
+                                ${media}
+                                ${isVideo ? `<span class="mw-thumb-badge mw-thumb-video"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>` : ''}
+                            </div>
+                            <div class="mw-creation-body">
+                                ${item.created_at ? `<p class="mw-creation-date">${formatCreationDate(item.created_at)}</p>` : ''}
+                                ${item.caption ? `<p class="mw-creation-caption">${escapeHtml(item.caption)}</p>` : ''}
+                                ${item.reply ? `<p class="mw-creation-reply">💬 ${escapeHtml(item.reply)}</p>` : (canReply ?
+                                    `<input type="text" class="mw-creation-reply-input" placeholder="Leave a reply…" maxlength="200">` :
+                                    '')}
+                                <div class="mw-creation-actions">
+                                    <button type="button" class="mw-pill-btn mw-delete-btn">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4.5A1.5 1.5 0 0110.5 3h3A1.5 1.5 0 0115 4.5V7"/><path d="M6 7l1 13a1.5 1.5 0 001.5 1.4h7a1.5 1.5 0 001.5-1.4l1-13"/></svg>
+                                        Unpin
+                                    </button>
+                                    <button type="button" class="mw-pill-btn mw-save-btn">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 19h14"/></svg>
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`;
                 }
 
                 async function loadGallery() {
                     galleryGrid.innerHTML = '<div class="mw-gallery-empty">Loading…</div>';
                     if (!supabase) return;
                     try {
-                        const { data, error } = await supabase.from(MW_TABLE).select('*').order('pinned', {
+                        const { data, error } = await supabase.from(MW_TABLE).select('*').order('created_at', {
                             ascending: false
-                        }).order('created_at', { ascending: false });
+                        });
                         if (error) throw error;
                         galleryData = data || [];
                         if (!galleryData.length) {
@@ -23307,9 +23314,37 @@
                                 '<div class="mw-gallery-empty">No creations saved yet — cast a spell and tap 📸 or ⏺️ to save one!</div>';
                             return;
                         }
-                        galleryGrid.innerHTML = galleryData.map(creationThumbHtml).join('');
-                        galleryGrid.querySelectorAll('.mw-creation-thumb').forEach((thumb, i) => {
-                            thumb.addEventListener('click', () => openLightbox(i));
+                        galleryGrid.innerHTML = galleryData.map(creationCardHtml).join('');
+                        galleryGrid.querySelectorAll('.mw-creation-card').forEach((card) => {
+                            const id = card.dataset.id;
+                            const item = galleryData.find(d => String(d.id) === id);
+                            const mediaWrap = card.querySelector('.mw-creation-media-wrap');
+                            const deleteBtn = card.querySelector('.mw-delete-btn');
+                            const saveBtn = card.querySelector('.mw-save-btn');
+                            const replyInput = card.querySelector('.mw-creation-reply-input');
+
+                            mediaWrap.addEventListener('click', () => openLightbox(item));
+                            deleteBtn.addEventListener('click', async () => {
+                                if (!confirm('Remove this creation? This can\'t be undone.')) return;
+                                deleteBtn.disabled = true;
+                                await supabase.storage.from(MW_BUCKET).remove([item.media_path]);
+                                const { error } = await supabase.from(MW_TABLE).delete().eq('id', item.id);
+                                if (!error) loadGallery();
+                                else deleteBtn.disabled = false;
+                            });
+                            saveBtn.addEventListener('click', () => saveCreationToPhone(item, saveBtn));
+                            if (replyInput) {
+                                replyInput.addEventListener('keydown', async (e) => {
+                                    if (e.key !== 'Enter') return;
+                                    const val = replyInput.value.trim();
+                                    if (!val) return;
+                                    replyInput.disabled = true;
+                                    const { error } = await supabase.from(MW_TABLE).update({ reply: val }).eq('id',
+                                        item.id);
+                                    if (!error) loadGallery();
+                                    else replyInput.disabled = false;
+                                });
+                            }
                         });
                     } catch (err) {
                         console.error('Could not load Magic Wand gallery:', err);
@@ -23317,11 +23352,11 @@
                     }
                 }
 
-                function renderLightbox() {
-                    const item = galleryData[lightboxIndex];
-                    if (!item) return;
+                // Bare fullscreen viewer — media only, nothing else. Tap
+                // it anywhere to leave.
+                function openLightbox(item) {
                     const isVideo = item.kind === 'video';
-                    lightboxMedia.querySelectorAll('img, video').forEach(el => el.remove());
+                    lightboxMedia.innerHTML = '';
                     const mediaEl = document.createElement(isVideo ? 'video' : 'img');
                     if (isVideo) {
                         mediaEl.src = item.media_url;
@@ -23334,71 +23369,16 @@
                         mediaEl.alt = 'A magic wand creation';
                     }
                     lightboxMedia.appendChild(mediaEl);
-
-                    const canReply = Number(item.author) !== myAuthorNum();
-                    lightboxBody.innerHTML = `
-                        ${item.caption ? `<p class="mw-creation-caption">${escapeHtml(item.caption)}</p>` : ''}
-                        ${item.reply ? `<p class="mw-creation-reply">💬 ${escapeHtml(item.reply)}</p>` : (canReply ?
-                            `<input type="text" class="mw-creation-reply-input" placeholder="Leave a reply…" maxlength="200">` :
-                            '')}
-                        <div class="mw-creation-actions">
-                            <button type="button" class="mw-pin-btn ${item.pinned ? 'pinned' : ''}" title="${item.pinned ? 'Unpin' : 'Pin'}">${item.pinned ? '★' : '☆'}</button>
-                            <button type="button" class="mw-delete-btn" title="Delete">🗑️</button>
-                        </div>`;
-
-                    const pinBtn = lightboxBody.querySelector('.mw-pin-btn');
-                    const delBtn = lightboxBody.querySelector('.mw-delete-btn');
-                    const replyInput = lightboxBody.querySelector('.mw-creation-reply-input');
-
-                    pinBtn.addEventListener('click', async () => {
-                        const { error } = await supabase.from(MW_TABLE).update({ pinned: !item.pinned }).eq('id',
-                            item.id);
-                        if (!error) { await loadGallery();
-                            lightboxIndex = galleryData.findIndex(d => String(d.id) === String(item.id));
-                            if (lightboxIndex === -1) closeLightbox();
-                            else renderLightbox(); }
-                    });
-                    delBtn.addEventListener('click', async () => {
-                        if (!confirm('Delete this creation?')) return;
-                        await supabase.storage.from(MW_BUCKET).remove([item.media_path]);
-                        const { error } = await supabase.from(MW_TABLE).delete().eq('id', item.id);
-                        if (!error) { await loadGallery();
-                            if (!galleryData.length) closeLightbox();
-                            else { lightboxIndex = Math.min(lightboxIndex, galleryData.length - 1);
-                                renderLightbox(); } }
-                    });
-                    if (replyInput) {
-                        replyInput.addEventListener('keydown', async (e) => {
-                            if (e.key !== 'Enter') return;
-                            const val = replyInput.value.trim();
-                            if (!val) return;
-                            replyInput.disabled = true;
-                            const { error } = await supabase.from(MW_TABLE).update({ reply: val }).eq('id', item.id);
-                            if (!error) { await loadGallery();
-                                renderLightbox(); } else replyInput.disabled = false;
-                        });
-                    }
-
-                    lightboxPrevBtn.disabled = lightboxIndex <= 0;
-                    lightboxNextBtn.disabled = lightboxIndex >= galleryData.length - 1;
-                }
-
-                function openLightbox(index) {
-                    lightboxIndex = index;
-                    renderLightbox();
                     lightbox.classList.remove('hidden');
                 }
 
                 function closeLightbox() {
                     lightbox.classList.add('hidden');
                     lightboxMedia.querySelectorAll('video').forEach(v => v.pause());
+                    lightboxMedia.innerHTML = '';
                 }
 
-                lightboxCloseBtn.addEventListener('click', closeLightbox);
-                lightboxPrevBtn.addEventListener('click', () => { if (lightboxIndex > 0) openLightbox(lightboxIndex -
-                    1); });
-                lightboxNextBtn.addEventListener('click', () => { if (lightboxIndex < galleryData.length - 1)
-                    openLightbox(lightboxIndex + 1); });
+                lightbox.addEventListener('click', closeLightbox);
 
                 function openGallery() {
                     startScreen.classList.add('hidden');
