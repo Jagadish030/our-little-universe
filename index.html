@@ -34,6 +34,8 @@
             --glass-bg: rgba(255, 253, 249, 0.6);
             --glass-bg-strong: rgba(255, 253, 249, 0.72);
             --glass-border: rgba(255, 255, 255, 0.55);
+            --glass-highlight: rgba(255, 255, 255, 0.65);
+            --glass-tint: linear-gradient(135deg, rgba(168, 184, 156, 0.35), rgba(217, 138, 147, 0.35));
             --card-border: rgba(107, 83, 68, 0.15);
             --card-shadow: 0 10px 20px rgba(107, 83, 68, 0.15);
             --skeleton-shine: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0) 100%);
@@ -53,6 +55,8 @@
             --glass-bg: rgba(48, 39, 57, 0.55);
             --glass-bg-strong: rgba(48, 39, 57, 0.7);
             --glass-border: rgba(255, 255, 255, 0.14);
+            --glass-highlight: rgba(255, 255, 255, 0.18);
+            --glass-tint: linear-gradient(135deg, rgba(159, 191, 169, 0.4), rgba(227, 145, 159, 0.4));
             --card-border: rgba(255, 255, 255, 0.08);
             --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.45);
             --skeleton-shine: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0) 100%);
@@ -3821,34 +3825,46 @@
             font-weight: 600;
             font-size: 0.95rem;
             color: var(--white);
-            background: var(--rose-deep);
-            border: none;
+            background: var(--glass-tint);
+            border: 1px solid var(--glass-highlight);
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
             border-radius: 999px;
             padding: 0.85rem 1.7rem;
             cursor: pointer;
-            box-shadow: 0 6px 16px var(--shadow);
-            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 6px 16px var(--shadow);
+            transition: transform 0.2s cubic-bezier(.34, 1.56, .64, 1), box-shadow 0.2s ease, background 0.2s ease;
         }
         .add-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 22px var(--shadow);
-            background: #C97781;
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 22px var(--shadow);
         }
+        .add-btn:active { transform: scale(.96); }
         .fav-filter-btn {
             font-family: 'Quicksand', sans-serif;
             font-weight: 600;
             font-size: 0.9rem;
             color: var(--rose-deep);
-            background: var(--white);
-            border: 1px solid var(--rose-deep);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
             border-radius: 999px;
             padding: 0.8rem 1.4rem;
             cursor: pointer;
-            transition: background 0.2s ease, color 0.2s ease;
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 4px 14px var(--shadow);
+            transition: transform 0.2s cubic-bezier(.34, 1.56, .64, 1), background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
         }
+        .fav-filter-btn:hover {
+            transform: translateY(-2px);
+            background: var(--glass-bg-strong);
+        }
+        .fav-filter-btn:active { transform: scale(.95); }
         .fav-filter-btn.active {
-            background: var(--rose-deep);
+            background: var(--glass-tint);
             color: var(--white);
+            border-color: var(--glass-highlight);
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 6px 18px var(--shadow);
         }
         a.fav-filter-btn {
             text-decoration: none;
@@ -3955,10 +3971,14 @@
             font-size: 0.85rem;
             padding: 0.55rem 1rem;
             border-radius: 999px;
-            border: 1px solid #E3D3C2;
-            background: var(--white);
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            box-shadow: inset 0 1px 0 var(--glass-highlight);
             color: var(--ink);
             outline: none;
+            transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
         }
         .sort-select {
             appearance: none;
@@ -10325,11 +10345,18 @@
             user-select: none;
         }
         .touch-heart {
-            width:50px; height:50px; padding:12px; box-sizing:border-box; border-radius:50%; border:0;
-            background:linear-gradient(135deg,var(--rose),var(--rose-deep)); color:white; font-size:1.3rem;
-            cursor:pointer; box-shadow:0 5px 14px var(--shadow);
+            width:50px; height:50px; padding:12px; box-sizing:border-box; border-radius:50%;
+            border: 1px solid var(--glass-highlight);
+            background: var(--glass-tint);
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            color:white; font-size:1.3rem;
+            cursor:pointer; box-shadow: inset 0 1px 0 var(--glass-highlight), 0 5px 14px var(--shadow);
             touch-action:manipulation; -webkit-tap-highlight-color:transparent;
-            transition: box-shadow .25s ease, transform .15s ease;
+            transition: box-shadow .25s ease, transform .2s cubic-bezier(.34, 1.56, .64, 1);
+        }
+        @media (hover: hover) {
+            .touch-heart:hover { transform: translateY(-2px) scale(1.04); }
         }
         .touch-heart.pulsing { animation:touchPulse .8s ease-in-out infinite; }
         @keyframes touchPulse { 50% { transform:scale(1.22); box-shadow:0 0 0 22px rgba(217,138,147,.28),0 0 60px 14px var(--rose-deep); } }
@@ -22820,6 +22847,8 @@
                 let rafId = null;
                 let sendLoopActive = false;
                 let lastFlowerAt = 0;
+                let lastFlowerPos = null; // last spot a flower was planted — used to detect an actually-resting finger
+                const FLOWER_MIN_MOVE = 6; // px the tip must travel since the last flower before another one plants
                 let particles = []; // flowers: {x,y,size,rot,hue,species,born,vx,vy,rotSpeed}
                 let stars = []; // constellation points: {x,y,born,vx,vy}
                 let cover = null; // {scale, offsetX, offsetY, dispW, dispH} for the current video/canvas fit
@@ -23265,9 +23294,9 @@
                 // proportion to each other) and how long a photo of
                 // that tier stays up before it fades away uncaught.
                 const BTS_TIERS = [
-                    { key: 'normal', label: 'Normal', weight: 70, duration: 15000, items: BTS_NORMAL, minSpeed: 130, maxSpeed: 180 },
-                    { key: 'rare', label: 'Rare', weight: 25, duration: 9000, items: BTS_RARE, minSpeed: 200, maxSpeed: 260 },
-                    { key: 'ultra', label: 'Ultra Rare', weight: 5, duration: 5000, items: BTS_ULTRA_RARE, minSpeed: 280, maxSpeed: 350 }
+                    { key: 'normal', label: 'Normal', weight: 70, duration: 15000, items: BTS_NORMAL, minSpeed: 230, maxSpeed: 310 },
+                    { key: 'rare', label: 'Rare', weight: 25, duration: 9000, items: BTS_RARE, minSpeed: 340, maxSpeed: 440 },
+                    { key: 'ultra', label: 'Ultra Rare', weight: 5, duration: 5000, items: BTS_ULTRA_RARE, minSpeed: 480, maxSpeed: 620 }
                 ];
                 const BTS_SUMMON_COOLDOWN = 1200; // ms — stops one gesture spamming several summons
                 const BTS_MISS_FADE_MS = 900;
@@ -23348,7 +23377,7 @@
                         vx: Math.cos(roamAngle) * roamSpeed,
                         vy: Math.sin(roamAngle) * roamSpeed,
                         speed: roamSpeed,
-                        nextTurnAt: now + 450 + Math.random() * 500,
+                        nextTurnAt: now + 220 + Math.random() * 280,
                         lastMoveAt: now,
                         spawnedAt: now,
                         expiresAt: now + picked.tier.duration,
@@ -23775,24 +23804,20 @@
                                 alpha = 1;
                             } else {
                                 // Wanders the screen: keeps moving at
-                                // its assigned speed, but every ~0.5-1s
-                                // picks a new random-ish direction (a
-                                // turn of up to ±100° from its current
-                                // heading, not a full random reset —
-                                // that would look too jittery) so the
-                                // path curves around instead of reading
-                                // as one straight bounce-off-the-wall
-                                // line.
+                                // its assigned speed, and every ~0.2-0.5s
+                                // picks a fresh, fully random heading —
+                                // not a gentle curve — so the path reads
+                                // as genuinely erratic and hard to
+                                // predict, rather than a smooth bounce
+                                // off the walls.
                                 const dt = Math.min(0.05, (now - spawn.lastMoveAt) / 1000);
                                 spawn.lastMoveAt = now;
 
                                 if (now > spawn.nextTurnAt) {
-                                    const heading = Math.atan2(spawn.vy, spawn.vx);
-                                    const turn = (Math.random() - 0.5) * (Math.PI * 1.1); // up to ~±100°
-                                    const newHeading = heading + turn;
+                                    const newHeading = Math.random() * Math.PI * 2;
                                     spawn.vx = Math.cos(newHeading) * spawn.speed;
                                     spawn.vy = Math.sin(newHeading) * spawn.speed;
-                                    spawn.nextTurnAt = now + 450 + Math.random() * 500;
+                                    spawn.nextTurnAt = now + 220 + Math.random() * 280;
                                 }
 
                                 spawn.x += spawn.vx * dt;
@@ -23828,8 +23853,15 @@
                 }
 
                 function onFingertipFlower(x, y, now) {
+                    // Only plant a new flower once the fingertip has
+                    // actually traveled a bit since the last one — a
+                    // resting finger (still pointing, not moving) stops
+                    // spawning instead of piling flowers on top of
+                    // each other every 90ms.
+                    if (lastFlowerPos && Math.hypot(x - lastFlowerPos.x, y - lastFlowerPos.y) < FLOWER_MIN_MOVE) return;
                     if (now - lastFlowerAt > 90) {
                         lastFlowerAt = now;
+                        lastFlowerPos = { x, y };
                         particles.push({
                             x, y,
                             size: 14 + Math.random() * 10,
@@ -23861,6 +23893,7 @@
                     lastLandmarks = handDetected ? results.multiHandLandmarks[0] : null;
                     if (!handDetected) {
                         dwellPos = null;
+                        lastFlowerPos = null;
                         fistLitIndex = 0;
                         btsPalmReady = false;
                         btsGestureHoldSince = 0;
@@ -23937,6 +23970,7 @@
                         else onFingertipConstellation(x, y, now);
                     } else if (pose === 'fist') {
                         dwellPos = null;
+                        lastFlowerPos = null;
                         // Hold a fist to light the stars you've placed,
                         // oldest first; re-closing the fist replays it.
                         if (mode === 'constellation' && stars.length) {
@@ -23948,11 +23982,13 @@
                         }
                     } else if (pose === 'open') {
                         dwellPos = null;
+                        lastFlowerPos = null;
                         beginClear();
                     } else {
                         // ambiguous shape — leave everything exactly as
                         // it is, draw and light nothing new
                         dwellPos = null;
+                        lastFlowerPos = null;
                         fistLitIndex = 0;
                     }
                 }
@@ -24024,6 +24060,7 @@
                     stars = [];
                     clearing = false;
                     dwellPos = null;
+                    lastFlowerPos = null;
                     fistLitIndex = 0;
                     lastLandmarks = null;
                     cameraStarted = false;
@@ -24060,6 +24097,7 @@
                     stars = [];
                     clearing = false;
                     dwellPos = null;
+                    lastFlowerPos = null;
                     fistLitIndex = 0; });
                 modeBtns.forEach(btn => {
                     btn.addEventListener('click', () => {
@@ -24069,6 +24107,7 @@
                         stars = [];
                         clearing = false;
                         dwellPos = null;
+                        lastFlowerPos = null;
                         fistLitIndex = 0;
                         btsActiveSpawn = null;
                         btsCelebration = null;
