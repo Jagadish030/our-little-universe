@@ -877,10 +877,18 @@
         .mw-mode-group {
             display: flex;
             gap: 8px;
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 2px; /* room so the scrollbar (hidden) never clips content */
         }
+        .mw-mode-group::-webkit-scrollbar { display: none; }
         .mw-topbar-actions {
             display: flex;
             gap: 8px;
+            flex: 0 0 auto;
         }
         .mw-mode-btn, .mw-icon-btn {
             border: 1px solid rgba(255, 255, 255, .28);
@@ -900,6 +908,8 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
         .mw-mode-btn svg { width: 16px;
             height: 16px;
@@ -925,6 +935,7 @@
             width: 38px;
             height: 38px;
             padding: 0;
+            flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1230,12 +1241,26 @@
             font-size: .82rem;
             line-height: 1.5;
         }
+        .mw-bts-reset-btn {
+            margin: 8px 16px 0;
+            align-self: flex-start;
+            border: 1px solid rgba(255, 255, 255, .25);
+            background: rgba(255, 255, 255, .06);
+            color: rgba(255, 255, 255, .8);
+            font-size: .76rem;
+            padding: 6px 12px;
+            border-radius: 999px;
+            cursor: pointer;
+        }
+        .mw-bts-reset-btn:active { transform: scale(.96); }
         .mw-bts-grid {
             flex: 1;
             min-height: 0;
             overflow-y: auto;
             display: grid;
             grid-template-columns: repeat(5, 1fr);
+            align-content: start;
+            align-items: start;
             gap: 6px;
             padding: 10px 10px max(20px, env(safe-area-inset-bottom));
             scrollbar-width: thin;
@@ -10653,6 +10678,7 @@
                     <button type="button" class="mw-icon-btn" id="mwBtsCollectionBackBtn" aria-label="Back">‹</button>
                 </div>
                 <p class="mw-bts-summary" id="mwBtsSummary"></p>
+                <button type="button" class="mw-bts-reset-btn" id="mwBtsResetBtn">🔄 Reset collection</button>
                 <div class="mw-bts-grid" id="mwBtsGrid"></div>
             </div>
 
@@ -22977,8 +23003,8 @@
                     { name: 'photo', src: 'Assets/Normal/image (1).png' },
                     { name: 'photo', src: 'Assets/Normal/image (2).png' },
                     { name: 'photo', src: 'Assets/Normal/image (3).png' },
-                    { name: 'photo', src: 'Assets/Normal/image (4).png' },
-                    /*{ name: 'photo', src: 'Assets/Normal/image (5).png' },
+                    /*{ name: 'photo', src: 'Assets/Normal/image (4).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (5).png' },
                     { name: 'photo', src: 'Assets/Normal/image (6).png' },
                     { name: 'photo', src: 'Assets/Normal/image (7).png' },
                     { name: 'photo', src: 'Assets/Normal/image (8).png' },
@@ -23099,9 +23125,9 @@
                 // proportion to each other) and how long a photo of
                 // that tier stays up before it fades away uncaught.
                 const BTS_TIERS = [
-                    { key: 'normal', label: 'Normal', weight: 70, duration: 15000, items: BTS_NORMAL },
-                    { key: 'rare', label: 'Rare', weight: 25, duration: 9000, items: BTS_RARE },
-                    { key: 'ultra', label: 'Ultra Rare', weight: 5, duration: 5000, items: BTS_ULTRA_RARE }
+                    { key: 'normal', label: 'Normal', weight: 70, duration: 15000, items: BTS_NORMAL, minSpeed: 90, maxSpeed: 130 },
+                    { key: 'rare', label: 'Rare', weight: 25, duration: 9000, items: BTS_RARE, minSpeed: 150, maxSpeed: 200 },
+                    { key: 'ultra', label: 'Ultra Rare', weight: 5, duration: 5000, items: BTS_ULTRA_RARE, minSpeed: 220, maxSpeed: 280 }
                 ];
                 const BTS_SUMMON_COOLDOWN = 1200; // ms — stops one gesture spamming several summons
                 const BTS_MISS_FADE_MS = 900;
@@ -23109,7 +23135,7 @@
                 const BTS_ROAM_TOP = 130; // keep the roaming photo clear of the topbar/banner
                 const BTS_ROAM_BOTTOM = 190; // ...and clear of the hint text/bottom controls
                 const BTS_GESTURE_HOLD_MS = 180; // 2/3-finger pose must be held this long before it counts — filters out a single misread frame while the hand is opening/closing
-                const BTS_CATCH_RADIUS_FACTOR = 0.85; // how close your fist needs to be to the photo's CURRENT position, relative to its size
+                const BTS_CATCH_RADIUS_FACTOR = 0.42; // how close your fist needs to be to the photo's CURRENT position, relative to its size — tight, so you have to actually center it in your palm
 
                 let btsActiveSpawn = null; // {tier, item, img, x, y, size, spawnedAt, expiresAt, missedAt}
                 let btsLastSummonAt = 0;
@@ -23159,16 +23185,20 @@
                     btsLastSummonAt = now;
 
                     // Spawns at a random spot (not on your hand) and
-                    // drifts around the screen on its own — you have to
-                    // go find it and close your fist over wherever it
-                    // currently is, not just wherever your palm sits.
+                    // wanders the screen on its own, re-steering every
+                    // so often (see the movement update in render())
+                    // rather than one straight line that only ever
+                    // changes direction by bouncing off an edge — that
+                    // read as too predictable and too slow to be worth
+                    // chasing. Speed scales with rarity, per BTS_TIERS.
                     const size = btsPalmSize;
                     const margin = size / 2 + 16;
                     const x = margin + Math.random() * Math.max(1, canvas.width - margin * 2);
                     const y = BTS_ROAM_TOP + Math.random() * Math.max(1, canvas.height - BTS_ROAM_TOP -
                         BTS_ROAM_BOTTOM);
                     const roamAngle = Math.random() * Math.PI * 2;
-                    const roamSpeed = 26 + Math.random() * 34; // px/sec — gentle drift, not a chase
+                    const tier = picked.tier;
+                    const roamSpeed = tier.minSpeed + Math.random() * (tier.maxSpeed - tier.minSpeed);
 
                     btsActiveSpawn = {
                         tier: picked.tier,
@@ -23177,6 +23207,8 @@
                         x, y, size,
                         vx: Math.cos(roamAngle) * roamSpeed,
                         vy: Math.sin(roamAngle) * roamSpeed,
+                        speed: roamSpeed,
+                        nextTurnAt: now + 450 + Math.random() * 500,
                         lastMoveAt: now,
                         spawnedAt: now,
                         expiresAt: now + picked.tier.duration,
@@ -23193,9 +23225,14 @@
                     if (!btsActiveSpawn || btsActiveSpawn.missedAt) return;
                     const { tier, item } = btsActiveSpawn;
                     btsActiveSpawn = null;
-                    const prevCount = (btsCollection[item.name] && btsCollection[item.name].count) || 0;
+                    // Keyed by src, not name — names aren't guaranteed
+                    // unique (several of your configured photos share
+                    // the literal name "photo"), but each image's file
+                    // path always is.
+                    const key = item.src;
+                    const prevCount = (btsCollection[key] && btsCollection[key].count) || 0;
                     const newCount = prevCount + 1;
-                    btsCollection[item.name] = { tier: tier.key, count: newCount };
+                    btsCollection[key] = { tier: tier.key, count: newCount };
                     startBtsCelebration([`Caught ${item.name}!`, tier.label], tier.key);
                     if (typeof haptic === 'function') haptic(18);
                     renderBtsCollectionGrid();
@@ -23203,7 +23240,7 @@
                     try {
                         await supabase.from('bts_collection').upsert({
                             author: myAuthorNum(),
-                            image_name: item.name,
+                            image_name: key,
                             tier: tier.key,
                             count: newCount,
                             last_caught_at: new Date().toISOString()
@@ -23304,11 +23341,12 @@
                 const btsCollectionBtn = document.getElementById('mwBtsCollectionBtn');
                 const btsCollectionModal = document.getElementById('mwBtsCollectionModal');
                 const btsCollectionBackBtn = document.getElementById('mwBtsCollectionBackBtn');
+                const btsResetBtn = document.getElementById('mwBtsResetBtn');
                 const btsGrid = document.getElementById('mwBtsGrid');
                 const btsSummaryEl = document.getElementById('mwBtsSummary');
 
                 function btsCardHtml(entry) {
-                    const caught = btsCollection[entry.name];
+                    const caught = btsCollection[entry.src];
                     const locked = !caught;
                     return `
                         <div class="mw-bts-card tier-${entry.tierKey} ${locked ? 'locked' : ''}">
@@ -23406,6 +23444,31 @@
                 }
                 if (btsCollectionBackBtn) {
                     btsCollectionBackBtn.addEventListener('click', () => btsCollectionModal.classList.add('hidden'));
+                }
+                if (btsResetBtn) {
+                    btsResetBtn.addEventListener('click', async() => {
+                        if (!supabase || !getIdentity()) return;
+                        if (!confirm('Reset your BTS collection? This clears everything you\'ve caught and starts a fresh 7-day period right now.')) return;
+                        btsResetBtn.disabled = true;
+                        try {
+                            const author = myAuthorNum();
+                            await supabase.from('bts_collection').delete().eq('author', author);
+                            const newStart = new Date();
+                            await supabase.from('bts_collection_period').upsert({
+                                author,
+                                period_start: newStart.toISOString()
+                            });
+                            btsPeriodStart = newStart;
+                            btsCollection = {};
+                            renderBtsCollectionGrid();
+                            if (typeof showToast === 'function') showToast('Collection reset ✓');
+                        } catch (err) {
+                            console.error('Could not reset BTS collection:', err);
+                            if (typeof showToast === 'function') showToast('Could not reset — try again.');
+                        } finally {
+                            btsResetBtn.disabled = false;
+                        }
+                    });
                 }
 
                 function render() {
@@ -23528,13 +23591,27 @@
                                 missBtsSpawn(now);
                                 alpha = 1;
                             } else {
-                                // Drift around the screen on its own,
-                                // bouncing off the safe-area edges —
-                                // this is what makes it something you
-                                // have to go catch, not just a sticker
-                                // riding along on your palm.
+                                // Wanders the screen: keeps moving at
+                                // its assigned speed, but every ~0.5-1s
+                                // picks a new random-ish direction (a
+                                // turn of up to ±100° from its current
+                                // heading, not a full random reset —
+                                // that would look too jittery) so the
+                                // path curves around instead of reading
+                                // as one straight bounce-off-the-wall
+                                // line.
                                 const dt = Math.min(0.05, (now - spawn.lastMoveAt) / 1000);
                                 spawn.lastMoveAt = now;
+
+                                if (now > spawn.nextTurnAt) {
+                                    const heading = Math.atan2(spawn.vy, spawn.vx);
+                                    const turn = (Math.random() - 0.5) * (Math.PI * 1.1); // up to ~±100°
+                                    const newHeading = heading + turn;
+                                    spawn.vx = Math.cos(newHeading) * spawn.speed;
+                                    spawn.vy = Math.sin(newHeading) * spawn.speed;
+                                    spawn.nextTurnAt = now + 450 + Math.random() * 500;
+                                }
+
                                 spawn.x += spawn.vx * dt;
                                 spawn.y += spawn.vy * dt;
                                 const half = spawn.size / 2 + 16;
@@ -23560,7 +23637,8 @@
                             }
                         }
                         if (btsPalmReady && btsPalmPos) {
-                            drawBtsPalmMarker(btsPalmPos.x, btsPalmPos.y, btsPalmSize * 0.9);
+                            drawBtsPalmMarker(btsPalmPos.x, btsPalmPos.y, Math.min(btsPalmSize * 0.55, Math.min(
+                                canvas.width, canvas.height) * 0.11));
                         }
                         if (btsCelebration) drawBtsCelebration(now);
                     }
@@ -23623,7 +23701,13 @@
                         btsPalmPos = mapPoint(centerNorm.x, centerNorm.y);
                         const widthNorm = dist3(knuckleA, knuckleB);
                         const pxWidth = cover ? widthNorm * cover.dispW : 100;
-                        btsPalmSize = Math.max(70, Math.min(260, pxWidth * 2.1));
+                        // Sized relative to the actual screen, not a
+                        // fixed pixel cap — a flat 260px cap looked
+                        // huge on a ~380px-wide phone canvas but tiny
+                        // on a desktop one. minSide scales both floor
+                        // and ceiling to whatever screen this actually is.
+                        const minSide = Math.min(canvas.width, canvas.height);
+                        btsPalmSize = Math.max(minSide * 0.16, Math.min(minSide * 0.30, pxWidth * 1.7));
 
                         const pose = classifyHandPose(lm);
                         const extCount = countExtendedFingers(lm);
@@ -23911,8 +23995,7 @@
                 function formatCreationDate(iso) {
                     if (!iso) return '';
                     const d = new Date(iso);
-                    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) +
-                        ' · ' + d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+                    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
                 }
 
                 function extFromUrl(url, fallback) {
