@@ -730,6 +730,22 @@
             overflow: hidden;
         }
         .magic-wand-overlay[hidden] { display: none; }
+        /* Kept technically "visible" (never display:none) — Chrome and
+           most other browsers pause decoding frames for a display:none
+           <video>, which silently stalls readyState forever and hangs
+           the "Loading the magic…" screen. Shrinking it to near-zero
+           size and zero opacity hides it just as effectively without
+           that problem. Only the canvas (drawn from this video each
+           frame) is ever actually seen. */
+        #mwVideo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 2px;
+            height: 2px;
+            opacity: 0;
+            pointer-events: none;
+        }
         #mwCanvas {
             position: absolute;
             inset: 0;
@@ -1082,11 +1098,11 @@
             min-height: 0;
             overflow-y: auto;
             overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            padding: 16px;
-            padding-bottom: max(24px, env(safe-area-inset-bottom));
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding: 10px;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
             scrollbar-width: thin;
             scrollbar-color: var(--rose-deep) transparent;
         }
@@ -1098,6 +1114,7 @@
             border-radius: 3px;
         }
         .mw-gallery-empty {
+            grid-column: 1 / -1;
             text-align: center;
             color: rgba(255, 255, 255, .5);
             padding: 60px 20px;
@@ -1105,17 +1122,16 @@
             line-height: 1.6;
         }
         .mw-creation-card {
-            background: rgba(255, 255, 255, .05);
-            border-radius: 18px;
+            position: relative;
+            aspect-ratio: 3 / 4;
+            border-radius: 12px;
             overflow: hidden;
+            background: #14161b;
             border: 1px solid rgba(255, 255, 255, .1);
-            flex-shrink: 0;
         }
         .mw-creation-media-wrap {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 4 / 3;
-            background: #000;
+            position: absolute;
+            inset: 0;
             cursor: zoom-in;
         }
         .mw-creation-media-wrap img, .mw-creation-media-wrap video {
@@ -1126,8 +1142,8 @@
         }
         .mw-creation-media-wrap .mw-thumb-badge {
             position: absolute;
-            width: 26px;
-            height: 26px;
+            width: 22px;
+            height: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1136,11 +1152,14 @@
             backdrop-filter: blur(3px);
             pointer-events: none;
         }
-        .mw-creation-media-wrap .mw-thumb-badge svg { width: 13px;
-            height: 13px; }
-        .mw-thumb-video { bottom: 8px;
-            right: 8px;
+        .mw-creation-media-wrap .mw-thumb-badge svg { width: 11px;
+            height: 11px; }
+        .mw-thumb-video { top: 6px;
+            right: 6px;
             color: #fff; }
+        .mw-thumb-replied { top: 6px;
+            left: 6px;
+            color: #ffd166; }
 
         /* ─── Fullscreen media viewer ───
            Bare-bones on purpose: tapping a card's photo/video opens
@@ -1166,83 +1185,151 @@
             object-fit: contain;
         }
 
-        .mw-creation-date {
-            font-size: .74rem;
-            color: rgba(255, 255, 255, .45);
-            margin: 0 0 8px;
-        }
-
-        .mw-creation-body {
-            padding: 12px 14px 14px;
-            color: #fff;
-        }
-        .mw-creation-caption {
-            font-size: .9rem;
-            margin: 0 0 8px;
-            word-break: break-word;
-            line-height: 1.4;
-        }
-        .mw-creation-reply {
-            font-size: .82rem;
-            color: rgba(255, 255, 255, .65);
-            margin: 0 0 10px;
-            font-style: italic;
-            word-break: break-word;
-            background: rgba(255, 255, 255, .06);
-            border-radius: 10px;
-            padding: 8px 10px;
-        }
-        .mw-creation-reply-input {
-            width: 100%;
-            box-sizing: border-box;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, .25);
-            background: rgba(255, 255, 255, .08);
-            color: #fff;
-            padding: 8px 10px;
-            font-size: .82rem;
-            margin-bottom: 10px;
-        }
+        /* Compact icon-only actions, overlaid on the thumbnail itself
+           (there's no room for labeled buttons at 3-per-row) — Unpin
+           bottom-left, Save bottom-right. */
         .mw-creation-actions {
+            position: absolute;
+            left: 6px;
+            right: 6px;
+            bottom: 6px;
             display: flex;
-            gap: 10px;
-            padding-top: 10px;
-            border-top: 1px solid rgba(255, 255, 255, .08);
+            justify-content: space-between;
+            pointer-events: none;
         }
-        .mw-pill-btn {
-            flex: 1;
+        .mw-cc-icon-btn {
+            pointer-events: auto;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, .55);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            border: 1px solid rgba(255, 255, 255, .25);
-            background: rgba(255, 255, 255, .06);
-            color: #fff;
-            border-radius: 999px;
-            padding: 9px 14px;
-            font-family: 'Quicksand', sans-serif;
-            font-size: .82rem;
-            font-weight: 600;
             cursor: pointer;
-            transition: transform .18s cubic-bezier(.34, 1.56, .64, 1), background .18s ease, border-color .18s ease, box-shadow .18s ease;
+            transition: transform .18s cubic-bezier(.34, 1.56, .64, 1), background .18s ease, color .18s ease;
         }
-        .mw-pill-btn svg { width: 14px;
-            height: 14px;
-            flex-shrink: 0; }
-        .mw-delete-btn:hover, .mw-delete-btn:active { color: #ff8a8f; }
+        .mw-cc-icon-btn svg { width: 13px;
+            height: 13px; }
         @media (hover: hover) {
-            .mw-pill-btn:hover {
-                transform: translateY(-2px);
-                background: rgba(255, 255, 255, .14);
-                border-color: rgba(255, 255, 255, .5);
-            }
-            .mw-delete-btn:hover {
-                background: rgba(229, 72, 77, .16);
-                border-color: rgba(229, 72, 77, .5);
-            }
+            .mw-cc-icon-btn:hover { transform: scale(1.1);
+                background: rgba(0, 0, 0, .75); }
+            .mw-cc-icon-btn.mw-delete-btn:hover { color: #ff8a8f; }
         }
-        .mw-pill-btn:active { transform: scale(.95); }
+        .mw-cc-icon-btn:active { transform: scale(.9); }
 
+        /* ─── BTS collection ─── */
+        .mw-bts-summary {
+            margin: 0;
+            padding: 12px 16px 0;
+            color: rgba(255, 255, 255, .75);
+            font-size: .82rem;
+            line-height: 1.5;
+        }
+        .mw-bts-grid {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            padding: 10px 10px max(20px, env(safe-area-inset-bottom));
+            scrollbar-width: thin;
+            scrollbar-color: var(--rose-deep) transparent;
+        }
+        .mw-bts-grid::-webkit-scrollbar { width: 5px; }
+        .mw-bts-grid::-webkit-scrollbar-track { background: transparent; }
+        .mw-bts-grid::-webkit-scrollbar-thumb { background: var(--rose-deep);
+            opacity: .4;
+            border-radius: 3px; }
+        .mw-bts-card {
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 9px;
+            padding: 5px 4px 4px;
+            text-align: center;
+            position: relative;
+        }
+        .mw-bts-card.tier-rare { border-color: rgba(122, 162, 255, .5); }
+        .mw-bts-card.tier-ultra {
+            border-color: rgba(255, 196, 92, .6);
+            box-shadow: 0 0 10px rgba(255, 196, 92, .16);
+        }
+        .mw-bts-card-media {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 7px;
+            overflow: hidden;
+            background: radial-gradient(circle, rgba(0, 0, 0, .35) 0%, rgba(0, 0, 0, 0) 72%), rgba(255, 255, 255, .04);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mw-bts-card-media img {
+            width: 82%;
+            height: 82%;
+            object-fit: contain;
+        }
+        .mw-bts-card.locked .mw-bts-card-media img {
+            filter: brightness(0);
+            opacity: .55;
+        }
+        .mw-bts-card-qmark {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.05rem;
+            color: rgba(255, 255, 255, .6);
+            font-weight: 700;
+            pointer-events: none;
+        }
+        .mw-bts-card-name {
+            margin: 4px 0 0;
+            font-size: .56rem;
+            color: #fff;
+            word-break: break-word;
+            line-height: 1.15;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        .mw-bts-card.locked .mw-bts-card-name { color: rgba(255, 255, 255, .5); }
+        .mw-bts-card-count {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            background: rgba(0, 0, 0, .6);
+            color: #fff;
+            font-size: .56rem;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 999px;
+        }
+        .mw-bts-tier-tag {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            font-size: .5rem;
+            font-weight: 700;
+            padding: 1px 4px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: .01em;
+        }
+        .mw-bts-tier-tag.tier-normal { background: rgba(255, 255, 255, .15);
+            color: #fff; }
+        .mw-bts-tier-tag.tier-rare { background: rgba(122, 162, 255, .3);
+            color: #cfe0ff; }
+        .mw-bts-tier-tag.tier-ultra { background: rgba(255, 196, 92, .3);
+            color: #ffe3ac; }
 
         /* ─── Chat ───
            A side icon that's always present (unlike the compliment
@@ -10506,7 +10593,7 @@
 
         <!-- ─── Magic Wand ─── -->
         <div class="magic-wand-overlay" id="magicWandOverlay" hidden>
-            <video id="mwVideo" autoplay playsinline muted class="hidden"></video>
+            <video id="mwVideo" autoplay playsinline muted></video>
             <canvas id="mwCanvas"></canvas>
 
             <div class="mw-start-screen" id="mwStartScreen">
@@ -10539,8 +10626,15 @@
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/><path d="M19 14l.7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7z" opacity=".85"/></svg>
                         Constellation
                     </button>
+                    <button type="button" class="mw-mode-btn" data-mode="bts">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.9-10-9.2C.4 8.6 2 5 5.4 5 7.6 5 9 6.2 12 9.2 15 6.2 16.4 5 18.6 5 22 5 23.6 8.6 22 11.8 19.5 16.1 12 21 12 21z"/></svg>
+                        BTS
+                    </button>
                 </div>
                 <div class="mw-topbar-actions">
+                    <button type="button" class="mw-icon-btn" id="mwBtsCollectionBtn" aria-label="BTS collection" title="BTS collection">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+                    </button>
                     <button type="button" class="mw-icon-btn" id="mwGalleryBtn" aria-label="Saved creations" title="Saved creations">
                         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6" fill="#fff" stroke="none"/><path d="M3 16l5-5 4 4 3-3 6 6"/></svg>
                     </button>
@@ -10551,6 +10645,17 @@
             </div>
 
             <p class="magic-wand-hint hidden" id="mwHint">Point to draw · Hold your fist to light stars · Open your hand to clear</p>
+
+            <!-- ─── BTS collection modal ─── -->
+            <div class="mw-gallery hidden" id="mwBtsCollectionModal">
+                <div class="mw-gallery-header">
+                    <h3>💜 BTS Collection</h3>
+                    <button type="button" class="mw-icon-btn" id="mwBtsCollectionBackBtn" aria-label="Back">‹</button>
+                </div>
+                <p class="mw-bts-summary" id="mwBtsSummary"></p>
+                <div class="mw-bts-grid" id="mwBtsGrid"></div>
+            </div>
+
 
             <div class="mw-bottom-controls hidden" id="mwBottomControls">
                 <button type="button" class="mw-round-btn" id="mwClearBtn" aria-label="Clear" title="Clear">
@@ -22588,6 +22693,15 @@
                     if (extCount === 0) return 'fist';
                     return 'other';
                 }
+                // Used only by BTS mode, which needs to tell 2-finger
+                // and 3-finger poses apart (classifyHandPose lumps both
+                // into 'other', which is exactly right for flowers/
+                // constellation but not specific enough here).
+                function countExtendedFingers(lm) {
+                    return [isFingerExtended(lm, 6, 8), isFingerExtended(lm, 10, 12), isFingerExtended(lm, 14, 16),
+                        isFingerExtended(lm, 18, 20)
+                    ].filter(Boolean).length;
+                }
 
                 /* ─── Hand skeleton overlay ───
                    Draws the same 21-point rig MediaPipe tracks, so the
@@ -22838,6 +22952,462 @@
                     ctx.restore();
                 }
 
+                /* ══════════════════════════════════════════════════════
+                   ─── BTS mode ───
+                   Same camera + hand tracking as flowers/constellation,
+                   but instead of drawing, it's a catch-a-photo game:
+                   hold up 2 or 3 fingers to summon a random photo
+                   (weighted by rarity), it follows your palm, and
+                   closing your fist over it catches it. Miss the timer
+                   and it fades away — you get one shot per summon, not
+                   several like a typical "catch" game.
+                   ══════════════════════════════════════════════════════ */
+
+                /* ─── ADD YOUR BTS PHOTOS HERE ───
+                   Each entry needs a unique `name` (used as its ID
+                   everywhere — collection, database, catch text) and a
+                   `src` (a path or URL to the image — transparent-
+                   background PNGs work best, see the vignette note
+                   below). Add as many as you want to each tier; nothing
+                   else needs to change — frequency, sizing, and the
+                   weekly "X/Y found" summary all read the array
+                   lengths automatically. */
+                const BTS_NORMAL = [
+                    // { name: 'RM — Airport', src: 'bts/rm-airport.png' },
+                    { name: 'photo', src: 'Assets/Normal/image (1).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (2).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (3).png' },
+                    /*{ name: 'photo', src: 'Assets/Normal/image (4).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (5).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (6).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (7).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (8).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (9).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (10).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (11).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (12).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (13).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (14).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (15).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (16).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (17).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (18).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (19).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (20).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (21).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (22).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (23).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (24).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (25).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (26).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (27).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (28).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (29).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (30).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (31).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (32).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (33).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (34).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (35).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (36).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (37).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (38).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (39).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (40).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (41).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (42).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (43).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (44).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (45).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (46).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (47).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (48).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (49).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (50).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (51).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (52).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (53).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (54).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (55).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (56).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (57).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (58).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (59).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (60).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (61).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (62).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (63).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (64).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (65).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (66).png' },
+                    { name: 'photo', src: 'Assets/Normal/image (67).png' },*/
+                ];
+                const BTS_RARE = [
+                    // { name: 'Jungkook — Stage', src: 'bts/jk-stage.png' },
+                    { name: 'photo', src: 'Assets/Rare/image (1).png' },
+                    /*{ name: 'photo', src: 'Assets/Rare/image (2).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (3).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (4).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (5).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (6).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (7).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (8).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (9).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (10).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (11).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (12).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (13).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (14).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (15).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (16).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (17).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (18).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (19).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (20).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (21).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (22).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (23).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (24).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (25).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (26).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (27).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (28).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (29).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (30).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (32).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (33).png' },
+                    { name: 'photo', src: 'Assets/Rare/image (34).png' },*/
+                ];
+                const BTS_ULTRA_RARE = [
+                    // { name: 'V — Concept Photo', src: 'bts/v-concept.png' },
+                    { name: 'photo', src: 'Assets/Ultra Rare/image (1).png' },
+                    /*{ name: 'photo', src: 'Assets/Ultra Rare/image (2).png' },
+                    { name: 'photo', src: 'Assets/Ultra Rare/image (3).png' },
+                    { name: 'photo', src: 'Assets/Ultra Rare/image (4).png' },
+                    { name: 'photo', src: 'Assets/Ultra Rare/image (5).png' },
+                    { name: 'photo', src: 'Assets/Ultra Rare/image (6).png' },
+                    { name: 'photo', src: 'Assets/Ultra Rare/image (7).png' },
+                    { name: 'photo', src: 'Assets/Ultra Rare/image (8).png' },
+                    { name: 'photo', src: 'Assets/Ultra Rare/image (9).png' },
+                    { name: 'photo', src: 'Assets/Ultra Rare/image (10).png' },
+                    { name: 'photo', src: 'Assets/Ultra Rare/image (11).png' },
+                    { name: 'photo', src: 'Assets/Ultra Rare/image (12).png' },*/
+                ];
+
+                // How often each tier appears (relative weights — they
+                // don't need to add to 100, just to be in this
+                // proportion to each other) and how long a photo of
+                // that tier stays up before it fades away uncaught.
+                const BTS_TIERS = [
+                    { key: 'normal', label: 'Normal', weight: 70, duration: 15000, items: BTS_NORMAL },
+                    { key: 'rare', label: 'Rare', weight: 25, duration: 9000, items: BTS_RARE },
+                    { key: 'ultra', label: 'Ultra Rare', weight: 5, duration: 5000, items: BTS_ULTRA_RARE }
+                ];
+                const BTS_SUMMON_COOLDOWN = 1200; // ms — stops one gesture spamming several summons
+                const BTS_MISS_FADE_MS = 900;
+                const BTS_RESET_DAYS = 7;
+                const BTS_ROAM_TOP = 130; // keep the roaming photo clear of the topbar/banner
+                const BTS_ROAM_BOTTOM = 190; // ...and clear of the hint text/bottom controls
+                const BTS_GESTURE_HOLD_MS = 180; // 2/3-finger pose must be held this long before it counts — filters out a single misread frame while the hand is opening/closing
+                const BTS_CATCH_RADIUS_FACTOR = 0.85; // how close your fist needs to be to the photo's CURRENT position, relative to its size
+
+                let btsActiveSpawn = null; // {tier, item, img, x, y, size, spawnedAt, expiresAt, missedAt}
+                let btsLastSummonAt = 0;
+                let btsGestureHoldSince = 0; // when the current 2/3-finger pose started, for the debounce above
+                let btsPalmPos = null;
+                let btsPalmSize = 120;
+                let btsPalmReady = false;
+                let btsCelebration = null; // {lines, tier, startedAt}
+                let btsCollection = {}; // { [name]: {tier, count} } — loaded from Supabase
+                let btsPeriodStart = null;
+                let btsCollectionLoaded = false;
+                const btsImageCache = {};
+
+                function btsAllConfiguredItems() {
+                    return BTS_TIERS.flatMap(t => t.items.map(it => ({ ...it, tierKey: t.key, tierLabel: t.label })));
+                }
+
+                function getBtsImage(src) {
+                    if (!btsImageCache[src]) {
+                        const img = new Image();
+                        img.src = src;
+                        btsImageCache[src] = img;
+                    }
+                    return btsImageCache[src];
+                }
+
+                function pickRandomBtsItem() {
+                    const pool = BTS_TIERS.filter(t => t.items.length > 0);
+                    if (!pool.length) return null;
+                    const totalWeight = pool.reduce((s, t) => s + t.weight, 0);
+                    let r = Math.random() * totalWeight;
+                    let chosenTier = pool[pool.length - 1];
+                    for (const t of pool) {
+                        if (r < t.weight) { chosenTier = t;
+                            break; }
+                        r -= t.weight;
+                    }
+                    const item = chosenTier.items[Math.floor(Math.random() * chosenTier.items.length)];
+                    return { tier: chosenTier, item };
+                }
+
+                function trySummonBts(now) {
+                    if (btsActiveSpawn) return;
+                    if (now - btsLastSummonAt < BTS_SUMMON_COOLDOWN) return;
+                    const picked = pickRandomBtsItem();
+                    if (!picked) return; // no images configured yet for any tier
+                    btsLastSummonAt = now;
+
+                    // Spawns at a random spot (not on your hand) and
+                    // drifts around the screen on its own — you have to
+                    // go find it and close your fist over wherever it
+                    // currently is, not just wherever your palm sits.
+                    const size = btsPalmSize;
+                    const margin = size / 2 + 16;
+                    const x = margin + Math.random() * Math.max(1, canvas.width - margin * 2);
+                    const y = BTS_ROAM_TOP + Math.random() * Math.max(1, canvas.height - BTS_ROAM_TOP -
+                        BTS_ROAM_BOTTOM);
+                    const roamAngle = Math.random() * Math.PI * 2;
+                    const roamSpeed = 26 + Math.random() * 34; // px/sec — gentle drift, not a chase
+
+                    btsActiveSpawn = {
+                        tier: picked.tier,
+                        item: picked.item,
+                        img: getBtsImage(picked.item.src),
+                        x, y, size,
+                        vx: Math.cos(roamAngle) * roamSpeed,
+                        vy: Math.sin(roamAngle) * roamSpeed,
+                        lastMoveAt: now,
+                        spawnedAt: now,
+                        expiresAt: now + picked.tier.duration,
+                        missedAt: null
+                    };
+                }
+
+                function startBtsCelebration(lines, tier) {
+                    btsCelebration = { lines, tier, startedAt: performance.now() };
+                    setTimeout(() => { if (btsCelebration && btsCelebration.startedAt) btsCelebration = null; }, 2000);
+                }
+
+                async function catchBtsSpawn() {
+                    if (!btsActiveSpawn || btsActiveSpawn.missedAt) return;
+                    const { tier, item } = btsActiveSpawn;
+                    btsActiveSpawn = null;
+                    const prevCount = (btsCollection[item.name] && btsCollection[item.name].count) || 0;
+                    const newCount = prevCount + 1;
+                    btsCollection[item.name] = { tier: tier.key, count: newCount };
+                    startBtsCelebration([`Caught ${item.name}!`, tier.label], tier.key);
+                    if (typeof haptic === 'function') haptic(18);
+                    renderBtsCollectionGrid();
+                    if (!supabase || !getIdentity()) return;
+                    try {
+                        await supabase.from('bts_collection').upsert({
+                            author: myAuthorNum(),
+                            image_name: item.name,
+                            tier: tier.key,
+                            count: newCount,
+                            last_caught_at: new Date().toISOString()
+                        }, { onConflict: 'author,image_name' });
+                    } catch (err) { console.error('Could not save BTS catch:', err); }
+                }
+
+                function missBtsSpawn(now) {
+                    if (!btsActiveSpawn || btsActiveSpawn.missedAt) return;
+                    btsActiveSpawn.missedAt = now;
+                    startBtsCelebration(['so close…'], null);
+                }
+
+                /* A soft dark radial glow behind every BTS image — since
+                   the photos are meant to be transparent-background
+                   PNGs, this keeps them readable against any camera
+                   background without needing per-image editing. Works
+                   for any image added to the arrays above, now or
+                   later. */
+                function drawBtsVignette(x, y, radius, alpha) {
+                    const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                    grad.addColorStop(0, `rgba(0,0,0,${0.4 * alpha})`);
+                    grad.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.save();
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                function btsTierColor(tierKey) {
+                    if (tierKey === 'ultra') return '#ffc45c';
+                    if (tierKey === 'rare') return '#7aa2ff';
+                    return '#ffffff';
+                }
+
+                function drawBtsCountdownRing(x, y, radius, fraction, alpha, tierKey) {
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    ctx.lineWidth = 4;
+                    ctx.strokeStyle = 'rgba(255,255,255,.25)';
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.strokeStyle = btsTierColor(tierKey);
+                    ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * fraction);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                function drawBtsPalmMarker(x, y, size) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.85;
+                    ctx.font = `${Math.round(size)}px sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('🤲', x, y);
+                    ctx.restore();
+                }
+
+                function drawBtsCelebration(now) {
+                    const t = (now - btsCelebration.startedAt) / 2000;
+                    if (t >= 1) { btsCelebration = null;
+                        return; }
+                    const alpha = t < 0.15 ? t / 0.15 : (t > 0.75 ? (1 - t) / 0.25 : 1);
+                    const rise = -30 * Math.min(t / 0.15, 1);
+                    const cx = canvas.width / 2,
+                        cy = canvas.height * 0.32 + rise;
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, alpha);
+                    ctx.textAlign = 'center';
+                    const color = btsCelebration.tier ? btsTierColor(btsCelebration.tier) : '#fff';
+                    ctx.font = '700 26px Quicksand, sans-serif';
+                    ctx.shadowColor = 'rgba(0,0,0,.6)';
+                    ctx.shadowBlur = 10;
+                    ctx.fillStyle = color;
+                    ctx.fillText(btsCelebration.lines[0], cx, cy);
+                    if (btsCelebration.lines[1]) {
+                        ctx.font = '700 14px Quicksand, sans-serif';
+                        ctx.fillStyle = 'rgba(255,255,255,.85)';
+                        ctx.fillText(btsCelebration.lines[1].toUpperCase(), cx, cy + 24);
+                    }
+                    ctx.restore();
+                    if (btsCelebration.tier && t < 0.5) {
+                        for (let i = 0; i < 2; i++) {
+                            const ang = Math.random() * Math.PI * 2;
+                            const dist = 40 + Math.random() * 70;
+                            drawSparkle(cx + Math.cos(ang) * dist, cy + 20 + Math.sin(ang) * dist, 6 + Math.random() *
+                                6, color, color, 12, (1 - t * 2) * 0.9);
+                        }
+                    }
+                }
+
+                /* ─── Collection modal ─── */
+                const btsCollectionBtn = document.getElementById('mwBtsCollectionBtn');
+                const btsCollectionModal = document.getElementById('mwBtsCollectionModal');
+                const btsCollectionBackBtn = document.getElementById('mwBtsCollectionBackBtn');
+                const btsGrid = document.getElementById('mwBtsGrid');
+                const btsSummaryEl = document.getElementById('mwBtsSummary');
+
+                function btsCardHtml(entry) {
+                    const caught = btsCollection[entry.name];
+                    const locked = !caught;
+                    return `
+                        <div class="mw-bts-card tier-${entry.tierKey} ${locked ? 'locked' : ''}">
+                            <span class="mw-bts-tier-tag tier-${entry.tierKey}">${entry.tierKey === 'ultra' ?
+                        'Ultra' : entry.tierKey === 'rare' ? 'Rare' : 'Normal'}</span>
+                            ${caught && caught.count > 1 ? `<span class="mw-bts-card-count">×${caught.count}</span>` :
+                        ''}
+                            <div class="mw-bts-card-media">
+                                <img src="${escapeHtml(entry.src)}" alt="${escapeHtml(entry.name)}" loading="lazy">
+                                ${locked ? '<span class="mw-bts-card-qmark">?</span>' : ''}
+                            </div>
+                            <p class="mw-bts-card-name">${escapeHtml(entry.name)}</p>
+                        </div>`;
+                }
+
+                function renderBtsCollectionGrid() {
+                    if (!btsGrid) return;
+                    const all = btsAllConfiguredItems();
+                    if (!all.length) {
+                        btsGrid.innerHTML =
+                            '<div class="mw-gallery-empty" style="grid-column:1/-1;">No BTS photos added yet — see the code comment for where to add them.</div>';
+                        btsSummaryEl.textContent = '';
+                        return;
+                    }
+                    btsGrid.innerHTML = all.map(btsCardHtml).join('');
+                    const counts = { normal: 0, rare: 0, ultra: 0 };
+                    Object.values(btsCollection).forEach(c => { counts[c.tier] = (counts[c.tier] || 0) + 1; });
+                    const totals = { normal: BTS_NORMAL.length, rare: BTS_RARE.length, ultra: BTS_ULTRA_RARE.length };
+                    btsSummaryEl.textContent =
+                        `${counts.normal}/${totals.normal} Normal · ${counts.rare}/${totals.rare} Rare · ${counts.ultra}/${totals.ultra} Ultra Rare`;
+                }
+
+                /* ─── Persistence + weekly reset ───
+                   Every catch is saved right away (see catchBtsSpawn).
+                   On load, and again each time the collection is
+                   opened, we check whether 7 days have passed since
+                   this person's period_start — if so, we show a
+                   summary of what was collected, then clear it out for
+                   a fresh week. */
+                async function loadBtsCollection() {
+                    if (!supabase || !getIdentity() || btsCollectionLoaded) return;
+                    btsCollectionLoaded = true;
+                    const author = myAuthorNum();
+                    try {
+                        const [{ data: periodRow }, { data: rows }] = await Promise.all([
+                            supabase.from('bts_collection_period').select('*').eq('author', author).maybeSingle(),
+                            supabase.from('bts_collection').select('*').eq('author', author)
+                        ]);
+
+                        let periodStart = periodRow ? new Date(periodRow.period_start) : null;
+                        if (!periodStart) {
+                            periodStart = new Date();
+                            await supabase.from('bts_collection_period').upsert({
+                                author,
+                                period_start: periodStart.toISOString()
+                            });
+                        }
+                        btsPeriodStart = periodStart;
+
+                        btsCollection = {};
+                        (rows || []).forEach(r => { btsCollection[r.image_name] = { tier: r.tier, count: r.count }; });
+
+                        const daysElapsed = (Date.now() - periodStart.getTime()) / (1000 * 60 * 60 * 24);
+                        if (daysElapsed >= BTS_RESET_DAYS) {
+                            const counts = { normal: 0, rare: 0, ultra: 0 };
+                            Object.values(btsCollection).forEach(c => { counts[c.tier] = (counts[c.tier] || 0) + 1; });
+                            const totals = { normal: BTS_NORMAL.length, rare: BTS_RARE.length, ultra: BTS_ULTRA_RARE
+                                .length };
+                            if (typeof showToast === 'function') {
+                                showToast(
+                                    `New week! Last week you collected ${counts.normal}/${totals.normal} Normal, ${counts.rare}/${totals.rare} Rare, ${counts.ultra}/${totals.ultra} Ultra Rare 💜`,
+                                    { duration: 6000 }
+                                );
+                            }
+                            await supabase.from('bts_collection').delete().eq('author', author);
+                            const newStart = new Date();
+                            await supabase.from('bts_collection_period').upsert({
+                                author,
+                                period_start: newStart.toISOString()
+                            });
+                            btsPeriodStart = newStart;
+                            btsCollection = {};
+                        }
+                    } catch (err) { console.error('Could not load BTS collection:', err);
+                        btsCollectionLoaded = false; }
+                    renderBtsCollectionGrid();
+                }
+
+                if (btsCollectionBtn) {
+                    btsCollectionBtn.addEventListener('click', async() => {
+                        btsCollectionModal.classList.remove('hidden');
+                        await loadBtsCollection();
+                        renderBtsCollectionGrid();
+                    });
+                }
+                if (btsCollectionBackBtn) {
+                    btsCollectionBackBtn.addEventListener('click', () => btsCollectionModal.classList.add('hidden'));
+                }
+
                 function render() {
                     rafId = requestAnimationFrame(render);
                     if (!cover) cover = computeCover();
@@ -22888,7 +23458,7 @@
                             const rot = clearing ? p.rot + p.rotSpeed * clearT : p.rot;
                             drawFlower(px, py, size, rot, p.hue, clearAlpha, p.species);
                         });
-                    } else {
+                    } else if (mode === 'constellation') {
                         // Connecting lines only make sense for the
                         // settled constellation — once a wish is being
                         // made (clearing), each star flies its own way.
@@ -22947,6 +23517,52 @@
                                 clearAlpha
                             );
                         });
+                    } else if (mode === 'bts') {
+                        if (btsActiveSpawn) {
+                            const spawn = btsActiveSpawn;
+                            let alpha = 1;
+                            if (spawn.missedAt) {
+                                alpha = Math.max(0, 1 - (now - spawn.missedAt) / BTS_MISS_FADE_MS);
+                                if (alpha <= 0) btsActiveSpawn = null;
+                            } else if (now > spawn.expiresAt) {
+                                missBtsSpawn(now);
+                                alpha = 1;
+                            } else {
+                                // Drift around the screen on its own,
+                                // bouncing off the safe-area edges —
+                                // this is what makes it something you
+                                // have to go catch, not just a sticker
+                                // riding along on your palm.
+                                const dt = Math.min(0.05, (now - spawn.lastMoveAt) / 1000);
+                                spawn.lastMoveAt = now;
+                                spawn.x += spawn.vx * dt;
+                                spawn.y += spawn.vy * dt;
+                                const half = spawn.size / 2 + 16;
+                                if (spawn.x < half) { spawn.x = half;
+                                    spawn.vx = Math.abs(spawn.vx); }
+                                if (spawn.x > canvas.width - half) { spawn.x = canvas.width - half;
+                                    spawn.vx = -Math.abs(spawn.vx); }
+                                if (spawn.y < BTS_ROAM_TOP) { spawn.y = BTS_ROAM_TOP;
+                                    spawn.vy = Math.abs(spawn.vy); }
+                                if (spawn.y > canvas.height - BTS_ROAM_BOTTOM) { spawn.y = canvas.height -
+                                    BTS_ROAM_BOTTOM;
+                                    spawn.vy = -Math.abs(spawn.vy); }
+                            }
+                            if (btsActiveSpawn) {
+                                drawBtsVignette(spawn.x, spawn.y, spawn.size * 0.7, alpha);
+                                if (spawn.img.complete && spawn.img.naturalWidth) {
+                                    ctx.save();
+                                    ctx.globalAlpha = alpha;
+                                    ctx.drawImage(spawn.img, spawn.x - spawn.size / 2, spawn.y - spawn.size / 2, spawn
+                                        .size, spawn.size);
+                                    ctx.restore();
+                                }
+                            }
+                        }
+                        if (btsPalmReady && btsPalmPos) {
+                            drawBtsPalmMarker(btsPalmPos.x, btsPalmPos.y, btsPalmSize * 0.9);
+                        }
+                        if (btsCelebration) drawBtsCelebration(now);
                     }
                 }
 
@@ -22985,12 +23601,63 @@
                     if (!handDetected) {
                         dwellPos = null;
                         fistLitIndex = 0;
+                        btsPalmReady = false;
+                        btsGestureHoldSince = 0;
                         return;
                     }
 
                     const lm = lastLandmarks;
-                    const pose = classifyHandPose(lm);
                     const now = performance.now();
+
+                    if (mode === 'bts') {
+                        // Palm center ≈ midpoint between the index and
+                        // pinky knuckles; palm width ≈ distance between
+                        // them, scaled up to a comfortable photo size.
+                        // This only sizes new spawns and positions the
+                        // "ready" hand marker now — active photos roam
+                        // on their own (see render()), they don't
+                        // follow your hand around.
+                        const knuckleA = lm[5],
+                            knuckleB = lm[17];
+                        const centerNorm = { x: (knuckleA.x + knuckleB.x) / 2, y: (knuckleA.y + knuckleB.y) / 2 };
+                        btsPalmPos = mapPoint(centerNorm.x, centerNorm.y);
+                        const widthNorm = dist3(knuckleA, knuckleB);
+                        const pxWidth = cover ? widthNorm * cover.dispW : 100;
+                        btsPalmSize = Math.max(70, Math.min(260, pxWidth * 2.1));
+
+                        const pose = classifyHandPose(lm);
+                        const extCount = countExtendedFingers(lm);
+                        btsPalmReady = pose === 'open';
+
+                        // Require the 2/3-finger pose to hold steady for
+                        // a beat before it counts as a summon — a single
+                        // misread frame while the hand is opening from a
+                        // fist (or closing from a flat palm) would
+                        // otherwise fire a spawn it shouldn't.
+                        const isSummonPose = (extCount === 2 || extCount === 3) && !btsActiveSpawn;
+                        if (isSummonPose) {
+                            if (!btsGestureHoldSince) btsGestureHoldSince = now;
+                            if (now - btsGestureHoldSince > BTS_GESTURE_HOLD_MS) {
+                                trySummonBts(now);
+                                btsGestureHoldSince = 0;
+                            }
+                        } else {
+                            btsGestureHoldSince = 0;
+                        }
+
+                        if (pose === 'fist' && btsActiveSpawn && !btsActiveSpawn.missedAt) {
+                            // Only counts as a catch if the fist is
+                            // actually near where the photo currently
+                            // is — it's moving on its own now, so
+                            // closing your hand somewhere else shouldn't
+                            // catch it.
+                            const dist = Math.hypot(btsPalmPos.x - btsActiveSpawn.x, btsPalmPos.y - btsActiveSpawn.y);
+                            if (dist < btsActiveSpawn.size * BTS_CATCH_RADIUS_FACTOR) catchBtsSpawn();
+                        }
+                        return;
+                    }
+
+                    const pose = classifyHandPose(lm);
 
                     if (pose === 'point') {
                         // Pointing again cancels an in-progress clear so
@@ -23043,9 +23710,10 @@
                         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
                         video.srcObject = stream;
                         await video.play();
-                        await new Promise(resolve => {
+                        await new Promise((resolve, reject) => {
                             if (video.readyState >= 2) return resolve();
                             video.onloadedmetadata = resolve;
+                            setTimeout(() => reject(new Error('Camera feed took too long to become ready')), 8000);
                         });
                         cover = computeCover();
                     } catch (err) {
@@ -23135,6 +23803,17 @@
                         clearing = false;
                         dwellPos = null;
                         fistLitIndex = 0;
+                        btsActiveSpawn = null;
+                        btsCelebration = null;
+                        btsGestureHoldSince = 0;
+                        if (mode === 'bts') {
+                            hint.textContent = 'Hold up 2 or 3 fingers to summon a photo · Open your palm to get ready · Close your fist to catch!';
+                            loadBtsCollection();
+                        } else if (mode === 'flowers' || mode === 'constellation') {
+                            hint.textContent = mode === 'flowers' ?
+                                'Point to draw flowers · Open your hand to clear' :
+                                'Point to draw · Hold your fist to light stars · Open your hand to clear';
+                        }
                     });
                 });
                 window.addEventListener('resize', () => { if (!overlay.hidden) resizeCanvas(); });
@@ -23273,29 +23952,24 @@
                     const media = isVideo ?
                         `<video src="${escapeHtml(item.media_url)}" muted playsinline preload="metadata"></video>` :
                         `<img src="${escapeHtml(item.media_url)}" alt="A magic wand creation" loading="lazy">`;
-                    const canReply = Number(item.author) !== myAuthorNum();
+                    const canReply = Number(item.author) !== myAuthorNum() && !item.reply;
                     return `
                         <div class="mw-creation-card" data-id="${item.id}">
                             <div class="mw-creation-media-wrap">
                                 ${media}
                                 ${isVideo ? `<span class="mw-thumb-badge mw-thumb-video"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>` : ''}
+                                ${item.reply ? `<span class="mw-thumb-badge mw-thumb-replied" title="${escapeHtml(item.reply)}"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v12H7l-3 3z"/></svg></span>` : ''}
                             </div>
-                            <div class="mw-creation-body">
-                                ${item.created_at ? `<p class="mw-creation-date">${formatCreationDate(item.created_at)}</p>` : ''}
-                                ${item.caption ? `<p class="mw-creation-caption">${escapeHtml(item.caption)}</p>` : ''}
-                                ${item.reply ? `<p class="mw-creation-reply">💬 ${escapeHtml(item.reply)}</p>` : (canReply ?
-                                    `<input type="text" class="mw-creation-reply-input" placeholder="Leave a reply…" maxlength="200">` :
-                                    '')}
-                                <div class="mw-creation-actions">
-                                    <button type="button" class="mw-pill-btn mw-delete-btn">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4.5A1.5 1.5 0 0110.5 3h3A1.5 1.5 0 0115 4.5V7"/><path d="M6 7l1 13a1.5 1.5 0 001.5 1.4h7a1.5 1.5 0 001.5-1.4l1-13"/></svg>
-                                        Unpin
-                                    </button>
-                                    <button type="button" class="mw-pill-btn mw-save-btn">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 19h14"/></svg>
-                                        Save
-                                    </button>
-                                </div>
+                            <div class="mw-creation-actions">
+                                <button type="button" class="mw-cc-icon-btn mw-delete-btn" title="Unpin">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4.5A1.5 1.5 0 0110.5 3h3A1.5 1.5 0 0115 4.5V7"/><path d="M6 7l1 13a1.5 1.5 0 001.5 1.4h7a1.5 1.5 0 001.5-1.4l1-13"/></svg>
+                                </button>
+                                ${canReply ? `<button type="button" class="mw-cc-icon-btn mw-reply-btn" title="Reply">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                                </button>` : ''}
+                                <button type="button" class="mw-cc-icon-btn mw-save-btn" title="Save">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 19h14"/></svg>
+                                </button>
                             </div>
                         </div>`;
                 }
@@ -23321,10 +23995,11 @@
                             const mediaWrap = card.querySelector('.mw-creation-media-wrap');
                             const deleteBtn = card.querySelector('.mw-delete-btn');
                             const saveBtn = card.querySelector('.mw-save-btn');
-                            const replyInput = card.querySelector('.mw-creation-reply-input');
+                            const replyBtn = card.querySelector('.mw-reply-btn');
 
                             mediaWrap.addEventListener('click', () => openLightbox(item));
-                            deleteBtn.addEventListener('click', async () => {
+                            deleteBtn.addEventListener('click', async (e) => {
+                                e.stopPropagation();
                                 if (!confirm('Remove this creation? This can\'t be undone.')) return;
                                 deleteBtn.disabled = true;
                                 await supabase.storage.from(MW_BUCKET).remove([item.media_path]);
@@ -23332,17 +24007,18 @@
                                 if (!error) loadGallery();
                                 else deleteBtn.disabled = false;
                             });
-                            saveBtn.addEventListener('click', () => saveCreationToPhone(item, saveBtn));
-                            if (replyInput) {
-                                replyInput.addEventListener('keydown', async (e) => {
-                                    if (e.key !== 'Enter') return;
-                                    const val = replyInput.value.trim();
+                            saveBtn.addEventListener('click', (e) => { e.stopPropagation();
+                                saveCreationToPhone(item, saveBtn); });
+                            if (replyBtn) {
+                                replyBtn.addEventListener('click', async (e) => {
+                                    e.stopPropagation();
+                                    const val = (window.prompt('Leave a reply:', '') || '').trim();
                                     if (!val) return;
-                                    replyInput.disabled = true;
+                                    replyBtn.disabled = true;
                                     const { error } = await supabase.from(MW_TABLE).update({ reply: val }).eq('id',
                                         item.id);
                                     if (!error) loadGallery();
-                                    else replyInput.disabled = false;
+                                    else replyBtn.disabled = false;
                                 });
                             }
                         });
