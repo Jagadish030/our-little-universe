@@ -891,10 +891,11 @@
             flex: 0 0 auto;
         }
         .mw-mode-btn, .mw-icon-btn {
-            border: 1px solid rgba(255, 255, 255, .28);
-            background: rgba(20, 22, 28, .55);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, .35);
+            background: rgba(255, 255, 255, .12);
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 4px 14px rgba(0, 0, 0, .18);
             color: #fff;
             border-radius: 999px;
             font-family: 'Quicksand', sans-serif;
@@ -915,19 +916,19 @@
             height: 16px;
             flex-shrink: 0; }
         .mw-mode-btn.active {
-            background: linear-gradient(135deg, var(--sage), var(--rose-deep));
-            border-color: transparent;
-            box-shadow: 0 6px 18px rgba(217, 138, 147, .4);
+            background: linear-gradient(135deg, rgba(168, 184, 156, .5), rgba(217, 138, 147, .5));
+            border-color: rgba(255, 255, 255, .55);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 6px 18px rgba(217, 138, 147, .3);
         }
         @media (hover: hover) {
             .mw-mode-btn:not(.active):hover, .mw-icon-btn:hover {
                 transform: translateY(-2px);
-                background: rgba(255, 255, 255, .16);
-                border-color: rgba(255, 255, 255, .5);
+                background: rgba(255, 255, 255, .2);
+                border-color: rgba(255, 255, 255, .6);
             }
             .mw-mode-btn.active:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 9px 22px rgba(217, 138, 147, .55);
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4), 0 9px 22px rgba(217, 138, 147, .4);
             }
         }
         .mw-mode-btn:active, .mw-icon-btn:active { transform: scale(.92); }
@@ -1111,6 +1112,8 @@
             overflow-x: hidden;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
+            align-content: start;
+            align-items: start;
             gap: 8px;
             padding: 10px;
             padding-bottom: max(20px, env(safe-area-inset-bottom));
@@ -1134,15 +1137,16 @@
         }
         .mw-creation-card {
             position: relative;
-            aspect-ratio: 3 / 4;
             border-radius: 12px;
             overflow: hidden;
             background: #14161b;
             border: 1px solid rgba(255, 255, 255, .1);
+            display: flex;
+            flex-direction: column;
         }
         .mw-creation-media-wrap {
-            position: absolute;
-            inset: 0;
+            position: relative;
+            aspect-ratio: 1 / 1;
             cursor: zoom-in;
         }
         .mw-creation-media-wrap img, .mw-creation-media-wrap video {
@@ -1233,6 +1237,44 @@
         }
         .mw-cc-icon-btn:active { transform: scale(.9); }
 
+        .mw-creation-footer {
+            padding: 8px 10px 10px;
+        }
+        .mw-creation-caption-text {
+            margin: 0 0 4px;
+            font-size: .8rem;
+            color: #fff;
+            word-break: break-word;
+            line-height: 1.35;
+            cursor: pointer;
+        }
+        .mw-creation-caption-text.empty {
+            color: rgba(255, 255, 255, .4);
+            font-style: italic;
+        }
+        .mw-creation-caption-text.readonly {
+            cursor: default;
+        }
+        .mw-creation-reply-text {
+            margin: 0 0 4px;
+            font-size: .78rem;
+            color: rgba(255, 214, 110, .95);
+            word-break: break-word;
+            line-height: 1.35;
+            background: rgba(255, 214, 110, .1);
+            border-radius: 8px;
+            padding: 5px 8px;
+            cursor: pointer;
+        }
+        .mw-creation-reply-text.readonly {
+            cursor: default;
+        }
+        .mw-creation-date {
+            margin: 0;
+            font-size: .68rem;
+            color: rgba(255, 255, 255, .45);
+        }
+
         /* ─── BTS collection ─── */
         .mw-bts-summary {
             margin: 0;
@@ -1253,12 +1295,75 @@
             cursor: pointer;
         }
         .mw-bts-reset-btn:active { transform: scale(.96); }
+
+        /* ─── BTS card preview ───
+           A partial-screen enlarge, not a full lightbox — tapping
+           ANYWHERE within it (backdrop or the image itself) closes it,
+           since a "tap outside to close" convention is easy to miss
+           when the image already fills most of the view. */
+        .mw-bts-preview-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            background: rgba(0, 0, 0, .72);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            cursor: pointer;
+        }
+        .mw-bts-preview-card {
+            position: relative;
+            width: min(78vw, 340px);
+            background: rgba(255, 255, 255, .06);
+            border: 1px solid rgba(255, 255, 255, .15);
+            border-radius: 20px;
+            padding: 16px 16px 18px;
+            text-align: center;
+        }
+        .mw-bts-preview-media {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 14px;
+            overflow: hidden;
+            background: radial-gradient(circle, rgba(0, 0, 0, .35) 0%, rgba(0, 0, 0, 0) 72%), rgba(255, 255, 255, .04);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mw-bts-preview-media img {
+            width: 88%;
+            height: 88%;
+            object-fit: contain;
+        }
+        .mw-bts-preview-card.locked .mw-bts-preview-media img {
+            filter: brightness(0);
+            opacity: .55;
+        }
+        .mw-bts-preview-name {
+            margin: 12px 0 0;
+            font-size: 1rem;
+            color: #fff;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 600;
+        }
+        .mw-bts-preview-card .mw-bts-tier-tag {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+        }
+        .mw-bts-preview-card .mw-bts-card-count {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+        }
         .mw-bts-grid {
             flex: 1;
             min-height: 0;
             overflow-y: auto;
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             align-content: start;
             align-items: start;
             gap: 6px;
@@ -1864,7 +1969,7 @@
         .chat-bubble-reaction {
             position: absolute;
             bottom: -11px;
-            right: -6px;
+            left: -6px;
             background: var(--paper);
             border: 1px solid var(--card-border);
             border-radius: 999px;
@@ -1874,8 +1979,8 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, .18);
         }
         .chat-bubble-row.theirs .chat-bubble-reaction {
-            right: auto;
-            left: -6px;
+            left: auto;
+            right: -6px;
         }
         body.dark-mode .chat-bubble-reaction {
             background: var(--paper-deep);
@@ -10680,6 +10785,17 @@
                 <p class="mw-bts-summary" id="mwBtsSummary"></p>
                 <button type="button" class="mw-bts-reset-btn" id="mwBtsResetBtn">🔄 Reset collection</button>
                 <div class="mw-bts-grid" id="mwBtsGrid"></div>
+                <div class="mw-bts-preview-overlay hidden" id="mwBtsPreviewOverlay">
+                    <div class="mw-bts-preview-card">
+                        <span class="mw-bts-tier-tag" id="mwBtsPreviewTier"></span>
+                        <span class="mw-bts-card-count hidden" id="mwBtsPreviewCount"></span>
+                        <div class="mw-bts-preview-media">
+                            <img id="mwBtsPreviewImg" src="" alt="">
+                            <span class="mw-bts-card-qmark hidden" id="mwBtsPreviewQmark">?</span>
+                        </div>
+                        <p class="mw-bts-preview-name" id="mwBtsPreviewName"></p>
+                    </div>
+                </div>
             </div>
 
 
@@ -17730,9 +17846,26 @@
                                 entry.cooldown_text = val || null;
                                 await supabase.from(ANGER_LOG_TABLE).update({ cooldown_text: entry.cooldown_text })
                                     .eq('id', entry.id);
-                                if (val) { showToast('Sent 💛');
-                                    renderReplyArea(); }
+                                // Intentionally NOT re-rendering here —
+                                // doing so on every pause in typing was
+                                // destroying and recreating this
+                                // textarea mid-sentence, which drops
+                                // focus and dismisses the keyboard.
+                                // Saving quietly in the background is
+                                // enough; the view only switches over
+                                // once they're actually done (blur).
                             }, 500);
+                        });
+                        textarea.addEventListener('blur', () => {
+                            clearTimeout(saveTimer);
+                            const val = textarea.value.trim();
+                            if (!val) return;
+                            entry.cooldown_text = val;
+                            supabase.from(ANGER_LOG_TABLE).update({ cooldown_text: val }).eq('id', entry.id).then(
+                                () => {
+                                    showToast('Sent 💛');
+                                    renderReplyArea();
+                                });
                         });
                         createMiniVoiceRecorder({
                             button: micBtn,
@@ -17788,14 +17921,21 @@
                 document.getElementById('breakGlassBtn')?.classList.remove('is-cracked');
             });
             function closeAngerHistory() {
+                // "‹ back" — returns to the who's-upset picker underneath.
                 angerHistoryModal.classList.add('hidden');
                 glassModal.classList.remove('hidden');
                 if (currentOpenScope === 'fight') leaveScope();
             }
-            angerHistoryClose.addEventListener('click', closeAngerHistory);
+            function fullyCloseAngerHistory() {
+                // "✕" — closes the whole thing, no picker reappearing.
+                angerHistoryModal.classList.add('hidden');
+                glassModal.classList.add('hidden');
+                if (currentOpenScope === 'fight') leaveScope();
+            }
+            angerHistoryClose.addEventListener('click', fullyCloseAngerHistory);
             angerHistoryBack.addEventListener('click', closeAngerHistory);
             angerHistoryModal.addEventListener('click', e => { if (e.target === angerHistoryModal)
-                    closeAngerHistory(); });
+                    fullyCloseAngerHistory(); });
 
             /* ─── Voice notes ─── */
             const MAX_RECORDING_SECONDS = 120;
@@ -23125,9 +23265,9 @@
                 // proportion to each other) and how long a photo of
                 // that tier stays up before it fades away uncaught.
                 const BTS_TIERS = [
-                    { key: 'normal', label: 'Normal', weight: 70, duration: 15000, items: BTS_NORMAL, minSpeed: 90, maxSpeed: 130 },
-                    { key: 'rare', label: 'Rare', weight: 25, duration: 9000, items: BTS_RARE, minSpeed: 150, maxSpeed: 200 },
-                    { key: 'ultra', label: 'Ultra Rare', weight: 5, duration: 5000, items: BTS_ULTRA_RARE, minSpeed: 220, maxSpeed: 280 }
+                    { key: 'normal', label: 'Normal', weight: 70, duration: 15000, items: BTS_NORMAL, minSpeed: 130, maxSpeed: 180 },
+                    { key: 'rare', label: 'Rare', weight: 25, duration: 9000, items: BTS_RARE, minSpeed: 200, maxSpeed: 260 },
+                    { key: 'ultra', label: 'Ultra Rare', weight: 5, duration: 5000, items: BTS_ULTRA_RARE, minSpeed: 280, maxSpeed: 350 }
                 ];
                 const BTS_SUMMON_COOLDOWN = 1200; // ms — stops one gesture spamming several summons
                 const BTS_MISS_FADE_MS = 900;
@@ -23349,7 +23489,7 @@
                     const caught = btsCollection[entry.src];
                     const locked = !caught;
                     return `
-                        <div class="mw-bts-card tier-${entry.tierKey} ${locked ? 'locked' : ''}">
+                        <div class="mw-bts-card tier-${entry.tierKey} ${locked ? 'locked' : ''}" data-src="${escapeHtml(entry.src)}">
                             <span class="mw-bts-tier-tag tier-${entry.tierKey}">${entry.tierKey === 'ultra' ?
                         'Ultra' : entry.tierKey === 'rare' ? 'Rare' : 'Normal'}</span>
                             ${caught && caught.count > 1 ? `<span class="mw-bts-card-count">×${caught.count}</span>` :
@@ -23377,6 +23517,49 @@
                     const totals = { normal: BTS_NORMAL.length, rare: BTS_RARE.length, ultra: BTS_ULTRA_RARE.length };
                     btsSummaryEl.textContent =
                         `${counts.normal}/${totals.normal} Normal · ${counts.rare}/${totals.rare} Rare · ${counts.ultra}/${totals.ultra} Ultra Rare`;
+
+                    btsGrid.querySelectorAll('.mw-bts-card').forEach((card) => {
+                        card.addEventListener('click', () => {
+                            const entry = all.find(e => e.src === card.dataset.src);
+                            if (entry) openBtsPreview(entry);
+                        });
+                    });
+                }
+
+                const btsPreviewOverlay = document.getElementById('mwBtsPreviewOverlay');
+                const btsPreviewCard = btsPreviewOverlay ? btsPreviewOverlay.querySelector('.mw-bts-preview-card') :
+                    null;
+                const btsPreviewImg = document.getElementById('mwBtsPreviewImg');
+                const btsPreviewName = document.getElementById('mwBtsPreviewName');
+                const btsPreviewTier = document.getElementById('mwBtsPreviewTier');
+                const btsPreviewCount = document.getElementById('mwBtsPreviewCount');
+                const btsPreviewQmark = document.getElementById('mwBtsPreviewQmark');
+
+                function openBtsPreview(entry) {
+                    if (!btsPreviewOverlay) return;
+                    const caught = btsCollection[entry.src];
+                    const locked = !caught;
+                    const tierLabel = entry.tierKey === 'ultra' ? 'Ultra' : entry.tierKey === 'rare' ? 'Rare' :
+                        'Normal';
+                    btsPreviewCard.className = `mw-bts-preview-card tier-${entry.tierKey} ${locked ? 'locked' : ''}`;
+                    btsPreviewImg.src = entry.src;
+                    btsPreviewImg.alt = entry.name;
+                    btsPreviewName.textContent = entry.name;
+                    btsPreviewTier.textContent = tierLabel;
+                    btsPreviewTier.className = `mw-bts-tier-tag tier-${entry.tierKey}`;
+                    btsPreviewQmark.classList.toggle('hidden', !locked);
+                    if (caught && caught.count > 1) {
+                        btsPreviewCount.textContent = `×${caught.count}`;
+                        btsPreviewCount.classList.remove('hidden');
+                    } else {
+                        btsPreviewCount.classList.add('hidden');
+                    }
+                    btsPreviewOverlay.classList.remove('hidden');
+                }
+                // Tapping ANYWHERE in the preview — backdrop or the
+                // enlarged image itself — closes it, not just outside.
+                if (btsPreviewOverlay) {
+                    btsPreviewOverlay.addEventListener('click', () => btsPreviewOverlay.classList.add('hidden'));
                 }
 
                 /* ─── Persistence + weekly reset ───
@@ -24035,24 +24218,43 @@
                     const media = isVideo ?
                         `<video src="${escapeHtml(item.media_url)}" muted playsinline preload="metadata"></video>` :
                         `<img src="${escapeHtml(item.media_url)}" alt="A magic wand creation" loading="lazy">`;
-                    const canReply = Number(item.author) !== myAuthorNum() && !item.reply;
+                    const isMine = Number(item.author) === myAuthorNum();
+                    const canReply = !isMine;
+                    const hasCaption = !!(item.caption && item.caption.trim());
+                    let captionHtml = '';
+                    if (hasCaption) {
+                        captionHtml =
+                            `<p class="mw-creation-caption-text ${isMine ? '' : 'readonly'}" data-role="caption">${escapeHtml(item.caption)}</p>`;
+                    } else if (isMine) {
+                        captionHtml = '<p class="mw-creation-caption-text empty" data-role="caption">Add a caption…</p>';
+                    }
+                    let replyHtml = '';
+                    if (item.reply) {
+                        replyHtml =
+                            `<p class="mw-creation-reply-text ${canReply ? '' : 'readonly'}" data-role="reply">💬 ${escapeHtml(item.reply)}</p>`;
+                    }
                     return `
                         <div class="mw-creation-card" data-id="${item.id}">
                             <div class="mw-creation-media-wrap">
                                 ${media}
                                 ${isVideo ? `<span class="mw-thumb-badge mw-thumb-video"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>` : ''}
-                                ${item.reply ? `<span class="mw-thumb-badge mw-thumb-replied" title="${escapeHtml(item.reply)}"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v12H7l-3 3z"/></svg></span>` : ''}
+                                ${item.reply ? `<span class="mw-thumb-badge mw-thumb-replied"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v12H7l-3 3z"/></svg></span>` : ''}
+                                <div class="mw-creation-actions">
+                                    <button type="button" class="mw-cc-icon-btn mw-delete-btn" title="Unpin">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4.5A1.5 1.5 0 0110.5 3h3A1.5 1.5 0 0115 4.5V7"/><path d="M6 7l1 13a1.5 1.5 0 001.5 1.4h7a1.5 1.5 0 001.5-1.4l1-13"/></svg>
+                                    </button>
+                                    ${canReply && !item.reply ? `<button type="button" class="mw-cc-icon-btn mw-reply-btn" title="Reply">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                                    </button>` : ''}
+                                    <button type="button" class="mw-cc-icon-btn mw-save-btn" title="Save">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 19h14"/></svg>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="mw-creation-actions">
-                                <button type="button" class="mw-cc-icon-btn mw-delete-btn" title="Unpin">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4.5A1.5 1.5 0 0110.5 3h3A1.5 1.5 0 0115 4.5V7"/><path d="M6 7l1 13a1.5 1.5 0 001.5 1.4h7a1.5 1.5 0 001.5-1.4l1-13"/></svg>
-                                </button>
-                                ${canReply ? `<button type="button" class="mw-cc-icon-btn mw-reply-btn" title="Reply">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                                </button>` : ''}
-                                <button type="button" class="mw-cc-icon-btn mw-save-btn" title="Save">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 19h14"/></svg>
-                                </button>
+                            <div class="mw-creation-footer">
+                                ${captionHtml}
+                                ${replyHtml}
+                                <p class="mw-creation-date">${formatCreationDate(item.created_at)}</p>
                             </div>
                         </div>`;
                 }
@@ -24102,6 +24304,31 @@
                                         item.id);
                                     if (!error) loadGallery();
                                     else replyBtn.disabled = false;
+                                });
+                            }
+                            const captionEl = card.querySelector('[data-role="caption"]');
+                            const isMine = Number(item.author) === myAuthorNum();
+                            if (captionEl && isMine) {
+                                captionEl.addEventListener('click', async (e) => {
+                                    e.stopPropagation();
+                                    const val = window.prompt('Caption:', item.caption || '');
+                                    if (val === null) return; // cancelled
+                                    const trimmed = val.trim();
+                                    const { error } = await supabase.from(MW_TABLE).update({ caption: trimmed ||
+                                        null }).eq('id', item.id);
+                                    if (!error) loadGallery();
+                                });
+                            }
+                            const replyEl = card.querySelector('[data-role="reply"]');
+                            if (replyEl && !isMine) {
+                                replyEl.addEventListener('click', async (e) => {
+                                    e.stopPropagation();
+                                    const val = window.prompt('Edit your reply:', item.reply || '');
+                                    if (val === null) return; // cancelled
+                                    const trimmed = val.trim();
+                                    const { error } = await supabase.from(MW_TABLE).update({ reply: trimmed ||
+                                        null }).eq('id', item.id);
+                                    if (!error) loadGallery();
                                 });
                             }
                         });
