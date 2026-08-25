@@ -39,6 +39,19 @@
             --card-border: rgba(107, 83, 68, 0.15);
             --card-shadow: 0 10px 20px rgba(107, 83, 68, 0.15);
             --skeleton-shine: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0) 100%);
+            /* Chat-only glass variables — the site-wide --glass-bg /
+               --glass-bg-strong above are deliberately quite
+               see-through, which is fine for cards sitting over a
+               static page, but let the actual page (and its scroll
+               position) show through the chat panel, making the text
+               unreadable and the panel look "buggy" when the page
+               behind it moves. These are the same family of colors
+               but with the transparency mostly dialed back — opaque
+               enough to always read cleanly, with just enough left
+               for a soft frosted edge. */
+            --chat-glass-bg: rgba(255, 253, 249, 0.94);
+            --chat-glass-bg-strong: rgba(255, 253, 249, 0.98);
+            --chat-glass-bubble-theirs: rgba(255, 253, 249, 0.96);
         }
         body.dark-mode {
             --paper: #221C29;
@@ -60,6 +73,9 @@
             --card-border: rgba(255, 255, 255, 0.08);
             --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.45);
             --skeleton-shine: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0) 100%);
+            --chat-glass-bg: rgba(48, 39, 57, 0.94);
+            --chat-glass-bg-strong: rgba(48, 39, 57, 0.98);
+            --chat-glass-bubble-theirs: rgba(48, 39, 57, 0.96);
         }
 
         /* ─── Skeleton loading ─── */
@@ -498,6 +514,66 @@
                 opacity: 1;
             }
         }
+        /* ─── Glass theme toggle — sits just left of the backup
+           button. An animated sliding pill switch (like an iOS
+           toggle) rather than a plain button, and its own look always
+           stays "glassy" regardless of which theme is active, since
+           it's the control that turns the effect on/off — it wouldn't
+           make sense for it to look plain in glass mode or glassy in
+           the plain mode. */
+        .glass-toggle-btn {
+            position: fixed;
+            top: 14px;
+            right: 58px;
+            z-index: 40;
+            width: 56px;
+            height: 30px;
+            padding: 3px;
+            box-sizing: border-box;
+            border-radius: 999px;
+            border: 1px solid var(--glass-highlight);
+            background: var(--glass-tint);
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 2px 8px var(--shadow);
+            transition: opacity .3s ease, visibility .3s ease, box-shadow .2s ease, background .25s ease;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .glass-toggle-btn.visible {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        .glass-toggle-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--rose-deep);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, .25);
+            transform: translateX(0);
+            transition: transform .32s cubic-bezier(.34, 1.56, .64, 1), color .25s ease;
+        }
+        .glass-toggle-btn.active .glass-toggle-thumb {
+            transform: translateX(26px);
+        }
+        .glass-toggle-thumb svg { width: 13px;
+            height: 13px; }
+        @media (hover: hover) and (pointer: fine) {
+            .glass-toggle-btn.visible:hover {
+                box-shadow: inset 0 1px 0 var(--glass-highlight), 0 5px 14px var(--shadow);
+            }
+        }
+        .glass-toggle-btn:active .glass-toggle-thumb { transform: scale(.88) translateX(var(--thumb-x, 0)); }
+        .glass-toggle-btn.active:active .glass-toggle-thumb { transform: scale(.88) translateX(26px); }
         @media (max-width:480px) {
             .backup-fixed-btn {
                 width: 34px;
@@ -505,6 +581,15 @@
                 top: 10px;
                 right: 10px;
             }
+            .glass-toggle-btn {
+                width: 50px;
+                height: 27px;
+                top: 11px;
+                right: 50px;
+            }
+            .glass-toggle-thumb { width: 20px;
+                height: 20px; }
+            .glass-toggle-btn.active .glass-toggle-thumb { transform: translateX(22px); }
         }
 
         .love-envelope::after {
@@ -1573,6 +1658,33 @@
             z-index: 7;
             border-radius: 999px;
         }
+        /* A real position:absolute layer that always exactly fills the
+           panel's CURRENT box — dragging, resizing, or going
+           fullscreen all just resize this via normal CSS layout, no
+           JS recalculation needed, so there's nothing to glitch. */
+        .chat-panel-wallpaper-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            pointer-events: none;
+            border-radius: inherit;
+        }
+        /* In the glass theme the panel itself is now mostly opaque
+           (see --chat-glass-* below), so tone the wallpaper image
+           down a bit rather than letting it compete at full strength
+           with the frosted surfaces sitting on top of it. */
+        body.theme-glass .chat-panel-wallpaper-layer {
+            opacity: .5;
+        }
+        .chat-panel-header,
+        .chat-messages,
+        .chat-input-row {
+            position: relative;
+            z-index: 1;
+        }
         .chat-panel-draghandle:active {
             cursor: grabbing;
         }
@@ -1892,13 +2004,20 @@
             border: 1px solid rgba(217, 138, 147, .3);
             border-bottom-right-radius: 4px;
         }
+        /* Was rgba(...,.32) — nearly transparent, so a chat wallpaper
+           would show straight through and swallow the text. Bumped to
+           a near-opaque tint that still reads as the same rose color. */
         body.dark-mode .chat-bubble-row.mine .chat-bubble {
-            background: rgba(217, 163, 177, .32);
+            background: rgba(217, 163, 177, .94);
             color: var(--ink);
             border: 1px solid rgba(217, 163, 177, .45);
         }
+        /* Was var(--glass-bg-strong) (~70% opaque) even outside the
+           glass theme, so a chat wallpaper behind it bled through and
+           made the text hard to read. Solid background here; the
+           glass theme re-adds transparency + blur deliberately below. */
         .chat-bubble-row.theirs .chat-bubble {
-            background: var(--glass-bg-strong);
+            background: var(--white);
             color: var(--ink);
             border: 1px solid var(--card-border);
             border-bottom-left-radius: 4px;
@@ -2270,19 +2389,24 @@
             margin-left: 3px;
         }
         /* ─── Date separators ─── */
+        /* Was almost fully see-through (9% opacity) so a chat
+           wallpaper would sit right under the label and swallow it.
+           Opaque-enough pill now, with a light blur as a fallback for
+           anything sitting behind it. */
         .chat-date-sep {
             align-self: center;
             margin: .35rem 0;
             padding: .28rem .85rem;
             border-radius: 999px;
-            background: rgba(107, 83, 68, .09);
+            background: var(--paper-deep);
             color: var(--ink-soft);
             font: 700 .68rem 'Quicksand', sans-serif;
             text-transform: uppercase;
             letter-spacing: .03em;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .1);
         }
         body.dark-mode .chat-date-sep {
-            background: rgba(255, 255, 255, .09);
+            background: var(--paper-deep);
         }
         /* ─── Typing indicator bubble ─── */
         .chat-typing-row {
@@ -2352,6 +2476,12 @@
             background: rgba(219, 125, 143, .3);
             color: var(--rose-deep);
             transform: scale(1.06);
+        }
+        #chatWallpaperBtn {
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: manipulation;
         }
         .chat-search-bar {
             display: flex;
@@ -2512,6 +2642,91 @@
             overflow-y: auto;
             line-height: 1.35;
         }
+
+        /* ─── Glass theme: chat ───
+           Off by default. Once body.theme-glass is set, the whole
+           panel — frame, header, bubbles, input row, attach/send
+           buttons — re-skins as frosted glass. This USED to reuse the
+           site-wide --glass-bg / --glass-bg-strong tokens, which are
+           only 60–72% opaque — fine for a card sitting on a static
+           page, but with the chat panel that meant the page
+           underneath (including its scroll position) showed straight
+           through, making messages unreadable and the whole panel
+           read as broken. It now uses the --chat-glass-* tokens
+           instead (see :root), which keep the blur/saturate "frosted"
+           feel around the edges but are essentially opaque, so a chat
+           wallpaper (see .chat-panel-wallpaper-layer above) still
+           shows through softly without swallowing the text.
+           Switching back to the normal theme reverts every one of
+           these to their plain styling above with nothing left over. */
+        body.theme-glass .chat-panel {
+            background: var(--chat-glass-bg);
+            border: 1px solid var(--glass-highlight);
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 22px 60px rgba(0, 0, 0, .5);
+        }
+        body.theme-glass .chat-panel-header {
+            background: var(--chat-glass-bg-strong);
+            backdrop-filter: blur(18px) saturate(160%);
+            -webkit-backdrop-filter: blur(18px) saturate(160%);
+            border-bottom: 1px solid var(--glass-highlight);
+            box-shadow: inset 0 -1px 0 var(--glass-highlight);
+        }
+        body.theme-glass .chat-input-row {
+            background: var(--chat-glass-bg-strong);
+            backdrop-filter: blur(18px) saturate(160%);
+            -webkit-backdrop-filter: blur(18px) saturate(160%);
+            border-top: 1px solid var(--glass-highlight);
+            box-shadow: inset 0 1px 0 var(--glass-highlight);
+        }
+        body.theme-glass .chat-input-row textarea {
+            background: var(--chat-glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px) saturate(150%);
+            -webkit-backdrop-filter: blur(10px) saturate(150%);
+        }
+        body.theme-glass .chat-attach-btn,
+        body.theme-glass .chat-mic-btn.mini-mic-btn:not(.recording) {
+            background: var(--chat-glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px) saturate(150%);
+            -webkit-backdrop-filter: blur(10px) saturate(150%);
+        }
+        body.theme-glass .chat-send-btn {
+            background: var(--glass-tint);
+            border: 1px solid var(--glass-highlight);
+            backdrop-filter: blur(10px) saturate(150%);
+            -webkit-backdrop-filter: blur(10px) saturate(150%);
+            box-shadow: inset 0 1px 0 var(--glass-highlight);
+        }
+        body.theme-glass .chat-panel-close,
+        body.theme-glass .chat-panel-expand,
+        body.theme-glass .chat-search-btn {
+            background: var(--chat-glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px) saturate(150%);
+            -webkit-backdrop-filter: blur(10px) saturate(150%);
+        }
+        body.theme-glass .chat-bubble-row.mine .chat-bubble {
+            background: var(--rose-deep);
+            border: 1px solid var(--glass-highlight);
+            backdrop-filter: blur(10px) saturate(150%);
+            -webkit-backdrop-filter: blur(10px) saturate(150%);
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 2px 6px rgba(0, 0, 0, .15);
+            color: var(--white);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, .45);
+        }
+        body.theme-glass .chat-bubble-row.theirs .chat-bubble {
+            background: var(--chat-glass-bubble-theirs);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px) saturate(150%);
+            -webkit-backdrop-filter: blur(10px) saturate(150%);
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 2px 6px rgba(0, 0, 0, .1);
+        }
+        body.theme-glass .chat-date-sep {
+            background: var(--chat-glass-bg-strong);
+            backdrop-filter: blur(10px) saturate(150%);
+            -webkit-backdrop-filter: blur(10px) saturate(150%);
+        }
         .chat-pin-menu {
             position: fixed;
             z-index: 2160;
@@ -2601,7 +2816,10 @@
             overflow-x: hidden;
             min-height: 100vh;
             overflow-anchor: none;
+            scrollbar-width: none;
         }
+        html { scrollbar-width: none; }
+        body::-webkit-scrollbar, html::-webkit-scrollbar { display: none; }
 
         /* ─── Site-wide scrollbar ───
            Applies the same thin rose scrollbar everywhere by default
@@ -3825,52 +4043,85 @@
             font-weight: 600;
             font-size: 0.95rem;
             color: var(--white);
-            background: var(--glass-tint);
-            border: 1px solid var(--glass-highlight);
-            backdrop-filter: blur(14px) saturate(160%);
-            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            background: var(--rose-deep);
+            border: none;
             border-radius: 999px;
             padding: 0.85rem 1.7rem;
             cursor: pointer;
-            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 6px 16px var(--shadow);
-            transition: transform 0.2s cubic-bezier(.34, 1.56, .64, 1), box-shadow 0.2s ease, background 0.2s ease;
+            box-shadow: 0 6px 16px var(--shadow);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
         }
         .add-btn:hover {
             transform: translateY(-2px);
-            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 22px var(--shadow);
+            box-shadow: 0 10px 22px var(--shadow);
+            background: #C97781;
         }
-        .add-btn:active { transform: scale(.96); }
         .fav-filter-btn {
             font-family: 'Quicksand', sans-serif;
             font-weight: 600;
             font-size: 0.9rem;
             color: var(--rose-deep);
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            backdrop-filter: blur(14px) saturate(160%);
-            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            background: var(--white);
+            border: 1px solid var(--rose-deep);
             border-radius: 999px;
             padding: 0.8rem 1.4rem;
             cursor: pointer;
-            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 4px 14px var(--shadow);
-            transition: transform 0.2s cubic-bezier(.34, 1.56, .64, 1), background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+            transition: background 0.2s ease, color 0.2s ease;
         }
-        .fav-filter-btn:hover {
-            transform: translateY(-2px);
-            background: var(--glass-bg-strong);
-        }
-        .fav-filter-btn:active { transform: scale(.95); }
         .fav-filter-btn.active {
-            background: var(--glass-tint);
+            background: var(--rose-deep);
             color: var(--white);
-            border-color: var(--glass-highlight);
-            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 6px 18px var(--shadow);
         }
         a.fav-filter-btn {
             text-decoration: none;
             display: inline-block;
         }
+
+        /* ─── Glass theme ───
+           Off by default (this is the "revert to original" look
+           above). Selecting "🫧 Glass" under Themes adds this class
+           to <body>, which re-skins the same buttons as frosted,
+           translucent panels instead of solid fills — see
+           applySeason() for how the class gets toggled. */
+        body.theme-glass .add-btn {
+            color: var(--white);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, .5), 0 1px 10px rgba(0, 0, 0, .3);
+            background: var(--glass-tint), rgba(60, 40, 50, .28);
+            background-blend-mode: normal, normal;
+            border: 1px solid var(--glass-highlight);
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 6px 16px var(--shadow);
+            transition: transform 0.2s cubic-bezier(.34, 1.56, .64, 1), box-shadow 0.2s ease, background 0.2s ease;
+        }
+        body.theme-glass .add-btn:hover {
+            background: var(--glass-tint), rgba(60, 40, 50, .34);
+            transform: translateY(-2px);
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 22px var(--shadow);
+        }
+        body.theme-glass .add-btn:active { transform: scale(.96); }
+        body.theme-glass .fav-filter-btn {
+            color: var(--rose-deep);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 4px 14px var(--shadow);
+            transition: transform 0.2s cubic-bezier(.34, 1.56, .64, 1), background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+        }
+        body.theme-glass .fav-filter-btn:hover {
+            transform: translateY(-2px);
+            background: var(--glass-bg-strong);
+        }
+        body.theme-glass .fav-filter-btn:active { transform: scale(.95); }
+        body.theme-glass .fav-filter-btn.active {
+            background: var(--glass-tint);
+            color: var(--white);
+            border-color: var(--glass-highlight);
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 6px 18px var(--shadow);
+        }
         .music-btn {
+
             width: 44px;
             height: 44px;
             border-radius: 50%;
@@ -3971,13 +4222,18 @@
             font-size: 0.85rem;
             padding: 0.55rem 1rem;
             border-radius: 999px;
+            border: 1px solid #E3D3C2;
+            background: var(--white);
+            color: var(--ink);
+            outline: none;
+        }
+        body.theme-glass .search-input,
+        body.theme-glass .sort-select {
             border: 1px solid var(--glass-border);
             background: var(--glass-bg);
             backdrop-filter: blur(14px) saturate(160%);
             -webkit-backdrop-filter: blur(14px) saturate(160%);
             box-shadow: inset 0 1px 0 var(--glass-highlight);
-            color: var(--ink);
-            outline: none;
             transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
         }
         .sort-select {
@@ -6887,7 +7143,9 @@
             gap: .7rem;
             text-align: left;
             padding-right: 2px;
+            scrollbar-width: none;
         }
+        .anger-history-list::-webkit-scrollbar { display: none; }
         .anger-history-empty.hidden {
             display: none;
         }
@@ -9176,6 +9434,52 @@
         .top-right-btn:active {
             transform: scale(.9);
         }
+        /* Wallpaper is available in both themes now — a fixed layer
+           behind everything, sized/positioned independent of scroll.
+           NOTE: this used to sit at z-index:-1, which relies on the
+           browser painting it above the body/canvas background but
+           below all normal-flow content. Several mobile WebViews
+           (including the in-app content:// viewer this is often
+           opened in) don't reliably honour that for a fixed element,
+           and end up hiding it behind the page entirely. Using an
+           explicit, non-negative z-index here — paired with
+           #siteContent below being promoted to its own stacking
+           context at a higher z-index — makes the layering
+           unambiguous everywhere instead of depending on that quirk. */
+        #siteWallpaperLayer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            width: 100%;
+            height: 100vh;
+            height: 100lvh;
+            min-height: 100%;
+            min-height: -webkit-fill-available;
+            z-index: 0;
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            pointer-events: none;
+            -webkit-transform: translate3d(0, 0, 0);
+            transform: translate3d(0, 0, 0);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            will-change: transform;
+        }
+        /* Give the real page its own explicit stacking context above
+           the wallpaper layer — see note above. */
+        #siteContent {
+            position: relative;
+            z-index: 1;
+        }
+        #wallpaperBtn {
+            position: relative;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: manipulation;
+        }
         .identity-modal {
             position: fixed;
             inset: 0;
@@ -10345,18 +10649,21 @@
             user-select: none;
         }
         .touch-heart {
-            width:50px; height:50px; padding:12px; box-sizing:border-box; border-radius:50%;
-            border: 1px solid var(--glass-highlight);
-            background: var(--glass-tint);
-            backdrop-filter: blur(14px) saturate(160%);
-            -webkit-backdrop-filter: blur(14px) saturate(160%);
-            color:white; font-size:1.3rem;
-            cursor:pointer; box-shadow: inset 0 1px 0 var(--glass-highlight), 0 5px 14px var(--shadow);
+            width:50px; height:50px; padding:12px; box-sizing:border-box; border-radius:50%; border:0;
+            background:linear-gradient(135deg,var(--rose),var(--rose-deep)); color:white; font-size:1.3rem;
+            cursor:pointer; box-shadow:0 5px 14px var(--shadow);
             touch-action:manipulation; -webkit-tap-highlight-color:transparent;
             transition: box-shadow .25s ease, transform .2s cubic-bezier(.34, 1.56, .64, 1);
         }
         @media (hover: hover) {
             .touch-heart:hover { transform: translateY(-2px) scale(1.04); }
+        }
+        body.theme-glass .touch-heart {
+            border: 1px solid var(--glass-highlight);
+            background: var(--glass-tint);
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 5px 14px var(--shadow);
         }
         .touch-heart.pulsing { animation:touchPulse .8s ease-in-out infinite; }
         @keyframes touchPulse { 50% { transform:scale(1.22); box-shadow:0 0 0 22px rgba(217,138,147,.28),0 0 60px 14px var(--rose-deep); } }
@@ -10673,11 +10980,19 @@
 
 <body>
 
+    <!-- Fixed background layer for custom wallpapers — a real
+         position:fixed element rather than background-attachment:fixed
+         on <body>, which mobile browsers repaint/jitter/"zoom" during
+         scroll. This one just sits still. -->
+    <div id="siteWallpaperLayer" aria-hidden="true"></div>
+
     <!-- ========== PASSWORD GATE ========== -->
     <div class="top-right-controls" id="topRightControls">
         <button type="button" class="top-right-btn" id="signatureBtn" title="Draw or type your signature" aria-label="Draw or type your signature">✍️</button>
         <button type="button" class="top-right-btn" id="presenceSwitchBtn" title="Change whose device this is" aria-label="Change whose device this is">⚙️</button>
+        <button type="button" class="top-right-btn" id="wallpaperBtn" title="Set a background wallpaper (long-press to remove)" aria-label="Set a background wallpaper">🖼️</button>
         <button type="button" class="top-right-btn" id="lockToggleBtn" title="Lock the page" aria-label="Lock the page">🔒</button>
+        <input type="file" id="wallpaperFileInput" accept="image/*" style="display:none">
     </div>
 
     <div class="pass-gate" id="passGate">
@@ -10727,6 +11042,13 @@
 
         <div class="ambient" id="ambient" aria-hidden="true"></div>
         <div class="seasonal-layer" id="seasonalLayer" aria-hidden="true"></div>
+
+        <!-- ─── Glass theme toggle (visible only at top) ─── -->
+        <button type="button" class="glass-toggle-btn" id="glassToggleBtn" role="switch" aria-checked="false" aria-label="Toggle glass theme" title="Glass theme">
+            <span class="glass-toggle-thumb">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12l-4 4H4z"/><path d="M4 4l8 8 8-8" opacity=".55"/></svg>
+            </span>
+        </button>
 
         <!-- ─── Backup button (visible only at top) ─── -->
         <button type="button" class="backup-fixed-btn" id="backupBtn" aria-label="Backup everything" title="Backup everything">
@@ -10861,16 +11183,19 @@
         </div>
         <div class="chat-panel hidden" id="chatPanel" role="dialog" aria-label="Chat">
             <div class="chat-panel-draghandle" id="chatPanelDragHandle" aria-hidden="true"></div>
+            <div class="chat-panel-wallpaper-layer" id="chatWallpaperLayer" aria-hidden="true"></div>
             <div class="chat-panel-header">
                 <div class="chat-panel-heading">
                     <h3>Chat</h3>
                     <p class="chat-presence" id="chatPresence"></p>
                 </div>
                 <div class="chat-panel-header-actions">
+                    <button type="button" class="chat-search-btn" id="chatWallpaperBtn" aria-label="Set a chat wallpaper (long-press to remove)" title="Set a chat wallpaper (long-press to remove)">🖼️</button>
                     <button type="button" class="chat-search-btn" id="chatNotifBtn" aria-label="Turn on notifications" title="Turn on notifications">🔕</button>
                     <button type="button" class="chat-search-btn" id="chatSearchBtn" aria-label="Search this chat" title="Search">🔍</button>
                     <button type="button" class="chat-panel-expand" id="chatPanelExpand" aria-label="Expand to full screen" title="Full screen">⛶</button>
                     <button type="button" class="chat-panel-close" id="chatPanelClose" aria-label="Close chat">✕</button>
+                    <input type="file" id="chatWallpaperFileInput" accept="image/*" style="display:none">
                 </div>
             </div>
             <div class="chat-search-bar hidden" id="chatSearchBar">
@@ -11715,6 +12040,51 @@
                 }
             }
 
+            /* ─── Back button / gesture support for in-page "sections" ───
+               By default a phone's back button (or a laptop trackpad's
+               back gesture) navigates away from the whole site. For
+               anything that acts like its own screen — the chat panel,
+               the magic wand and its gallery/collection/lightbox — that
+               should instead just close that screen, the way it would
+               in a native app.
+
+               openBackable(name, onClose) pushes a dummy history entry
+               when a screen opens. The single popstate listener below
+               closes whichever registered screen is topmost. A screen
+               closed through its own UI (an X button, tap-outside, etc.)
+               must call backableClose(name) rather than hiding itself
+               directly, so the history stack and the visible UI never
+               drift out of sync — backableClose does the actual
+               history.back() for you and your onClose runs from the
+               resulting popstate, so write onClose as "hide this
+               screen" and nothing more (no confirm()s, no navigation).
+               Nested screens (e.g. the BTS collection opened from
+               inside the magic wand) just call openBackable again on
+               top — one back press closes the innermost one first. */
+            let backableStack = [];
+            let backablePopInProgress = false;
+            function openBackable(name, onClose) {
+                backableStack.push({ name, onClose });
+                history.pushState({ mwBackable: name, mwDepth: backableStack.length }, '');
+            }
+            function backableClose(name) {
+                const idx = backableStack.findIndex(e => e.name === name);
+                if (idx === -1) return; // not currently tracked as open — nothing to sync or hide
+                const [entry] = backableStack.splice(idx, 1);
+                if (history.state && history.state.mwBackable === name) {
+                    backablePopInProgress = true;
+                    history.back();
+                }
+                entry.onClose();
+            }
+            window.addEventListener('popstate', () => {
+                if (backablePopInProgress) { backablePopInProgress = false;
+                    return; }
+                if (!backableStack.length) return; // nothing of ours open — let the browser navigate normally
+                const top = backableStack.pop();
+                try { top.onClose(); } catch (err) { console.error('backable close failed:', err); }
+            });
+
             /* ─── Heart bloom ─── */
             function heartBloom(x, y) {
                 if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -11805,6 +12175,7 @@
 
             /* ─── Backup button + signature/settings icons: only visible at top ─── */
             const backupBtn = document.getElementById('backupBtn');
+            const glassToggleBtn = document.getElementById('glassToggleBtn');
             const topRightControls = document.getElementById('topRightControls');
             let backupVisible = true;
 
@@ -11813,6 +12184,7 @@
                 if (atTop !== backupVisible) {
                     backupVisible = atTop;
                     backupBtn.classList.toggle('visible', atTop);
+                    if (glassToggleBtn) glassToggleBtn.classList.toggle('visible', atTop);
                 }
                 const unlocked = siteContent && !siteContent.classList.contains('hidden');
                 if (topRightControls) topRightControls.classList.toggle('visible', atTop && unlocked);
@@ -11825,6 +12197,158 @@
             backupVisible = false;
             // Check after a moment
             setTimeout(updateBackupVisibility, 100);
+
+            /* ─── Glass theme toggle ───
+               Independent of the seasonal "Themes" picker on purpose —
+               it's a look, not a weather/particle overlay, so it can
+               stay on while any seasonal effect is also selected. */
+            const GLASS_THEME_KEY = 'mw_theme_glass';
+            function setGlassTheme(on) {
+                document.body.classList.toggle('theme-glass', on);
+                if (glassToggleBtn) { glassToggleBtn.classList.toggle('active', on);
+                    glassToggleBtn.setAttribute('aria-checked', String(on)); }
+                localStorage.setItem(GLASS_THEME_KEY, on ? '1' : '0');
+                applyThemedWallpaper();
+            }
+            if (glassToggleBtn) {
+                glassToggleBtn.addEventListener('click', () => {
+                    setGlassTheme(!document.body.classList.contains('theme-glass'));
+                    haptic(10);
+                });
+            }
+
+            /* ─── Custom wallpaper ───
+               Available in both themes, but each theme keeps its OWN
+               wallpaper — switching the glass toggle swaps which one
+               (if either) is showing, they never bleed into each
+               other. Stored as a downscaled/compressed data URL in
+               Supabase (site_settings table) for shared real-time sync
+               between both users, and cached locally in localStorage
+               for instant 0ms startup. Applied to a dedicated
+               position:fixed layer behind everything rather than
+               background-attachment:fixed on <body>, which mobile
+               browsers visibly jitter/"zoom" during scroll. */
+            const WALLPAPER_KEY_GLASS = 'mw_site_wallpaper_glass';
+            const WALLPAPER_KEY_NORMAL = 'mw_site_wallpaper_normal';
+            const wallpaperBtn = document.getElementById('wallpaperBtn');
+            const wallpaperFileInput = document.getElementById('wallpaperFileInput');
+            const siteWallpaperLayer = document.getElementById('siteWallpaperLayer');
+
+            function currentWallpaperKey() {
+                return document.body.classList.contains('theme-glass') ? WALLPAPER_KEY_GLASS : WALLPAPER_KEY_NORMAL;
+            }
+            function applyWallpaper(dataUrl) {
+                if (!siteWallpaperLayer) return;
+                siteWallpaperLayer.style.backgroundImage = dataUrl ? `url("${dataUrl}")` : '';
+            }
+            function applyThemedWallpaper() {
+                applyWallpaper(localStorage.getItem(currentWallpaperKey()));
+            }
+
+            async function saveHomepageWallpaperRemote(compressed) {
+                if (typeof supabase === 'undefined' || !supabase) return;
+                const isGlass = document.body.classList.contains('theme-glass');
+                const col = isGlass ? 'wallpaper_glass' : 'wallpaper_normal';
+                try {
+                    const { error } = await supabase.from('site_settings').upsert({ id: 1, [col]: compressed });
+                    if (error) console.error('Could not save wallpaper to Supabase:', error);
+                } catch (err) {
+                    console.error('Could not save wallpaper to Supabase:', err);
+                }
+            }
+
+            async function clearHomepageWallpaperRemote() {
+                if (typeof supabase === 'undefined' || !supabase) return;
+                const isGlass = document.body.classList.contains('theme-glass');
+                const col = isGlass ? 'wallpaper_glass' : 'wallpaper_normal';
+                try {
+                    const { error } = await supabase.from('site_settings').upsert({ id: 1, [col]: null });
+                    if (error) console.error('Could not clear wallpaper from Supabase:', error);
+                } catch (err) {
+                    console.error('Could not clear wallpaper from Supabase:', err);
+                }
+            }
+
+            // Long-press (or right-click on desktop) clears the
+            // wallpaper — no separate remove button needed. The
+            // touch-action/user-select/callout CSS on #wallpaperBtn is
+            // what stops the hold from also triggering the phone's own
+            // text-selection/copy-paste popup.
+            function wireWallpaperButton(btn, fileInput, getKey, onApplied, onRemoteSave, onRemoteClear) {
+                if (!btn || !fileInput) return;
+                const clear = () => {
+                    localStorage.removeItem(getKey());
+                    onApplied(null);
+                    if (typeof onRemoteClear === 'function') onRemoteClear();
+                    if (typeof showToast === 'function') showToast('Wallpaper removed');
+                };
+                let pressTimer = null;
+                let longPressed = false;
+                btn.addEventListener('pointerdown', (e) => {
+                    longPressed = false;
+                    pressTimer = setTimeout(() => {
+                        longPressed = true;
+                        haptic(15);
+                        clear();
+                    }, 550);
+                });
+                ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
+                    btn.addEventListener(evt, () => { if (pressTimer) clearTimeout(pressTimer); });
+                });
+                btn.addEventListener('contextmenu', (e) => { e.preventDefault();
+                    clear(); });
+                btn.addEventListener('click', () => {
+                    if (longPressed) return; // the long-press already handled it
+                    fileInput.click();
+                });
+                fileInput.addEventListener('change', () => {
+                    const file = fileInput.files && fileInput.files[0];
+                    fileInput.value = '';
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            // Downscale before storing — a full-res
+                            // phone photo would blow past localStorage's
+                            // quota in a couple of tries.
+                            const maxW = 1600;
+                            const scale = Math.min(1, maxW / img.width);
+                            const canvas = document.createElement('canvas');
+                            canvas.width = Math.round(img.width * scale);
+                            canvas.height = Math.round(img.height * scale);
+                            const cctx = canvas.getContext('2d');
+                            cctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            const compressed = canvas.toDataURL('image/jpeg', 0.82);
+                            try {
+                                localStorage.setItem(getKey(), compressed);
+                                onApplied(compressed);
+                                if (typeof onRemoteSave === 'function') onRemoteSave(compressed);
+                                if (typeof showToast === 'function') showToast('Wallpaper set ✓');
+                            } catch (err) {
+                                console.error('Could not save wallpaper:', err);
+                                if (typeof showToast === 'function') showToast(
+                                    "That image is too large to save — try a smaller one.", { type: 'error' });
+                            }
+                        };
+                        img.onerror = () => {
+                            if (typeof showToast === 'function') showToast("Couldn't read that image.", {
+                                type: 'error'
+                            });
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            wireWallpaperButton(wallpaperBtn, wallpaperFileInput, currentWallpaperKey, applyThemedWallpaper, saveHomepageWallpaperRemote, clearHomepageWallpaperRemote);
+
+            // Now that both the toggle and the wallpaper machinery
+            // exist, apply whichever theme (and its wallpaper, if any)
+            // was last chosen.
+            if (glassToggleBtn) setGlassTheme(localStorage.getItem(GLASS_THEME_KEY) === '1');
+            else applyThemedWallpaper();
 
             /* ─── Doodle overlay handlers ─── */
             let soloOverlayHandler = null;
@@ -13136,16 +13660,19 @@
             }
 
             notesToggleBtn.addEventListener('click', () => {
-                const nowHidden = notesWall.classList.toggle('hidden');
-                if (!nowHidden) {
+                const wasHidden = notesWall.classList.contains('hidden');
+                if (wasHidden) {
+                    notesWall.classList.remove('hidden');
                     scrollToSection(notesWall);
                     if (!notesLoaded) { notesLoaded = true;
                         loadNotes(); }
                     enterScope('notes');
-                } else if (currentOpenScope === 'notes') { leaveScope(); }
+                    ensureSectionBackable();
+                } else {
+                    backableClose('section');
+                }
             });
-            notesCloseBtn.addEventListener('click', () => { notesWall.classList.add('hidden');
-                if (currentOpenScope === 'notes') leaveScope(); });
+            notesCloseBtn.addEventListener('click', () => backableClose('section'));
             notesFavFilterBtn.addEventListener('click', () => {
                 notesShowFavoritesOnly = !notesShowFavoritesOnly;
                 notesFavFilterBtn.classList.toggle('active', notesShowFavoritesOnly);
@@ -14319,7 +14846,9 @@
                     relayFinishBtn.disabled = false; }
             });
 
+            let doodleViewOpen = false; // true while solo/duet/relay is showing (vs the mode chooser)
             function showDoodleModeChooser() {
+                doodleViewOpen = false;
                 doodleModeChooser.classList.remove('hidden');
                 doodleSoloView.classList.add('hidden');
                 doodleDuetView.classList.add('hidden');
@@ -14334,6 +14863,7 @@
             }
 
             function openDoodleSolo() {
+                doodleViewOpen = true;
                 doodleModeChooser.classList.add('hidden');
                 doodleDuetView.classList.add('hidden');
                 doodleRelayView.classList.add('hidden');
@@ -14354,6 +14884,7 @@
             }
 
             function openDoodleDuet() {
+                doodleViewOpen = true;
                 doodleModeChooser.classList.add('hidden');
                 doodleSoloView.classList.add('hidden');
                 doodleRelayView.classList.add('hidden');
@@ -14375,6 +14906,7 @@
             }
 
             function openDoodleRelay() {
+                doodleViewOpen = true;
                 doodleModeChooser.classList.add('hidden');
                 doodleSoloView.classList.add('hidden');
                 doodleDuetView.classList.add('hidden');
@@ -14402,20 +14934,20 @@
             doodlesToggleBtn.addEventListener('click', () => {
                 const opening = doodlesWall.classList.contains('hidden');
                 closeFeatureMenuInstantly();
-                doodlesWall.classList.toggle('hidden');
-                if (opening) { notesWall.classList.add('hidden');
+                if (opening) {
+                    doodlesWall.classList.remove('hidden');
+                    notesWall.classList.add('hidden');
                     showDoodleModeChooser();
                     scrollToSection(doodlesWall);
                     enterScope('doodles');
                     if (!doodlesLoaded) { doodlesLoaded = true;
                         loadDoodles(); }
-                } else if (currentOpenScope === 'doodles') { leaveScope(); }
+                    ensureSectionBackable();
+                } else {
+                    backableClose('section');
+                }
             });
-            doodlesCloseBtn.addEventListener('click', () => {
-                doodlesWall.classList.add('hidden');
-                resetDoodleCanvasOverlays();
-                if (currentOpenScope === 'doodles') leaveScope();
-            });
+            doodlesCloseBtn.addEventListener('click', () => backableClose('section'));
             notesToggleBtn.addEventListener('click', () => doodlesWall.classList.add('hidden'));
             doodlesFavFilterBtn.addEventListener('click', () => {
                 doodlesFavoritesOnly = !doodlesFavoritesOnly;
@@ -14590,6 +15122,38 @@
                 if (currentOpenScope && currentOpenScope !== 'notes' && currentOpenScope !== 'doodles') leaveScope();
             }
 
+            // Only one of notes / doodles / an "extras" wall is ever
+            // visible at once (each opening path already force-hides
+            // the others), so a single shared backable slot covers all
+            // of them — closing just means "hide whichever of these is
+            // currently showing," regardless of which one that is.
+            function closeOpenSection() {
+                const doodlesWasOpen = !doodlesWall.classList.contains('hidden');
+                notesWall.classList.add('hidden');
+                doodlesWall.classList.add('hidden');
+                if (doodlesWasOpen) resetDoodleCanvasOverlays();
+                extrasWalls.forEach(w => w.classList.add('hidden'));
+                if (currentOpenScope) leaveScope();
+            }
+            // Doodles gets one extra level of "back": if a specific
+            // view (solo/duet/relay) is open, the first back press
+            // just returns to the mode chooser — the whole section
+            // only closes on a second press, once the chooser itself
+            // is what's showing. Every other "extras" wall closes in
+            // one press, same as before.
+            function closeOpenSectionOrDoodleView() {
+                if (doodleViewOpen) {
+                    showDoodleModeChooser();
+                    openBackable('section', closeOpenSectionOrDoodleView);
+                } else {
+                    closeOpenSection();
+                }
+            }
+            function ensureSectionBackable() {
+                if (!backableStack.some(e => e.name === 'section')) openBackable('section',
+                    closeOpenSectionOrDoodleView);
+            }
+
             function openExtra(wall, scope) {
                 closeFeatureMenuInstantly();
                 closeExtras();
@@ -14598,6 +15162,7 @@
                 wall.classList.remove('hidden');
                 scrollToSection(wall);
                 if (scope) enterScope(scope);
+                ensureSectionBackable();
             }
             const littleThingsWalls = [doodlesWall, moodsWall, capsulesWall, bucketWall, constellationWall, gamesWall,
                 specialDaysWall
@@ -14615,6 +15180,7 @@
                     if (!doodlesLoaded) { doodlesLoaded = true;
                         loadDoodles(); }
                     enterScope('doodles');
+                    ensureSectionBackable();
                 } else {
                     let scope = null;
                     if (wall === moodsWall) scope = 'mood';
@@ -17526,9 +18092,10 @@
                 resetGlass();
                 glassNoteText.textContent = breakGlassMessage;
                 glassModal.classList.remove('hidden');
+                openBackable('anger', closeAngerFlow);
             });
-            glassModalClose.addEventListener('click', () => glassModal.classList.add('hidden'));
-            glassModal.addEventListener('click', e => { if (e.target === glassModal) glassModal.classList.add('hidden'); });
+            glassModalClose.addEventListener('click', () => backableClose('anger'));
+            glassModal.addEventListener('click', e => { if (e.target === glassModal) backableClose('anger'); });
             glassWhoOptions.querySelectorAll('.glass-who-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     glassSelectedWho = btn.dataset.who;
@@ -17953,16 +18520,18 @@
                 glassModal.classList.remove('hidden');
                 if (currentOpenScope === 'fight') leaveScope();
             }
-            function fullyCloseAngerHistory() {
-                // "✕" — closes the whole thing, no picker reappearing.
+            function closeAngerFlow() {
+                // Device back / "✕" — closes the whole anger-log flow,
+                // whichever of its two views (picker or history) is
+                // currently showing.
                 angerHistoryModal.classList.add('hidden');
                 glassModal.classList.add('hidden');
                 if (currentOpenScope === 'fight') leaveScope();
             }
-            angerHistoryClose.addEventListener('click', fullyCloseAngerHistory);
+            angerHistoryClose.addEventListener('click', () => backableClose('anger'));
             angerHistoryBack.addEventListener('click', closeAngerHistory);
-            angerHistoryModal.addEventListener('click', e => { if (e.target === angerHistoryModal)
-                    fullyCloseAngerHistory(); });
+            angerHistoryModal.addEventListener('click', e => { if (e.target === angerHistoryModal) backableClose(
+                    'anger'); });
 
             /* ─── Voice notes ─── */
             const MAX_RECORDING_SECONDS = 120;
@@ -18752,6 +19321,36 @@
                         if (data.title) siteTitle.textContent = data.title;
                         if (data.subtitle) siteSubtitle.textContent = data.subtitle;
                         if (data.break_glass_message) breakGlassMessage = data.break_glass_message;
+
+                        // Sync shared homepage wallpapers across themes
+                        let wpChanged = false;
+                        if (data.wallpaper_glass !== undefined) {
+                            const curGlass = localStorage.getItem(WALLPAPER_KEY_GLASS);
+                            if (data.wallpaper_glass) {
+                                if (curGlass !== data.wallpaper_glass) {
+                                    localStorage.setItem(WALLPAPER_KEY_GLASS, data.wallpaper_glass);
+                                    wpChanged = true;
+                                }
+                            } else if (curGlass) {
+                                localStorage.removeItem(WALLPAPER_KEY_GLASS);
+                                wpChanged = true;
+                            }
+                        }
+                        if (data.wallpaper_normal !== undefined) {
+                            const curNormal = localStorage.getItem(WALLPAPER_KEY_NORMAL);
+                            if (data.wallpaper_normal) {
+                                if (curNormal !== data.wallpaper_normal) {
+                                    localStorage.setItem(WALLPAPER_KEY_NORMAL, data.wallpaper_normal);
+                                    wpChanged = true;
+                                }
+                            } else if (curNormal) {
+                                localStorage.removeItem(WALLPAPER_KEY_NORMAL);
+                                wpChanged = true;
+                            }
+                        }
+                        if (wpChanged && typeof applyThemedWallpaper === 'function') {
+                            applyThemedWallpaper();
+                        }
 
                         // Expire feelings older than 24h — hide instantly on the client,
                         // and best-effort clear them in Supabase (the SQL cron job is the source of truth).
@@ -21147,6 +21746,9 @@
             const chatPanelClose = document.getElementById('chatPanelClose');
             const chatPanelExpand = document.getElementById('chatPanelExpand');
             const chatPanelDragHandle = document.getElementById('chatPanelDragHandle');
+            const chatWallpaperBtn = document.getElementById('chatWallpaperBtn');
+            const chatWallpaperFileInput = document.getElementById('chatWallpaperFileInput');
+            const chatWallpaperLayer = document.getElementById('chatWallpaperLayer');
             const chatPresence = document.getElementById('chatPresence');
             const chatPinMenu = document.getElementById('chatPinMenu');
             const chatSelectBar = document.getElementById('chatSelectBar');
@@ -21998,6 +22600,37 @@
                 applyChatPanelRect(r.left, r.top, r.w, r.h);
             }
 
+            /* ─── Body scroll lock ───
+               `overflow:hidden` on <body> alone stops WHEEL scrolling
+               but many mobile WebViews (including the in-app
+               content:// viewer) keep honouring touch-drag scrolling
+               on the page underneath a modal anyway — which is why
+               the page (and its background Polaroids) visibly kept
+               scrolling behind the "fixed" chat panel. Pinning the
+               body itself to position:fixed at its current scroll
+               offset — the standard workaround for this — blocks that
+               unconditionally, on every engine, and we restore the
+               exact scroll position on close. */
+            let chatScrollLockY = 0;
+            function lockBodyScroll() {
+                chatScrollLockY = window.scrollY || window.pageYOffset || 0;
+                document.body.style.position = 'fixed';
+                document.body.style.top = -chatScrollLockY + 'px';
+                document.body.style.left = '0';
+                document.body.style.right = '0';
+                document.body.style.width = '100%';
+                document.body.style.overflow = 'hidden';
+            }
+            function unlockBodyScroll() {
+                document.body.style.position = '';
+                document.body.style.top = '';
+                document.body.style.left = '';
+                document.body.style.right = '';
+                document.body.style.width = '';
+                document.body.style.overflow = '';
+                window.scrollTo(0, chatScrollLockY);
+            }
+
             function openChatPanel() {
                 chatOpen = true;
                 chatPanel.classList.remove('fullscreen');
@@ -22010,7 +22643,7 @@
                    spot instead of the panel jumping there mid-fade. */
                 positionChatPanelForOpen();
                 requestAnimationFrame(() => chatPanel.classList.remove('hidden'));
-                document.body.style.overflow = 'hidden';
+                lockBodyScroll();
                 if (!chatLoaded) { chatLoaded = true;
                     loadChatMessages();
                     cleanupExpiredChat(); }
@@ -22018,12 +22651,13 @@
                 updateChatPresenceUI();
                 markChatSeen();
                 setTimeout(() => chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight, 60);
+                openBackable('chat', closeChatPanel);
             }
 
             function closeChatPanel() {
                 chatOpen = false;
                 chatPanel.classList.add('hidden');
-                document.body.style.overflow = '';
+                unlockBodyScroll();
                 if (chatSelectMode) exitChatSelectMode();
                 if (chatSearchOpen) closeChatSearch();
                 closeChatPinMenu();
@@ -22031,7 +22665,25 @@
                 chatPanelPreKeyboardRect = null;
             }
 
-            chatPanelClose.addEventListener('click', closeChatPanel);
+            chatPanelClose.addEventListener('click', () => backableClose('chat'));
+
+            /* ─── Chat wallpaper ───
+               Its own storage key — entirely independent of the two
+               site-wide wallpapers (glass/normal). Applied to
+               #chatWallpaperLayer, a position:absolute layer that
+               fills whatever size the chat panel currently is (see
+               .chat-panel-wallpaper-layer CSS), so dragging/resizing/
+               fullscreen-toggling the panel just resizes it via normal
+               layout — nothing to recalculate, nothing to glitch. */
+            const CHAT_WALLPAPER_KEY = 'mw_chat_wallpaper';
+            function applyChatWallpaper(dataUrl) {
+                if (!chatWallpaperLayer) return;
+                chatWallpaperLayer.style.backgroundImage = dataUrl ? `url("${dataUrl}")` : '';
+            }
+            applyChatWallpaper(localStorage.getItem(CHAT_WALLPAPER_KEY));
+            wireWallpaperButton(chatWallpaperBtn, chatWallpaperFileInput, () => CHAT_WALLPAPER_KEY,
+                applyChatWallpaper);
+
             chatPanelExpand.addEventListener('click', () => {
                 const goingFull = !chatPanel.classList.contains('fullscreen');
                 if (goingFull) {
@@ -22259,7 +22911,7 @@
                         .target)) return;
                 const expandedOverlay = document.querySelector('.expanded-player-overlay');
                 if (expandedOverlay && expandedOverlay.contains(e.target)) return;
-                closeChatPanel();
+                backableClose('chat');
             }, true);
 
             /* ─── Chat FAB: draggable, edge-snapping, auto-tucks-away ───
@@ -22369,7 +23021,7 @@
                 chatFabBtn.classList.remove('dragging');
                 try { chatFabBtn.releasePointerCapture(chatFabPointerId); } catch (err) {}
                 if (!chatFabMoved) {
-                    if (chatOpen) closeChatPanel();
+                    if (chatOpen) backableClose('chat');
                     else openChatPanel();
                     wakeChatFab();
                     return;
@@ -22425,6 +23077,18 @@
                 chatVoicePreview.classList.add('hidden');
             });
 
+            // Sending a message (via the "Go"/"Send" key on a mobile
+            // keyboard) can make the browser blur the input as part of
+            // that keypress before our submit handler even runs — the
+            // keyboard then closes even though the person is clearly
+            // still mid-conversation. Re-focusing right after handling
+            // the send reopens/keeps it up; it stays open until they
+            // actually tap away or back out of the chat.
+            function keepChatKeyboardOpen() {
+                requestAnimationFrame(() => {
+                    if (document.activeElement !== chatTextInput) chatTextInput.focus({ preventScroll: true });
+                });
+            }
             chatInputForm.addEventListener('submit', async(e) => {
                 e.preventDefault();
                 if (!supabase || !getIdentity()) return;
@@ -22440,6 +23104,7 @@
                     resizeChatTextInput();
                     refreshChatComposeContext();
                     stopChatTyping();
+                    keepChatKeyboardOpen();
                     const prevText = editMsg.content_text;
                     const prevEdited = editMsg.edited_at;
                     editMsg.content_text = text;
@@ -22473,6 +23138,7 @@
                 chatReplyTarget = null;
                 refreshChatComposeContext();
                 stopChatTyping();
+                keepChatKeyboardOpen();
                 const record = { chat_id: CHAT_ID, sender: myLetter(), recipient: otherLetter(), content_text: text ||
                         null, content_type: voice ? 'voice' : (file ? 'image' : 'text'), read_by_recipient: false };
                 if (voice) { record.voice_url = voice.url;
@@ -23564,6 +24230,10 @@
                 const btsPreviewCount = document.getElementById('mwBtsPreviewCount');
                 const btsPreviewQmark = document.getElementById('mwBtsPreviewQmark');
 
+                function closeBtsPreview() {
+                    if (btsPreviewOverlay) btsPreviewOverlay.classList.add('hidden');
+                    popWandScreenIfMatches(closeBtsPreview);
+                }
                 function openBtsPreview(entry) {
                     if (!btsPreviewOverlay) return;
                     const caught = btsCollection[entry.src];
@@ -23584,11 +24254,12 @@
                         btsPreviewCount.classList.add('hidden');
                     }
                     btsPreviewOverlay.classList.remove('hidden');
+                    pushWandScreen(closeBtsPreview);
                 }
                 // Tapping ANYWHERE in the preview — backdrop or the
                 // enlarged image itself — closes it, not just outside.
                 if (btsPreviewOverlay) {
-                    btsPreviewOverlay.addEventListener('click', () => btsPreviewOverlay.classList.add('hidden'));
+                    btsPreviewOverlay.addEventListener('click', closeBtsPreview);
                 }
 
                 /* ─── Persistence + weekly reset ───
@@ -23647,15 +24318,20 @@
                     renderBtsCollectionGrid();
                 }
 
+                function closeBtsCollectionModal() {
+                    btsCollectionModal.classList.add('hidden');
+                    popWandScreenIfMatches(closeBtsCollectionModal);
+                }
                 if (btsCollectionBtn) {
                     btsCollectionBtn.addEventListener('click', async() => {
                         btsCollectionModal.classList.remove('hidden');
+                        pushWandScreen(closeBtsCollectionModal);
                         await loadBtsCollection();
                         renderBtsCollectionGrid();
                     });
                 }
                 if (btsCollectionBackBtn) {
-                    btsCollectionBackBtn.addEventListener('click', () => btsCollectionModal.classList.add('hidden'));
+                    btsCollectionBackBtn.addEventListener('click', closeBtsCollectionModal);
                 }
                 if (btsResetBtn) {
                     btsResetBtn.addEventListener('click', async() => {
@@ -23960,9 +24636,17 @@
                     const pose = classifyHandPose(lm);
 
                     if (pose === 'point') {
-                        // Pointing again cancels an in-progress clear so
-                        // new drawing doesn't fight a scattering trail.
-                        if (clearing) clearing = false;
+                        // If a clear was in progress, let it finish for
+                        // real — empty the old trail right away instead
+                        // of cancelling the fade, which used to snap
+                        // the half-vanished flowers/stars back to full
+                        // opacity. Pointing again always starts a fresh
+                        // trail, never resurrects the one being thrown out.
+                        if (clearing) {
+                            clearing = false;
+                            particles = [];
+                            stars = [];
+                        }
                         fistLitIndex = 0;
                         const tip = lm[8]; // index fingertip
                         const { x, y } = mapPoint(tip.x, tip.y);
@@ -24053,6 +24737,29 @@
                     }
                 }
 
+                // Sub-screens opened INSIDE the wand — gallery, BTS
+                // collection, the bare lightbox, the BTS card preview.
+                // These don't each get their own history entry; the
+                // whole wand session holds just one, and each device
+                // back press pops the innermost sub-screen off this
+                // local stack until none remain, then finally exits
+                // the wand. See handleWandBack / openWand below.
+                let wandScreenStack = [];
+                function pushWandScreen(hideFn) { wandScreenStack.push(hideFn); }
+                function popWandScreenIfMatches(hideFn) {
+                    const idx = wandScreenStack.lastIndexOf(hideFn);
+                    if (idx !== -1) wandScreenStack.splice(idx, 1);
+                }
+                function handleWandBack() {
+                    if (wandScreenStack.length) {
+                        const hideFn = wandScreenStack.pop();
+                        hideFn();
+                        openBackable('mw-overlay', handleWandBack);
+                    } else {
+                        closeWand();
+                    }
+                }
+
                 function openWand() {
                     overlay.hidden = false;
                     document.body.classList.add('mw-scroll-locked');
@@ -24064,6 +24771,7 @@
                     fistLitIndex = 0;
                     lastLandmarks = null;
                     cameraStarted = false;
+                    wandScreenStack = [];
                     startScreen.classList.remove('hidden');
                     topbar.classList.add('hidden');
                     bottomControls.classList.add('hidden');
@@ -24071,6 +24779,7 @@
                     gallery.classList.add('hidden');
                     lightbox.classList.add('hidden');
                     savePanel.classList.add('hidden');
+                    openBackable('mw-overlay', handleWandBack);
                 }
 
                 function stopCameraAndTracking() {
@@ -24091,8 +24800,8 @@
 
                 toggleBtn.addEventListener('click', openWand);
                 startBtn.addEventListener('click', startCamera);
-                closeBtn.addEventListener('click', closeWand);
-                startCloseBtn.addEventListener('click', closeWand);
+                closeBtn.addEventListener('click', () => backableClose('mw-overlay'));
+                startCloseBtn.addEventListener('click', () => backableClose('mw-overlay'));
                 clearBtn.addEventListener('click', () => { particles = [];
                     stars = [];
                     clearing = false;
@@ -24395,28 +25104,33 @@
                     }
                     lightboxMedia.appendChild(mediaEl);
                     lightbox.classList.remove('hidden');
+                    pushWandScreen(closeLightbox);
                 }
 
                 function closeLightbox() {
                     lightbox.classList.add('hidden');
                     lightboxMedia.querySelectorAll('video').forEach(v => v.pause());
                     lightboxMedia.innerHTML = '';
+                    popWandScreenIfMatches(closeLightbox);
                 }
 
                 lightbox.addEventListener('click', closeLightbox);
 
+                function closeGallery() {
+                    closeLightbox(); // in case one was open on top — harmless no-op otherwise
+                    gallery.classList.add('hidden');
+                    if (!cameraStarted) startScreen.classList.remove('hidden');
+                    popWandScreenIfMatches(closeGallery);
+                }
                 function openGallery() {
                     startScreen.classList.add('hidden');
                     gallery.classList.remove('hidden');
                     loadGallery();
+                    pushWandScreen(closeGallery);
                 }
                 galleryBtn.addEventListener('click', openGallery);
                 startGalleryBtn.addEventListener('click', openGallery);
-                galleryBackBtn.addEventListener('click', () => {
-                    closeLightbox();
-                    gallery.classList.add('hidden');
-                    if (!cameraStarted) startScreen.classList.remove('hidden');
-                });
+                galleryBackBtn.addEventListener('click', closeGallery);
             })();
 
             /* ─── Notification deep-link routing ───
