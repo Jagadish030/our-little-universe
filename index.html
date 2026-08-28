@@ -52,6 +52,9 @@
             --chat-glass-bg: rgba(255, 253, 249, 0.94);
             --chat-glass-bg-strong: rgba(255, 253, 249, 0.98);
             --chat-glass-bubble-theirs: rgba(255, 253, 249, 0.96);
+            --premium-ease: cubic-bezier(.22, 1, .36, 1);
+            --premium-bounce: cubic-bezier(.34, 1.56, .64, 1);
+            --shadow-lift: 0 14px 34px rgba(107, 83, 68, 0.22);
         }
         body.dark-mode {
             --paper: #221C29;
@@ -76,6 +79,7 @@
             --chat-glass-bg: rgba(48, 39, 57, 0.94);
             --chat-glass-bg-strong: rgba(48, 39, 57, 0.98);
             --chat-glass-bubble-theirs: rgba(48, 39, 57, 0.96);
+            --shadow-lift: 0 14px 34px rgba(0, 0, 0, 0.5);
         }
 
         /* ─── Skeleton loading ─── */
@@ -3809,6 +3813,69 @@
             text-align: center;
             padding: 4.5rem 1.5rem 2.5rem;
         }
+        /* ─── ambient gradient glow, top of the page ─── */
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -6rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(900px, 140vw);
+            height: 420px;
+            z-index: -1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center,
+                rgba(217, 138, 147, 0.35) 0%,
+                rgba(155, 138, 196, 0.22) 40%,
+                rgba(212, 165, 116, 0.12) 65%,
+                transparent 80%);
+            filter: blur(30px);
+            animation: heroGlowPulse 8s var(--premium-ease) infinite;
+        }
+        @keyframes heroGlowPulse {
+            0%, 100% { opacity: 0.85; transform: translateX(-50%) scale(1); }
+            50%      { opacity: 1;    transform: translateX(-50%) scale(1.08); }
+        }
+        /* ─── second, smaller ambient light drifting behind the title —
+           adds depth alongside the centered glow above without
+           competing with it (lower opacity, offset, independent drift) ─── */
+        .hero { overflow: visible; }
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: -2rem;
+            right: 4%;
+            width: min(320px, 55vw);
+            height: 320px;
+            z-index: -1;
+            pointer-events: none;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(168, 184, 156, 0.28) 0%, transparent 70%);
+            filter: blur(45px);
+            animation: ambientDrift 15s var(--premium-ease) infinite;
+        }
+        @keyframes ambientDrift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-6%, 5%) scale(1.12); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero::before, .hero::after { animation: none; }
+        }
+        body.is-scrolling .hero::before, body.is-scrolling .hero::after {
+            animation-play-state: paused;
+        }
+        /* The soft rose/sage ambient glow suits the default look and
+           the warmer seasonal themes (cherry blossom, autumn, festival)
+           but visually clashes with the cooler/darker/more atmospheric
+           ones, which already bring their own strong palette (aura now
+           has its own aurora wash above, night/stars/fireflies are
+           meant to read as dim, rain and snow lean cool, fireworks
+           needs a dark sky to pop against). Toggled via a body class
+           kept in sync with the season picker — see applySeason(). */
+        body.season-ambient-off .hero::before,
+        body.season-ambient-off .hero::after {
+            display: none;
+        }
         .hero .eyebrow {
             font-size: 0.8rem;
             letter-spacing: 0.25em;
@@ -3821,8 +3888,28 @@
             font-weight: 700;
             font-size: clamp(2.8rem, 8vw, 4.6rem);
             margin: 0;
+            line-height: 1.2;
+            padding-bottom: 0.08em;
+            background: linear-gradient(100deg,
+                var(--ink) 0%,
+                var(--rose-deep) 35%,
+                var(--gold) 55%,
+                var(--lavender) 70%,
+                var(--ink) 100%);
+            background-size: 250% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
             color: var(--ink);
-            line-height: 1;
+            animation: heroTitleShine 7s var(--premium-ease) infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero h1 { animation: none; }
+        }
+        ::selection { background: var(--rose-deep); color: var(--white); }
+        @keyframes heroTitleShine {
+            0%, 100% { background-position: 0% 50%; }
+            50%      { background-position: 100% 50%; }
         }
         .hero p.subtitle {
             font-family: 'Caveat', cursive;
@@ -4083,6 +4170,75 @@
            to <body>, which re-skins the same buttons as frosted,
            translucent panels instead of solid fills — see
            applySeason() for how the class gets toggled. */
+        /* ─── glass theme — page backdrop ───
+           Only body.theme-glass is touched here; the default theme's
+           `body { ... }` rule above is untouched, so switching Glass
+           off returns the page exactly to how it was. This gives the
+           glass theme its own soft, colourful backdrop for all the
+           frosted panels to actually refract/float over — a sheet of
+           flat glass over a plain page doesn't read as glass. */
+        body.theme-glass {
+            background: var(--paper);
+            background-image:
+                radial-gradient(circle at 15% 15%, rgba(217, 138, 147, .30), transparent 45%),
+                radial-gradient(circle at 85% 20%, rgba(155, 138, 196, .28), transparent 48%),
+                radial-gradient(circle at 30% 90%, rgba(212, 165, 116, .22), transparent 50%),
+                radial-gradient(circle at 90% 85%, rgba(168, 184, 156, .18), transparent 45%);
+            background-attachment: fixed;
+        }
+        body.theme-glass::before,
+        body.theme-glass::after {
+            content: '';
+            position: fixed;
+            z-index: -1;
+            border-radius: 50%;
+            filter: blur(64px);
+            opacity: .55;
+            pointer-events: none;
+        }
+        body.theme-glass::before {
+            width: 46vmax;
+            height: 46vmax;
+            top: -14vmax;
+            left: -16vmax;
+            background: radial-gradient(circle, var(--rose) 0%, transparent 72%);
+            animation: glassOrbDriftA 24s ease-in-out infinite;
+        }
+        body.theme-glass::after {
+            width: 50vmax;
+            height: 50vmax;
+            bottom: -18vmax;
+            right: -14vmax;
+            background: radial-gradient(circle, var(--lavender) 0%, transparent 72%);
+            animation: glassOrbDriftB 28s ease-in-out infinite;
+        }
+        @keyframes glassOrbDriftA {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50%      { transform: translate(5vmax, 6vmax) scale(1.1); }
+        }
+        @keyframes glassOrbDriftB {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50%      { transform: translate(-5vmax, -5vmax) scale(1.08); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            body.theme-glass::before, body.theme-glass::after { animation: none; }
+        }
+        /* These two are position:fixed, huge (46-50vmax), and blurred —
+           animating them continuously means every backdrop-filter
+           panel on the page (there are many, especially in glass
+           theme) has to keep resampling a moving blurred layer behind
+           it on every frame. That's the main source of the scroll
+           jank/flicker and the momentary seam glass theme shows during
+           scroll. Pausing them while the page is actively being
+           scrolled (see the is-scrolling toggle further down) removes
+           that per-frame cost exactly when it matters, and they simply
+           resume their slow drift the moment scrolling settles. */
+        body.is-scrolling.theme-glass::before,
+        body.is-scrolling.theme-glass::after {
+            animation-play-state: paused;
+        }
+        /* the hero's own ambient glow (added earlier) still sits on top of
+           this backdrop nicely — no change needed there for glass mode */
         body.theme-glass .add-btn {
             color: var(--white);
             text-shadow: 0 1px 3px rgba(0, 0, 0, .5), 0 1px 10px rgba(0, 0, 0, .3);
@@ -4120,6 +4276,78 @@
             border-color: var(--glass-highlight);
             box-shadow: inset 0 1px 0 var(--glass-highlight), 0 6px 18px var(--shadow);
         }
+        /* ─── liquid-glass upgrade — scoped to the 🫧 Glass theme only.
+           The default theme's buttons are completely untouched; this
+           only refines what already re-skins under body.theme-glass:
+           a soft specular sweep on the two main CTAs, echoing a real
+           refractive highlight, plus the same frosted treatment
+           extended to the icon buttons and dialog buttons that the
+           glass theme hadn't reached yet. ─── */
+        body.theme-glass .add-btn,
+        body.theme-glass .fav-filter-btn {
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+        }
+        body.theme-glass .add-btn::before,
+        body.theme-glass .fav-filter-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, .4) 48%, transparent 64%);
+            transform: translateX(-130%);
+            pointer-events: none;
+        }
+        body.theme-glass .add-btn:hover::before,
+        body.theme-glass .fav-filter-btn:hover::before {
+            transition: transform .7s cubic-bezier(.22, 1, .36, 1);
+            transform: translateX(130%);
+        }
+        body.theme-glass .theme-btn,
+        body.theme-glass .music-btn {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 4px 14px var(--shadow);
+            transition: transform 0.2s cubic-bezier(.34, 1.56, .64, 1), background 0.2s ease, box-shadow 0.2s ease;
+        }
+        body.theme-glass .theme-btn:hover,
+        body.theme-glass .music-btn:hover {
+            background: var(--glass-bg-strong);
+            transform: translateY(-2px);
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 8px 18px var(--shadow);
+        }
+        body.theme-glass .theme-btn:active,
+        body.theme-glass .music-btn:active { transform: scale(.94); }
+        body.theme-glass .save-title-btn {
+            color: var(--white);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+            background: var(--glass-tint), rgba(60, 40, 50, .28);
+            border: 1px solid var(--glass-highlight);
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 6px 16px var(--shadow);
+        }
+        body.theme-glass .cancel-title-btn {
+            background: var(--glass-bg);
+            color: var(--ink);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px) saturate(150%);
+            -webkit-backdrop-filter: blur(12px) saturate(150%);
+            box-shadow: inset 0 1px 0 var(--glass-highlight);
+        }
+        body.theme-glass .game-choice-btn {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 6px 16px var(--shadow);
+            transition: background 0.2s ease, box-shadow 0.2s ease;
+        }
+        body.theme-glass .game-choice-btn:hover {
+            background: var(--glass-bg-strong);
+        }
         .music-btn {
 
             width: 44px;
@@ -4143,11 +4371,12 @@
         .title-block {
             position: relative;
             display: inline-block;
+            padding-right: 34px;
         }
         .edit-title-btn {
             position: absolute;
-            top: 4px;
-            right: -30px;
+            top: 2px;
+            right: 0;
             background: none;
             border: none;
             font-size: 1rem;
@@ -8754,12 +8983,70 @@
         .seasonal-layer {
             position: fixed;
             inset: 0;
-            z-index: 0;
+            /* Same reasoning as #seasonalFxCanvas above: #siteContent
+               is position:relative + z-index:1, and any *positioned*
+               element with z-index:0 still paints above ordinary
+               non-positioned buttons regardless of the "0" — only a
+               negative z-index reliably sits behind them. */
+            z-index: -1;
             overflow: hidden;
             pointer-events: none;
             transform: translateZ(0);
             will-change: transform;
             contain: layout style paint;
+        }
+        /* ─── canvas that draws the water-ripple rings (Monsoon), the
+           aura cursor trail, the ambient snow layer, and the fireworks
+           show — one shared surface, only one of them active at a
+           time depending on the chosen season. Sits just above the
+           seasonal-layer's DOM sprites (z-index 0) and well below any
+           dialog/modal (those start at z-index 40+). ─── */
+        #seasonalFxCanvas {
+            position: fixed;
+            inset: 0;
+            /* Canvas is a "replaced element" — without an explicit
+               CSS width/height, `inset:0` alone does NOT stretch it to
+               the viewport; the browser falls back to the canvas's
+               intrinsic bitmap size (canvas.width/height, which are
+               device-pixel-ratio scaled, e.g. 3x on some phones) as
+               its on-screen CSS size too. That mismatch is exactly
+               what made the monsoon/aura trail drift further from the
+               real cursor position the further it moved from the
+               top-left corner. Explicit 100%/100% fixes it. */
+            width: 100%;
+            height: 100%;
+            /* Negative z-index puts this in the same paint tier as
+               the other ambient decoration (see .hero::before/::after
+               and .seasonal-layer) — BELOW normal in-flow content
+               like buttons, even ones with no z-index of their own.
+               A small positive z-index like 6 is not enough for that:
+               #siteContent is itself position:relative + z-index:1,
+               so anything above 1 here still painted in front of
+               every button on the page. */
+            z-index: -1;
+            pointer-events: none;
+            display: none;
+        }
+        .seasonal-layer.aura {
+            /* A soft aurora-borealis wash across the top of the sky —
+               a few overlapping color bands that slowly drift, rather
+               than a single flat glow. Centers sit just inside the
+               viewport (not off the top edge) so the bands themselves,
+               not just their faint falloff, are actually visible. */
+            background:
+                radial-gradient(ellipse 90% 60% at 15% 5%, rgba(70, 230, 180, .38), transparent 65%),
+                radial-gradient(ellipse 80% 55% at 55% 0%, rgba(150, 110, 240, .34), transparent 60%),
+                radial-gradient(ellipse 75% 50% at 88% 12%, rgba(70, 150, 245, .3), transparent 60%),
+                radial-gradient(ellipse at 50% 30%, rgba(168, 85, 247, .1), transparent 60%);
+            background-size: 200% 200%, 200% 200%, 200% 200%, auto;
+            animation: auroraFlow 18s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .seasonal-layer.aura { animation: none; }
+        }
+        @keyframes auroraFlow {
+            0%, 100% { background-position: 0% 0%, 100% 0%, 50% 20%, center; }
+            50% { background-position: 30% 10%, 70% 15%, 20% 0%, center; }
         }
         .seasonal-layer.weather {
             background: radial-gradient(circle at 30% 15%, rgba(255, 214, 150, .05), transparent 55%);
@@ -10643,7 +10930,7 @@
         .ritual-card { display:flex; align-items:center; gap:.55rem; padding:.55rem .75rem; border:1px solid var(--card-border); border-radius:999px; background:var(--glass-bg-strong); color:var(--ink); box-shadow:0 5px 14px var(--shadow); font:600 .78rem 'Quicksand',sans-serif; }
         .ritual-card button { border:0; background:transparent; color:inherit; font:inherit; cursor:pointer; padding:.15rem; }
         .ritual-card input { width:105px; border:0; border-bottom:1px dashed var(--rose-deep); background:transparent; color:var(--ink); font:600 .75rem 'Quicksand',sans-serif; outline:none; }
-        .ritual-card, .touch-heart, #touchHint {
+        .touch-heart {
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
@@ -10667,6 +10954,14 @@
         }
         .touch-heart.pulsing { animation:touchPulse .8s ease-in-out infinite; }
         @keyframes touchPulse { 50% { transform:scale(1.22); box-shadow:0 0 0 22px rgba(217,138,147,.28),0 0 60px 14px var(--rose-deep); } }
+        /* Compact variant used beside the caption search input on home */
+        .touch-heart-inline {
+            width: 40px;
+            height: 40px;
+            padding: 9px;
+            font-size: 1.05rem;
+            flex-shrink: 0;
+        }
         .together-game { max-width:680px; margin:1rem auto 0; text-align:center; }
         .together-game h3 { margin:.25rem 0; font:700 1.5rem 'Caveat',cursive; color:var(--ink); }
         .together-game .game-copy { color:var(--ink-soft); font-size:.82rem; }
@@ -10975,7 +11270,1119 @@
         .secret-note span { padding:1.3rem 1.7rem; border-radius:16px; background:var(--white); color:var(--ink); box-shadow:0 18px 40px var(--shadow); font:2rem 'Caveat',cursive; }
         @keyframes secretFade { 0%,75% { opacity:1; } 100% { opacity:0; } }
         @media (max-width:480px) { .touch-heart{width:58px;height:58px;padding:14px;font-size:1.55rem}.together-game .game-controls{gap:.4rem}.together-game input{max-width:150px} }
+
+        /* ══════════════════════════════════════════════════════════
+           PREMIUM POLISH LAYER v2
+           Additive only — nothing here removes or repositions
+           existing rules, and nothing touches JS-driven state
+           classes, only how they're allowed to look. Safe to delete
+           this whole block to revert with zero side effects.
+           ══════════════════════════════════════════════════════════ */
+
+        /* ─── Hero entrance choreography ───
+           #siteContent is display:none while locked, so this replays
+           fresh on every unlock (and on every hero-actions.hidden
+           toggle, e.g. opening the title-edit form) with no JS hook
+           needed. */
+        @media (prefers-reduced-motion: no-preference) {
+            .hero > * { animation: heroRise .6s var(--premium-ease) both; }
+            .hero > *:nth-child(1) { animation-delay: .02s; }
+            .hero > *:nth-child(2) { animation-delay: .06s; }
+            .hero > *:nth-child(3) { animation-delay: .10s; }
+            .hero > *:nth-child(4) { animation-delay: .14s; }
+            .hero > *:nth-child(5) { animation-delay: .18s; }
+            .hero > *:nth-child(6) { animation-delay: .22s; }
+            .hero > *:nth-child(7) { animation-delay: .26s; }
+            .hero > *:nth-child(8) { animation-delay: .30s; }
+            .hero > *:nth-child(9) { animation-delay: .34s; }
+            .hero > *:nth-child(10) { animation-delay: .38s; }
+            .hero > *:nth-child(11) { animation-delay: .42s; }
+            .hero > *:nth-child(12) { animation-delay: .46s; }
+            .hero > *:nth-child(13) { animation-delay: .50s; }
+        }
+        @keyframes heroRise {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ─── Fill small gaps in existing button feedback ───
+           .fav-filter-btn already has excellent hover/press states
+           (see above) — .add-btn only had hover, no default-theme
+           press feedback, so it's the only real gap here. */
+        .add-btn:active {
+            transform: scale(.96);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        /* ─── Polaroids: soft shadow bloom on top of the existing
+           lift + sway-pause, not replacing it ─── */
+        @media (hover: hover) and (pointer: fine) {
+            .polaroid-wrap { transition: filter .35s var(--premium-ease); }
+            .polaroid-wrap:hover, .polaroid-wrap:focus-within {
+                filter: drop-shadow(0 16px 22px rgba(107, 83, 68, .28));
+            }
+            body.dark-mode .polaroid-wrap:hover, body.dark-mode .polaroid-wrap:focus-within {
+                filter: drop-shadow(0 16px 22px rgba(0, 0, 0, .55));
+            }
+        }
+
+        /* ─── Empty-state: a soft illustration instead of bare text ─── */
+        .empty-note::before {
+            content: '♡';
+            display: block;
+            font-size: 2.4rem;
+            line-height: 1;
+            margin-bottom: .3rem;
+            color: var(--rose);
+            opacity: .6;
+            animation: emptyHeartFloat 3.6s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) { .empty-note::before { animation: none; } }
+        @keyframes emptyHeartFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        /* ─── Floating bottom dock — quick access on every device ───
+           Proxies clicks to the existing, already-wired buttons
+           (#doodlesToggleBtn, #gamesToggleBtn, #moodsToggleBtn,
+           #chatFabBtn, #seasonMenuBtn, #magicWandToggleBtn,
+           #breakGlassBtn) rather than reimplementing any logic, so
+           it can't desync from app state.
+           The dock sits inside a full-width fixed wrapper and is
+           centered with flexbox rather than `left:50% + transform`
+           — on some Android/Chrome builds a transform-centered fixed
+           element combined with backdrop-filter can visibly lag and
+           "snap" back into place during momentum scroll. Flexbox
+           centering on a non-transformed fixed element avoids that
+           entirely. */
+        .nav-dock-wrap {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: max(16px, env(safe-area-inset-bottom));
+            z-index: 850;
+            display: flex;
+            justify-content: center;
+            pointer-events: none;
+            /* layout+style only — NOT paint: paint containment clips
+               descendant rendering to this box, which would hide the
+               "More" popover since it deliberately renders above
+               (outside) this wrapper's own bounds. */
+            contain: layout style;
+            transition: opacity .3s var(--premium-ease), transform .3s var(--premium-ease);
+        }
+        /* Mobile-only auto-collapse: after 10s idle the full dock
+           fades/sinks away and a single small glass heart takes its
+           place at bottom-left; tapping that brings the dock back.
+           Desktop (hover:hover + pointer:fine) never collapses — see
+           the matching JS guard. */
+        .nav-dock-wrap.dock-collapsed {
+            opacity: 0;
+            transform: translateY(14px) scale(.85);
+            pointer-events: none;
+        }
+        .nav-dock-collapsed-btn {
+            position: fixed;
+            left: max(16px, env(safe-area-inset-left));
+            bottom: max(16px, env(safe-area-inset-bottom));
+            z-index: 850;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            box-shadow: 0 10px 26px var(--shadow), inset 0 1px 0 var(--glass-highlight);
+            font-size: 1.3rem;
+            font-weight: 700;
+            font-family: 'Caveat', cursive;
+            line-height: 1;
+            color: var(--rose-deep);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transform: scale(.4);
+            pointer-events: none;
+            transition: opacity .35s var(--premium-bounce), transform .35s var(--premium-bounce);
+        }
+        .nav-dock-collapsed-btn.show {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+        @media (prefers-reduced-motion: no-preference) {
+            .nav-dock-collapsed-btn.show { animation: dockCollapsedPulse 2.6s ease-in-out .6s infinite; }
+        }
+        .nav-dock-collapsed-btn:active { transform: scale(.85); }
+        @keyframes dockCollapsedPulse {
+            0%, 100% { box-shadow: 0 10px 26px var(--shadow), inset 0 1px 0 var(--glass-highlight), 0 0 0 0 rgba(217, 138, 147, .35); }
+            50% { box-shadow: 0 10px 26px var(--shadow), inset 0 1px 0 var(--glass-highlight), 0 0 0 9px rgba(217, 138, 147, 0); }
+        }
+        body.dark-mode .nav-dock-collapsed-btn { box-shadow: 0 10px 26px rgba(0,0,0,.5), inset 0 1px 0 var(--glass-highlight); }
+        .nav-dock {
+            position: relative;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding: 6px;
+            border-radius: 999px;
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(22px) saturate(180%);
+            -webkit-backdrop-filter: blur(22px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 12px 34px var(--shadow), inset 0 1px 0 var(--glass-highlight);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+        }
+        /* subtle top sheen for extra glassiness */
+        .nav-dock::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(180deg, rgba(255,255,255,.22), transparent 55%);
+            pointer-events: none;
+            opacity: .7;
+        }
+        body.dark-mode .nav-dock::before { background: linear-gradient(180deg, rgba(255,255,255,.08), transparent 55%); }
+
+        /* ─── Sliding selection pill ───
+           Positioned/sized via JS (moveNavDockIndicator) to match
+           whichever button is active, and animates with a spring. */
+        .nav-dock-indicator {
+            position: absolute;
+            top: 6px;
+            bottom: 6px;
+            left: 6px;
+            width: 56px;
+            border-radius: 999px;
+            background: var(--glass-highlight);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
+            transition: transform .45s var(--premium-bounce), width .45s var(--premium-bounce), opacity .25s ease;
+            z-index: 0;
+            opacity: 0;
+        }
+        .nav-dock-indicator.show { opacity: 1; }
+
+        .nav-dock-btn {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1px;
+            width: 56px;
+            height: 52px;
+            border: none;
+            background: transparent;
+            border-radius: 999px;
+            color: var(--ink-soft);
+            cursor: pointer;
+            font-family: 'Quicksand', sans-serif;
+            transition: transform .3s var(--premium-bounce), color .25s ease;
+        }
+        .nav-dock-btn .nav-dock-icon { font-size: 1.25rem; line-height: 1; }
+        .nav-dock-btn .nav-dock-label { font-size: .58rem; font-weight: 700; letter-spacing: .02em; }
+        .nav-dock-btn.active { color: var(--rose-deep); }
+        @media (hover: hover) and (pointer: fine) {
+            .nav-dock-btn:hover { transform: translateY(-3px); color: var(--rose-deep); }
+        }
+        .nav-dock-btn:active { transform: scale(.9); }
+        @media (max-width: 480px) {
+            .nav-dock-btn { width: 48px; height: 48px; }
+            .nav-dock-btn .nav-dock-label { display: none; }
+        }
+        body.dark-mode .nav-dock { box-shadow: 0 12px 34px rgba(0,0,0,.5), inset 0 1px 0 var(--glass-highlight); }
+
+        /* ─── "More" popover — opens upward above the dock ───
+           Uses the same dedicated near-opaque variant the chat panel
+           uses (see --chat-glass-bg-strong above) instead of the
+           site-wide --glass-bg-strong, which is deliberately quite
+           see-through — fine for decorative cards, not for a menu
+           that needs to stay readable over busy scrolling content. */
+        .nav-dock-more-popover {
+            position: absolute;
+            bottom: calc(100% + 12px);
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 190px;
+            max-width: calc(100vw - 24px);
+            padding: .5rem;
+            border-radius: 16px;
+            background: var(--chat-glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(170%);
+            -webkit-backdrop-filter: blur(20px) saturate(170%);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 14px 34px var(--shadow);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(8px) scale(.96);
+            transform-origin: bottom right;
+            transition: opacity .22s ease, transform .22s var(--premium-bounce), visibility .22s;
+        }
+        .nav-dock-more-popover:not(.hidden) {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+        .nav-dock-more-popover button {
+            position: relative;
+            border: none;
+            background: transparent;
+            text-align: left;
+            padding: .6rem .7rem;
+            border-radius: 10px;
+            font: 600 .85rem 'Quicksand', sans-serif;
+            color: var(--ink);
+            cursor: pointer;
+            transition: background .2s ease, transform .25s var(--premium-bounce);
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .nav-dock-more-popover button:hover { background: var(--glass-highlight); }
+        }
+        .nav-dock-more-popover button:active { transform: scale(.97); }
+
+        /* ─── Small "glass" notification dots on dock items ───
+           Purely reflective — a MutationObserver watches the same
+           .notif-cloud / badge elements the rest of the app already
+           uses, and only toggles a class here; nothing sets the
+           underlying notification state. */
+        .nav-dock-dot {
+            position: absolute;
+            top: 5px;
+            right: 9px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--rose), var(--rose-deep));
+            border: 1.5px solid var(--glass-bg-strong);
+            box-shadow: 0 0 6px rgba(217, 138, 147, .7), inset 0 1px 0 rgba(255,255,255,.6);
+            opacity: 0;
+            transform: scale(.4);
+            transition: opacity .25s ease, transform .3s var(--premium-bounce);
+            pointer-events: none;
+        }
+        .nav-dock-dot.show { opacity: 1; transform: scale(1); }
+        .nav-dock-dot-inline {
+            position: static;
+            display: inline-block;
+            margin-left: 6px;
+            vertical-align: middle;
+            border-color: var(--chat-glass-bg-strong);
+        }
+
+        /* Keep the draggable chat FAB and the dock from overlapping on
+           short mobile screens by giving page content a little extra
+           breathing room at the very bottom. */
+        body { padding-bottom: 84px; }
+        @media (max-width: 700px) {
+            body { padding-bottom: 78px; }
+        }
+        /* keep toasts from landing behind the new bottom dock, on any screen size */
+        .toast-container { bottom: 92px; }
+
+        /* ─── Responsive hardening pass ───
+           Spot fixes for cramped/overflowing edges at narrow and
+           very wide viewports, additive only. */
+        html { overflow-x: hidden; }
+        @media (max-width: 380px) {
+            .hero { padding-left: 1rem; padding-right: 1rem; }
+            .hero-actions { gap: .5rem; }
+            .fav-filter-btn, .add-btn { padding: .7rem 1.1rem; font-size: .84rem; }
+            .notes-header h2 { font-size: 1.3rem; }
+        }
+        @media (min-width: 1400px) {
+            .hero { max-width: 1100px; margin: 0 auto; }
+            .notes-grid, .doodles-wall, .extras-wall { max-width: 1200px; margin-left: auto; margin-right: auto; }
+        }
+
+        /* ─── Style-picker preview thumbnails get the same premium
+           press/hover feedback as the rest of the app ─── */
+        .style-option {
+            transition: transform .3s var(--premium-bounce), box-shadow .25s var(--premium-ease);
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .style-option:hover { transform: translateY(-3px); }
+        }
+        .style-option:active { transform: scale(.95); }
+
+        /* ─── Micro-interactions sweep ───
+           Fills the remaining gaps: a handful of buttons had no
+           hover/press feedback at all in the default (non-glass)
+           theme, unlike most of the app which already has this. */
+        .theme-btn, .music-btn {
+            transition: transform .3s var(--premium-bounce), background .2s ease, color .2s ease, box-shadow .25s var(--premium-ease);
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .theme-btn:hover, .music-btn:hover {
+                transform: translateY(-2px) rotate(-6deg);
+                box-shadow: 0 8px 18px var(--shadow);
+            }
+        }
+        .theme-btn:active, .music-btn:active { transform: scale(.9); }
+
+        .calendar-day {
+            transition: transform .25s var(--premium-bounce), border-color .2s ease, box-shadow .2s ease;
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .calendar-day:hover { transform: translateY(-2px); box-shadow: 0 6px 14px var(--shadow); }
+        }
+        .calendar-day:active { transform: scale(.94); }
+
+        .edit-title-btn, .save-title-btn, .cancel-title-btn {
+            transition: transform .3s var(--premium-bounce), opacity .2s ease, box-shadow .2s ease;
+        }
+        .edit-title-btn:active, .save-title-btn:active, .cancel-title-btn:active { transform: scale(.92); }
+
+        .feature-menu-popover button {
+            transition: background .2s ease, color .2s ease, transform .25s var(--premium-bounce);
+        }
+        .feature-menu-popover button:active { transform: scale(.97); }
+
+        /* Haptic-style visual pulse — a brief ring flash usable on any
+           element via .pulse-tap; only fires when JS adds/removes the
+           class, so it's inert until (and unless) something opts in. */
+        @keyframes hapticPulse {
+            0% { box-shadow: 0 0 0 0 rgba(217, 138, 147, .45); }
+            100% { box-shadow: 0 0 0 14px rgba(217, 138, 147, 0); }
+        }
+        .pulse-tap { animation: hapticPulse .55s var(--premium-ease); }
+
+        /* ════════════════════════════════════════════════════════
+           PERSONAL DIARY MODULE — fully self-contained under
+           #diaryOverlay / .diary-* selectors, so it cannot clash
+           with the rest of the site's CSS. Own fixed-position
+           layout (see #diaryOverlay below), same pattern as the
+           Magic Wand: it does not live inside #siteContent's normal
+           document flow, so its animations can never make the main
+           page feel laggy.
+           ════════════════════════════════════════════════════════ */
+
+/* ============================================================
+   DIARY MODULE — styles
+   ============================================================ */
+#diaryOverlay {
+  --diary-cover-a: #D98A93;
+  --diary-cover-b: #6B4A3A;
+  --diary-cover-text: #FFFDF9;
+  --diary-page-bg: #FBF3EA;
+  --diary-page-line: rgba(107,83,68,.14);
+  --diary-ink: #6B5344;
+  --diary-font: 'Caveat', cursive;
+  --diary-ribbon: #D98A93;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Quicksand', sans-serif;
+  color: var(--diary-ink);
+}
+#diaryOverlay.hidden { display: none; }
+
+.diary-backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 20%, #3a2f38, #1c1620 75%);
+}
+body.dark-mode .diary-backdrop { background: radial-gradient(circle at 50% 20%, #15111c, #050408 75%); }
+
+/* ---------- top bar ---------- */
+.diary-topbar {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .6rem;
+  padding: max(.8rem, env(safe-area-inset-top)) 1rem .6rem;
+  flex-wrap: wrap;
+}
+.diary-icon-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.08);
+  color: #FFFDF9;
+  font-size: 1.05rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: transform .25s var(--premium-ease, ease), background .25s ease;
+}
+.diary-icon-btn:hover { background: rgba(255,255,255,.16); transform: translateY(-1px); }
+.diary-icon-btn:active { transform: scale(.92); }
+
+.diary-topbar-actions { display: flex; gap: .5rem; }
+
+.diary-user-toggle {
+  display: flex;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+  backdrop-filter: blur(8px);
+}
+.diary-user-btn {
+  border: none;
+  background: transparent;
+  color: rgba(255,253,249,.75);
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 700;
+  font-size: .8rem;
+  padding: .4rem .85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background .25s ease, color .25s ease, box-shadow .25s ease;
+}
+.diary-user-btn.active {
+  background: var(--diary-cover-a, #D98A93);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(0,0,0,.25);
+}
+
+/* ---------- scene / book ---------- */
+.diary-scene {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: .5rem 1rem 2rem;
+  perspective: 2400px;
+}
+
+.diary-book {
+  position: relative;
+  width: min(940px, 94vw);
+  height: min(600px, 78vh);
+  transform-style: preserve-3d;
+}
+@media (max-width: 860px) {
+  .diary-book { width: min(420px, 92vw); height: min(620px, 74vh); }
+}
+
+.diary-book-shadow {
+  position: absolute;
+  left: 6%; right: 6%; bottom: -26px;
+  height: 34px;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,.42), rgba(0,0,0,0) 72%);
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+/* spine gutter shading down the center (desktop spread only) */
+.diary-spine {
+  position: absolute;
+  left: 50%; top: 0; bottom: 0;
+  width: 46px;
+  margin-left: -23px;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    rgba(0,0,0,.16), rgba(0,0,0,.32) 50%, rgba(0,0,0,.16));
+  opacity: .55;
+}
+@media (max-width: 860px) { .diary-spine { display: none; } }
+
+.diary-back-cover {
+  position: absolute; inset: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--diary-cover-a), var(--diary-cover-b));
+  box-shadow: 0 30px 60px rgba(0,0,0,.45);
+  z-index: 1;
+}
+@media (max-width: 860px) { .diary-back-cover { left: 0; width: 100%; } }
+
+/* ---------- leaves (the physical sheets) ---------- */
+.diary-leaf {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%; width: 50%;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transform: rotateY(0deg);
+  transition: transform .95s cubic-bezier(.42,.0,.2,1);
+  will-change: transform;
+}
+@media (max-width: 860px) {
+  .diary-leaf { left: 0; width: 100%; }
+}
+.diary-leaf.flipped { transform: rotateY(-180deg); }
+.diary-leaf.no-anim { transition: none !important; }
+
+.leaf-face {
+  position: absolute; inset: 0;
+  backface-visibility: hidden;
+  background: var(--diary-page-bg);
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.04) inset;
+}
+.leaf-front {
+  border-radius: 3px 10px 10px 3px;
+  box-shadow: -2px 0 10px rgba(0,0,0,.08) inset, 4px 0 18px rgba(0,0,0,.16);
+}
+.leaf-back {
+  transform: rotateY(180deg);
+  border-radius: 10px 3px 3px 10px;
+  box-shadow: 2px 0 10px rgba(0,0,0,.08) inset, -4px 0 18px rgba(0,0,0,.16);
+}
+@media (max-width: 860px) {
+  .leaf-front, .leaf-back { border-radius: 10px; }
+}
+
+/* ruled paper backgrounds, applied via data-rule on #diaryOverlay */
+#diaryOverlay[data-rule="lined"] .leaf-face {
+  background-image: repeating-linear-gradient(var(--diary-page-bg), var(--diary-page-bg) 27px, var(--diary-page-line) 28px);
+}
+#diaryOverlay[data-rule="dots"] .leaf-face {
+  background-image: radial-gradient(var(--diary-page-line) 1.1px, transparent 1.1px);
+  background-size: 20px 20px;
+}
+#diaryOverlay[data-rule="grid"] .leaf-face {
+  background-image:
+    repeating-linear-gradient(var(--diary-page-line) 0 1px, transparent 1px 26px),
+    repeating-linear-gradient(90deg, var(--diary-page-line) 0 1px, transparent 1px 26px);
+}
+
+/* subtle curl shading while a leaf is mid-turn */
+.leaf-face::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(0,0,0,.14), transparent 30%, transparent 70%, rgba(0,0,0,.14));
+  opacity: 0;
+  transition: opacity .95s ease;
+  pointer-events: none;
+}
+.diary-leaf.turning .leaf-face::after { opacity: 1; }
+
+.diary-page-content {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 1.4rem 1.5rem 1.1rem;
+  box-sizing: border-box;
+}
+.diary-page-header {
+  display: flex; align-items: center; gap: .5rem;
+  margin-bottom: .3rem;
+}
+.diary-page-date {
+  font-size: .72rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  opacity: .62;
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 700;
+}
+.diary-page-mood { font-size: 1rem; }
+.diary-page-tools { margin-left: auto; display: flex; gap: .3rem; opacity: 0; transition: opacity .2s ease; }
+.diary-page-content:hover .diary-page-tools { opacity: .85; }
+.diary-page-tool {
+  border: none; background: rgba(0,0,0,.06); color: var(--diary-ink);
+  width: 26px; height: 26px; border-radius: 50%; cursor: pointer; font-size: .8rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.diary-page-tool:hover { background: rgba(0,0,0,.12); }
+
+.diary-page-title {
+  font-family: var(--diary-font);
+  font-size: 1.7rem;
+  margin: .1rem 0 .35rem;
+  line-height: 1.15;
+}
+.diary-page-body {
+  font-family: var(--diary-font);
+  font-size: 1.18rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-y: auto;
+  flex: 1;
+  scrollbar-width: thin;
+}
+.diary-page-num {
+  text-align: center;
+  font-size: .68rem;
+  opacity: .45;
+  margin-top: .4rem;
+  font-family: 'Quicksand', sans-serif;
+}
+
+/* image "tags" stuck to the page */
+.diary-page-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  padding-top: .5rem;
+}
+.diary-img-tag {
+  width: 58px; height: 58px;
+  border-radius: 6px;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 10px rgba(0,0,0,.22);
+  padding: 0; overflow: hidden; cursor: pointer;
+  background: #fff;
+  transform: rotate(var(--tag-rot, -4deg));
+  transition: transform .25s var(--premium-bounce, ease), box-shadow .25s ease;
+  flex-shrink: 0;
+}
+.diary-img-tag:hover { transform: rotate(0deg) scale(1.08) translateY(-3px); box-shadow: 0 10px 18px rgba(0,0,0,.3); }
+.diary-img-tag img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* the always-available "write today" invite page */
+.diary-blank-page {
+  height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .8rem; text-align: center; padding: 2rem;
+}
+.diary-blank-page .glyph { font-size: 2.4rem; opacity: .35; }
+.diary-blank-page p { font-family: var(--diary-font); font-size: 1.25rem; opacity: .55; max-width: 220px; }
+.diary-blank-write-btn {
+  border: none; border-radius: 999px; padding: .65rem 1.3rem;
+  background: linear-gradient(135deg, var(--diary-cover-a), var(--diary-cover-b));
+  color: #fff; font-family: 'Quicksand'; font-weight: 700; font-size: .9rem;
+  cursor: pointer; box-shadow: 0 8px 18px rgba(0,0,0,.25);
+}
+
+.diary-leaf-back-plain { height: 100%; opacity: .5; }
+
+/* ---------- click zones to turn pages ---------- */
+.diary-turn-zone {
+  position: absolute; top: 0; bottom: 0; width: 30%;
+  z-index: 4; cursor: pointer; background: transparent;
+}
+.diary-turn-zone.next { right: 0; }
+.diary-turn-zone.prev { left: 0; }
+@media (max-width: 860px) { .diary-turn-zone { width: 22%; } }
+.diary-turn-zone::after {
+  content: '';
+  position: absolute; top: 10%; bottom: 10%; width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(rgba(0,0,0,0), rgba(107,83,68,.25), rgba(0,0,0,0));
+  opacity: 0; transition: opacity .2s ease;
+}
+.diary-turn-zone.next::after { right: 10px; }
+.diary-turn-zone.prev::after { left: 10px; }
+.diary-turn-zone:hover::after { opacity: 1; }
+
+.diary-arrow-btn {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.08);
+  color: #fff; font-size: 1.3rem; cursor: pointer;
+  backdrop-filter: blur(8px); z-index: 6;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s ease, opacity .2s ease;
+}
+.diary-arrow-btn:disabled { opacity: .25; cursor: default; }
+.diary-arrow-btn:hover:not(:disabled) { background: rgba(255,255,255,.18); }
+#diaryPrevBtn { left: 10px; }
+#diaryNextBtn { right: 10px; }
+@media (max-width: 640px) { .diary-arrow-btn { display: none; } }
+
+.diary-fab {
+  position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%);
+  z-index: 6;
+  border: none; border-radius: 999px;
+  padding: .75rem 1.4rem;
+  background: linear-gradient(135deg, var(--diary-cover-a), var(--diary-cover-b));
+  color: #fff; font-family: 'Quicksand'; font-weight: 700; font-size: .9rem;
+  cursor: pointer; box-shadow: 0 10px 24px rgba(0,0,0,.35);
+  transition: transform .2s var(--premium-bounce, ease);
+}
+.diary-fab:hover { transform: translateX(-50%) translateY(-2px); }
+
+/* ---------- cover ---------- */
+.diary-cover {
+  position: absolute; inset: 0;
+  border-radius: 10px;
+  transform-style: preserve-3d;
+  transform-origin: left center;
+  z-index: 20;
+  cursor: pointer;
+  transition: transform 1.1s cubic-bezier(.42,0,.2,1);
+  background: linear-gradient(135deg, var(--diary-cover-a), var(--diary-cover-b));
+  box-shadow: 0 30px 70px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.06) inset;
+}
+#diaryOverlay.book-open .diary-cover { transform: rotateY(-178deg); pointer-events: none; }
+
+.diary-cover-inner {
+  position: absolute; inset: 0;
+  backface-visibility: hidden;
+  border-radius: 10px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .8rem; text-align: center; padding: 2rem;
+  color: var(--diary-cover-text);
+}
+.diary-cover-back-face {
+  transform: rotateY(180deg);
+  background: linear-gradient(135deg, var(--diary-page-bg), var(--diary-page-bg));
+  color: var(--diary-ink);
+}
+
+.diary-cover[data-pattern="stars"] .diary-cover-inner::before,
+.diary-cover[data-pattern="dots"] .diary-cover-inner::before,
+.diary-cover[data-pattern="botanical"] .diary-cover-inner::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 10px;
+  pointer-events: none;
+}
+.diary-cover[data-pattern="stars"] .diary-cover-inner::before {
+  background:
+    radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,.55), transparent 60%),
+    radial-gradient(1.6px 1.6px at 70% 20%, rgba(255,255,255,.4), transparent 60%),
+    radial-gradient(2px 2px at 85% 65%, rgba(255,255,255,.5), transparent 60%),
+    radial-gradient(1.4px 1.4px at 35% 75%, rgba(255,255,255,.35), transparent 60%),
+    radial-gradient(1.8px 1.8px at 55% 45%, rgba(255,255,255,.4), transparent 60%);
+}
+.diary-cover[data-pattern="dots"] .diary-cover-inner::before {
+  background-image: radial-gradient(rgba(255,255,255,.22) 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
+}
+.diary-cover[data-pattern="botanical"] .diary-cover-inner::before {
+  background:
+    radial-gradient(ellipse 140px 60px at 10% 100%, rgba(255,255,255,.16), transparent 70%),
+    radial-gradient(ellipse 140px 60px at 95% 0%, rgba(255,255,255,.16), transparent 70%);
+}
+
+.diary-cover-monogram {
+  font-size: 2.4rem;
+  width: 74px; height: 74px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.35);
+  backdrop-filter: blur(4px);
+}
+.diary-cover-title {
+  font-family: var(--diary-font);
+  font-size: 2.4rem;
+  line-height: 1.1;
+}
+.diary-cover-sub {
+  font-family: 'Quicksand', sans-serif;
+  font-size: .85rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  opacity: .8;
+}
+.diary-cover-tapopen {
+  margin-top: .6rem;
+  font-size: .78rem;
+  opacity: .65;
+  animation: diaryTapHint 2.4s ease-in-out infinite;
+}
+@keyframes diaryTapHint { 0%,100%{opacity:.45;} 50%{opacity:.85;} }
+
+.diary-cover-ribbon {
+  position: absolute; top: -6px; right: 26px;
+  width: 22px; height: 78px;
+  background: var(--diary-ribbon);
+  clip-path: polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%);
+  box-shadow: 0 4px 10px rgba(0,0,0,.25);
+}
+
+/* ---------- lock screen ---------- */
+.diary-lockscreen {
+  position: absolute; inset: 0; z-index: 40;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1rem; padding: 1.5rem; text-align: center;
+  color: #FFFDF9;
+}
+.diary-lockscreen.hidden { display: none; }
+.diary-lock-icon {
+  font-size: 2.6rem;
+  width: 84px; height: 84px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2);
+  transition: transform .5s var(--premium-bounce, ease);
+}
+.diary-lock-icon.shake { animation: diaryShake .5s; }
+@keyframes diaryShake {
+  10%,90% { transform: translateX(-2px); }
+  20%,80% { transform: translateX(4px); }
+  30%,50%,70% { transform: translateX(-8px); }
+  40%,60% { transform: translateX(8px); }
+}
+.diary-lock-icon.open { transform: scale(1.15); }
+.diary-lockscreen h3 { font-family: var(--diary-font, 'Caveat'); font-size: 1.8rem; margin: 0; }
+.diary-lockscreen p.hint { opacity: .65; font-size: .85rem; max-width: 260px; margin: 0; }
+
+.diary-pin-dots { display: flex; gap: .7rem; }
+.diary-pin-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,.5);
+  transition: background .15s ease, transform .15s ease;
+}
+.diary-pin-dot.filled { background: #FFFDF9; transform: scale(1.1); }
+
+.diary-keypad {
+  display: grid; grid-template-columns: repeat(3, 62px); gap: .6rem;
+}
+.diary-key {
+  width: 62px; height: 62px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+  color: #FFFDF9; font-size: 1.3rem; cursor: pointer;
+  transition: background .15s ease, transform .1s ease;
+}
+.diary-key:hover { background: rgba(255,255,255,.14); }
+.diary-key:active { transform: scale(.92); }
+.diary-key.wide { font-size: .85rem; }
+
+.diary-lock-links { display: flex; gap: 1.2rem; margin-top: .3rem; }
+.diary-lock-links button {
+  background: none; border: none; color: rgba(255,253,249,.7);
+  text-decoration: underline; font-size: .8rem; cursor: pointer;
+  font-family: 'Quicksand', sans-serif;
+}
+.diary-lock-links button:hover { color: #FFFDF9; }
+
+/* ---------- generic modal shell used by calendar / design / lock-settings / editor ---------- */
+.diary-modal-backdrop {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(20,15,20,.55);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+}
+.diary-modal-backdrop.hidden { display: none; }
+.diary-modal {
+  background: var(--paper, #FBF3EA);
+  color: var(--ink, #6B5344);
+  border-radius: 20px;
+  width: min(480px, 100%);
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 1.4rem 1.4rem 1.6rem;
+  box-shadow: 0 30px 70px rgba(0,0,0,.4);
+  font-family: 'Quicksand', sans-serif;
+  position: relative;
+}
+.diary-modal h2 {
+  font-family: 'Caveat', cursive; font-size: 1.7rem; margin: 0 0 .2rem;
+}
+.diary-modal .diary-modal-close {
+  position: absolute; top: 1rem; right: 1rem;
+  border: none; background: rgba(107,83,68,.08); color: inherit;
+  width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+}
+.diary-modal-tabs { display: flex; gap: .4rem; margin: .9rem 0; }
+.diary-modal-tab {
+  flex: 1; border: none; border-radius: 10px; padding: .5rem;
+  background: rgba(107,83,68,.07); color: inherit; cursor: pointer;
+  font-family: 'Quicksand'; font-weight: 700; font-size: .82rem;
+}
+.diary-modal-tab.active { background: var(--rose-deep, #D98A93); color: #fff; }
+
+.diary-field-label {
+  font-size: .74rem; text-transform: uppercase; letter-spacing: .05em;
+  opacity: .6; margin: 1rem 0 .4rem; font-weight: 700;
+}
+.diary-swatch-row { display: flex; flex-wrap: wrap; gap: .55rem; }
+.diary-swatch {
+  width: 42px; height: 42px; border-radius: 12px; cursor: pointer;
+  border: 2px solid transparent; box-shadow: 0 3px 8px rgba(0,0,0,.18);
+  transition: transform .15s ease, border-color .15s ease;
+}
+.diary-swatch:hover { transform: translateY(-2px); }
+.diary-swatch.selected { border-color: var(--rose-deep, #D98A93); }
+
+.diary-input, .diary-select, .diary-textarea {
+  width: 100%; box-sizing: border-box;
+  border: 1px solid rgba(107,83,68,.2); border-radius: 10px;
+  padding: .55rem .7rem; font-family: 'Quicksand'; font-size: .9rem;
+  background: rgba(255,255,255,.6); color: inherit;
+}
+body.dark-mode .diary-input, body.dark-mode .diary-select, body.dark-mode .diary-textarea {
+  background: rgba(0,0,0,.2);
+}
+.diary-textarea { resize: vertical; min-height: 90px; font-family: var(--diary-font, inherit); font-size: 1.1rem; }
+.diary-color-row { display: flex; align-items: center; gap: .6rem; }
+.diary-color-row input[type=color] { width: 42px; height: 42px; border: none; border-radius: 10px; background: none; cursor: pointer; }
+
+.diary-btn {
+  border: none; border-radius: 999px; padding: .6rem 1.2rem;
+  font-family: 'Quicksand'; font-weight: 700; font-size: .85rem; cursor: pointer;
+}
+.diary-btn.primary { background: linear-gradient(135deg, var(--rose,#E8B4B8), var(--rose-deep,#D98A93)); color: #fff; }
+.diary-btn.ghost { background: rgba(107,83,68,.08); color: inherit; }
+.diary-btn.danger { background: rgba(196,80,80,.14); color: #a33; }
+.diary-modal-actions { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1.2rem; }
+
+/* calendar grid */
+.diary-cal-nav { display: flex; align-items: center; justify-content: space-between; margin-top: .5rem; }
+.diary-cal-nav button { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: inherit; }
+.diary-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: .6rem; }
+.diary-cal-dow { text-align: center; font-size: .7rem; opacity: .5; font-weight: 700; }
+.diary-cal-day {
+  aspect-ratio: 1; border-radius: 8px; border: none; background: rgba(107,83,68,.05);
+  cursor: pointer; font-size: .82rem; color: inherit; position: relative;
+}
+.diary-cal-day:disabled { opacity: .25; cursor: default; }
+.diary-cal-day.has-entry { background: rgba(217,138,147,.22); font-weight: 700; }
+.diary-cal-day.today { box-shadow: 0 0 0 2px var(--rose-deep, #D98A93) inset; }
+.diary-cal-day .dot { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--rose-deep,#D98A93); }
+
+/* image lightbox */
+.diary-lightbox {
+  position: fixed; inset: 0; z-index: 70;
+  background: rgba(10,8,12,.86);
+  display: flex; align-items: center; justify-content: center;
+  perspective: 1600px;
+}
+.diary-lightbox.hidden { display: none; }
+.diary-lightbox-card {
+  max-width: min(88vw, 560px); max-height: 80vh;
+  border-radius: 14px; overflow: hidden;
+  box-shadow: 0 40px 90px rgba(0,0,0,.6);
+  transform: scale(.85) rotateX(0deg) rotateY(0deg);
+  animation: diaryLightboxIn .45s cubic-bezier(.22,1,.36,1) forwards;
+  background: #111;
+}
+@keyframes diaryLightboxIn { from { transform: scale(.6) rotateX(12deg); opacity:0; } to { transform: scale(1) rotateX(0); opacity:1; } }
+.diary-lightbox-card img { display: block; max-width: 88vw; max-height: 80vh; object-fit: contain; }
+.diary-lightbox-close, .diary-lightbox-nav {
+  position: absolute; border: none; background: rgba(255,255,255,.1); color: #fff;
+  border-radius: 50%; cursor: pointer; backdrop-filter: blur(6px);
+}
+.diary-lightbox-close { top: 18px; right: 18px; width: 38px; height: 38px; font-size: 1rem; }
+.diary-lightbox-nav { top: 50%; transform: translateY(-50%); width: 44px; height: 44px; font-size: 1.2rem; }
+.diary-lightbox-nav.prev { left: 14px; }
+.diary-lightbox-nav.next { right: 14px; }
+
+.diary-toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: rgba(20,15,20,.9); color: #fff; padding: .6rem 1.1rem; border-radius: 999px;
+  font-size: .85rem; z-index: 90; opacity: 0; pointer-events: none;
+  transition: opacity .25s ease, transform .25s ease;
+}
+.diary-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+
+        /* ════════════════════════════════════════════════════════
+           PER-PAGE CUSTOMIZE — a small floating icon that appears
+           whenever one of the "little things" pages (Notes, Doodles,
+           Mood Calendar, Time Capsules, Bucket List, Constellation,
+           Games, Special Days) is open, letting you set a background
+           and accent colour for just THAT page — independent of the
+           site's global theme. Nothing here touches the home screen
+           or any other page's look.
+           ════════════════════════════════════════════════════════ */
+        #pageCustomizeBtn {
+            position: fixed;
+            right: max(16px, env(safe-area-inset-right));
+            bottom: max(84px, calc(70px + env(safe-area-inset-bottom)));
+            z-index: 860;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            box-shadow: 0 8px 22px var(--shadow), inset 0 1px 0 var(--glass-highlight);
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transform: scale(.5) translateY(10px);
+            pointer-events: none;
+            transition: opacity .3s var(--premium-bounce, ease), transform .3s var(--premium-bounce, ease);
+        }
+        #pageCustomizeBtn.show { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+        #pageCustomizeBtn:active { transform: scale(.88); }
+        .page-customize-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 1600;
+            background: rgba(20, 14, 12, .45);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .page-customize-backdrop.hidden { display: none; }
+        .page-customize-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--white);
+            border-radius: 24px 24px 0 0;
+            padding: 1.4rem 1.5rem max(1.4rem, env(safe-area-inset-bottom));
+            box-shadow: 0 -12px 40px rgba(0, 0, 0, .3);
+            max-height: 82vh;
+            overflow-y: auto;
+        }
+        body.dark-mode .page-customize-card { background: var(--paper-deep, #2a2320); }
+        .page-customize-card h3 {
+            margin: 0 0 .2rem;
+            font-family: 'Caveat', cursive;
+            font-size: 1.6rem;
+            color: var(--ink);
+        }
+        .page-customize-card p.hint { margin: 0 0 1rem; font-size: .82rem; color: var(--ink-soft); }
+        .page-customize-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: .6rem 0;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .page-customize-row:last-of-type { border-bottom: none; }
+        .page-customize-row label { font-size: .9rem; color: var(--ink); font-weight: 600; }
+        .page-customize-row input[type="color"] {
+            width: 42px; height: 32px; border: none; border-radius: 8px; cursor: pointer; background: none; padding: 0;
+        }
+        .page-customize-actions {
+            display: flex;
+            gap: .6rem;
+            margin-top: 1.2rem;
+        }
+        .page-customize-actions button {
+            flex: 1;
+            border: none;
+            border-radius: 999px;
+            padding: .7rem 1rem;
+            font-weight: 700;
+            font-size: .9rem;
+            cursor: pointer;
+        }
+        #pageCustomizeReset { background: var(--glass-bg); color: var(--ink); border: 1px solid var(--glass-border); }
+        #pageCustomizeClose { background: var(--rose); color: var(--ink); }
+        /* Applied to whichever wall has a saved customization. Backgrounds
+           default to fully transparent (today's look) via the var()
+           fallback, so a page with no customization is pixel-identical
+           to before. */
+        .notes-wall, .doodles-wall, .extras-wall {
+            background: linear-gradient(165deg, var(--page-bg-a, transparent), var(--page-bg-b, transparent));
+            transition: background .3s ease;
+        }
+        .page-has-custom-bg {
+            border-radius: 28px;
+            padding-top: 1.3rem;
+            padding-bottom: 1.6rem;
+        }
+        .page-has-custom-bg .notes-header h2 {
+            background: none;
+            -webkit-text-fill-color: initial;
+            animation: none;
+            color: var(--page-accent, var(--rose-deep));
+        }
     </style>
+
 </head>
 
 <body>
@@ -11063,6 +12470,26 @@
             <button type="button" class="envelope-note-close" id="envelopeNoteClose" aria-label="Close">✕</button>
             <p id="envelopeNoteText"></p>
         </div>
+
+        <!-- ─── Floating nav dock — quick access, proxies to existing buttons ─── -->
+        <div class="nav-dock-wrap" id="navDockWrap">
+            <nav class="nav-dock" id="navDock" aria-label="Quick navigation">
+                <span class="nav-dock-indicator" id="navDockIndicator" aria-hidden="true"></span>
+                <button type="button" id="navDockHome" class="nav-dock-btn" aria-label="Home"><span class="nav-dock-icon">🏠</span><span class="nav-dock-label">Home</span></button>
+                <button type="button" id="navDockDoodles" class="nav-dock-btn" aria-label="Doodles Wall"><span class="nav-dock-icon">✏️</span><span class="nav-dock-label">Doodle</span><span class="nav-dock-dot" id="navDockDoodlesDot"></span></button>
+                <button type="button" id="navDockGames" class="nav-dock-btn" aria-label="Mini Games"><span class="nav-dock-icon">🎮</span><span class="nav-dock-label">Games</span></button>
+                <button type="button" id="navDockChat" class="nav-dock-btn" aria-label="Chat"><span class="nav-dock-icon">💬</span><span class="nav-dock-label">Chat</span><span class="nav-dock-dot" id="navDockChatDot"></span></button>
+                <button type="button" id="navDockMore" class="nav-dock-btn" aria-label="More" aria-expanded="false" aria-haspopup="true" aria-controls="navDockMorePopover"><span class="nav-dock-icon">⋯</span><span class="nav-dock-label">More</span><span class="nav-dock-dot" id="navDockMoreDot"></span></button>
+                <div class="nav-dock-more-popover hidden" id="navDockMorePopover" role="menu">
+                    <button type="button" id="navDockMoreMood" role="menuitem">🗓️ Mood Calendar<span class="nav-dock-dot nav-dock-dot-inline" id="navDockMoodDot"></span></button>
+                    <button type="button" id="navDockMoreNotes" role="menuitem">💌 Love Notes<span class="nav-dock-dot nav-dock-dot-inline" id="navDockNotesDot"></span></button>
+                    <button type="button" id="navDockMoreTheme" role="menuitem">🎨 Themes</button>
+                    <button type="button" id="navDockMoreWand" role="menuitem">🪄 Magic Wand</button>
+                    <button type="button" id="navDockMoreFight" role="menuitem">🔨 In case of a fight<span class="nav-dock-dot nav-dock-dot-inline" id="navDockFightDot"></span></button>
+                </div>
+            </nav>
+        </div>
+        <button type="button" class="nav-dock-collapsed-btn" id="navDockCollapsedBtn" aria-label="Open quick navigation">D</button>
 
         <!-- ─── Chat ─── -->
         <button type="button" class="chat-fab" id="chatFabBtn" aria-label="Open chat" title="Chat">
@@ -11333,6 +12760,7 @@
                 <button type="button" data-season="snow">❄️ Snowfall</button>
                 <button type="button" data-season="blossom">🌸 Cherry blossom</button>
                 <button type="button" data-season="fireworks">🎆 Fireworks</button>
+                <button type="button" data-season="aura">🌌 Aura</button>
                 <button type="button" data-season="autumn">🍂 Autumn drizzle</button>
                 <button type="button" data-season="stars">🎈 Birthday stars</button>
                 <button type="button" data-season="night">🌙 Night sky</button>
@@ -11350,6 +12778,7 @@
                     <button type="button" data-season="snow">❄️ Snowfall</button>
                     <button type="button" data-season="blossom">🌸 Cherry blossom</button>
                     <button type="button" data-season="fireworks">🎆 Fireworks</button>
+                    <button type="button" data-season="aura">🌌 Aura</button>
                     <button type="button" data-season="autumn">🍂 Autumn drizzle</button>
                     <button type="button" data-season="stars">🎈 Birthday stars</button>
                     <button type="button" data-season="night">🌙 Night sky</button>
@@ -11361,6 +12790,7 @@
 
             <div class="hero-actions secondary-row">
                 <input type="text" id="searchInput" class="search-input" placeholder="🔍 search captions...">
+                <button type="button" id="touchHeartBtn" class="touch-heart touch-heart-inline" aria-label="Press and hold to send a touch" title="Press &amp; hold to send a touch">♥</button>
                 <div class="photo-sort-menu" id="photoSortMenu">
                     <button class="fav-filter-btn photo-sort-trigger" id="photoSortBtn" type="button" aria-expanded="false" aria-controls="photoSortPopover">
                         <span id="photoSortLabel">Oldest first</span><span class="sort-caret">⌄</span>
@@ -11380,6 +12810,7 @@
                         <button id="capsulesToggleBtn" type="button" class="notif-host">⏳ Time Capsules<span class="notif-cloud notif-cloud-inline" id="capsulesNotifCloud"><span class="cloud-stem"></span><span class="cloud-body"><span class="notif-name"></span></span></span></button>
                         <button id="bucketToggleBtn" type="button" class="notif-host">✨ Our Bucket List<span class="notif-cloud notif-cloud-inline" id="bucketNotifCloud"><span class="cloud-stem"></span><span class="cloud-body"><span class="notif-name"></span></span></span></button>
                         <button id="constellationToggleBtn" type="button">✦ Memory Constellation</button>
+                        <button id="diaryOpenBtn" type="button">📔 Personal Diary</button>
                         <button id="gamesToggleBtn" type="button">🎮 Mini Games</button>
                         <button id="magicWandToggleBtn" type="button">🪄 Magic Wand</button>
                         <button id="specialDaysToggleBtn" type="button">🎀 Special Days</button>
@@ -11391,9 +12822,6 @@
             <div class="presence-indicator" id="presenceIndicator" title="">
                 <span class="presence-dot" id="presenceDot"></span>
                 <span id="presenceText">just you right now</span>
-            </div>
-            <div class="together-rituals" aria-label="Together rituals">
-                <div class="ritual-card"><button id="touchHeartBtn" class="touch-heart" type="button" aria-label="Send a thinking of you touch">♥</button><span id="touchHint">press &amp; hold to send a touch</span></div>
             </div>
 
             <div class="on-this-day hidden" id="onThisDay">
@@ -19915,40 +21343,11 @@
                         }
                     }
                 }
-                if (renderKey === 'fireworks') {
-                    const palettes = [
-                        { core: '#fff6d8', colors: ['#ff9ebb', '#ffd873', '#8fe3ff', '#caa8ff', '#9be6b0',
-                                '#ffb37a'
-                            ] },
-                        { core: '#ffe9f2', colors: ['#ff6f91', '#ffe28a', '#7fd8ff', '#c9a6ff', '#8be0a6',
-                                '#ffb3a0'
-                            ] },
-                        { core: '#fff2c9', colors: ['#ffd1e0', '#fff1a8', '#a7e8ff', '#d8bbff', '#b6f0c6',
-                                '#ffc9a3'
-                            ] },
-                        { core: '#e8f7ff', colors: ['#ff5d8f', '#43e6c2', '#5eb3ff', '#ffb84d', '#c084fc',
-                                '#4ade80'
-                            ] },
-                        { core: '#fff0f5', colors: ['#f472b6', '#facc15', '#38bdf8', '#a78bfa', '#34d399',
-                                '#fb923c'
-                            ] },
-                        { core: '#fef3e2', colors: ['#e11d48', '#f59e0b', '#0ea5e9', '#8b5cf6', '#10b981',
-                                '#ec4899'
-                            ] }
-                    ];
-                    const shuffled = [...palettes].sort(() => Math.random() - .5);
-                    for (let i = 0; i < (isSmallScreen ? 4 : 7); i++) {
-                        const fw = document.createElement('span');
-                        const palette = shuffled[i % shuffled.length];
-                        fw.style.left = `${12 + Math.random() * 76}%`;
-                        fw.style.setProperty('--rise', `${-(28 + Math.random() * 26)}vh`);
-                        fw.style.setProperty('--core', palette.core);
-                        palette.colors.forEach((c, ci) => fw.style.setProperty(`--c${ci + 1}`, c));
-                        fw.style.animationDuration = `${3.2 + Math.random() * 2.4}s`;
-                        fw.style.animationDelay = `${-Math.random() * 6}s`;
-                        seasonalLayer.appendChild(fw);
-                    }
-                }
+                // Fireworks used to be built from DOM spans here — that
+                // show is now the canvas-drawn rocket + spark system (see
+                // the "seasonalCanvasFX" script near the end of the page),
+                // which starts/stops on its own by watching this element's
+                // class, so there's nothing left to build in the DOM for it.
             }
 
             function mapWeatherCodeToScene(code) {
@@ -19985,7 +21384,9 @@
                 }, { timeout: 8000 });
             }
 
+            const AMBIENT_GLOW_SEASONS = ['none', 'blossom', 'autumn', 'festival'];
             function applySeason(season) {
+                document.body.classList.toggle('season-ambient-off', !AMBIENT_GLOW_SEASONS.includes(season));
                 if (season === 'weather') {
                     seasonalLayer.className = 'seasonal-layer weather';
                     seasonalLayer.innerHTML = '';
@@ -20170,7 +21571,7 @@
                     const cursorSeasons = ['rain', 'blossom', 'snow', 'autumn', 'night', 'stars', 'fireflies'];
                     if (!cursorSeasons.includes(currentSeason)) return;
                     lastSpawn = now;
-                    if (currentSeason === 'rain') spawnRipple(e.clientX, e.clientY);
+                    if (currentSeason === 'rain') { /* the water-ripple rings are now drawn by the canvas system below */ }
                     else if (currentSeason === 'blossom') spawnCursorPetal(e.clientX, e.clientY);
                     else if (currentSeason === 'snow') spawnCursorSnow(e.clientX, e.clientY);
                     else if (currentSeason === 'autumn') spawnCursorLeaf(e.clientX, e.clientY);
@@ -20308,6 +21709,8 @@
             const FILTERS = [
                 { key: 'original', label: 'As it is', css: 'none' },
                 { key: 'vintage', label: 'Vintage tint', css: 'sepia(0.5) contrast(1.05) brightness(0.96) saturate(1.15)',
+                    vignette: true },
+                { key: 'goldenhour', label: 'Golden Hour', css: 'sepia(0.2) saturate(1.3) contrast(1.08) brightness(1.05) hue-rotate(-6deg)',
                     vignette: true },
                 { key: 'bw', label: 'Black & White', css: 'grayscale(1) contrast(1.12)' },
                 { key: 'cool', label: 'Cool tone', css: 'saturate(1.05) hue-rotate(-6deg) brightness(1.03) contrast(1.03)' },
@@ -22909,6 +24312,15 @@
                 if (!chatOpen || chatPanel.classList.contains('fullscreen')) return;
                 if (chatPanel.contains(e.target) || chatFabBtn.contains(e.target) || chatPinMenu.contains(e
                         .target)) return;
+                // The dock's Chat button runs its own open/close toggle
+                // (it has to — the fab has no click listener, only
+                // pointerdown/up). Without this exclusion, this
+                // capture-phase handler closes chat a tick before the
+                // dock's own bubble-phase click handler runs, which then
+                // sees "closed" and immediately reopens it — net effect,
+                // chat looked like it never closed at all.
+                const chatDockBtnEl = document.getElementById('navDockChat');
+                if (chatDockBtnEl && chatDockBtnEl.contains(e.target)) return;
                 const expandedOverlay = document.querySelector('.expanded-player-overlay');
                 if (expandedOverlay && expandedOverlay.contains(e.target)) return;
                 backableClose('chat');
@@ -25266,7 +26678,12 @@
       const today = () => new Date().toISOString().slice(0,10);
       let touchTimer, touchChannel, bothOnline = false, wordleGame = null;
 
-      function pulseTouch(text='thinking of you ♥') { $('touchHeartBtn').classList.add('pulsing'); $('touchHint').textContent=text; setTimeout(()=>{$('touchHeartBtn').classList.remove('pulsing'); $('touchHint').textContent='press & hold to send a touch';},2600); }
+      function pulseTouch(text='thinking of you ♥') {
+        const btn = $('touchHeartBtn');
+        if (btn) btn.classList.add('pulsing');
+        toast(text);
+        setTimeout(() => { if (btn) btn.classList.remove('pulsing'); }, 2600);
+      }
       $('touchHeartBtn').addEventListener('contextmenu', e => e.preventDefault());
       $('touchHeartBtn').addEventListener('pointerdown', (e) => { e.preventDefault(); touchTimer=setTimeout(async()=>{ if (!db) return toast('Connect Supabase first.'); await db.from('touch_events').insert({sender_id:visitor}); pulseTouch('sent across the distance ♥'); },550); });
       ['pointerup','pointerleave','pointercancel'].forEach(e=>$('touchHeartBtn').addEventListener(e,()=>clearTimeout(touchTimer)));
@@ -25301,6 +26718,2090 @@
 
       let combo=[]; document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(e.target.tagName))return;combo.push(e.key.toLowerCase());combo=combo.slice(-10);if(combo.join('')==='arrowuparrowuparrowdownarrowdownarrowleftarrowrightarrowleftarrowrightba'||combo.join('')==='iloveyou'){$('secretNote').classList.add('show');setTimeout(()=>$('secretNote').classList.remove('show'),3500);}});
       if(db){ loadWordle(); const presence=db.channel('together-game-presence',{config:{presence:{key:visitor}}}); presence.on('presence',{event:'sync'},()=>{bothOnline=Object.keys(presence.presenceState()).length>=2; $('reactionStatus').textContent=bothOnline?'Both here — start when you are ready.':'Both of you need to be here to start.';}); presence.subscribe(async status=>{if(status==='SUBSCRIBED') await presence.track({online_at:new Date().toISOString()});}); touchChannel=db.channel('together-live').on('postgres_changes',{event:'INSERT',schema:'public',table:'touch_events'},p=>{if(p.new.sender_id!==visitor)pulseTouch('a touch just arrived ♥');}).on('postgres_changes',{event:'*',schema:'public',table:'reaction_games'},p=>{ $('reactionTarget').dataset.target=new Date(p.new.target_at).getTime();runReaction(p.new);}).on('postgres_changes',{event:'*',schema:'public',table:'wordle_games'},loadWordle).subscribe();}
+    })();
+    </script>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         Firecracker cursor trail — a lightweight canvas spark trail
+         that follows the pointer, inspired by a GPU particle-field
+         cursor but rebuilt in plain 2D canvas so it needs no extra
+         libraries and can't affect anything else on the page.
+         - Only active while the Fireworks season theme is selected —
+           watches #seasonalLayer's class list the same way the
+           seasonal canvas FX below does, so it never needs to know
+           about applySeason() internally.
+         - Desktop / mouse only (fine pointer), so it never touches
+           the mobile experience.
+         - Respects prefers-reduced-motion.
+         - The canvas is pointer-events:none and sits purely for
+           decoration, so it can never block a tap or a click.
+         - Wrapped in try/catch and fully self-contained: if it
+           fails for any reason, the rest of the site is unaffected.
+         Safe to delete this whole block to remove it. ═══════════ -->
+    <script>
+    (function firecrackerCursorTrail() {
+        try {
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const seasonalLayerEl = document.getElementById('seasonalLayer');
+            if (!seasonalLayerEl) return;
+
+            const canvas = document.createElement('canvas');
+            canvas.setAttribute('aria-hidden', 'true');
+            // z-index:-1 (not 4000!) so this sits behind #siteContent
+            // (position:relative; z-index:1) and every button on the
+            // page, the same as the other ambient decoration layers.
+            canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:-1;display:none;';
+            // Appended inside #siteContent (as the very first child,
+            // right alongside #seasonalLayer, which uses this exact
+            // same z-index:-1 approach and is known to render
+            // correctly) rather than as a sibling of #siteContent on
+            // body — keeps the negative z-index comparison scoped to
+            // the same local stacking context as the buttons it needs
+            // to sit behind, instead of being compared against
+            // #siteContent as one single whole unit from outside it.
+            const fcMountPoint = document.getElementById('siteContent') || document.body;
+            fcMountPoint.insertBefore(canvas, fcMountPoint.firstChild);
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            // Warm sparkler / firecracker palette — gold embers with a
+            // little rose and lavender mixed in so it still feels like
+            // *this* site rather than a generic effect.
+            const SPARK_COLORS = ['#FFD27A', '#D4A574', '#FF9E6D', '#D98A93', '#F2C57C', '#B79BD9'];
+
+            let dpr = Math.min(window.devicePixelRatio || 1, 2);
+            function resize() {
+                dpr = Math.min(window.devicePixelRatio || 1, 2);
+                canvas.width = Math.max(1, Math.round(window.innerWidth * dpr));
+                canvas.height = Math.max(1, Math.round(window.innerHeight * dpr));
+            }
+            resize();
+            window.addEventListener('resize', resize, { passive: true });
+
+            let active = false;
+            let particles = [];
+            let lastSpawn = 0;
+            let lastX = null, lastY = null;
+
+            function spawnBurst(x, y, count, power) {
+                for (let i = 0; i < count; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = (0.6 + Math.random() * 1.8) * power;
+                    particles.push({
+                        x, y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed - 0.4, // a slight initial pop upward
+                        life: 0,
+                        maxLife: 420 + Math.random() * 380,
+                        radius: 1.1 + Math.random() * 1.8,
+                        color: SPARK_COLORS[(Math.random() * SPARK_COLORS.length) | 0],
+                    });
+                }
+                // Cap the pool so a fast, sustained sweep can't grow unbounded.
+                if (particles.length > 260) particles.splice(0, particles.length - 260);
+            }
+
+            function onMove(e) {
+                if (!active) return;
+                const now = performance.now();
+                const x = e.clientX, y = e.clientY;
+                if (lastX !== null) {
+                    const dist = Math.hypot(x - lastX, y - lastY);
+                    // Spawn density scales gently with movement speed, like a
+                    // dragged sparkler throwing off more sparks the faster it moves.
+                    if (now - lastSpawn > 16 || dist > 24) {
+                        spawnBurst(x, y, Math.min(3, 1 + Math.floor(dist / 40)), 1);
+                        lastSpawn = now;
+                    }
+                }
+                lastX = x; lastY = y;
+            }
+            function onDown(e) {
+                if (!active) return;
+                // A small firecracker "pop" on click/tap — playful, not disruptive.
+                spawnBurst(e.clientX, e.clientY, 18, 2.2);
+            }
+            window.addEventListener('pointermove', onMove, { passive: true });
+            window.addEventListener('pointerdown', onDown, { passive: true });
+
+            let raf = 0;
+            function frame() {
+                raf = requestAnimationFrame(frame);
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const GRAVITY = 0.0022;
+                const next = [];
+                for (const p of particles) {
+                    p.life += 16.7;
+                    if (p.life >= p.maxLife) continue;
+                    p.vy += GRAVITY * 16.7;
+                    p.vx *= 0.985;
+                    p.vy *= 0.985;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    const t = p.life / p.maxLife;
+                    const alpha = 1 - t;
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, alpha);
+                    ctx.shadowColor = p.color;
+                    ctx.shadowBlur = 8;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, Math.max(0.2, p.radius * (1 - t * 0.6)), 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                    next.push(p);
+                }
+                particles = next;
+            }
+
+            function isFireworksTheme() {
+                return seasonalLayerEl.classList.contains('fireworks');
+            }
+            function start() {
+                if (active) return;
+                active = true;
+                canvas.style.display = 'block';
+                lastX = null; lastY = null;
+                if (!raf) raf = requestAnimationFrame(frame);
+            }
+            function stop() {
+                if (!active) return;
+                active = false;
+                canvas.style.display = 'none';
+                particles = [];
+                if (raf) { cancelAnimationFrame(raf); raf = 0; }
+                if (canvas.width && canvas.height) ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            function syncToTheme() {
+                if (isFireworksTheme()) start();
+                else stop();
+            }
+            const themeObserver = new MutationObserver(syncToTheme);
+            themeObserver.observe(seasonalLayerEl, { attributes: true, attributeFilter: ['class'] });
+            syncToTheme();
+
+            document.addEventListener('visibilitychange', () => {
+                if (!active) return;
+                if (document.hidden) { if (raf) { cancelAnimationFrame(raf); raf = 0; } }
+                else if (!raf) { raf = requestAnimationFrame(frame); }
+            });
+        } catch (err) {
+            console.error('Firecracker cursor trail failed to initialize (core site unaffected):', err);
+        }
+    })();
+    </script>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         Seasonal canvas FX — one shared canvas that renders whichever
+         of these four is active:
+           • Monsoon (rain)  → concentric water-ripple rings on the cursor,
+                                replacing the old single-circle ripple.
+           • Aura (new)      → a soft, colour-cycling glow trail on the
+                                cursor, in the spirit of a fluid-sim cursor
+                                but rebuilt as plain 2D canvas so it needs
+                                no WebGL2 / multi-pass solver.
+           • Snowfall        → an additional ambient layer of drifting
+                                snow, on top of the existing snowflake
+                                sprites (kept as-is) — kept deliberately
+                                light so the two layers don't overwhelm
+                                each other.
+           • Fireworks       → rockets that rise and burst into
+                                gravity-affected sparks with a tilted
+                                perspective, replacing the old DOM/CSS
+                                box-shadow bursts.
+         It watches #seasonalLayer's class list (set by the existing
+         applySeason()) via MutationObserver, so it never needs to call
+         into or modify that function — fully decoupled, and safe to
+         delete this whole block to remove all four effects at once.
+         Respects prefers-reduced-motion, and is pointer-events:none so
+         it can never intercept a tap or a click. ═══════════════════ -->
+    <script>
+    (function seasonalCanvasFX() {
+        try {
+            const seasonalLayerEl = document.getElementById('seasonalLayer');
+            if (!seasonalLayerEl) return;
+            const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const isSmallScreen = () => window.innerWidth <= 480;
+
+            const canvas = document.createElement('canvas');
+            canvas.id = 'seasonalFxCanvas';
+            canvas.setAttribute('aria-hidden', 'true');
+            // Inserted right after #seasonalLayer (both first children
+            // of #siteContent) rather than appended to body — see the
+            // matching note in the firecracker trail script above for
+            // why: keeps the negative z-index comparison scoped to the
+            // same local stacking context as the buttons it needs to
+            // stay behind.
+            const fxMountPoint = document.getElementById('siteContent') || document.body;
+            if (seasonalLayerEl.nextSibling) fxMountPoint.insertBefore(canvas, seasonalLayerEl.nextSibling);
+            else fxMountPoint.appendChild(canvas);
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            let dpr = Math.min(window.devicePixelRatio || 1, 2);
+            function resize() {
+                dpr = Math.min(window.devicePixelRatio || 1, 2);
+                canvas.width = Math.max(1, Math.round(window.innerWidth * dpr));
+                canvas.height = Math.max(1, Math.round(window.innerHeight * dpr));
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+            resize();
+            window.addEventListener('resize', resize, { passive: true });
+
+            let mode = 'none'; // 'rain' | 'aura' | 'snow' | 'fireworks'
+            let raf = 0;
+            let lastFrameTime = 0;
+
+            /* ───────────────── Monsoon: water-ripple rings ─────────────────
+               Two concentric rings per ripple (a leading crest and a
+               fainter trailing one), expanding and fading — closer to a
+               real water ring than a single growing circle. */
+            let ripples = [];
+            function spawnRipple(x, y) {
+                ripples.push({ x, y, t: 0 });
+                if (ripples.length > 40) ripples.splice(0, ripples.length - 40);
+            }
+            function drawRipples(dt) {
+                const life = 0.9;
+                const next = [];
+                for (const r of ripples) {
+                    r.t += dt;
+                    if (r.t >= life) continue;
+                    const p = r.t / life;
+                    for (let ring = 0; ring < 2; ring++) {
+                        const ringP = p - ring * 0.14;
+                        if (ringP <= 0) continue;
+                        const radius = ringP * 44;
+                        const alpha = (1 - ringP) * (ring === 0 ? 0.55 : 0.28);
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(160,211,235,${Math.max(0, alpha)})`;
+                        ctx.lineWidth = 1.4;
+                        ctx.arc(r.x, r.y, radius, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                    next.push(r);
+                }
+                ripples = next;
+            }
+
+            /* ───────────────── Aura: colour-cycling glow trail ─────────────────
+               A soft trail of overlapping, colour-shifting glows in 'lighter'
+               blend mode — the same lava-lamp feeling as a fluid-sim cursor,
+               without the WebGL2 fluid solver that would need. */
+            const AURA_COLORS = ['#A855F7', '#EC4899', '#3B82F6'];
+            let auraBlobs = [];
+            let auraColorIdx = 0;
+            function hexToRgba(hex, a) {
+                const n = parseInt(hex.slice(1), 16);
+                return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+            }
+            function spawnAura(x, y) {
+                auraColorIdx = (auraColorIdx + 1) % AURA_COLORS.length;
+                auraBlobs.push({ x, y, t: 0, color: AURA_COLORS[auraColorIdx] });
+                if (auraBlobs.length > 70) auraBlobs.splice(0, auraBlobs.length - 70);
+            }
+            function drawAura(dt) {
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                const life = 1.15;
+                const next = [];
+                for (const b of auraBlobs) {
+                    b.t += dt;
+                    if (b.t >= life) continue;
+                    const p = b.t / life;
+                    const radius = 16 + p * 50;
+                    const alpha = (1 - p) * 0.32;
+                    const grad = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, radius);
+                    grad.addColorStop(0, hexToRgba(b.color, alpha));
+                    grad.addColorStop(1, hexToRgba(b.color, 0));
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    next.push(b);
+                }
+                auraBlobs = next;
+                ctx.restore();
+            }
+
+            /* ───────────────── Snowfall: ambient depth layer ─────────────────
+               A light second layer of small drifting circles behind the
+               existing ❄❅❆ sprites (untouched) — kept deliberately sparse
+               (well under the ~600-flake reference default) so the two
+               layers read as one snowfall rather than doubling it up. */
+            let snowFlakes = [];
+            function initSnow() {
+                const count = isSmallScreen() ? 26 : 55;
+                snowFlakes = new Array(count).fill(0).map(() => ({
+                    x: Math.random() * window.innerWidth,
+                    y: Math.random() * window.innerHeight,
+                    r: 2 + Math.random() * 2.6,
+                    vy: 10 + Math.random() * 18,
+                    vx: -4 + Math.random() * 8,
+                    phase: Math.random() * Math.PI * 2,
+                    sway: 6 + Math.random() * 10,
+                    alpha: 0.45 + Math.random() * 0.4,
+                }));
+            }
+            function drawSnow(dt, t) {
+                ctx.save();
+                ctx.shadowColor = 'rgba(255,255,255,.9)';
+                ctx.shadowBlur = 4;
+                ctx.fillStyle = '#ffffff';
+                for (const f of snowFlakes) {
+                    f.y += f.vy * dt;
+                    f.x += (f.vx * 0.3 + Math.sin(t * 0.6 + f.phase) * f.sway) * dt;
+                    if (f.y - f.r > window.innerHeight) { f.y = -f.r; f.x = Math.random() * window.innerWidth; }
+                    if (f.x < -f.r) f.x = window.innerWidth + f.r;
+                    else if (f.x > window.innerWidth + f.r) f.x = -f.r;
+                    ctx.globalAlpha = f.alpha;
+                    ctx.beginPath();
+                    ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+                ctx.restore();
+            }
+
+            /* ───────────────── Fireworks: rockets + gravity sparks ─────────────────
+               World space: x = right, z = depth, y = height. A tilted camera
+               (~45°) with a perspective divide makes near bursts read bigger
+               than far ones. Ported from a canvas 2D reference and re-tinted
+               to the site's own pastel palette. */
+            const FW_FIELD = 1.5, FW_APEX_LO = 0.7, FW_APEX_HI = 1.6, FW_CAM_DIST = 3.4;
+            const FW_GRAVITY = 0.55 * 2.2;
+            const FW_TILT = (45 * Math.PI) / 180;
+            const FW_COLORS = ['#ff9ebb', '#ffd873', '#8fe3ff', '#caa8ff', '#9be6b0', '#ffb37a',
+                '#ff6f91', '#ffe28a', '#7fd8ff', '#c9a6ff', '#8be0a6', '#ffb3a0'];
+            let FW = null;
+            function initFireworks() {
+                const cap = isSmallScreen() ? 1400 : 2600;
+                FW = {
+                    cap,
+                    x: new Float32Array(cap), y: new Float32Array(cap), z: new Float32Array(cap),
+                    vx: new Float32Array(cap), vy: new Float32Array(cap), vz: new Float32Array(cap),
+                    life: new Float32Array(cap), max: new Float32Array(cap),
+                    r: new Float32Array(cap), g: new Float32Array(cap), b: new Float32Array(cap),
+                    cursor: 0,
+                    rockets: [],
+                    acc: 0,
+                };
+            }
+            function fwPickColor() {
+                const hex = FW_COLORS[(Math.random() * FW_COLORS.length) | 0];
+                const n = parseInt(hex.slice(1), 16);
+                return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+            }
+            function fwSpawnRocket() {
+                const apex = FW_APEX_LO + Math.random() * (FW_APEX_HI - FW_APEX_LO);
+                const col = fwPickColor();
+                FW.rockets.push({
+                    x: (Math.random() * 2 - 1) * FW_FIELD,
+                    z: (Math.random() * 2 - 1) * FW_FIELD,
+                    y: 0,
+                    vy: Math.sqrt(2 * FW_GRAVITY * apex),
+                    r: col.r, g: col.g, b: col.b,
+                });
+            }
+            function fwBurst(rk) {
+                const n = isSmallScreen() ? 40 : 85;
+                const spread = 0.85;
+                for (let i = 0; i < n; i++) {
+                    const u = Math.random() * 2 - 1;
+                    const th = Math.random() * Math.PI * 2;
+                    const rr = Math.sqrt(1 - u * u);
+                    const spd = spread * (0.45 + Math.random() * 0.55);
+                    const c = FW.cursor;
+                    FW.cursor = (FW.cursor + 1) % FW.cap;
+                    FW.x[c] = rk.x; FW.y[c] = rk.y; FW.z[c] = rk.z;
+                    FW.vx[c] = rr * Math.cos(th) * spd;
+                    FW.vy[c] = u * spd;
+                    FW.vz[c] = rr * Math.sin(th) * spd;
+                    const life = 1.1 + Math.random() * 0.9;
+                    FW.life[c] = life; FW.max[c] = life;
+                    FW.r[c] = rk.r; FW.g[c] = rk.g; FW.b[c] = rk.b;
+                }
+            }
+            function fwProject(x, y, z, W, H) {
+                const cosA = Math.cos(FW_TILT), sinA = Math.sin(FW_TILT);
+                const depth = -y * sinA + z * cosA + FW_CAM_DIST;
+                if (depth <= 0.05) return null;
+                const vUp = y * cosA + z * sinA;
+                const focal = Math.min(W, H) * 0.9;
+                const persp = focal / depth;
+                return { sx: W / 2 + x * persp, sy: H / 2 - vUp * persp, dscale: FW_CAM_DIST / depth };
+            }
+            function drawFireworks(dt) {
+                if (!FW) initFireworks();
+                const W = window.innerWidth, H = window.innerHeight;
+                FW.acc += dt;
+                const interval = isSmallScreen() ? 0.7 : 0.5;
+                let guard = 0;
+                while (FW.acc >= interval && guard < 4) {
+                    FW.acc -= interval;
+                    if (FW.rockets.length < (isSmallScreen() ? 3 : 6)) fwSpawnRocket();
+                    guard++;
+                }
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                for (let i = FW.rockets.length - 1; i >= 0; i--) {
+                    const rk = FW.rockets[i];
+                    rk.vy -= FW_GRAVITY * dt;
+                    rk.y += rk.vy * dt;
+                    if (rk.vy <= 0 || rk.y <= 0) { fwBurst(rk); FW.rockets.splice(i, 1); continue; }
+                    const p = fwProject(rk.x, rk.y, rk.z, W, H);
+                    if (p) {
+                        const s = Math.max(2, Math.min(7, Math.round(2.6 * p.dscale)));
+                        ctx.fillStyle = `rgb(${rk.r | 0},${rk.g | 0},${rk.b | 0})`;
+                        ctx.fillRect(p.sx - s / 2, p.sy - s / 2, s, s);
+                    }
+                }
+                const drag = Math.pow(0.5, dt);
+                for (let c = 0; c < FW.cap; c++) {
+                    let lf = FW.life[c];
+                    if (lf <= 0) continue;
+                    lf -= dt;
+                    if (lf <= 0) { FW.life[c] = 0; continue; }
+                    FW.life[c] = lf;
+                    FW.vy[c] -= FW_GRAVITY * dt;
+                    FW.vx[c] *= drag; FW.vy[c] *= drag; FW.vz[c] *= drag;
+                    const x = (FW.x[c] += FW.vx[c] * dt);
+                    const y = (FW.y[c] += FW.vy[c] * dt);
+                    const z = (FW.z[c] += FW.vz[c] * dt);
+                    const p = fwProject(x, y, z, W, H);
+                    if (!p) continue;
+                    const bright = lf / FW.max[c];
+                    ctx.globalAlpha = bright * bright;
+                    const s = Math.max(1, Math.min(5, Math.round(1.8 * p.dscale)));
+                    ctx.fillStyle = `rgb(${FW.r[c] | 0},${FW.g[c] | 0},${FW.b[c] | 0})`;
+                    ctx.fillRect(p.sx - s / 2, p.sy - s / 2, s, s);
+                }
+                ctx.globalAlpha = 1;
+                ctx.restore();
+            }
+
+            /* ───────────────── shared loop / mode switching ───────────────── */
+            function frame(now) {
+                raf = requestAnimationFrame(frame);
+                if (!lastFrameTime) lastFrameTime = now;
+                let dt = Math.min((now - lastFrameTime) / 1000, 0.05);
+                lastFrameTime = now;
+                ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                if (mode === 'rain') drawRipples(dt);
+                else if (mode === 'aura') drawAura(dt);
+                else if (mode === 'snow') drawSnow(dt, now / 1000);
+                else if (mode === 'fireworks') drawFireworks(dt);
+            }
+            function startLoop() {
+                canvas.style.display = 'block';
+                if (raf) return;
+                lastFrameTime = 0;
+                raf = requestAnimationFrame(frame);
+            }
+            function stopLoop() {
+                if (raf) cancelAnimationFrame(raf);
+                raf = 0;
+                canvas.style.display = 'none';
+                if (canvas.width && canvas.height) ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                ripples = [];
+                auraBlobs = [];
+                snowFlakes = [];
+                if (FW) { FW.rockets = []; FW.life.fill(0); }
+            }
+            function detectSeason() {
+                const cls = seasonalLayerEl.classList;
+                if (cls.contains('rain')) return 'rain';
+                if (cls.contains('aura')) return 'aura';
+                if (cls.contains('snow')) return 'snow';
+                if (cls.contains('fireworks')) return 'fireworks';
+                return 'none';
+            }
+            function setMode(next) {
+                if (next === mode) return;
+                mode = next;
+                if (mode === 'none' || reduceMotion) { stopLoop(); return; }
+                if (mode === 'snow') initSnow();
+                if (mode === 'fireworks') initFireworks();
+                startLoop();
+            }
+
+            const observer = new MutationObserver(() => setMode(detectSeason()));
+            observer.observe(seasonalLayerEl, { attributes: true, attributeFilter: ['class'] });
+            setMode(detectSeason());
+
+            document.addEventListener('visibilitychange', () => {
+                if (!raf) return;
+                if (document.hidden) { cancelAnimationFrame(raf); raf = 0; }
+                else { lastFrameTime = 0; raf = requestAnimationFrame(frame); }
+            });
+
+            if (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+                let lastRippleSpawn = 0;
+                window.addEventListener('pointermove', (e) => {
+                    if (mode === 'rain') {
+                        const now = performance.now();
+                        if (now - lastRippleSpawn > 160) { spawnRipple(e.clientX, e.clientY); lastRippleSpawn = now; }
+                    } else if (mode === 'aura') {
+                        spawnAura(e.clientX, e.clientY);
+                    }
+                }, { passive: true });
+            }
+        } catch (err) {
+            console.error('Seasonal canvas FX failed to initialize (core site unaffected):', err);
+        }
+    })();
+
+    /* ─── Floating nav dock: wires each button to the existing,
+       already-functional toggle it mirrors. Nothing here reimplements
+       app logic — it only calls .click() on real buttons — so it
+       can't get out of sync with app state. Fully wrapped so a
+       failure here can never affect the rest of the site. */
+    (function() {
+        try {
+            const dock = document.getElementById('navDock');
+            if (!dock) return;
+            const byId = (id) => document.getElementById(id);
+            // Home: also close whatever section is currently open, then
+            // scroll up — clicking each wall's own (already-wired) close
+            // button rather than reaching into app internals. Closing an
+            // already-closed wall is a harmless no-op.
+            byId('navDockHome')?.addEventListener('click', () => {
+                byId('notesCloseBtn')?.click();
+                byId('doodlesCloseBtn')?.click();
+                document.querySelector('.extras-close')?.click();
+                const chatPanelNow = byId('chatPanel');
+                if (chatPanelNow && !chatPanelNow.classList.contains('hidden')) byId('chatPanelClose')?.click();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            // Doodles / Games / Chat: the app's own toggle buttons only
+            // ever *open* their section (openExtra() / openLittleThing()
+            // always show, never close), so a naive proxy can't close
+            // anything back up. The dock instead checks whether that
+            // section is currently open and, if so, clicks its real
+            // close control (and returns to home) instead of re-opening
+            // it — giving "tap again to close" behavior the underlying
+            // buttons don't have on their own.
+            const doodlesDockBtn = byId('navDockDoodles');
+            doodlesDockBtn?.addEventListener('click', () => {
+                const wall = byId('doodlesWall');
+                if (wall && !wall.classList.contains('hidden')) {
+                    byId('doodlesCloseBtn')?.click();
+                } else {
+                    byId('doodlesToggleBtn')?.click();
+                }
+            });
+
+            const gamesDockBtn = byId('navDockGames');
+            gamesDockBtn?.addEventListener('click', () => {
+                const wall = byId('gamesWall');
+                if (wall && !wall.classList.contains('hidden')) {
+                    wall.querySelector('.extras-close')?.click();
+                } else {
+                    byId('gamesToggleBtn')?.click();
+                }
+            });
+
+            // Chat's floating button is drag-enabled and only listens
+            // for pointerdown/pointerup (to tell a tap from a drag) —
+            // it has no 'click' listener at all, so .click() is a
+            // no-op on it. Opening dispatches a zero-movement
+            // pointerdown+pointerup pair through that same tap path;
+            // closing uses the chat panel's own real close button
+            // instead of relying on re-tapping the fab, since that's
+            // the more reliably wired path back to closed.
+            const chatDockBtn = byId('navDockChat');
+            const chatFab = byId('chatFabBtn');
+            const chatPanelEl = byId('chatPanel');
+            chatDockBtn?.addEventListener('click', () => {
+                if (!chatFab || !chatPanelEl) return;
+                if (!chatPanelEl.classList.contains('hidden')) {
+                    byId('chatPanelClose')?.click();
+                    return;
+                }
+                const r = chatFab.getBoundingClientRect();
+                const x = r.left + r.width / 2,
+                    y = r.top + r.height / 2;
+                const base = { bubbles: true, cancelable: true, pointerId: -1, clientX: x, clientY: y };
+                try {
+                    chatFab.dispatchEvent(new PointerEvent('pointerdown', base));
+                    chatFab.dispatchEvent(new PointerEvent('pointerup', base));
+                } catch (err) {
+                    chatFab.click();
+                }
+            });
+
+            /* ─── "More" popover ─── */
+            const moreBtn = byId('navDockMore');
+            const morePopover = byId('navDockMorePopover');
+            const closeMore = () => {
+                if (!morePopover) return;
+                morePopover.classList.add('hidden');
+                moreBtn?.setAttribute('aria-expanded', 'false');
+            };
+            const openMore = () => {
+                if (!morePopover) return;
+                morePopover.classList.remove('hidden');
+                moreBtn?.setAttribute('aria-expanded', 'true');
+            };
+            moreBtn?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (morePopover?.classList.contains('hidden')) { openMore(); moveIndicator(moreBtn); }
+                else { closeMore(); updateActive(); }
+            });
+            document.addEventListener('click', (e) => {
+                if (morePopover && !morePopover.classList.contains('hidden') && !dock.contains(e.target)) closeMore();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeMore();
+            });
+            const moreProxy = (dockBtnId, targetId) => {
+                const dockBtn = byId(dockBtnId), target = byId(targetId);
+                if (!dockBtn || !target) return;
+                dockBtn.addEventListener('click', () => { target.click();
+                    closeMore(); });
+            };
+            moreProxy('navDockMoreMood', 'moodsToggleBtn');
+            moreProxy('navDockMoreNotes', 'notesToggleBtn');
+            moreProxy('navDockMoreTheme', 'seasonMenuBtn');
+            moreProxy('navDockMoreWand', 'magicWandToggleBtn');
+            moreProxy('navDockMoreFight', 'breakGlassBtn');
+
+            /* ─── Sliding selection indicator ───
+               Measures the target button's own box and moves a pill
+               behind it — pure visual feedback, reads state, never
+               sets it. */
+            const indicator = byId('navDockIndicator');
+            function moveIndicator(btn) {
+                if (!indicator || !btn) return;
+                indicator.style.width = btn.offsetWidth + 'px';
+                indicator.style.transform = `translateX(${btn.offsetLeft - 6}px)`;
+                indicator.classList.add('show');
+            }
+            dock.querySelectorAll('.nav-dock-btn').forEach(btn => {
+                btn.addEventListener('click', () => moveIndicator(btn));
+            });
+
+            // Lightweight active-state highlight — purely cosmetic,
+            // reads existing .hidden classes, never sets them. Throttled
+            // to one check per animation frame, and only touches the DOM
+            // when the active item actually changed, so it stays cheap
+            // even while the page is scrolling continuously.
+            const watched = [
+                ['navDockDoodles', 'doodlesWall'],
+                ['navDockGames', 'gamesWall'],
+                ['navDockChat', 'chatPanel']
+            ];
+            let lastActiveId = null;
+            function updateActive() {
+                let anyOpen = false;
+                let activeBtn = null;
+                watched.forEach(([dockId, wallId]) => {
+                    const wall = byId(wallId);
+                    if (!wall) return;
+                    const open = !wall.classList.contains('hidden');
+                    if (open) { anyOpen = true;
+                        activeBtn = byId(dockId); }
+                });
+                const homeBtn = byId('navDockHome');
+                const homeActive = !anyOpen && window.scrollY < 80;
+                const newActiveId = activeBtn ? activeBtn.id : (homeActive ? 'navDockHome' : null);
+                if (newActiveId === lastActiveId) return;
+                lastActiveId = newActiveId;
+                watched.forEach(([dockId]) => byId(dockId)?.classList.toggle('active', dockId === newActiveId));
+                if (homeBtn) homeBtn.classList.toggle('active', newActiveId === 'navDockHome');
+                if (moreBtn) moreBtn.classList.remove('active');
+                if (activeBtn) moveIndicator(activeBtn);
+                else if (homeActive && homeBtn) moveIndicator(homeBtn);
+                else if (indicator) indicator.classList.remove('show');
+            }
+            const observer = new MutationObserver(updateActive);
+            watched.forEach(([, wallId]) => {
+                const wall = byId(wallId);
+                if (wall) observer.observe(wall, { attributes: true, attributeFilter: ['class'] });
+            });
+            let scrollRafPending = false;
+            function onScrollOrResize() {
+                if (scrollRafPending) return;
+                scrollRafPending = true;
+                requestAnimationFrame(() => { scrollRafPending = false;
+                    updateActive(); });
+            }
+            window.addEventListener('scroll', onScrollOrResize, { passive: true });
+            window.addEventListener('resize', onScrollOrResize, { passive: true });
+            updateActive();
+
+            /* ─── Notification dots ───
+               Purely reflective: watches the same .notif-cloud /
+               chat-badge elements the app already drives and mirrors
+               their state onto the dock, never sets the underlying
+               notification itself. */
+            const dotSyncPairs = [
+                ['doodlesNotifCloud', 'navDockDoodlesDot'],
+                ['moodsNotifCloud', 'navDockMoodDot'],
+                ['notesNotifCloud', 'navDockNotesDot'],
+                ['fightNotifCloud', 'navDockFightDot']
+            ];
+            function syncDots() {
+                let moreHasNotif = false;
+                dotSyncPairs.forEach(([cloudId, dotId]) => {
+                    const cloud = byId(cloudId), dot = byId(dotId);
+                    if (!cloud || !dot) return;
+                    const active = cloud.classList.contains('show');
+                    dot.classList.toggle('show', active);
+                    if (dotId !== 'navDockDoodlesDot' && active) moreHasNotif = true;
+                });
+                const moreDot = byId('navDockMoreDot');
+                if (moreDot) moreDot.classList.toggle('show', moreHasNotif);
+                const chatBadge = byId('chatUnreadBadge');
+                const chatDot = byId('navDockChatDot');
+                if (chatBadge && chatDot) chatDot.classList.toggle('show', !chatBadge.classList.contains('hidden'));
+            }
+            const dotObserver = new MutationObserver(syncDots);
+            [...dotSyncPairs.map(p => p[0]), 'chatUnreadBadge'].forEach(id => {
+                const el = byId(id);
+                if (el) dotObserver.observe(el, { attributes: true, attributeFilter: ['class'] });
+            });
+            syncDots();
+
+            /* ─── Pause expensive continuously-animated blurred
+               backgrounds while the page is actively scrolling (see
+               the .is-scrolling CSS rules for .hero and
+               body.theme-glass) — this is the main fix for the
+               scroll jank/flicker, especially in glass theme where
+               two large blurred fixed layers otherwise keep
+               recompositing behind every glass panel on every
+               frame. */
+            let scrollStopTimer = null;
+            window.addEventListener('scroll', () => {
+                document.body.classList.add('is-scrolling');
+                clearTimeout(scrollStopTimer);
+                scrollStopTimer = setTimeout(() => document.body.classList.remove('is-scrolling'), 220);
+            }, { passive: true });
+        } catch (err) {
+            console.error('Nav dock failed to initialize (core site unaffected):', err);
+        }
+    })();
+
+    /* ─── Mobile-only auto-collapse ───
+       After 10s with no interaction on the dock, it fades away and a
+       single small glass heart takes its place at bottom-left; a tap
+       on that heart brings the full dock back (and restarts the idle
+       clock). Desktop (real mouse + hover support) never collapses —
+       gated the same way the rest of the dock's hover styles are.
+       Fully self-contained and wrapped so a failure here can't affect
+       the rest of the site or the dock's own core functions above. */
+    (function() {
+        try {
+            const wrap = document.getElementById('navDockWrap');
+            const collapsedBtn = document.getElementById('navDockCollapsedBtn');
+            if (!wrap || !collapsedBtn) return;
+            const isDesktop = () => window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+            let idleTimer = null;
+
+            function collapse() {
+                if (isDesktop()) return;
+                // Never collapse while the "More" popover is open —
+                // that would strand it open with nothing to close it.
+                const morePopover = document.getElementById('navDockMorePopover');
+                if (morePopover && !morePopover.classList.contains('hidden')) { scheduleCollapse(); return; }
+                wrap.classList.add('dock-collapsed');
+                collapsedBtn.classList.add('show');
+            }
+            function expand() {
+                wrap.classList.remove('dock-collapsed');
+                collapsedBtn.classList.remove('show');
+                scheduleCollapse();
+            }
+            function scheduleCollapse() {
+                clearTimeout(idleTimer);
+                if (isDesktop()) return;
+                idleTimer = setTimeout(collapse, 10000);
+            }
+            wrap.addEventListener('click', scheduleCollapse);
+            collapsedBtn.addEventListener('click', expand);
+            window.addEventListener('resize', () => {
+                if (isDesktop()) { wrap.classList.remove('dock-collapsed');
+                    collapsedBtn.classList.remove('show');
+                    clearTimeout(idleTimer);
+                }
+                else scheduleCollapse();
+            }, { passive: true });
+            scheduleCollapse();
+        } catch (err) {
+            console.error('Dock auto-collapse failed to initialize (core site unaffected):', err);
+        }
+    })();
+    </script>
+
+    <!-- ════════════════════════════════════════════════════════
+         PER-PAGE CUSTOMIZE — floating icon + popover. Hidden by
+         default; the script below shows it only while one of the
+         customizable "little things" pages is open. ══════════ -->
+    <button type="button" id="pageCustomizeBtn" aria-label="Customize this page's look">🎨</button>
+    <div class="page-customize-backdrop hidden" id="pageCustomizeBackdrop">
+        <div class="page-customize-card">
+            <h3>Customize this page</h3>
+            <p class="hint">Give just this page its own background and accent colour — the rest of the site stays as you've set it.</p>
+            <div class="page-customize-row">
+                <label for="pageCustomizeBgA">Background — top</label>
+                <input type="color" id="pageCustomizeBgA" value="#fbf3ea">
+            </div>
+            <div class="page-customize-row">
+                <label for="pageCustomizeBgB">Background — bottom</label>
+                <input type="color" id="pageCustomizeBgB" value="#fbf3ea">
+            </div>
+            <div class="page-customize-row">
+                <label for="pageCustomizeAccent">Heading accent</label>
+                <input type="color" id="pageCustomizeAccent" value="#d98a93">
+            </div>
+            <div class="page-customize-actions">
+                <button type="button" id="pageCustomizeReset">Reset to default</button>
+                <button type="button" id="pageCustomizeClose">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         PERSONAL DIARY — own fixed/full-screen layout (z-index
+         9999), same self-contained pattern as the Magic Wand.
+         Triggered from the Little Things menu (#diaryOpenBtn) or
+         by calling window.openDiary(). ════════════════════════ -->
+<div id="diaryOverlay" class="hidden" data-rule="none" role="dialog" aria-modal="true" aria-label="Diary">
+  <div class="diary-backdrop"></div>
+
+  <div class="diary-topbar">
+    <button type="button" class="diary-icon-btn" id="diaryCloseBtn" aria-label="Close diary">✕</button>
+    <div class="diary-user-toggle" id="diaryUserToggle">
+      <button type="button" class="diary-user-btn" data-author="1">J</button>
+      <button type="button" class="diary-user-btn" data-author="2">M</button>
+    </div>
+    <div class="diary-topbar-actions">
+      <button type="button" class="diary-icon-btn" id="diaryCalendarBtn" aria-label="Jump to a date" title="Jump to a date">🗓️</button>
+      <button type="button" class="diary-icon-btn" id="diaryDesignBtn" aria-label="Customize diary" title="Customize">🎨</button>
+      <button type="button" class="diary-icon-btn" id="diaryLockBtn" aria-label="Lock settings" title="Lock settings">🔒</button>
+    </div>
+  </div>
+
+  <!-- ---------- lock screen ---------- -->
+  <div class="diary-lockscreen hidden" id="diaryLockscreen">
+    <div class="diary-lock-icon" id="diaryLockIcon">🔒</div>
+    <h3 id="diaryLockTitle">This diary is locked</h3>
+    <p class="hint" id="diaryLockSubtitle">Enter the passcode to open it.</p>
+    <div class="diary-pin-dots" id="diaryPinDots"></div>
+    <div class="diary-keypad" id="diaryKeypad">
+      <button type="button" class="diary-key" data-k="1">1</button>
+      <button type="button" class="diary-key" data-k="2">2</button>
+      <button type="button" class="diary-key" data-k="3">3</button>
+      <button type="button" class="diary-key" data-k="4">4</button>
+      <button type="button" class="diary-key" data-k="5">5</button>
+      <button type="button" class="diary-key" data-k="6">6</button>
+      <button type="button" class="diary-key" data-k="7">7</button>
+      <button type="button" class="diary-key" data-k="8">8</button>
+      <button type="button" class="diary-key" data-k="9">9</button>
+      <button type="button" class="diary-key wide" data-k="hint">hint</button>
+      <button type="button" class="diary-key" data-k="0">0</button>
+      <button type="button" class="diary-key wide" data-k="back">⌫</button>
+    </div>
+    <div class="diary-lock-links">
+      <button type="button" id="diaryForgotBtn">Forgot passcode?</button>
+    </div>
+  </div>
+
+  <!-- ---------- book scene ---------- -->
+  <div class="diary-scene" id="diaryScene">
+    <div class="diary-book" id="diaryBook">
+      <div class="diary-back-cover"></div>
+      <div class="diary-spine"></div>
+      <div id="diaryLeavesHost"></div>
+
+      <button type="button" class="diary-turn-zone prev" id="diaryZonePrev" aria-label="Previous page"></button>
+      <button type="button" class="diary-turn-zone next" id="diaryZoneNext" aria-label="Next page"></button>
+
+      <div class="diary-cover" id="diaryCover" data-pattern="none">
+        <div class="diary-cover-ribbon"></div>
+        <div class="diary-cover-inner diary-cover-front-face" id="diaryCoverFrontFace">
+          <div class="diary-cover-monogram" id="diaryCoverMonogram">✎</div>
+          <div class="diary-cover-title" id="diaryCoverTitle">My Diary</div>
+          <div class="diary-cover-sub" id="diaryCoverSub"></div>
+          <div class="diary-cover-tapopen">tap to open</div>
+        </div>
+        <div class="diary-cover-inner diary-cover-back-face">
+          <div class="diary-page-body" style="font-size:1.1rem;opacity:.7;max-width:70%">this is where the story begins…</div>
+        </div>
+      </div>
+
+      <div class="diary-book-shadow"></div>
+    </div>
+
+    <button type="button" class="diary-arrow-btn" id="diaryPrevBtn" aria-label="Previous page">‹</button>
+    <button type="button" class="diary-arrow-btn" id="diaryNextBtn" aria-label="Next page">›</button>
+    <button type="button" class="diary-fab" id="diaryAddBtn">+ New entry</button>
+  </div>
+</div>
+
+<!-- ---------- entry editor modal ---------- -->
+<div class="diary-modal-backdrop hidden" id="diaryEditorBackdrop">
+  <div class="diary-modal">
+    <button type="button" class="diary-modal-close" id="diaryEditorClose">✕</button>
+    <h2 id="diaryEditorHeading">New entry</h2>
+    <div class="diary-field-label">Date</div>
+    <input type="date" class="diary-input" id="diaryEditorDate">
+    <div class="diary-field-label">How you're feeling (optional)</div>
+    <div class="diary-swatch-row" id="diaryMoodRow">
+      <button type="button" class="diary-key" data-mood="">—</button>
+      <button type="button" class="diary-key" data-mood="😊">😊</button>
+      <button type="button" class="diary-key" data-mood="🥹">🥹</button>
+      <button type="button" class="diary-key" data-mood="😴">😴</button>
+      <button type="button" class="diary-key" data-mood="😤">😤</button>
+      <button type="button" class="diary-key" data-mood="🥰">🥰</button>
+      <button type="button" class="diary-key" data-mood="✨">✨</button>
+      <button type="button" class="diary-key" data-mood="🌧️">🌧️</button>
+    </div>
+    <div class="diary-field-label">Title (optional)</div>
+    <input type="text" class="diary-input" id="diaryEditorTitle" maxlength="80" placeholder="A little heading for this page">
+    <div class="diary-field-label">What happened today</div>
+    <textarea class="diary-textarea" id="diaryEditorBody" maxlength="4000" placeholder="Dear diary…"></textarea>
+    <div class="diary-field-label">Photos</div>
+    <div class="diary-swatch-row" id="diaryEditorImages"></div>
+    <button type="button" class="diary-btn ghost" id="diaryEditorAddImage">+ Add photo</button>
+    <input type="file" id="diaryEditorFileInput" accept="image/*" multiple style="display:none">
+    <div class="diary-modal-actions">
+      <button type="button" class="diary-btn danger hidden" id="diaryEditorDelete">Delete page</button>
+      <button type="button" class="diary-btn ghost" id="diaryEditorCancel">Cancel</button>
+      <button type="button" class="diary-btn primary" id="diaryEditorSave">Save page</button>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- calendar modal ---------- -->
+<div class="diary-modal-backdrop hidden" id="diaryCalBackdrop">
+  <div class="diary-modal">
+    <button type="button" class="diary-modal-close" id="diaryCalClose">✕</button>
+    <h2>Jump to a date</h2>
+    <div class="diary-cal-nav">
+      <button type="button" id="diaryCalPrevMonth">‹</button>
+      <strong id="diaryCalLabel"></strong>
+      <button type="button" id="diaryCalNextMonth">›</button>
+    </div>
+    <div class="diary-cal-grid" id="diaryCalGrid"></div>
+  </div>
+</div>
+
+<!-- ---------- design (customize) modal ---------- -->
+<div class="diary-modal-backdrop hidden" id="diaryDesignBackdrop">
+  <div class="diary-modal">
+    <button type="button" class="diary-modal-close" id="diaryDesignClose">✕</button>
+    <h2>Design your diary</h2>
+    <div class="diary-modal-tabs">
+      <button type="button" class="diary-modal-tab active" data-tab="cover">Cover</button>
+      <button type="button" class="diary-modal-tab" data-tab="pages">Pages</button>
+    </div>
+
+    <div id="diaryDesignCover">
+      <div class="diary-field-label">Material</div>
+      <div class="diary-swatch-row" id="diaryCoverPresets"></div>
+      <div class="diary-field-label">Custom colors</div>
+      <div class="diary-color-row">
+        <input type="color" id="diaryCoverColorA" value="#D98A93">
+        <input type="color" id="diaryCoverColorB" value="#6B4A3A">
+        <span style="font-size:.8rem;opacity:.65">primary / spine</span>
+      </div>
+      <div class="diary-field-label">Texture</div>
+      <div class="diary-swatch-row" id="diaryCoverPatterns"></div>
+      <div class="diary-field-label">Title</div>
+      <input type="text" class="diary-input" id="diaryCoverTitleInput" maxlength="40" placeholder="My Diary">
+      <div class="diary-field-label">Subtitle</div>
+      <input type="text" class="diary-input" id="diaryCoverSubInput" maxlength="60" placeholder="private &amp; personal">
+      <div class="diary-field-label">Monogram</div>
+      <input type="text" class="diary-input" id="diaryCoverMonogramInput" maxlength="4" placeholder="✎ or your initial">
+      <div class="diary-field-label">Ribbon color</div>
+      <div class="diary-color-row"><input type="color" id="diaryRibbonColor" value="#D98A93"></div>
+    </div>
+
+    <div id="diaryDesignPages" style="display:none">
+      <div class="diary-field-label">Paper tone</div>
+      <div class="diary-swatch-row" id="diaryPagePresets"></div>
+      <div class="diary-field-label">Ruling</div>
+      <div class="diary-swatch-row" id="diaryRuleOptions"></div>
+      <div class="diary-field-label">Entry font</div>
+      <select class="diary-select" id="diaryFontSelect">
+        <option value="'Caveat', cursive">Caveat — handwritten</option>
+        <option value="'Patrick Hand', cursive">Patrick Hand — playful</option>
+        <option value="'Playfair Display', serif">Playfair Display — elegant</option>
+        <option value="'Quicksand', sans-serif">Quicksand — clean</option>
+      </select>
+      <div class="diary-field-label">Custom paper &amp; ink</div>
+      <div class="diary-color-row">
+        <input type="color" id="diaryPageColor" value="#FBF3EA">
+        <input type="color" id="diaryInkColor" value="#6B5344">
+        <span style="font-size:.8rem;opacity:.65">paper / ink</span>
+      </div>
+    </div>
+
+    <div class="diary-modal-actions">
+      <button type="button" class="diary-btn ghost" id="diaryDesignCancel">Cancel</button>
+      <button type="button" class="diary-btn primary" id="diaryDesignSave">Save design</button>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- lock settings modal ---------- -->
+<div class="diary-modal-backdrop hidden" id="diaryLockSettingsBackdrop">
+  <div class="diary-modal">
+    <button type="button" class="diary-modal-close" id="diaryLockSettingsClose">✕</button>
+    <h2 id="diaryLockSettingsHeading">Diary lock</h2>
+    <p style="font-size:.85rem;opacity:.7" id="diaryLockSettingsSub"></p>
+
+    <div id="diaryLockNoneView">
+      <div class="diary-field-label">Set a passcode (4–6 digits)</div>
+      <input type="password" inputmode="numeric" class="diary-input" id="diaryNewPin1" maxlength="6" placeholder="New passcode">
+      <div class="diary-field-label">Confirm</div>
+      <input type="password" inputmode="numeric" class="diary-input" id="diaryNewPin2" maxlength="6" placeholder="Confirm passcode">
+      <div class="diary-field-label">Hint (optional, shown after failed attempts)</div>
+      <input type="text" class="diary-input" id="diaryPinHint" maxlength="60" placeholder="e.g. our anniversary day">
+      <div class="diary-modal-actions">
+        <button type="button" class="diary-btn primary" id="diarySetPinBtn">Set passcode</button>
+      </div>
+    </div>
+
+    <div id="diaryLockSomeView" class="hidden">
+      <div class="diary-field-label">Current passcode</div>
+      <input type="password" inputmode="numeric" class="diary-input" id="diaryCurPin" maxlength="6" placeholder="Current passcode">
+      <div class="diary-field-label">New passcode</div>
+      <input type="password" inputmode="numeric" class="diary-input" id="diaryChangePin1" maxlength="6" placeholder="New passcode">
+      <div class="diary-field-label">Confirm new passcode</div>
+      <input type="password" inputmode="numeric" class="diary-input" id="diaryChangePin2" maxlength="6" placeholder="Confirm new passcode">
+      <div class="diary-field-label">Hint (optional)</div>
+      <input type="text" class="diary-input" id="diaryChangeHint" maxlength="60">
+      <div class="diary-modal-actions">
+        <button type="button" class="diary-btn danger" id="diaryRemovePinBtn">Remove passcode</button>
+        <button type="button" class="diary-btn primary" id="diaryChangePinBtn">Save new passcode</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- image lightbox ---------- -->
+<div class="diary-lightbox hidden" id="diaryLightbox">
+  <button type="button" class="diary-lightbox-close" id="diaryLightboxClose">✕</button>
+  <button type="button" class="diary-lightbox-nav prev" id="diaryLightboxPrev">‹</button>
+  <div class="diary-lightbox-card" id="diaryLightboxCard"><img id="diaryLightboxImg" src="" alt=""></div>
+  <button type="button" class="diary-lightbox-nav next" id="diaryLightboxNext">›</button>
+</div>
+
+<div class="diary-toast" id="diaryToast"></div>
+
+    <script>
+(function () {
+  'use strict';
+
+  /* ================= CONFIG ================= */
+  // Same project your site already uses — reusing it means the
+  // diary "just works" with zero extra setup beyond running the
+  // SQL file and creating the storage bucket.
+  const SUPABASE_URL = 'https://cctlzqlchijwrxrxnmmm.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjdGx6cWxjaGlqd3J4cnhubW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MDg1NTksImV4cCI6MjA5OTQ4NDU1OX0.5cEM69NsRjiN2d1XqzFcqVmSp8Db0AqxRr6wLJmm5Yc';
+  const ENTRIES_TABLE = 'diary_entries';
+  const SETTINGS_TABLE = 'diary_settings';
+  const IMAGES_BUCKET = 'diary-images';
+  const IDENTITY_KEY = 'ourLittleUniverseIdentity'; // same key your site already uses
+
+  const sb = (window.supabase && SUPABASE_URL.startsWith('http'))
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+
+  /* ================= HELPERS ================= */
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $all = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+  function uid() {
+    if (crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function isoDate(d) { d = d || new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+  function prettyDate(iso) {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return dt.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  }
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  async function sha256Hex(text) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  function currentIdentity() {
+    return localStorage.getItem(IDENTITY_KEY) === '2' ? 2 : 1;
+  }
+  function letterFor(n) { return n === 2 ? 'M' : 'J'; }
+  function showToast(msg) {
+    const t = $('#diaryToast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  /* ================= PRESETS ================= */
+  const COVER_PRESETS = [
+    { key: 'blush', label: 'Rose Blush', a: '#D98A93', b: '#6B4A3A', text: '#FFFDF9', pattern: 'stars' },
+    { key: 'leather', label: 'Chestnut Leather', a: '#7A5138', b: '#3A2718', text: '#F2DFC0', pattern: 'none' },
+    { key: 'velvet', label: 'Midnight Velvet', a: '#5B3466', b: '#231529', text: '#F0E0F5', pattern: 'stars' },
+    { key: 'linen', label: 'Cream Linen', a: '#EDE3D0', b: '#B9A67D', text: '#5B4A36', pattern: 'botanical' },
+    { key: 'sage', label: 'Sage', a: '#8FA487', b: '#425240', text: '#F4F7EE', pattern: 'dots' },
+    { key: 'navy', label: 'Starlit Navy', a: '#232A4A', b: '#0D1024', text: '#E7D9AE', pattern: 'stars' },
+    { key: 'holo', label: 'Holographic', a: '#E8B4D8', b: '#B4CFE8', text: '#4A3B57', pattern: 'dots' }
+  ];
+  const PAGE_PRESETS = [
+    { key: 'cream', label: 'Cream', bg: '#FBF3EA', line: 'rgba(107,83,68,.14)', ink: '#6B5344' },
+    { key: 'blush', label: 'Blush', bg: '#FBEDEF', line: 'rgba(217,138,147,.18)', ink: '#6B5344' },
+    { key: 'sage', label: 'Sage', bg: '#F1F5EC', line: 'rgba(90,110,80,.16)', ink: '#48533E' },
+    { key: 'slate', label: 'Slate', bg: '#EFF2F6', line: 'rgba(90,105,130,.16)', ink: '#3E4A5C' },
+    { key: 'midnight', label: 'Midnight', bg: '#1E1B2A', line: 'rgba(217,197,168,.18)', ink: '#E8DCC0' }
+  ];
+  const PATTERN_OPTIONS = [
+    { key: 'none', label: 'Plain' }, { key: 'stars', label: 'Starlight' },
+    { key: 'dots', label: 'Dotted' }, { key: 'botanical', label: 'Botanical' }
+  ];
+  const RULE_OPTIONS = [
+    { key: 'none', label: 'Blank' }, { key: 'lined', label: 'Lined' },
+    { key: 'dots', label: 'Dot grid' }, { key: 'grid', label: 'Grid' }
+  ];
+  const DEFAULT_COVER = { preset: 'blush', a: '#D98A93', b: '#6B4A3A', text: '#FFFDF9', pattern: 'stars', title: 'My Diary', subtitle: 'private & personal', monogram: '✎', ribbon: '#D98A93' };
+  const DEFAULT_PAGE = { preset: 'cream', bg: '#FBF3EA', line: 'rgba(107,83,68,.14)', ink: '#6B5344', font: "'Caveat', cursive", rule: 'none' };
+
+  /* ================= STATE ================= */
+  const state = {
+    viewingAuthor: currentIdentity(),
+    entries: [],
+    settingsCache: {},       // { 1: {cover,page,hasLock,hint}, 2: {...} }
+    pages: [],                // entries + trailing blank page, for the currently viewed author
+    leafEls: [],
+    flippedCount: 0,
+    bookOpen: false,
+    pinBuffer: '',
+    lockAttempts: 0,
+    calMonth: new Date(),
+    editingEntryId: null,
+    editorImages: [],         // [{path,url,caption}] staged for the entry being edited
+    lightboxList: [],
+    lightboxIndex: 0,
+    designTab: 'cover'
+  };
+
+  function sessionUnlockedKey(author) { return `diaryUnlocked_${author}`; }
+  function isUnlockedThisSession(author) { return sessionStorage.getItem(sessionUnlockedKey(author)) === '1'; }
+  function markUnlocked(author) { sessionStorage.setItem(sessionUnlockedKey(author), '1'); }
+  function clearUnlocked(author) { sessionStorage.removeItem(sessionUnlockedKey(author)); }
+
+  /* ================= SETTINGS (lock + design) ================= */
+  async function loadSettings(author) {
+    if (state.settingsCache[author]) return state.settingsCache[author];
+    let row = null;
+    if (sb) {
+      try {
+        const { data, error } = await sb.from(SETTINGS_TABLE).select('*').eq('author', author).maybeSingle();
+        if (!error) row = data;
+      } catch (e) { console.error('diary: could not load settings', e); }
+    }
+    const settings = {
+      hasLock: !!(row && row.passcode_hash),
+      passcodeHash: row ? row.passcode_hash : null,
+      hint: row ? row.passcode_hint : '',
+      cover: Object.assign({}, DEFAULT_COVER, (row && row.cover_style) || {}),
+      page: Object.assign({}, DEFAULT_PAGE, (row && row.page_style) || {})
+    };
+    state.settingsCache[author] = settings;
+    return settings;
+  }
+
+  async function saveSettingsField(author, patch) {
+    const current = await loadSettings(author);
+    Object.assign(current, patch);
+    state.settingsCache[author] = current;
+    if (!sb) return;
+    const row = {
+      author,
+      passcode_hash: current.passcodeHash,
+      passcode_hint: current.hint,
+      cover_style: current.cover,
+      page_style: current.page,
+      updated_at: new Date().toISOString()
+    };
+    try {
+      const { error } = await sb.from(SETTINGS_TABLE).upsert(row, { onConflict: 'author' });
+      if (error) throw error;
+    } catch (e) {
+      console.error('diary: could not save settings', e);
+      showToast('Could not save — check your connection.');
+    }
+  }
+
+  function applyDesignVars(settings) {
+    const overlay = $('#diaryOverlay');
+    const cover = settings.cover, page = settings.page;
+    overlay.style.setProperty('--diary-cover-a', cover.a);
+    overlay.style.setProperty('--diary-cover-b', cover.b);
+    overlay.style.setProperty('--diary-cover-text', cover.text);
+    overlay.style.setProperty('--diary-ribbon', cover.ribbon);
+    overlay.style.setProperty('--diary-page-bg', page.bg);
+    overlay.style.setProperty('--diary-page-line', page.line);
+    overlay.style.setProperty('--diary-ink', page.ink);
+    overlay.style.setProperty('--diary-font', page.font);
+    overlay.setAttribute('data-rule', page.rule);
+    $('#diaryCover').setAttribute('data-pattern', cover.pattern);
+    $('#diaryCoverTitle').textContent = cover.title || 'My Diary';
+    $('#diaryCoverSub').textContent = cover.subtitle || '';
+    $('#diaryCoverMonogram').textContent = cover.monogram || '✎';
+  }
+
+  /* ================= ENTRIES ================= */
+  async function loadEntries(author) {
+    if (!sb) { state.entries = []; return; }
+    try {
+      const { data, error } = await sb.from(ENTRIES_TABLE).select('*')
+        .eq('author', author)
+        .order('entry_date', { ascending: true })
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      state.entries = data || [];
+    } catch (e) {
+      console.error('diary: could not load entries', e);
+      showToast('Could not load diary entries — check your connection.');
+      state.entries = [];
+    }
+  }
+
+  /* ================= LOCK SCREEN ================= */
+  function renderPinDots() {
+    const wrap = $('#diaryPinDots');
+    wrap.innerHTML = '';
+    const len = Math.max(state.pinBuffer.length, 4);
+    for (let i = 0; i < Math.max(4, state.pinTargetLen || 4); i++) {
+      const d = document.createElement('span');
+      d.className = 'diary-pin-dot' + (i < state.pinBuffer.length ? ' filled' : '');
+      wrap.appendChild(d);
+    }
+  }
+
+  async function openLockscreenFor(author, settings) {
+    $('#diaryLockscreen').classList.remove('hidden');
+    $('#diaryScene').style.visibility = 'hidden';
+    state.pinBuffer = '';
+    state.pinTargetLen = 6;
+    state.lockAttempts = 0;
+    $('#diaryLockIcon').textContent = '🔒';
+    $('#diaryLockIcon').className = 'diary-lock-icon';
+    $('#diaryLockTitle').textContent = `${letterFor(author)}'s diary is locked`;
+    $('#diaryLockSubtitle').textContent = 'Enter the passcode to open it.';
+    renderPinDots();
+  }
+
+  async function tryPasscode(author, settings) {
+    const enteredHash = await sha256Hex(state.pinBuffer);
+    if (enteredHash === settings.passcodeHash) {
+      $('#diaryLockIcon').textContent = '🔓';
+      $('#diaryLockIcon').classList.add('open');
+      markUnlocked(author);
+      setTimeout(async () => {
+        $('#diaryLockscreen').classList.add('hidden');
+        $('#diaryScene').style.visibility = 'visible';
+        await enterAuthorBook(author);
+      }, 420);
+    } else {
+      state.lockAttempts++;
+      $('#diaryLockIcon').classList.add('shake');
+      setTimeout(() => $('#diaryLockIcon').classList.remove('shake'), 500);
+      state.pinBuffer = '';
+      renderPinDots();
+      if (state.lockAttempts >= 3 && settings.hint) {
+        $('#diaryLockSubtitle').textContent = `Hint: ${settings.hint}`;
+      } else {
+        showToast('Wrong passcode');
+      }
+    }
+  }
+
+  $('#diaryKeypad').addEventListener('click', async (e) => {
+    const btn = e.target.closest('.diary-key');
+    if (!btn) return;
+    const k = btn.dataset.k;
+    const author = state.viewingAuthor;
+    const settings = await loadSettings(author);
+    if (k === 'back') { state.pinBuffer = state.pinBuffer.slice(0, -1); renderPinDots(); return; }
+    if (k === 'hint') {
+      showToast(settings.hint ? `Hint: ${settings.hint}` : 'No hint was set for this passcode.');
+      return;
+    }
+    if (state.pinBuffer.length >= 6) return;
+    state.pinBuffer += k;
+    renderPinDots();
+    if (state.pinBuffer.length >= 4) {
+      // auto-check once they've typed at least 4 digits and pause briefly,
+      // but also check immediately at 6 (max length)
+      if (state.pinBuffer.length === 6) { tryPasscode(author, settings); }
+      else {
+        clearTimeout(state._pinTimer);
+        state._pinTimer = setTimeout(() => tryPasscode(author, settings), 550);
+      }
+    }
+  });
+
+  $('#diaryForgotBtn').addEventListener('click', async () => {
+    const author = state.viewingAuthor;
+    const settings = await loadSettings(author);
+    if (settings.hint) {
+      showToast(`Hint: ${settings.hint}`);
+    } else {
+      showToast('No hint saved. Ask whoever set it to reset it from the lock settings.');
+    }
+  });
+
+  /* ================= BOOK RENDERING ================= */
+  function buildPages() {
+    const pages = state.entries.map(e => ({ type: 'entry', entry: e }));
+    pages.push({ type: 'blank' });
+    state.pages = pages;
+  }
+
+  function chunkLeaves() {
+    const leaves = [];
+    for (let i = 0; i < state.pages.length; i += 2) {
+      leaves.push([state.pages[i], state.pages[i + 1] || null]);
+    }
+    return leaves;
+  }
+
+  function renderTagsHtml(entry) {
+    if (!entry.images || !entry.images.length) return '';
+    const tags = entry.images.map((img, i) => {
+      const rot = ((i * 37) % 17) - 8;
+      return `<button type="button" class="diary-img-tag" style="--tag-rot:${rot}deg" data-entry="${entry.id}" data-idx="${i}"><img src="${escapeHtml(img.url)}" alt="attached photo" loading="lazy"></button>`;
+    }).join('');
+    return `<div class="diary-page-tags">${tags}</div>`;
+  }
+
+  function renderPageFaceHtml(pageObj, pageNumber) {
+    if (!pageObj) return `<div class="diary-leaf-back-plain"></div>`;
+    if (pageObj.type === 'blank') {
+      return `<div class="diary-blank-page">
+        <div class="glyph">🖋️</div>
+        <p>This page is waiting for you…</p>
+        <button type="button" class="diary-blank-write-btn" data-act="new-here">+ Write today's page</button>
+      </div>`;
+    }
+    const e = pageObj.entry;
+    return `<div class="diary-page-content">
+      <div class="diary-page-header">
+        <span class="diary-page-date">${escapeHtml(prettyDate(e.entry_date))}</span>
+        ${e.mood ? `<span class="diary-page-mood">${escapeHtml(e.mood)}</span>` : ''}
+        <div class="diary-page-tools">
+          <button type="button" class="diary-page-tool" data-act="edit" data-id="${e.id}" aria-label="Edit">✎</button>
+          <button type="button" class="diary-page-tool" data-act="delete" data-id="${e.id}" aria-label="Delete">🗑</button>
+        </div>
+      </div>
+      ${e.title ? `<h3 class="diary-page-title">${escapeHtml(e.title)}</h3>` : ''}
+      <div class="diary-page-body">${escapeHtml(e.body)}</div>
+      ${renderTagsHtml(e)}
+      <div class="diary-page-num">${pageNumber}</div>
+    </div>`;
+  }
+
+  function renderBook() {
+    buildPages();
+    const leavesData = chunkLeaves();
+    const host = $('#diaryLeavesHost');
+    host.innerHTML = '';
+    state.leafEls = [];
+
+    leavesData.forEach((pair, i) => {
+      const leaf = document.createElement('div');
+      leaf.className = 'diary-leaf';
+      leaf.style.zIndex = leavesData.length - i;
+      leaf.dataset.index = i;
+
+      const front = document.createElement('div');
+      front.className = 'leaf-face leaf-front';
+      front.innerHTML = renderPageFaceHtml(pair[0], i * 2 + 1);
+
+      const back = document.createElement('div');
+      back.className = 'leaf-face leaf-back';
+      back.innerHTML = renderPageFaceHtml(pair[1], i * 2 + 2);
+
+      leaf.appendChild(front);
+      leaf.appendChild(back);
+      host.appendChild(leaf);
+      state.leafEls.push(leaf);
+    });
+
+    // Land on the last spread (today's blank invite page) instantly, no animation.
+    state.leafEls.forEach(l => l.classList.add('no-anim'));
+    state.flippedCount = 0;
+    setFlipState(state.leafEls.length, false);
+    requestAnimationFrame(() => state.leafEls.forEach(l => l.classList.remove('no-anim')));
+
+    updateArrowStates();
+  }
+
+  function setFlipState(targetCount, animate) {
+    targetCount = Math.max(0, Math.min(state.leafEls.length, targetCount));
+    const distance = Math.abs(targetCount - state.flippedCount);
+    if (!animate || distance > 5) {
+      state.leafEls.forEach((leaf, i) => {
+        leaf.classList.add('no-anim');
+        leaf.classList.toggle('flipped', i < targetCount);
+        leaf.style.zIndex = i < targetCount ? (1000 + i) : (state.leafEls.length - i);
+      });
+      state.flippedCount = targetCount;
+      requestAnimationFrame(() => state.leafEls.forEach(l => l.classList.remove('no-anim')));
+      updateArrowStates();
+      return;
+    }
+    // animate one leaf at a time toward the target, staggered slightly
+    const forward = targetCount > state.flippedCount;
+    let steps = distance;
+    let i = 0;
+    const stepFn = () => {
+      if (i >= steps) { updateArrowStates(); return; }
+      flipOneLeaf(forward);
+      i++;
+      setTimeout(stepFn, 140);
+    };
+    stepFn();
+  }
+
+  function flipOneLeaf(forward) {
+    if (forward) {
+      if (state.flippedCount >= state.leafEls.length) return;
+      const leaf = state.leafEls[state.flippedCount];
+      leaf.classList.add('turning');
+      leaf.style.zIndex = 2000;
+      leaf.classList.add('flipped');
+      state.flippedCount++;
+      setTimeout(() => {
+        leaf.classList.remove('turning');
+        leaf.style.zIndex = 1000 + (state.flippedCount - 1);
+      }, 950);
+    } else {
+      if (state.flippedCount <= 0) return;
+      state.flippedCount--;
+      const leaf = state.leafEls[state.flippedCount];
+      leaf.classList.add('turning');
+      leaf.style.zIndex = 2000;
+      leaf.classList.remove('flipped');
+      setTimeout(() => {
+        leaf.classList.remove('turning');
+        leaf.style.zIndex = state.leafEls.length - state.flippedCount;
+      }, 950);
+    }
+    updateArrowStates();
+  }
+
+  function turnPage(dir) {
+    if (!state.bookOpen) return;
+    if (dir === 'next') flipOneLeaf(true);
+    else flipOneLeaf(false);
+  }
+
+  function updateArrowStates() {
+    $('#diaryPrevBtn').disabled = state.flippedCount <= 0;
+    $('#diaryNextBtn').disabled = state.flippedCount >= state.leafEls.length;
+  }
+
+  function pageIndexForEntry(entryId) {
+    return state.pages.findIndex(p => p.type === 'entry' && p.entry.id === entryId);
+  }
+  function flipCountToShowPageIndex(ti) {
+    return Math.floor(ti / 2) + (ti % 2);
+  }
+  function jumpToEntry(entryId) {
+    const ti = pageIndexForEntry(entryId);
+    if (ti < 0) return;
+    setFlipState(flipCountToShowPageIndex(ti), true);
+  }
+  function jumpToDate(dateIso) {
+    const idx = state.entries.findIndex(e => e.entry_date === dateIso);
+    if (idx >= 0) jumpToEntry(state.entries[idx].id);
+    else showToast('No entry on that date yet — tap "+ New entry" to add one.');
+  }
+
+  /* ================= OPEN / CLOSE / USER SWITCH ================= */
+  async function enterAuthorBook(author) {
+    const settings = await loadSettings(author);
+    applyDesignVars(settings);
+    await loadEntries(author);
+    renderBook();
+    $('#diaryOverlay').classList.add('book-open');
+    state.bookOpen = true;
+    $all('.diary-user-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.author) === author));
+  }
+
+  async function showAuthor(author) {
+    state.viewingAuthor = author;
+    $('#diaryOverlay').classList.remove('book-open');
+    state.bookOpen = false;
+    $('#diaryScene').style.visibility = 'visible';
+    $('#diaryLockscreen').classList.add('hidden');
+
+    const settings = await loadSettings(author);
+    applyDesignVars(settings);
+
+    if (settings.hasLock && !isUnlockedThisSession(author)) {
+      $('#diaryScene').style.visibility = 'hidden';
+      await openLockscreenFor(author, settings);
+    } else {
+      await enterAuthorBook(author);
+    }
+  }
+
+  async function openDiary() {
+    $('#diaryOverlay').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    await showAuthor(currentIdentity());
+  }
+  function closeDiary() {
+    $('#diaryOverlay').classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+  window.openDiary = openDiary;
+
+  $('#diaryOpenBtn') && $('#diaryOpenBtn').addEventListener('click', openDiary);
+  $('#diaryCloseBtn').addEventListener('click', closeDiary);
+
+  $('#diaryUserToggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('.diary-user-btn');
+    if (!btn) return;
+    showAuthor(Number(btn.dataset.author));
+  });
+
+  // Tap the cover to open the book, then click zones / arrows / keys to turn pages.
+  $('#diaryCover').addEventListener('click', () => {
+    if (!$('#diaryOverlay').classList.contains('book-open')) return; // opened via showAuthor already
+  });
+  $('#diaryScene').addEventListener('click', (e) => {
+    if (e.target.closest('.diary-cover')) return;
+  });
+
+  $('#diaryZoneNext').addEventListener('click', () => turnPage('next'));
+  $('#diaryZonePrev').addEventListener('click', () => turnPage('prev'));
+  $('#diaryPrevBtn').addEventListener('click', () => turnPage('prev'));
+  $('#diaryNextBtn').addEventListener('click', () => turnPage('next'));
+
+  document.addEventListener('keydown', (e) => {
+    if ($('#diaryOverlay').classList.contains('hidden')) return;
+    if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+    if (e.key === 'ArrowRight') turnPage('next');
+    if (e.key === 'ArrowLeft') turnPage('prev');
+    if (e.key === 'Escape') closeDiary();
+  });
+
+  // swipe support
+  (function initSwipe() {
+    let sx = null;
+    const scene = $('#diaryScene');
+    scene.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
+    scene.addEventListener('touchend', (e) => {
+      if (sx == null) return;
+      const dx = e.changedTouches[0].clientX - sx;
+      if (Math.abs(dx) > 60) turnPage(dx < 0 ? 'next' : 'prev');
+      sx = null;
+    }, { passive: true });
+  })();
+
+  // click delegated actions inside pages (edit / delete / write-here / open image)
+  $('#diaryLeavesHost').addEventListener('click', (e) => {
+    const editBtn = e.target.closest('[data-act="edit"]');
+    const delBtn = e.target.closest('[data-act="delete"]');
+    const newHereBtn = e.target.closest('[data-act="new-here"]');
+    const tag = e.target.closest('.diary-img-tag');
+    if (editBtn) { e.stopPropagation(); openEditor(editBtn.dataset.id); }
+    else if (delBtn) { e.stopPropagation(); deleteEntry(delBtn.dataset.id); }
+    else if (newHereBtn) { e.stopPropagation(); openEditor(null); }
+    else if (tag) { e.stopPropagation(); openLightboxFor(tag.dataset.entry, Number(tag.dataset.idx)); }
+  });
+
+  /* ================= ENTRY EDITOR ================= */
+  function openEditor(entryId) {
+    state.editingEntryId = entryId;
+    const entry = entryId ? state.entries.find(e => e.id === entryId) : null;
+    $('#diaryEditorHeading').textContent = entry ? 'Edit page' : 'New entry';
+    $('#diaryEditorDate').value = entry ? entry.entry_date : isoDate();
+    $('#diaryEditorTitle').value = entry ? (entry.title || '') : '';
+    $('#diaryEditorBody').value = entry ? (entry.body || '') : '';
+    state.editorImages = entry && entry.images ? entry.images.slice() : [];
+    renderEditorImages();
+    $all('#diaryMoodRow .diary-key').forEach(b => b.classList.toggle('active', (entry ? entry.mood : '') === b.dataset.mood));
+    $('#diaryEditorDelete').classList.toggle('hidden', !entry);
+    $('#diaryEditorBackdrop').classList.remove('hidden');
+  }
+  function closeEditor() { $('#diaryEditorBackdrop').classList.add('hidden'); }
+  $('#diaryEditorClose').addEventListener('click', closeEditor);
+  $('#diaryEditorCancel').addEventListener('click', closeEditor);
+
+  $('#diaryMoodRow').addEventListener('click', (e) => {
+    const btn = e.target.closest('.diary-key');
+    if (!btn) return;
+    $all('#diaryMoodRow .diary-key').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+
+  function renderEditorImages() {
+    const wrap = $('#diaryEditorImages');
+    wrap.innerHTML = state.editorImages.map((img, i) =>
+      `<div style="position:relative"><img src="${escapeHtml(img.url)}" style="width:56px;height:56px;object-fit:cover;border-radius:8px">
+        <button type="button" data-remove="${i}" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:#c44;color:#fff;font-size:.7rem;cursor:pointer">✕</button></div>`
+    ).join('');
+  }
+  $('#diaryEditorImages').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-remove]');
+    if (!btn) return;
+    state.editorImages.splice(Number(btn.dataset.remove), 1);
+    renderEditorImages();
+  });
+
+  $('#diaryEditorAddImage').addEventListener('click', () => $('#diaryEditorFileInput').click());
+  $('#diaryEditorFileInput').addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    for (const file of files) {
+      try {
+        const compressed = await compressImage(file);
+        const path = `${state.viewingAuthor}/${uid()}.jpg`;
+        if (!sb) { showToast('Supabase is not connected.'); return; }
+        const { error: uploadError } = await sb.storage.from(IMAGES_BUCKET).upload(path, compressed, { cacheControl: '3600', upsert: false, contentType: 'image/jpeg' });
+        if (uploadError) throw uploadError;
+        const { data: urlData } = sb.storage.from(IMAGES_BUCKET).getPublicUrl(path);
+        state.editorImages.push({ path, url: urlData.publicUrl });
+        renderEditorImages();
+      } catch (err) {
+        console.error('diary: image upload failed', err);
+        showToast('Could not upload that photo.');
+      }
+    }
+  });
+
+  function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = () => { img.src = reader.result; };
+      reader.onerror = reject;
+      img.onload = () => {
+        const maxDim = 1600;
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const scale = maxDim / Math.max(width, height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('toBlob failed')), 'image/jpeg', 0.85);
+      };
+      img.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  $('#diaryEditorSave').addEventListener('click', async () => {
+    if (!sb) { showToast('Supabase is not connected.'); return; }
+    const author = state.viewingAuthor;
+    const mood = ($('#diaryMoodRow .diary-key.active') || {}).dataset ? $('#diaryMoodRow .diary-key.active').dataset.mood : '';
+    const payload = {
+      author,
+      entry_date: $('#diaryEditorDate').value || isoDate(),
+      title: $('#diaryEditorTitle').value.trim(),
+      body: $('#diaryEditorBody').value,
+      mood: mood || null,
+      images: state.editorImages,
+      updated_at: new Date().toISOString()
+    };
+    try {
+      if (state.editingEntryId) {
+        const { error } = await sb.from(ENTRIES_TABLE).update(payload).eq('id', state.editingEntryId);
+        if (error) throw error;
+      } else {
+        const { error } = await sb.from(ENTRIES_TABLE).insert(payload);
+        if (error) throw error;
+      }
+      closeEditor();
+      await loadEntries(author);
+      renderBook();
+      showToast('Saved to your diary 💌');
+    } catch (err) {
+      console.error('diary: save failed', err);
+      showToast('Could not save that page — check your connection.');
+    }
+  });
+
+  $('#diaryEditorDelete').addEventListener('click', () => {
+    if (state.editingEntryId) deleteEntry(state.editingEntryId, true);
+  });
+
+  async function deleteEntry(entryId, fromEditor) {
+    if (!sb) return;
+    if (!confirm('Delete this diary page? This cannot be undone.')) return;
+    const entry = state.entries.find(e => e.id === entryId);
+    try {
+      const { error } = await sb.from(ENTRIES_TABLE).delete().eq('id', entryId);
+      if (error) throw error;
+      if (entry && entry.images && entry.images.length) {
+        const paths = entry.images.map(i => i.path).filter(Boolean);
+        if (paths.length) sb.storage.from(IMAGES_BUCKET).remove(paths).catch(() => {});
+      }
+      if (fromEditor) closeEditor();
+      await loadEntries(state.viewingAuthor);
+      renderBook();
+      showToast('Page deleted.');
+    } catch (err) {
+      console.error('diary: delete failed', err);
+      showToast('Could not delete that page.');
+    }
+  }
+
+  $('#diaryAddBtn').addEventListener('click', () => openEditor(null));
+
+  /* ================= LIGHTBOX ================= */
+  function openLightboxFor(entryId, idx) {
+    const entry = state.entries.find(e => e.id === entryId);
+    if (!entry) return;
+    state.lightboxList = entry.images || [];
+    state.lightboxIndex = idx;
+    renderLightbox();
+    $('#diaryLightbox').classList.remove('hidden');
+  }
+  function renderLightbox() {
+    const img = state.lightboxList[state.lightboxIndex];
+    if (!img) return;
+    $('#diaryLightboxImg').src = img.url;
+  }
+  $('#diaryLightboxClose').addEventListener('click', () => $('#diaryLightbox').classList.add('hidden'));
+  $('#diaryLightbox').addEventListener('click', (e) => { if (e.target.id === 'diaryLightbox') $('#diaryLightbox').classList.add('hidden'); });
+  $('#diaryLightboxNext').addEventListener('click', () => { state.lightboxIndex = (state.lightboxIndex + 1) % state.lightboxList.length; renderLightbox(); });
+  $('#diaryLightboxPrev').addEventListener('click', () => { state.lightboxIndex = (state.lightboxIndex - 1 + state.lightboxList.length) % state.lightboxList.length; renderLightbox(); });
+
+  /* ================= CALENDAR ================= */
+  function openCalendar() {
+    state.calMonth = new Date();
+    renderCalendar();
+    $('#diaryCalBackdrop').classList.remove('hidden');
+  }
+  function renderCalendar() {
+    const month = state.calMonth;
+    const y = month.getFullYear(), m = month.getMonth();
+    $('#diaryCalLabel').textContent = month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    const grid = $('#diaryCalGrid');
+    grid.innerHTML = '';
+    ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => {
+      const el = document.createElement('div'); el.className = 'diary-cal-dow'; el.textContent = d; grid.appendChild(el);
+    });
+    const first = new Date(y, m, 1);
+    const startOffset = first.getDay();
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    const entryDates = new Set(state.entries.map(e => e.entry_date));
+    const todayIso = isoDate();
+    for (let i = 0; i < startOffset; i++) {
+      const spacer = document.createElement('div'); grid.appendChild(spacer);
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const iso = `${y}-${pad(m + 1)}-${pad(d)}`;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'diary-cal-day' + (entryDates.has(iso) ? ' has-entry' : '') + (iso === todayIso ? ' today' : '');
+      btn.textContent = d;
+      if (entryDates.has(iso)) {
+        const dot = document.createElement('span'); dot.className = 'dot'; btn.appendChild(dot);
+      }
+      btn.addEventListener('click', () => {
+        $('#diaryCalBackdrop').classList.add('hidden');
+        jumpToDate(iso);
+      });
+      grid.appendChild(btn);
+    }
+  }
+  $('#diaryCalendarBtn').addEventListener('click', openCalendar);
+  $('#diaryCalClose').addEventListener('click', () => $('#diaryCalBackdrop').classList.add('hidden'));
+  $('#diaryCalPrevMonth').addEventListener('click', () => { state.calMonth = new Date(state.calMonth.getFullYear(), state.calMonth.getMonth() - 1, 1); renderCalendar(); });
+  $('#diaryCalNextMonth').addEventListener('click', () => { state.calMonth = new Date(state.calMonth.getFullYear(), state.calMonth.getMonth() + 1, 1); renderCalendar(); });
+
+  /* ================= DESIGN MODAL ================= */
+  function swatchHtml(items, selectedKey, dataAttr) {
+    return items.map(it => {
+      const bg = it.a ? `linear-gradient(135deg, ${it.a}, ${it.b})` : (it.bg || '#ccc');
+      return `<button type="button" class="diary-swatch${it.key === selectedKey ? ' selected' : ''}" data-${dataAttr}="${it.key}" title="${escapeHtml(it.label)}" style="background:${bg}"></button>`;
+    }).join('');
+  }
+  async function openDesign() {
+    const settings = await loadSettings(state.viewingAuthor);
+    $('#diaryCoverPresets').innerHTML = swatchHtml(COVER_PRESETS, settings.cover.preset, 'preset');
+    $('#diaryCoverPatterns').innerHTML = PATTERN_OPTIONS.map(p =>
+      `<button type="button" class="diary-btn ${p.key === settings.cover.pattern ? 'primary' : 'ghost'}" data-pattern="${p.key}" style="font-size:.75rem">${p.label}</button>`).join('');
+    $('#diaryCoverColorA').value = settings.cover.a;
+    $('#diaryCoverColorB').value = settings.cover.b;
+    $('#diaryCoverTitleInput').value = settings.cover.title;
+    $('#diaryCoverSubInput').value = settings.cover.subtitle;
+    $('#diaryCoverMonogramInput').value = settings.cover.monogram;
+    $('#diaryRibbonColor').value = settings.cover.ribbon;
+
+    $('#diaryPagePresets').innerHTML = swatchHtml(PAGE_PRESETS, settings.page.preset, 'preset');
+    $('#diaryRuleOptions').innerHTML = RULE_OPTIONS.map(r =>
+      `<button type="button" class="diary-btn ${r.key === settings.page.rule ? 'primary' : 'ghost'}" data-rule="${r.key}" style="font-size:.75rem">${r.label}</button>`).join('');
+    $('#diaryFontSelect').value = settings.page.font;
+    $('#diaryPageColor').value = settings.page.bg;
+    $('#diaryInkColor').value = settings.page.ink;
+
+    // live-preview working copy
+    state.designDraft = { cover: Object.assign({}, settings.cover), page: Object.assign({}, settings.page) };
+    $('#diaryDesignBackdrop').classList.remove('hidden');
+  }
+  function closeDesign() { $('#diaryDesignBackdrop').classList.add('hidden'); }
+  $('#diaryDesignBtn').addEventListener('click', openDesign);
+  $('#diaryDesignClose').addEventListener('click', closeDesign);
+  $('#diaryDesignCancel').addEventListener('click', () => { applyDesignVars(state.settingsCache[state.viewingAuthor]); closeDesign(); });
+
+  function previewDraft() { applyDesignVars(state.designDraft); }
+
+  $all('.diary-modal-tab').forEach(tab => tab.addEventListener('click', () => {
+    $all('.diary-modal-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const showCover = tab.dataset.tab === 'cover';
+    $('#diaryDesignCover').style.display = showCover ? '' : 'none';
+    $('#diaryDesignPages').style.display = showCover ? 'none' : '';
+  }));
+
+  $('#diaryCoverPresets').addEventListener('click', (e) => {
+    const btn = e.target.closest('.diary-swatch'); if (!btn) return;
+    const preset = COVER_PRESETS.find(p => p.key === btn.dataset.preset);
+    Object.assign(state.designDraft.cover, { preset: preset.key, a: preset.a, b: preset.b, text: preset.text, pattern: preset.pattern });
+    $('#diaryCoverColorA').value = preset.a; $('#diaryCoverColorB').value = preset.b;
+    $all('#diaryCoverPresets .diary-swatch').forEach(s => s.classList.toggle('selected', s === btn));
+    $all('#diaryCoverPatterns [data-pattern]').forEach(b => b.classList.toggle('primary', b.dataset.pattern === preset.pattern) || b.classList.toggle('ghost', b.dataset.pattern !== preset.pattern));
+    previewDraft();
+  });
+  $('#diaryCoverPatterns').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-pattern]'); if (!btn) return;
+    state.designDraft.cover.pattern = btn.dataset.pattern;
+    $all('#diaryCoverPatterns [data-pattern]').forEach(b => { b.classList.toggle('primary', b === btn); b.classList.toggle('ghost', b !== btn); });
+    previewDraft();
+  });
+  $('#diaryCoverColorA').addEventListener('input', (e) => { state.designDraft.cover.a = e.target.value; previewDraft(); });
+  $('#diaryCoverColorB').addEventListener('input', (e) => { state.designDraft.cover.b = e.target.value; previewDraft(); });
+  $('#diaryCoverTitleInput').addEventListener('input', (e) => { state.designDraft.cover.title = e.target.value; previewDraft(); });
+  $('#diaryCoverSubInput').addEventListener('input', (e) => { state.designDraft.cover.subtitle = e.target.value; previewDraft(); });
+  $('#diaryCoverMonogramInput').addEventListener('input', (e) => { state.designDraft.cover.monogram = e.target.value; previewDraft(); });
+  $('#diaryRibbonColor').addEventListener('input', (e) => { state.designDraft.cover.ribbon = e.target.value; previewDraft(); });
+
+  $('#diaryPagePresets').addEventListener('click', (e) => {
+    const btn = e.target.closest('.diary-swatch'); if (!btn) return;
+    const preset = PAGE_PRESETS.find(p => p.key === btn.dataset.preset);
+    Object.assign(state.designDraft.page, { preset: preset.key, bg: preset.bg, line: preset.line, ink: preset.ink });
+    $('#diaryPageColor').value = preset.bg; $('#diaryInkColor').value = preset.ink;
+    $all('#diaryPagePresets .diary-swatch').forEach(s => s.classList.toggle('selected', s === btn));
+    previewDraft();
+  });
+  $('#diaryRuleOptions').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-rule]'); if (!btn) return;
+    state.designDraft.page.rule = btn.dataset.rule;
+    $all('#diaryRuleOptions [data-rule]').forEach(b => { b.classList.toggle('primary', b === btn); b.classList.toggle('ghost', b !== btn); });
+    previewDraft();
+  });
+  $('#diaryFontSelect').addEventListener('change', (e) => { state.designDraft.page.font = e.target.value; previewDraft(); });
+  $('#diaryPageColor').addEventListener('input', (e) => { state.designDraft.page.bg = e.target.value; previewDraft(); });
+  $('#diaryInkColor').addEventListener('input', (e) => { state.designDraft.page.ink = e.target.value; previewDraft(); });
+
+  $('#diaryDesignSave').addEventListener('click', async () => {
+    await saveSettingsField(state.viewingAuthor, { cover: state.designDraft.cover, page: state.designDraft.page });
+    applyDesignVars(state.settingsCache[state.viewingAuthor]);
+    renderBook();
+    closeDesign();
+    showToast('Your diary now looks the way you like it ✨');
+  });
+
+  /* ================= LOCK SETTINGS ================= */
+  async function openLockSettings() {
+    const author = state.viewingAuthor;
+    const settings = await loadSettings(author);
+    $('#diaryLockSettingsHeading').textContent = `${letterFor(author)}'s diary lock`;
+    $('#diaryLockSettingsSub').textContent = settings.hasLock
+      ? 'A passcode currently protects this diary.'
+      : 'No passcode is set — anyone with access to this device can open this diary.';
+    $('#diaryLockNoneView').classList.toggle('hidden', settings.hasLock);
+    $('#diaryLockSomeView').classList.toggle('hidden', !settings.hasLock);
+    $('#diaryNewPin1').value = ''; $('#diaryNewPin2').value = ''; $('#diaryPinHint').value = '';
+    $('#diaryCurPin').value = ''; $('#diaryChangePin1').value = ''; $('#diaryChangePin2').value = '';
+    $('#diaryChangeHint').value = settings.hint || '';
+    $('#diaryLockSettingsBackdrop').classList.remove('hidden');
+  }
+  $('#diaryLockBtn').addEventListener('click', openLockSettings);
+  $('#diaryLockSettingsClose').addEventListener('click', () => $('#diaryLockSettingsBackdrop').classList.add('hidden'));
+
+  $('#diarySetPinBtn').addEventListener('click', async () => {
+    const p1 = $('#diaryNewPin1').value.trim(), p2 = $('#diaryNewPin2').value.trim();
+    if (!/^\d{4,6}$/.test(p1)) { showToast('Passcode must be 4–6 digits.'); return; }
+    if (p1 !== p2) { showToast("Passcodes don't match."); return; }
+    const author = state.viewingAuthor;
+    await saveSettingsField(author, { hasLock: true, passcodeHash: await sha256Hex(p1), hint: $('#diaryPinHint').value.trim() });
+    markUnlocked(author);
+    $('#diaryLockSettingsBackdrop').classList.add('hidden');
+    showToast('Passcode set — this diary is now locked for everyone else.');
+  });
+
+  $('#diaryChangePinBtn').addEventListener('click', async () => {
+    const author = state.viewingAuthor;
+    const settings = await loadSettings(author);
+    const cur = $('#diaryCurPin').value.trim();
+    if (await sha256Hex(cur) !== settings.passcodeHash) { showToast('Current passcode is incorrect.'); return; }
+    const p1 = $('#diaryChangePin1').value.trim(), p2 = $('#diaryChangePin2').value.trim();
+    if (!/^\d{4,6}$/.test(p1)) { showToast('New passcode must be 4–6 digits.'); return; }
+    if (p1 !== p2) { showToast("New passcodes don't match."); return; }
+    await saveSettingsField(author, { passcodeHash: await sha256Hex(p1), hint: $('#diaryChangeHint').value.trim() });
+    $('#diaryLockSettingsBackdrop').classList.add('hidden');
+    showToast('Passcode updated.');
+  });
+
+  $('#diaryRemovePinBtn').addEventListener('click', async () => {
+    const author = state.viewingAuthor;
+    const settings = await loadSettings(author);
+    const cur = $('#diaryCurPin').value.trim();
+    if (await sha256Hex(cur) !== settings.passcodeHash) { showToast('Current passcode is incorrect.'); return; }
+    await saveSettingsField(author, { hasLock: false, passcodeHash: null, hint: '' });
+    markUnlocked(author);
+    $('#diaryLockSettingsBackdrop').classList.add('hidden');
+    showToast('Passcode removed — this diary is now unlocked.');
+  });
+
+  /* ================= INIT ================= */
+  if (!sb) {
+    console.warn('diary: Supabase client not available — check that supabase-js has loaded before this script.');
+  }
+})();
+
+    </script>
+
+    <!-- ════════════════════════════════════════════════════════
+         PER-PAGE CUSTOMIZE — logic. Purely additive: watches the
+         8 "little things" sections for visibility via
+         MutationObserver (never touches the functions that open/
+         close them), shows the floating icon only while one is
+         open, and applies each page's saved colours as inline
+         custom properties on that page's own element — so a page
+         with nothing saved renders byte-for-byte as before.
+         Wrapped in try/catch so a failure here can never affect
+         the rest of the site. ════════════════════════════════ -->
+    <script>
+    (function pageCustomize() {
+        try {
+            const PAGES = [
+                { id: 'notesWall', label: 'Love Notes' },
+                { id: 'doodlesWall', label: 'Doodles Wall' },
+                { id: 'moodsWall', label: 'Mood Calendar' },
+                { id: 'capsulesWall', label: 'Time Capsules' },
+                { id: 'bucketWall', label: 'Our Bucket List' },
+                { id: 'constellationWall', label: 'Memory Constellation' },
+                { id: 'gamesWall', label: 'Mini Games' },
+                { id: 'specialDaysWall', label: 'Special Days' },
+            ];
+            const STORAGE_PREFIX = 'ourLittleUniversePageStyle:';
+
+            const btn = document.getElementById('pageCustomizeBtn');
+            const backdrop = document.getElementById('pageCustomizeBackdrop');
+            const inputA = document.getElementById('pageCustomizeBgA');
+            const inputB = document.getElementById('pageCustomizeBgB');
+            const inputAccent = document.getElementById('pageCustomizeAccent');
+            const resetBtn = document.getElementById('pageCustomizeReset');
+            const closeBtn = document.getElementById('pageCustomizeClose');
+            if (!btn || !backdrop || !inputA || !inputB || !inputAccent || !resetBtn || !closeBtn) return;
+
+            function readSaved(id) {
+                try {
+                    const raw = localStorage.getItem(STORAGE_PREFIX + id);
+                    return raw ? JSON.parse(raw) : null;
+                } catch (e) { return null; }
+            }
+            function applyStyle(el, style) {
+                if (style) {
+                    el.style.setProperty('--page-bg-a', style.a);
+                    el.style.setProperty('--page-bg-b', style.b);
+                    el.style.setProperty('--page-accent', style.accent);
+                    el.classList.add('page-has-custom-bg');
+                } else {
+                    el.style.removeProperty('--page-bg-a');
+                    el.style.removeProperty('--page-bg-b');
+                    el.style.removeProperty('--page-accent');
+                    el.classList.remove('page-has-custom-bg');
+                }
+            }
+
+            const elements = {};
+            PAGES.forEach(page => {
+                const el = document.getElementById(page.id);
+                if (!el) return;
+                elements[page.id] = el;
+                applyStyle(el, readSaved(page.id));
+            });
+
+            let currentPageId = null;
+
+            function findVisiblePage() {
+                for (const page of PAGES) {
+                    const el = elements[page.id];
+                    if (el && !el.classList.contains('hidden')) return page.id;
+                }
+                return null;
+            }
+
+            function syncButtonVisibility() {
+                currentPageId = findVisiblePage();
+                btn.classList.toggle('show', !!currentPageId);
+            }
+
+            PAGES.forEach(page => {
+                const el = elements[page.id];
+                if (!el) return;
+                new MutationObserver(syncButtonVisibility)
+                    .observe(el, { attributes: true, attributeFilter: ['class'] });
+            });
+            syncButtonVisibility();
+
+            btn.addEventListener('click', () => {
+                if (!currentPageId) return;
+                const saved = readSaved(currentPageId) || { a: '#fbf3ea', b: '#fbf3ea', accent: '#d98a93' };
+                inputA.value = saved.a;
+                inputB.value = saved.b;
+                inputAccent.value = saved.accent;
+                backdrop.classList.remove('hidden');
+            });
+
+            function saveCurrent() {
+                if (!currentPageId) return;
+                const style = { a: inputA.value, b: inputB.value, accent: inputAccent.value };
+                try { localStorage.setItem(STORAGE_PREFIX + currentPageId, JSON.stringify(style)); } catch (e) {}
+                applyStyle(elements[currentPageId], style);
+            }
+            [inputA, inputB, inputAccent].forEach(input => input.addEventListener('input', saveCurrent));
+
+            resetBtn.addEventListener('click', () => {
+                if (!currentPageId) return;
+                try { localStorage.removeItem(STORAGE_PREFIX + currentPageId); } catch (e) {}
+                applyStyle(elements[currentPageId], null);
+                inputA.value = '#fbf3ea';
+                inputB.value = '#fbf3ea';
+                inputAccent.value = '#d98a93';
+            });
+            closeBtn.addEventListener('click', () => backdrop.classList.add('hidden'));
+            backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.classList.add('hidden'); });
+        } catch (err) {
+            console.error('Per-page customize failed to initialize (core site unaffected):', err);
+        }
     })();
     </script>
 
