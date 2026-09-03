@@ -466,6 +466,18 @@
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
+        /* Buttons (virtually every tappable control in the app) and the
+           hero title text shouldn't ever show the mobile browser's
+           double-tap text-selection highlight/callout menu — that's
+           what was showing up as "blue thingy" selection handles when
+           double-tapping around the page. Actual text you're meant to
+           select/edit (inputs, textareas, diary/note content) is
+           unaffected since those aren't matched here. */
+        button, .hero h1, .hero .eyebrow, .hero p.subtitle {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
 
         /* ─── Backup button: only visible at top ─── */
         .backup-fixed-btn {
@@ -1690,6 +1702,11 @@
            competing with the frosted surfaces sitting on top of it. */
         body.theme-glass .chat-panel-wallpaper-layer {
             opacity: .5;
+        }
+        /* Double-tap the wallpaper button to toggle this — shows the
+           wallpaper at full strength instead of dimmed. */
+        .chat-panel-wallpaper-layer.full-glow {
+            opacity: 1;
         }
         .chat-panel-header,
         .chat-messages,
@@ -3890,6 +3907,7 @@
             margin: 0;
             line-height: 1.2;
             padding-bottom: 0.08em;
+            cursor: pointer;
             background: linear-gradient(100deg,
                 var(--ink) 0%,
                 var(--rose-deep) 35%,
@@ -4382,14 +4400,6 @@
         .title-block {
             position: relative;
             display: inline-block;
-            /* Was 34px — the cursive/script webfont's flourish on a
-               trailing "e" can visually extend past its calculated text
-               width (script fonts often paint outside their own advance
-               box), so a tight gap let the edit-pencil button's hit
-               area sit close enough to visually overlap that flourish
-               on some viewport widths. A bit more breathing room fixes
-               it without changing the pencil's actual position logic. */
-            padding-right: 48px;
         }
         .edit-title-btn {
             position: absolute;
@@ -4885,8 +4895,16 @@
                so it uses the same near-opaque variant the chat panel
                uses instead. */
             background: var(--chat-glass-bg-strong);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
+            /* No backdrop-filter here (there used to be one): the
+               background above is already ~98% opaque, so blurring
+               whatever's behind it was doing almost nothing visually
+               while still being one of the most expensive things a
+               mobile browser can be asked to do continuously — it has
+               to keep re-sampling and re-blurring the content behind
+               this panel for as long as it's open, not just once, which
+               is very likely what made opening/closing this menu (and
+               Games & More, which shares this same style) feel
+               laggy. */
             box-shadow: 0 14px 30px var(--shadow);
             z-index: 30;
             transition: opacity .22s ease, transform .22s cubic-bezier(.2, .9, .3, 1), visibility .22s;
@@ -10933,8 +10951,9 @@
                 -webkit-backdrop-filter: blur(3px);
             }
             .feature-menu-popover {
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
+                /* See the no-backdrop-filter note on the base rule
+                   above — same reasoning, this mobile override used to
+                   re-enable a (smaller) blur here too. */
             }
             .milestone-banner {
                 backdrop-filter: blur(10px);
@@ -12298,10 +12317,9 @@
             position: absolute; inset: 0;
             border-radius: 10px;
             background:
-                var(--diary-page-lines-img, none),
                 radial-gradient(circle at 12% 6%, rgba(0,0,0,.035), transparent 40%),
                 var(--diary-page-bg, #fffaf1);
-            background-size: var(--diary-page-lines-size, auto), cover, cover;
+            background-size: cover, cover;
             box-shadow: inset 3px 0 8px rgba(0,0,0,.06);
             display: flex; flex-direction: column;
             padding: 1.1rem 1.3rem 1rem;
@@ -12331,8 +12349,25 @@
         .diary-page-title::placeholder { color: var(--diary-ink, #4a3a2c); opacity: .35; }
         .diary-page-body {
             flex: 1; width: 100%; border: none; background: none; outline: none; resize: none;
-            font-family: var(--diary-font, 'Caveat', cursive); font-size: 1.28rem; line-height: var(--diary-line-height, 1.65);
+            font-family: var(--diary-font, 'Caveat', cursive); font-size: 1.28rem;
+            /* Fixed px, not a unitless multiplier — the ruled/grid/dots
+               guide pattern below has to repeat at this exact same
+               interval to actually land under each line of text, so it
+               needs to be a stable, known number rather than something
+               that could drift if font metrics change. */
+            line-height: var(--diary-line-height, 34px);
             color: var(--diary-ink, #4a3a2c); padding: 0;
+            /* Was on .diary-page (the whole page, including the date
+               row/title/mood-row above this textarea) — the pattern's
+               repeat distance never matched this textarea's own actual
+               line spacing there (39px lines vs. this textarea's
+               ~33.8px rendered line-height), and it started from the
+               top of the *page* rather than the top of the *text*, so
+               the two were guaranteed to drift apart regardless. Both
+               are fixed by scoping the pattern to this element and
+               matching its size to line-height exactly. */
+            background-image: var(--diary-page-lines-img, none);
+            background-size: var(--diary-page-lines-size, auto);
         }
         .diary-page-body::placeholder { color: var(--diary-ink, #4a3a2c); opacity: .35; }
         .diary-page-mood-row { display: flex; gap: .35rem; margin-bottom: .3rem; flex-wrap: wrap; flex-shrink: 0; }
@@ -12866,9 +12901,8 @@
         <header class="hero">
             <div class="eyebrow">a scrapbook for us</div>
             <div class="title-block" id="titleBlock">
-                <h1 id="siteTitle">Our Little Universe</h1>
+                <h1 id="siteTitle" title="Double-tap to edit">Our Little Universe</h1>
                 <p class="subtitle" id="siteSubtitle">every memory, pinned up to keep</p>
-                <button class="edit-title-btn" id="editTitleBtn" type="button" aria-label="Edit title">✏️</button>
             </div>
             <form class="title-edit-form hidden" id="titleEditForm">
                 <input type="text" id="titleInput" placeholder="Title" maxlength="60">
@@ -13887,7 +13921,7 @@
             // touch-action/user-select/callout CSS on #wallpaperBtn is
             // what stops the hold from also triggering the phone's own
             // text-selection/copy-paste popup.
-            function wireWallpaperButton(btn, fileInput, getKey, onApplied, onRemoteSave, onRemoteClear) {
+            function wireWallpaperButton(btn, fileInput, getKey, onApplied, onRemoteSave, onRemoteClear, onDoubleTap) {
                 if (!btn || !fileInput) return;
                 const clear = () => {
                     localStorage.removeItem(getKey());
@@ -13910,10 +13944,33 @@
                 });
                 btn.addEventListener('contextmenu', (e) => { e.preventDefault();
                     clear(); });
-                btn.addEventListener('click', () => {
-                    if (longPressed) return; // the long-press already handled it
-                    fileInput.click();
-                });
+                if (onDoubleTap) {
+                    /* Disambiguating single vs double tap: a lone tap
+                       normally opens the file picker the instant it's
+                       released, which leaves nothing to tell it apart
+                       from the first half of a double-tap — so when a
+                       double-tap action is wired up, a single tap opens
+                       the picker only after a short buffer, and gets
+                       cancelled in favor of onDoubleTap() if a second
+                       tap lands inside that window. */
+                    let tapTimer = null, tapCount = 0;
+                    btn.addEventListener('click', () => {
+                        if (longPressed) return;
+                        tapCount++;
+                        if (tapCount === 1) {
+                            tapTimer = setTimeout(() => { tapCount = 0; fileInput.click(); }, 320);
+                        } else {
+                            clearTimeout(tapTimer);
+                            tapCount = 0;
+                            onDoubleTap();
+                        }
+                    });
+                } else {
+                    btn.addEventListener('click', () => {
+                        if (longPressed) return; // the long-press already handled it
+                        fileInput.click();
+                    });
+                }
                 fileInput.addEventListener('change', () => {
                     const file = fileInput.files && fileInput.files[0];
                     fileInput.value = '';
@@ -14069,7 +14126,6 @@
 
             const siteTitle = document.getElementById('siteTitle');
             const siteSubtitle = document.getElementById('siteSubtitle');
-            const editTitleBtn = document.getElementById('editTitleBtn');
             const titleEditForm = document.getElementById('titleEditForm');
             const titleInput = document.getElementById('titleInput');
             const subtitleInput = document.getElementById('subtitleInput');
@@ -21204,11 +21260,27 @@
                 });
             })();
 
-            editTitleBtn.addEventListener('click', () => {
+            function openTitleEditForm() {
                 titleInput.value = siteTitle.textContent;
                 subtitleInput.value = siteSubtitle.textContent;
                 titleEditForm.classList.remove('hidden');
                 titleInput.focus();
+            }
+            // The pencil button was overlapping the last letter on some
+            // screen widths (a cursive font's flourish can paint past
+            // its own calculated width), so editing now happens via a
+            // double-tap on the title itself instead — implemented by
+            // hand (not relying on the browser's native dblclick) so it
+            // behaves the same on mobile taps and desktop clicks alike.
+            let lastTitleTapAt = 0;
+            siteTitle.addEventListener('click', () => {
+                const now = Date.now();
+                if (now - lastTitleTapAt < 400) {
+                    lastTitleTapAt = 0;
+                    openTitleEditForm();
+                } else {
+                    lastTitleTapAt = now;
+                }
             });
             cancelTitleBtn.addEventListener('click', () => titleEditForm.classList.add('hidden'));
             titleEditForm.addEventListener('submit', async(e) => {
@@ -22255,22 +22327,22 @@
                    │    polaroid: 'https://your-storage-url/sample.jpg'│
                    └──────────────────────────────────────────────────┘ */
                 const PB_SAMPLE_IMAGES = {
-                    /* polaroid: 'Assets/sample.jpg',
-                     strip3: 'Assets/sample.jpg',
-                     strip4: 'Assets/sample.jpg',
-                     grid4: 'Assets/sample.jpg',
-                     y2k: 'Assets/sample.jpg',
-                     vintage: 'Assets/sample.jpg',
-                     noir: 'Assets/sample.jpg',
-                     sunset: 'Assets/sample.jpg',
-                     colorroom: 'Assets/sample.jpg',
-                     nightvis: 'Assets/sample.jpg',
-                     dreamy: 'Assets/sample.jpg',
-                     prism: 'Assets/sample.jpg',
-                     duotone: 'Assets/sample.jpg',
-                     cinemaduo: 'Assets/sample.jpg',
-                     eyecuts: 'Assets/sample.jpg',
-                     goldenhour: 'Assets/sample.jpg',*/
+                    // polaroid: '',
+                    // strip3: '',
+                    // strip4: '',
+                    // grid4: '',
+                    // y2k: '',
+                    // vintage: '',
+                    // noir: '',
+                    // sunset: '',
+                    // colorroom: '',
+                    // nightvis: '',
+                    // dreamy: '',
+                    // prism: '',
+                    // duotone: '',
+                    // cinemaduo: '',
+                    // eyecuts: '',
+                    // goldenhour: '',
                 };
                 const PB_FILTERS = [
                     { id: 'none', name: 'Original', css: 'none' },
@@ -25336,8 +25408,27 @@
                 chatWallpaperLayer.style.backgroundImage = dataUrl ? `url("${dataUrl}")` : '';
             }
             applyChatWallpaper(localStorage.getItem(CHAT_WALLPAPER_KEY));
+
+            /* Double-tap the wallpaper button to toggle between the
+               normal dimmed look and a "full glow" (undimmed) one — a
+               separate preference from the wallpaper image itself, so
+               it's remembered independently. */
+            const CHAT_WALLPAPER_GLOW_KEY = 'mw_chat_wallpaper_glow';
+            function applyChatWallpaperGlow(full) {
+                if (!chatWallpaperLayer) return;
+                chatWallpaperLayer.classList.toggle('full-glow', !!full);
+            }
+            applyChatWallpaperGlow(localStorage.getItem(CHAT_WALLPAPER_GLOW_KEY) === '1');
+            function toggleChatWallpaperGlow() {
+                const next = !chatWallpaperLayer.classList.contains('full-glow');
+                applyChatWallpaperGlow(next);
+                localStorage.setItem(CHAT_WALLPAPER_GLOW_KEY, next ? '1' : '0');
+                if (typeof haptic === 'function') haptic(10);
+                if (typeof showToast === 'function') showToast(next ? 'Wallpaper: full glow ✨' :
+                    'Wallpaper: dimmed');
+            }
             wireWallpaperButton(chatWallpaperBtn, chatWallpaperFileInput, () => CHAT_WALLPAPER_KEY,
-                applyChatWallpaper);
+                applyChatWallpaper, null, null, toggleChatWallpaperGlow);
 
             chatPanelExpand.addEventListener('click', () => {
                 const goingFull = !chatPanel.classList.contains('fullscreen');
@@ -29271,7 +29362,11 @@
             const MOODS = ['😊', '😢', '😍', '😴', '😤', '🥳', '😌', '🤔'];
             const LINES_PATTERNS = {
                 none: 'none',
-                ruled: 'repeating-linear-gradient(180deg, transparent 0 38px, rgba(0,0,0,.09) 38px 39px)',
+                // 34px repeat — matches .diary-page-body's line-height
+                // exactly (see the comment there), so each ruled line
+                // actually falls under a line of text instead of
+                // drifting from it.
+                ruled: 'repeating-linear-gradient(180deg, transparent 0 33px, rgba(0,0,0,.09) 33px 34px)',
                 grid: 'repeating-linear-gradient(180deg, transparent 0 27px, rgba(0,0,0,.07) 27px 28px), repeating-linear-gradient(90deg, transparent 0 27px, rgba(0,0,0,.07) 27px 28px)',
                 dots: 'radial-gradient(circle, rgba(0,0,0,.14) 1px, transparent 1.2px)',
             };
@@ -29885,6 +29980,17 @@
                 overlay.classList.add('hidden');
                 document.body.style.overflow = state._prevBodyOverflow || '';
                 document.documentElement.style.overflow = state._prevHtmlOverflow || '';
+                // If a photo was left open in the full-screen lightbox
+                // (opened by tapping a diary photo) and the diary got
+                // closed some other way — back gesture, etc. — without
+                // that lightbox's own close button being tapped first,
+                // it stayed visibly open (it's a position:fixed overlay
+                // with a very high z-index) and would immediately show
+                // that same stale photo full-screen again the next time
+                // the diary opened, on top of the cover, until manually
+                // dismissed. Resetting it here whenever the diary closes
+                // means it can never be left in that state.
+                $('diaryLightbox')?.classList.add('hidden');
             }
             [$('diaryCloseBtn'), $('diaryTocCloseBtn'), $('diaryBookCloseBtn')].forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); closeDiary(); }));
 
