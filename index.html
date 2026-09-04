@@ -12946,7 +12946,8 @@
                 <button class="fav-filter-btn" id="favFilterBtn" type="button">♡ Favorites only</button>
                 <button class="fav-filter-btn" id="surpriseBtn" type="button">Surprise me 🎲</button>
                 <span class="notif-host"><button class="fav-filter-btn break-glass-btn" id="breakGlassBtn" type="button">🔨 In case of a fight</button><span class="notif-cloud" id="fightNotifCloud"><span class="cloud-stem"></span><span class="cloud-body"><span class="notif-name"></span></span></span></span>
-                <button class="music-btn" id="musicBtn" type="button" aria-label="Turn on music">🎵</button>
+                <button class="music-btn" id="musicBtn" type="button" aria-label="Turn on music" title="Tap to play/pause · Long-press to add your own song">🎵</button>
+                <input type="file" id="musicFileInput" accept="audio/*" style="display:none">
                 <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">🌙</button>
                 <div class="accent-picker">
                     <button class="theme-btn" id="accentPickerBtn" type="button" aria-label="Change accent color" title="Change accent color">🎨</button>
@@ -14112,6 +14113,7 @@
             const heroAddBtn = document.getElementById('heroAddBtn');
             const favFilterBtn = document.getElementById('favFilterBtn');
             const musicBtn = document.getElementById('musicBtn');
+            const musicFileInput = document.getElementById('musicFileInput');
             const onThisDay = document.getElementById('onThisDay');
             const otdImg = document.getElementById('otdImg');
             const otdCaption = document.getElementById('otdCaption');
@@ -21075,6 +21077,8 @@
                     if (data) {
                         if (data.title) siteTitle.textContent = data.title;
                         if (data.subtitle) siteSubtitle.textContent = data.subtitle;
+                        if (typeof fitHeroTitle === 'function') fitHeroTitle();
+                        if (typeof applyCustomMusic === 'function') applyCustomMusic(data.music_url || null);
                         if (data.break_glass_message) breakGlassMessage = data.break_glass_message;
 
                         // Sync shared homepage wallpapers across themes
@@ -21272,6 +21276,39 @@
             // double-tap on the title itself instead — implemented by
             // hand (not relying on the browser's native dblclick) so it
             // behaves the same on mobile taps and desktop clicks alike.
+            /* The title's font-size (clamp(2.8rem, 8vw, 4.6rem)) has a
+               hard floor of 2.8rem — on narrower phones the vw-based
+               preferred size undershoots that floor, but the floor
+               itself can still be too wide for "Our Little Universe" to
+               fit without overflowing .hero's padded width, clipping
+               the last letter (and, since the text is centered, a
+               sliver of the first one too). A fixed CSS number can't
+               account for every phone width or a custom title someone
+               renames it to (now double-tap-editable) — so this
+               measures the actual rendered width against the actual
+               available space and shrinks the font just enough to fit,
+               which is correct regardless of either. */
+            function fitHeroTitle() {
+                if (!siteTitle) return;
+                const hero = siteTitle.closest('.hero');
+                if (!hero) return;
+                siteTitle.style.fontSize = '';
+                const heroStyle = getComputedStyle(hero);
+                const available = hero.clientWidth - parseFloat(heroStyle.paddingLeft) - parseFloat(heroStyle
+                    .paddingRight) - 8; // small safety margin
+                let fontSize = parseFloat(getComputedStyle(siteTitle).fontSize);
+                let guard = 0;
+                while (siteTitle.scrollWidth > available && fontSize > 20 && guard < 60) {
+                    fontSize -= 1;
+                    siteTitle.style.fontSize = fontSize + 'px';
+                    guard++;
+                }
+            }
+            window.addEventListener('resize', fitHeroTitle);
+            window.addEventListener('load', fitHeroTitle);
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitHeroTitle);
+            setTimeout(fitHeroTitle, 0);
+
             let lastTitleTapAt = 0;
             siteTitle.addEventListener('click', () => {
                 const now = Date.now();
@@ -21289,6 +21326,7 @@
                 const newSubtitle = subtitleInput.value.trim() || 'every memory, pinned up to keep';
                 siteTitle.textContent = newTitle;
                 siteSubtitle.textContent = newSubtitle;
+                fitHeroTitle();
                 titleEditForm.classList.add('hidden');
                 haptic(10);
                 if (supabase) {
@@ -21411,8 +21449,25 @@
             let audioCtx = null;
             let musicNodes = null;
             let musicOn = false;
+            let customMusicUrl = null;
+            const customMusicEl = new Audio();
+            customMusicEl.loop = true;
+            customMusicEl.volume = 0;
+            customMusicEl.preload = 'none';
 
             function startMusic() {
+                if (customMusicUrl) {
+                    customMusicEl.play().catch(err => console.error('Could not play music:', err));
+                    let v = 0;
+                    customMusicEl.volume = 0;
+                    clearInterval(customMusicEl._fade);
+                    customMusicEl._fade = setInterval(() => {
+                        v = Math.min(0.55, v + 0.03);
+                        customMusicEl.volume = v;
+                        if (v >= 0.55) clearInterval(customMusicEl._fade);
+                    }, 60);
+                    return;
+                }
                 if (!audioCtx) audioCtx = new(window.AudioContext || window.webkitAudioContext)();
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 const master = audioCtx.createGain();
@@ -21446,6 +21501,16 @@
             }
 
             function stopMusic() {
+                if (customMusicUrl) {
+                    let v = customMusicEl.volume;
+                    clearInterval(customMusicEl._fade);
+                    customMusicEl._fade = setInterval(() => {
+                        v = Math.max(0, v - 0.03);
+                        customMusicEl.volume = v;
+                        if (v <= 0) { customMusicEl.pause(); clearInterval(customMusicEl._fade); }
+                    }, 60);
+                    return;
+                }
                 if (!musicNodes || !audioCtx) return;
                 const { master, oscs, lfo } = musicNodes;
                 const now = audioCtx.currentTime;
@@ -21456,13 +21521,99 @@
                     try { lfo.stop(); } catch (e) {}
                     musicNodes = null; }, 1100);
             }
-            musicBtn.addEventListener('click', () => {
+            function toggleMusicPlayback() {
                 musicOn = !musicOn;
                 musicBtn.classList.toggle('playing', musicOn);
-                musicBtn.textContent = musicOn ? '🔊' : '🎵';
+                musicBtn.textContent = musicOn ? '🔊' : (customMusicUrl ? '🎶' : '🎵');
                 musicBtn.setAttribute('aria-label', musicOn ? 'Turn off music' : 'Turn on music');
                 if (musicOn) startMusic();
                 else stopMusic();
+            }
+
+            /* Custom music: your own uploaded song, stored in Supabase
+               (site-music bucket, URL saved on the site_settings row)
+               so it's shared across both of you like the wallpaper is.
+               Falls back to the built-in synthesized ambient drone
+               above when nothing's been uploaded — nothing changes for
+               anyone who doesn't set one. */
+            const MUSIC_BUCKET = 'site-music';
+            function applyCustomMusic(url) {
+                customMusicUrl = url || null;
+                if (musicOn) { stopMusic(); musicOn = false;
+                    musicBtn.classList.remove('playing'); }
+                musicBtn.textContent = customMusicUrl ? '🎶' : '🎵';
+                if (customMusicUrl) customMusicEl.src = customMusicUrl;
+            }
+            async function removeCustomMusic() {
+                if (!customMusicUrl) return;
+                applyCustomMusic(null);
+                if (supabase) {
+                    try {
+                        await supabase.from(SETTINGS_TABLE).upsert({ id: 1, music_url: null });
+                    } catch (err) { console.error('Could not remove custom music:', err); }
+                }
+                showToast('Back to the default ambient music.');
+            }
+            async function uploadCustomMusic(file) {
+                if (!supabase) { showToast('Connect Supabase first.'); return; }
+                showToast('Uploading song…');
+                try {
+                    const ext = (file.name.split('.').pop() || 'mp3').toLowerCase();
+                    const path = 'site-music-' + Date.now() + '.' + ext;
+                    const { error: upErr } = await supabase.storage.from(MUSIC_BUCKET).upload(path, file, {
+                        upsert: true });
+                    if (upErr) throw upErr;
+                    const { data } = supabase.storage.from(MUSIC_BUCKET).getPublicUrl(path);
+                    const url = data && data.publicUrl;
+                    if (!url) throw new Error('no public url');
+                    applyCustomMusic(url);
+                    await supabase.from(SETTINGS_TABLE).upsert({ id: 1, music_url: url });
+                    showToast('Your song is set 🎶 — tap the music button to play it.');
+                } catch (err) {
+                    console.error('Music upload failed:', err);
+                    showToast("Couldn't upload that song" + (err && err.message ? `: ${err.message}` : '.'));
+                }
+            }
+            musicFileInput.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                e.target.value = '';
+                if (file) uploadCustomMusic(file);
+            });
+
+            /* Tap: play/pause (instant — no added delay when there's no
+               custom song, so this never feels sluggish for anyone who
+               hasn't uploaded one). Long-press: pick a song to upload.
+               Double-tap (only meaningfully wired once a custom song
+               exists, so it doesn't cost single-tap its instant feel
+               otherwise): removes it, back to the default ambient. */
+            let musicPressTimer = null;
+            let musicLongPressed = false;
+            musicBtn.addEventListener('pointerdown', () => {
+                musicLongPressed = false;
+                musicPressTimer = setTimeout(() => {
+                    musicLongPressed = true;
+                    if (typeof haptic === 'function') haptic(15);
+                    musicFileInput.click();
+                }, 550);
+            });
+            ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
+                musicBtn.addEventListener(evt, () => { if (musicPressTimer) clearTimeout(musicPressTimer); });
+            });
+            musicBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+            let musicLastTapAt = 0;
+            let musicTapTimer = null;
+            musicBtn.addEventListener('click', () => {
+                if (musicLongPressed) return;
+                if (!customMusicUrl) { toggleMusicPlayback(); return; }
+                const now = Date.now();
+                if (now - musicLastTapAt < 400) {
+                    musicLastTapAt = 0;
+                    clearTimeout(musicTapTimer);
+                    removeCustomMusic();
+                } else {
+                    musicLastTapAt = now;
+                    musicTapTimer = setTimeout(toggleMusicPlayback, 320);
+                }
             });
 
             function updateThemeBtn() {
