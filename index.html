@@ -12,7 +12,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Our Universe" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Patrick+Hand&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Patrick+Hand&family=Quicksand:wght@400;500;600;700&family=Permanent+Marker&family=Kalam:wght@400;700&family=Amatic+SC:wght@700&family=Playfair+Display:ital,wght@0,600;1,600&family=Pacifico&family=Architects+Daughter&family=Dancing+Script:wght@600&family=Special+Elite&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
@@ -3908,6 +3908,10 @@
             line-height: 1.2;
             padding-bottom: 0.08em;
             cursor: pointer;
+            /* Forced single-line on purpose — the JS auto-fit below is
+               what's responsible for making sure it actually fits at
+               that size, on every screen width. */
+            white-space: nowrap;
             background: linear-gradient(100deg,
                 var(--ink) 0%,
                 var(--rose-deep) 35%,
@@ -4513,7 +4517,13 @@
 
         .photo-sort-menu {
             position: relative;
-            z-index: 30;
+            /* Higher than .feature-menu's (200) on purpose: this
+               trigger sits earlier in the shared wrapping row, so its
+               popover can end up sitting over the "Little things"/
+               "Games & More" buttons on the next wrapped line — it
+               needs to win that stacking order instead of rendering
+               underneath them. */
+            z-index: 210;
             flex: 0 0 auto;
         }
         .photo-sort-trigger {
@@ -9214,6 +9224,9 @@
             box-shadow: 0 0 6px rgba(255, 175, 205, .5);
             animation: blossomFall linear infinite;
         }
+        /* blossomPhysics (the desktop canvas petal simulation) has
+           been removed — blossom now always uses the plain CSS
+           spans below, same approach as autumn drizzle. */
 
         .cursor-ripple {
             position: fixed;
@@ -9988,8 +10001,12 @@
             padding-top: 2.6rem;
             margin-bottom: 1rem;
         }
-        .row::before {
-            content: "";
+        /* A real element instead of .row::before on purpose — see the
+           desktop motion suite styles later in <head> for why (keeps
+           the clothesline-jiggle animation from ever touching .row
+           itself, which would disturb the content-visibility:auto
+           polaroid-wraps sitting in it). */
+        .row-twine {
             position: absolute;
             top: 0;
             left: -2%;
@@ -9997,6 +10014,7 @@
             height: 2px;
             background: repeating-linear-gradient(90deg, var(--gold) 0 10px, transparent 10px 16px);
             opacity: 0.7;
+            pointer-events: none;
         }
 
         .row-items {
@@ -10773,6 +10791,15 @@
             border-radius: 4px;
         }
 
+        /* Ignored entirely by browsers without View Transitions support
+           (Safari/Firefox at the time of writing) — this named group
+           only exists during the morph opened via openLightboxMorph()
+           in the main script, giving that specific transition a touch
+           more time than the browser's ~250ms default so the "grow"
+           reads clearly instead of feeling rushed. */
+        ::view-transition-group(lightbox-morph) { animation-duration: .38s; }
+        ::view-transition-old(lightbox-morph), ::view-transition-new(lightbox-morph) { animation-duration: .38s; }
+
         .lightbox {
             position: fixed;
             inset: 0;
@@ -11374,14 +11401,28 @@
             box-shadow: 0 4px 12px var(--shadow);
         }
 
-        /* ─── Polaroids: soft shadow bloom on top of the existing
-           lift + sway-pause, not replacing it ─── */
+        /* ─── Polaroids / Notes / Doodles: static hover lift + soft
+           shadow bloom — no mousemove-driven tilt or gloss, just a
+           simple lift on top of the polaroid's existing sway-pause
+           (notes/doodles don't sway, so the lift is their whole
+           hover treatment) ─── */
         @media (hover: hover) and (pointer: fine) {
+            .note-wrap, .doodle-wrap {
+                transition: transform .3s var(--premium-ease), filter .35s var(--premium-ease);
+            }
+            .note-wrap:hover, .note-wrap:focus-within,
+            .doodle-wrap:hover, .doodle-wrap:focus-within {
+                transform: translateY(-4px);
+            }
             .polaroid-wrap { transition: filter .35s var(--premium-ease); }
-            .polaroid-wrap:hover, .polaroid-wrap:focus-within {
+            .polaroid-wrap:hover, .polaroid-wrap:focus-within,
+            .note-wrap:hover, .note-wrap:focus-within,
+            .doodle-wrap:hover, .doodle-wrap:focus-within {
                 filter: drop-shadow(0 16px 22px rgba(107, 83, 68, .28));
             }
-            body.dark-mode .polaroid-wrap:hover, body.dark-mode .polaroid-wrap:focus-within {
+            body.dark-mode .polaroid-wrap:hover, body.dark-mode .polaroid-wrap:focus-within,
+            body.dark-mode .note-wrap:hover, body.dark-mode .note-wrap:focus-within,
+            body.dark-mode .doodle-wrap:hover, body.dark-mode .doodle-wrap:focus-within {
                 filter: drop-shadow(0 16px 22px rgba(0, 0, 0, .55));
             }
         }
@@ -12376,18 +12417,36 @@
             font-size: 1rem; width: 32px; height: 32px; cursor: pointer;
         }
         .diary-page-mood-row button.active { background: var(--diary-ink, #4a3a2c); }
-        .diary-page-images { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem; flex-shrink: 0; }
-        .diary-page-images img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,.2); cursor: pointer; }
+        /* Moved out of the page's normal flex flow and pinned to the
+           bottom-left corner instead — previously this row sat between
+           the mood row and the body/canvas, eating into the top of the
+           page before a single word was written. Small + out of flow
+           means the whole page (textarea + canvas) now has full room. */
+        .diary-page-images {
+            position: absolute; left: .6rem; bottom: max(.55rem, env(safe-area-inset-bottom));
+            display: flex; gap: .35rem; margin: 0; z-index: 6;
+        }
+        .diary-page-images img { width: 32px; height: 32px; object-fit: cover; border-radius: 6px; border: 2px solid #fff; box-shadow: 0 3px 8px rgba(0,0,0,.2); cursor: pointer; }
         .diary-page-add-img {
-            width: 60px; height: 60px; border-radius: 8px; border: 2px dashed rgba(0,0,0,.2);
-            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
-            color: var(--diary-ink, #4a3a2c); opacity: .5; background: none; cursor: pointer;
+            width: 32px; height: 32px; border-radius: 6px; border: 2px dashed rgba(0,0,0,.25);
+            display: flex; align-items: center; justify-content: center; font-size: .8rem;
+            color: var(--diary-ink, #4a3a2c); opacity: .6; background: rgba(255,255,255,.5); cursor: pointer;
         }
         /* Freely draggable/resizable/rotatable photos on the page itself
            (as opposed to the fixed thumbnail strip these replace).
            pointer-events:none on the layer + auto on each chip means the
            layer never blocks taps on the title/body text underneath it. */
-        .diary-page-canvas { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+        /* Blank/grid/dots patterns paint here rather than on
+           .diary-page-body, because that textarea is display:none for
+           every style except ruled — painting the pattern there meant
+           grid/dots simply had nowhere visible to render and looked
+           blank. This layer is always visible regardless of page
+           style, so it's the right place for the non-ruled patterns. */
+        .diary-page-canvas {
+            position: absolute; inset: 0; pointer-events: none; z-index: 4;
+            background-image: var(--diary-canvas-lines-img, none);
+            background-size: var(--diary-canvas-lines-size, auto);
+        }
         .diary-page-image-chip {
             position: absolute; touch-action: none; cursor: grab;
             pointer-events: auto; width: 108px; height: 108px; --el-scale: 1;
@@ -12423,6 +12482,75 @@
         }
         .diary-page-image-chip .diary-img-handle:active { cursor: grabbing; }
         .diary-img-ctrl svg { width: 12px; height: 12px; pointer-events: none; }
+
+        /* Freeform text blocks — blank/grid/dots page styles only (see
+           fillPageEl's isRuled check). Ruled pages keep the single
+           plain textarea, unchanged, since free-floating text blocks
+           would fight visually with printed lines meant for
+           continuous handwriting. */
+        .diary-page-add-text {
+            width: 32px; height: 32px; border-radius: 6px; border: 2px dashed rgba(0,0,0,.25);
+            display: flex; align-items: center; justify-content: center; font-size: .8rem;
+            color: var(--diary-ink, #4a3a2c); opacity: .6; background: rgba(255,255,255,.5); cursor: pointer;
+        }
+        .diary-text-block {
+            position: absolute; touch-action: none; cursor: grab;
+            pointer-events: auto; min-width: 40px; max-width: 70vw; --el-scale: 1;
+        }
+        .diary-text-block:active { cursor: grabbing; }
+        .diary-text-block-content {
+            font-size: 1.3rem; line-height: 1.3; color: var(--diary-ink, #4a3a2c);
+            padding: .3rem .5rem; outline: none; white-space: pre-wrap; word-break: break-word;
+            min-width: 40px; min-height: 1.4em; cursor: text;
+        }
+        .diary-text-block-content:empty::before {
+            content: attr(data-placeholder); opacity: .4; pointer-events: none;
+        }
+        .diary-text-block.selected .diary-text-block-content { outline: 1px dashed rgba(0,0,0,.25); border-radius: 4px; }
+        .diary-text-ctrl {
+            position: absolute; width: 24px; height: 24px; border-radius: 50%;
+            color: #fff; border: 2px solid rgba(255,255,255,.85); cursor: pointer; display: none; padding: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,.35);
+            align-items: center; justify-content: center;
+            transform: scale(calc(1 / var(--el-scale, 1)));
+        }
+        .diary-text-block.selected .diary-text-ctrl, .diary-text-block .diary-text-ctrl:active { display: flex; }
+        .diary-text-block .diary-text-remove { top: -11px; right: -11px; background: #c14b52; font-size: .78rem; font-weight: 700; }
+        .diary-text-block .diary-text-handle {
+            bottom: -11px; right: -11px; width: 26px; height: 26px;
+            background: linear-gradient(155deg, #8b9dc3, #5c6f96); cursor: grab;
+        }
+        .diary-text-block .diary-text-handle:active { cursor: grabbing; }
+        .diary-text-ctrl svg { width: 12px; height: 12px; pointer-events: none; }
+        .diary-text-font-select {
+            /* Bottom-left instead of top-left — that put it right next
+               to the ✕ remove button along the same top edge, and for a
+               small or narrow (e.g. vertically-stacked) block the two
+               would visually overlap. Bottom-left is the one corner not
+               already used by remove (top-right) or the resize/rotate
+               handle (bottom-right).
+               Shows a fixed "Aa" instead of the actual font name now —
+               a real <select> always displays its selected option's
+               text, and font names are often long enough to crowd a
+               small block. The visible "Aa" below is a plain span; the
+               real <select> is layered on top of it at opacity:0 so
+               it's still fully clickable/functional (a transparent
+               closed box doesn't hide the native options list that
+               pops up when it's actually opened). */
+            position: absolute; bottom: -11px; left: -11px; width: 30px; height: 24px;
+            border-radius: 12px; border: 2px solid rgba(255,255,255,.85); background: #6d5c4a; color: #fff;
+            display: none; align-items: center; justify-content: center;
+            transform: scale(calc(1 / var(--el-scale, 1))); transform-origin: bottom left; cursor: pointer;
+        }
+        .diary-text-block.selected .diary-text-font-select { display: flex; }
+        .diary-text-font-label {
+            font: 700 .68rem 'Quicksand', sans-serif; pointer-events: none; letter-spacing: .01em;
+        }
+        .diary-text-font-select-input {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            opacity: 0; border: 0; cursor: pointer;
+        }
+
         .diary-book-nav { display: flex; align-items: center; justify-content: space-between; padding: .55rem 1.2rem max(.75rem, env(safe-area-inset-bottom)); flex-shrink: 0; }
         .diary-book-nav button { border: none; background: rgba(74,58,44,.1); color: var(--diary-ink, #4a3a2c); width: 42px; height: 42px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; }
         .diary-book-nav button:disabled { opacity: .3; }
@@ -12439,6 +12567,16 @@
         .diary-popover-row label { font-size: .87rem; color: #382a26; font-weight: 600; }
         .diary-popover-row input[type="color"] { width: 40px; height: 30px; border: none; border-radius: 8px; padding: 0; cursor: pointer; }
         .diary-popover-row input[type="text"], .diary-popover-row input[type="password"] { border: 1px solid rgba(0,0,0,.12); border-radius: 10px; padding: .4rem .6rem; font-size: .87rem; width: 55%; font-family: inherit; }
+        /* Passcode fields: rely on the browser's normal masked-dot
+           rendering (type="password") so each typed digit shows up as
+           a dot — hiding that entirely left no way to tell how many
+           characters had been typed. */
+        #diaryPrivacyPin1, #diaryPrivacyPin2, .diary-lock-input {
+            caret-color: #382a26;
+        }
+        body.dark-mode #diaryPrivacyPin1, body.dark-mode #diaryPrivacyPin2, body.dark-mode .diary-lock-input {
+            caret-color: #f6eaf3;
+        }
         .diary-popover-row select { border: 1px solid rgba(0,0,0,.12); border-radius: 10px; padding: .35rem .5rem; font-size: .85rem; font-family: inherit; background: #fff; }
         .diary-segmented { display: flex; gap: .4rem; }
         .diary-segmented button { border: 1px solid rgba(0,0,0,.12); background: #f7ece2; color: #382a26; border-radius: 999px; padding: .35rem .8rem; font-size: .78rem; cursor: pointer; }
@@ -12587,6 +12725,207 @@
             animation: none;
             color: var(--page-accent, var(--rose-deep));
         }
+    </style>
+
+    <style>
+    /* ══════════════════════════════════════════════════════════
+       DESKTOP INTERACTIVE PHYSICS & PLAYFUL MOTION SUITE (FIXED)
+       Strictly gated to (hover: hover) and (pointer: fine)
+       Mobile remains 100% untouched, lightweight, and butter-smooth!
+       ══════════════════════════════════════════════════════════ */
+
+    /* 1. Polaroid / Note / Doodle cards: static hover lift + shadow
+       (no mousemove-driven 3D tilt or gloss sheen — replaced with a
+       simple, non-distracting hover treatment). See the shared
+       ".polaroid-wrap, .note-wrap, .doodle-wrap" hover rule further
+       down in <head> for the lift + drop-shadow itself. */
+    @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+        .pin {
+            cursor: grab;
+            transform-origin: 50% 0%;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .pin:hover {
+            transform: translateX(-50%) scale(1.2) rotate(-8deg);
+            filter: drop-shadow(0 4px 8px rgba(107, 83, 68, 0.35));
+        }
+        .pin:active {
+            cursor: grabbing;
+            transform: translateX(-50%) scale(0.95) rotate(10deg);
+        }
+
+        /* 3. Magnetic Buttons */
+        .add-btn,
+        .fav-filter-btn,
+        .theme-btn,
+        .music-btn,
+        .nav-dock-btn,
+        .touch-heart {
+            will-change: transform;
+            transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, background 0.2s ease;
+        }
+
+        /* 4. Memory Constellation Interactive Stardust Lines */
+        #constellationSky {
+            position: relative;
+        }
+        #constellationCanvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .constellation-star {
+            z-index: 2;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        }
+        .constellation-star:hover {
+            transform: translate(-50%, -50%) scale(1.6) !important;
+            box-shadow: 0 0 0 5px rgba(255, 242, 177, 0.3), 0 0 20px #fff7c9, 0 0 35px #ffd966 !important;
+        }
+    }
+
+    /* 5. Origami Paper Stamp Flight (no wax seal — removed completely) */
+    .origami-stamp-fly {
+        position: fixed;
+        z-index: 9999;
+        pointer-events: none;
+        width: 60px;
+        height: 48px;
+        border-radius: 4px;
+        background: #FFFDF9;
+        border: 2px dashed var(--rose-deep);
+        box-shadow: 0 12px 28px rgba(107, 83, 68, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        animation: origamiFly 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    @keyframes origamiFly {
+        0% {
+            transform: translate(0, 0) scale(1) rotate(0deg);
+            opacity: 1;
+        }
+        45% {
+            transform: translate(calc(var(--target-x) * 0.5), calc(var(--target-y) * 0.3 - 80px)) scale(1.15) rotate(-15deg);
+            opacity: 0.95;
+        }
+        100% {
+            transform: translate(var(--target-x), var(--target-y)) scale(0.2) rotate(45deg);
+            opacity: 0;
+        }
+    }
+
+    /* 6. Liquid Elastic Jelly Spring Animations — desktop only (see the
+       media query below). The keyframes themselves are harmless to
+       leave defined globally; nothing references them outside that
+       query, so they simply never run anywhere else. Bound to the
+       actual open/close state of each popover (not a permanently-
+       present class), with the popover's own opacity/transform
+       transition switched off while it plays, so the spring is the
+       only thing moving it and is always clearly visible. */
+    @keyframes jellySpringIn {
+        0% {
+            opacity: 0;
+            transform: scale(0.72) translateY(24px);
+        }
+        55% {
+            opacity: 1;
+            transform: scale(1.04) translateY(-4px);
+        }
+        75% {
+            transform: scale(0.98) translateY(2px);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    @keyframes jellyPopoverIn {
+        0% {
+            opacity: 0;
+            transform: translateX(calc(-50% + var(--popover-shift, 0px))) translateY(calc(12px + var(--popover-vshift, 0px))) scale(0.82);
+        }
+        60% {
+            opacity: 1;
+            transform: translateX(calc(-50% + var(--popover-shift, 0px))) translateY(calc(-4px + var(--popover-vshift, 0px))) scale(1.03);
+        }
+        80% {
+            transform: translateX(calc(-50% + var(--popover-shift, 0px))) translateY(calc(1px + var(--popover-vshift, 0px))) scale(0.99);
+        }
+        100% {
+            opacity: 1;
+            transform: translateX(calc(-50% + var(--popover-shift, 0px))) translateY(var(--popover-vshift, 0px)) scale(1);
+        }
+    }
+
+    @keyframes jellyDockPopoverIn {
+        0% {
+            opacity: 0;
+            transform: translateY(18px) scale(0.82);
+        }
+        60% {
+            opacity: 1;
+            transform: translateY(-4px) scale(1.03);
+        }
+        80% {
+            transform: translateY(1px) scale(0.99);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    /* Desktop-only (hover + fine pointer) on purpose — on mobile this
+       used to override each popover's own opacity/transform transition
+       with `!important`, and jellyPopoverIn's translateX always
+       assumed the desktop centered (-50%) layout. Below 720px, though,
+       .feature-menu-popover/.photo-sort-popover switch to a `left: 0`
+       layout instead (see that media query) precisely so a popover
+       near the edge of a narrow screen doesn't run off it — and this
+       animation was silently overriding that with the desktop-centered
+       transform every time, which is exactly what was cutting the
+       sort/filter dropdowns off the side of the screen on phones. */
+    @media (hover: hover) and (pointer: fine) {
+        /* Feature menu ("Little things") & photo-sort popovers */
+        .feature-menu.open .feature-menu-popover,
+        .photo-sort-menu.open .photo-sort-popover {
+            animation: jellyPopoverIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+            transition: none !important;
+        }
+
+        /* Nav dock "More" popover */
+        .nav-dock-more-popover:not(.hidden) {
+            animation: jellyDockPopoverIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+            transition: none !important;
+        }
+    }
+
+    /* Popups (not menus/dropdowns) get the jelly-spring entrance on
+       every device, mobile included — only the menu/dropdown popovers
+       above stay desktop-only. */
+
+    /* Accent color picker popover */
+    .accent-picker-popover:not(.hidden) {
+        animation: jellySpringIn 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    /* Milestone celebration banner */
+    .milestone-banner:not(.hidden) {
+        animation: jellySpringIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    /* Expanded audio player card — lives inside its own overlay that
+       toggles .hidden, so bind to that instead of the card's own
+       (permanently-present) class. */
+    .expanded-player-overlay:not(.hidden) .expanded-player-card {
+        animation: jellySpringIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
     </style>
 
 </head>
@@ -13680,6 +14019,53 @@
                 }
             }
 
+            /* ─── Reliable tap handling for small nav controls on cards
+               (expand icon, "back to photo"/"back" buttons, the slide
+               arrows) ───
+               These used to rely on a plain 'click' listener, which was
+               occasionally slow or entirely unresponsive on touch until
+               a second, separate tap — a well-known class of mobile
+               issue where the browser's native click synthesis (which
+               waits to see whether a touch turns into a scroll, a
+               double-tap, a text selection, etc.) doesn't always fire
+               promptly, or at all, for the first tap. Acting directly
+               on pointerup instead sidesteps that ambiguity entirely —
+               it's not waiting on any browser gesture disambiguation,
+               so it responds the instant a finger (or mouse button)
+               lifts, consistently, on both mobile and desktop. The
+               'click' that may still follow afterwards (native for a
+               mouse, synthesized for touch) is only used to stop it
+               from bubbling up to the card's own flip handler — the
+               `firedViaPointer` guard stops it from running the action
+               a second time. Keyboard activation (Enter/Space on a
+               focused button) never fires pointer events, so it still
+               falls through to running the handler from that 'click'.
+               A small movement tolerance keeps a swipe/drag from being
+               mistaken for a tap. */
+            function wireTapButton(el, handler) {
+                if (!el) return;
+                let tracking = false, firedViaPointer = false, startX = 0, startY = 0;
+                el.addEventListener('pointerdown', (e) => {
+                    tracking = true; firedViaPointer = false;
+                    startX = e.clientX; startY = e.clientY;
+                });
+                el.addEventListener('pointerup', (e) => {
+                    if (!tracking) return;
+                    tracking = false;
+                    if (Math.abs(e.clientX - startX) > 8 || Math.abs(e.clientY - startY) > 8) return;
+                    e.stopPropagation();
+                    firedViaPointer = true;
+                    handler(e);
+                });
+                el.addEventListener('pointercancel', () => { tracking = false; });
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    if (firedViaPointer) { firedViaPointer = false; return; }
+                    handler(e);
+                });
+            }
+
             /* ─── Back button / gesture support for in-page "sections" ───
                By default a phone's back button (or a laptop trackpad's
                back gesture) navigates away from the whole site. For
@@ -14567,6 +14953,12 @@
             if (supportsHover && !prefersReducedMotion) {
                 let lastTrailAt = 0;
                 document.addEventListener('mousemove', (e) => {
+                    // Only the default heart/flower trail when no theme
+                    // is selected — themes with their own cursor trail
+                    // (aura, fireworks, rain's ripples, etc.) handle
+                    // this themselves, so both were showing together
+                    // before this check existed.
+                    if (seasonalLayer.classList.length > 1) return;
                     const now = Date.now();
                     if (now - lastTrailAt < 90) return;
                     lastTrailAt = now;
@@ -15158,10 +15550,8 @@
                         });
                     }
 
-                    replyTabBtn.addEventListener('click', (e) => { e.stopPropagation();
-                        backPanels.classList.add('showing-reply'); });
-                    backTabBtn.addEventListener('click', (e) => { e.stopPropagation();
-                        backPanels.classList.remove('showing-reply'); });
+                    wireTapButton(replyTabBtn, () => backPanels.classList.add('showing-reply'));
+                    wireTapButton(backTabBtn, () => backPanels.classList.remove('showing-reply'));
 
                     function ensureNoteReplyVoiceButton(voiceUrl) {
                         ensureTaggedVoiceButton(wrap, { url: voiceUrl, selector: '.note-reply-voice-play',
@@ -15224,8 +15614,7 @@
                             if (!flipEl.classList.contains('flipped')) backPanels.classList.remove(
                                 'showing-reply'); }
                     });
-                    flipBackBtn.addEventListener('click', (e) => { e.stopPropagation();
-                        flipEl.classList.remove('flipped'); });
+                    wireTapButton(flipBackBtn, () => flipEl.classList.remove('flipped'));
                     favBtn.addEventListener('click', async(e) => {
                         e.stopPropagation();
                         if (!note.favorite) {
@@ -16047,10 +16436,8 @@
                             }
                         });
                     }
-                    replyTabBtn.addEventListener('click', (e) => { e.stopPropagation();
-                        backPanels.classList.add('showing-reply'); });
-                    backTabBtn.addEventListener('click', (e) => { e.stopPropagation();
-                        backPanels.classList.remove('showing-reply'); });
+                    wireTapButton(replyTabBtn, () => backPanels.classList.add('showing-reply'));
+                    wireTapButton(backTabBtn, () => backPanels.classList.remove('showing-reply'));
                     function renderDoodleReplyVoice(voice) {
                         renderVoiceAttachment(replyVoiceBox, voice, (v) => {
                             removeVoiceWithUndo(replyVoiceBox, v, {
@@ -16086,7 +16473,7 @@
                             haptic(12);
                         }
                     });
-                    if (doodleExpandBtn) doodleExpandBtn.addEventListener('click', (e) => { e.stopPropagation();
+                    if (doodleExpandBtn) wireTapButton(doodleExpandBtn, () => {
                         currentList = items.map(x => ({ src: x.image_url, caption: x.caption || 'A little doodle' }));
                         lightboxIndex = items.findIndex(x => x.id === d.id);
                         openLightbox(lightboxIndex, 'doodle');
@@ -16102,7 +16489,7 @@
                             flip.classList.toggle('flipped');
                             if (!flip.classList.contains('flipped')) backPanels.classList.remove(
                                 'showing-reply'); } });
-                    back.addEventListener('click', () => flip.classList.remove('flipped'));
+                    wireTapButton(back, () => flip.classList.remove('flipped'));
                     fav.addEventListener('click', async() => {
                         if (!d.favorite) {
                             const rect = fav.getBoundingClientRect();
@@ -16758,6 +17145,19 @@
                 }
                 if (gamesMoreMenu.classList.contains('open')) {
                     needed = Math.max(needed, gamesMoreMenuPopover.scrollHeight + 20);
+                }
+                // The photo-sort dropdown lives in this same shared row
+                // (see the fixed 172px fallback in CSS via
+                // .secondary-row:has(.photo-sort-menu.open)) — routing it
+                // through this same calculation means opening it can't
+                // have its space reservation silently cleared by this
+                // function running afterwards for one of the other two
+                // menus, and it gets sized to its real content instead
+                // of a guessed constant.
+                const sortMenuEl = document.getElementById('photoSortMenu');
+                if (sortMenuEl && sortMenuEl.classList.contains('open')) {
+                    const sortPopoverEl = sortMenuEl.querySelector('.photo-sort-popover');
+                    if (sortPopoverEl) needed = Math.max(needed, sortPopoverEl.scrollHeight + 20);
                 }
                 featureMenuRow.style.marginBottom = needed ? needed + 'px' : '';
             }
@@ -21293,21 +21693,34 @@
                 const hero = siteTitle.closest('.hero');
                 if (!hero) return;
                 siteTitle.style.fontSize = '';
+                void siteTitle.offsetWidth; // force layout so scrollWidth reflects the size just reset above
                 const heroStyle = getComputedStyle(hero);
                 const available = hero.clientWidth - parseFloat(heroStyle.paddingLeft) - parseFloat(heroStyle
                     .paddingRight) - 8; // small safety margin
                 let fontSize = parseFloat(getComputedStyle(siteTitle).fontSize);
                 let guard = 0;
-                while (siteTitle.scrollWidth > available && fontSize > 20 && guard < 60) {
-                    fontSize -= 1;
+                while (siteTitle.scrollWidth > available && fontSize > 16 && guard < 100) {
+                    fontSize -= 0.5;
                     siteTitle.style.fontSize = fontSize + 'px';
                     guard++;
                 }
             }
-            window.addEventListener('resize', fitHeroTitle);
-            window.addEventListener('load', fitHeroTitle);
+            /* ResizeObserver fires once as soon as it starts observing
+               (with accurate post-layout measurements) and again on any
+               later size change — a more reliable way to catch "the
+               hero's box is ready to measure" than guessing at load/
+               timeout timing, which is what the previous version of
+               this fix relied on. */
+            const heroEl = document.querySelector('.hero');
+            if (window.ResizeObserver && heroEl) {
+                new ResizeObserver(() => fitHeroTitle()).observe(heroEl);
+            } else {
+                window.addEventListener('resize', fitHeroTitle);
+                window.addEventListener('load', fitHeroTitle);
+                setTimeout(fitHeroTitle, 0);
+            }
             if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitHeroTitle);
-            setTimeout(fitHeroTitle, 0);
+            setTimeout(fitHeroTitle, 300); // extra safety pass after webfonts/layout fully settle
 
             let lastTitleTapAt = 0;
             siteTitle.addEventListener('click', () => {
@@ -21955,12 +22368,18 @@
             function closePhotoSortMenu() {
                 photoSortMenu.classList.remove('open');
                 photoSortBtn.setAttribute('aria-expanded', 'false');
+                if (typeof updateSharedMenuSpacing === 'function') updateSharedMenuSpacing();
             }
             photoSortBtn.addEventListener('click', () => {
                 const isOpen = photoSortMenu.classList.toggle('open');
                 photoSortBtn.setAttribute('aria-expanded', String(isOpen));
                 if (isOpen) keepPopoverInViewport(photoSortMenu.querySelector('.photo-sort-popover'));
+                if (typeof updateSharedMenuSpacing === 'function') updateSharedMenuSpacing();
             });
+            window.addEventListener('resize', () => { if (photoSortMenu.classList.contains('open')) {
+                    if (typeof updateSharedMenuSpacing === 'function') updateSharedMenuSpacing();
+                    keepPopoverInViewport(photoSortMenu.querySelector('.photo-sort-popover'));
+                } });
             photoSortOptions.forEach(option => option.addEventListener('click', () => {
                 sortMode = option.dataset.sort;
                 photoSortLabel.textContent = photoSortLabels[sortMode];
@@ -23433,6 +23852,9 @@
                 for (let r = 0; r < rowsNeeded; r++) {
                     const row = document.createElement('div');
                     row.className = 'row';
+                    const twine = document.createElement('div');
+                    twine.className = 'row-twine';
+                    row.appendChild(twine);
                     const rowItems = document.createElement('div');
                     rowItems.className = 'row-items';
                     row.appendChild(rowItems);
@@ -23579,10 +24001,8 @@
                 wireCaptionPlayButton(wrap.querySelector('.caption-voice-c'));
                 wireCaptionPlayButton(wrap.querySelector('.caption-voice-r'));
 
-                replyTabBtn.addEventListener('click', (e) => { e.stopPropagation();
-                    backPanels.classList.add('showing-reply'); });
-                backTabBtn.addEventListener('click', (e) => { e.stopPropagation();
-                    backPanels.classList.remove('showing-reply'); });
+                wireTapButton(replyTabBtn, () => backPanels.classList.add('showing-reply'));
+                wireTapButton(backTabBtn, () => backPanels.classList.remove('showing-reply'));
 
                 function renderPhotoCaptionVoice(voice) {
                     renderVoiceAttachment(captionVoiceBox, voice, (v) => {
@@ -23662,8 +24082,7 @@
                         if (!card.classList.contains('flipped')) backPanels.classList.remove('showing-reply');
                     }
                 });
-                flipBackBtn.addEventListener('click', (e) => { e.stopPropagation();
-                    card.classList.remove('flipped'); });
+                wireTapButton(flipBackBtn, () => card.classList.remove('flipped'));
                 textarea.addEventListener('click', (e) => e.stopPropagation());
                 let saveTimer = null;
                 textarea.addEventListener('input', () => {
@@ -23796,8 +24215,9 @@
                     });
                 }
                 if (expandBtn) {
-                    expandBtn.addEventListener('click', (e) => { e.stopPropagation();
-                        openLightbox(index); });
+                    wireTapButton(expandBtn, () => {
+                        openLightboxMorph(card.querySelector('img'), index);
+                    });
                 }
                 wireNewItemCloud(card, photo, {
                     seenField: `seen_by_${myFieldSuffix()}`,
@@ -23827,10 +24247,56 @@
                 if (kind === 'photo') markScopeSeen('memories');
             }
 
+            /* Desktop-only "morph" open: the tapped memory card's photo
+               visually grows into the lightbox instead of the lightbox
+               just fading in over it, using the native View Transitions
+               API. Only runs in browsers that support it (Chrome/Edge
+               at the time of writing) and only with a mouse — it's a
+               no-op fallback to the plain openLightbox() everywhere
+               else, so nothing about opening a memory changes for
+               anyone who doesn't get the fancier version. Wrapped in
+               try/catch since a failure here should never be able to
+               prevent the photo from actually opening. */
+            function openLightboxMorph(cardImg, index) {
+                const canMorph = document.startViewTransition && cardImg &&
+                    window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
+                    !(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+                if (!canMorph) { openLightbox(index); return; }
+                try {
+                    cardImg.style.viewTransitionName = 'lightbox-morph';
+                    const vt = document.startViewTransition(() => {
+                        openLightbox(index);
+                        lightboxImg.style.viewTransitionName = 'lightbox-morph';
+                    });
+                    vt.finished.finally(() => {
+                        cardImg.style.viewTransitionName = '';
+                        // Cleared once the lightbox is closed (see the
+                        // close handler below) rather than here, so it
+                        // stays assigned to lightboxImg for as long as
+                        // it's actually the element on screen.
+                    });
+                } catch (err) {
+                    console.error('Lightbox morph failed, opening normally:', err);
+                    cardImg.style.viewTransitionName = '';
+                    openLightbox(index);
+                }
+            }
+
             function closeLightbox() {
-                lightbox.classList.add('hidden');
-                lightbox.classList.remove('doodle-lightbox');
-                document.removeEventListener('keydown', handleLightboxKeys);
+                const doClose = () => {
+                    lightbox.classList.add('hidden');
+                    lightbox.classList.remove('doodle-lightbox');
+                    document.removeEventListener('keydown', handleLightboxKeys);
+                    lightboxImg.style.viewTransitionName = '';
+                };
+                if (document.startViewTransition &&
+                    window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
+                    !(window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+                    try { document.startViewTransition(doClose); }
+                    catch (err) { console.error('Lightbox close transition failed:', err); doClose(); }
+                } else {
+                    doClose();
+                }
             }
 
             function showLightboxPhoto() {
@@ -28265,10 +28731,16 @@
 
             const canvas = document.createElement('canvas');
             canvas.setAttribute('aria-hidden', 'true');
-            // z-index:-1 (not 4000!) so this sits behind #siteContent
-            // (position:relative; z-index:1) and every button on the
-            // page, the same as the other ambient decoration layers.
-            canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:-1;display:none;';
+            // z-index:500 — this is the fireworks theme's cursor
+            // trail, the equivalent of the z-index:500 heart trail
+            // every other theme gets (see .cursor-trail-heart), so it
+            // needs to sit in FRONT of buttons/content like that one
+            // does. It was wrongly set to -1 (grouped in with the
+            // purely-ambient background layers like rain/snow, which
+            // legitimately do stay behind content) — but this one
+            // follows the cursor and is meant to be the interactive
+            // foreground effect, not scenery.
+            canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:500;display:none;';
             // Appended inside #siteContent (as the very first child,
             // right alongside #seasonalLayer, which uses this exact
             // same z-index:-1 approach and is known to render
@@ -28738,6 +29210,19 @@
             function setMode(next) {
                 if (next === mode) return;
                 mode = next;
+                /* Every other mode this canvas handles (rain ripples,
+                   snow, the ambient fireworks show) is meant to sit
+                   behind buttons like ordinary background scenery, so
+                   z-index:-1 is correct for them. Aura is different:
+                   its blobs are spawned directly from cursor movement
+                   (see the pointermove listener below) and ARE this
+                   theme's cursor trail — the equivalent of the z-index
+                   500 heart trail every other theme gets — so it needs
+                   to sit in front like that one does, not behind
+                   content like the purely-ambient modes. Toggled here
+                   rather than fixed in CSS since this one canvas is
+                   shared by both kinds of effect depending on mode. */
+                canvas.style.zIndex = (mode === 'aura') ? '500' : '-1';
                 if (mode === 'none' || reduceMotion) { stopLoop(); return; }
                 if (mode === 'snow') initSnow();
                 if (mode === 'fireworks') initFireworks();
@@ -28767,6 +29252,81 @@
             }
         } catch (err) {
             console.error('Seasonal canvas FX failed to initialize (core site unaffected):', err);
+        }
+    })();
+
+    /* ═══════════════════════════════════════════════════════════════
+       Desktop-only visual flourishes. Everything in this block is
+       gated behind (hover: hover) and (pointer: fine) — the real way
+       to detect "has a mouse", since screen width alone doesn't (a
+       narrow browser window on a desktop still has a mouse; a large
+       tablet doesn't) — and behind prefers-reduced-motion, and every
+       piece is independently wrapped so one failing can't take out
+       the others or the core site. ═══════════════════════════════ */
+    (function desktopFlourishes() {
+        try {
+            const isDesktop = window.matchMedia &&
+                window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+            const reduceMotion = window.matchMedia &&
+                window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (!isDesktop || reduceMotion) return;
+
+            /* ── Parallax: ambient decoration drifts slower than the
+               page scrolls, instead of being perfectly pinned (fixed)
+               or scrolling 1:1 with content — a small extra transform
+               layered on top of its existing fixed positioning. ── */
+            (function parallax() {
+                try {
+                    const layer = document.getElementById('seasonalLayer');
+                    if (!layer) return;
+                    let ticking = false;
+                    window.addEventListener('scroll', () => {
+                        if (ticking) return;
+                        ticking = true;
+                        requestAnimationFrame(() => {
+                            layer.style.transform = `translate3d(0, ${window.scrollY * -0.06}px, 0)`;
+                            ticking = false;
+                        });
+                    }, { passive: true });
+                } catch (err) { console.error('Parallax failed:', err); }
+            })();
+
+            /* ── Title write-on: the hero title reveals left-to-right
+               once on load, like it's being written. A true per-letter
+               ink-stroke animation isn't practical for arbitrary,
+               user-editable text (that needs each glyph traced as an
+               SVG path, which only works for a fixed, known string) —
+               this is a clip-path wipe instead, which reads the same
+               way at a glance and works for whatever the title says. ── */
+            (function titleWriteOn() {
+                try {
+                    const h1 = document.getElementById('siteTitle');
+                    if (!h1) return;
+                    h1.style.clipPath = 'inset(0 100% 0 0)';
+                    h1.style.transition = 'clip-path 1.6s cubic-bezier(.65,0,.35,1)';
+                    requestAnimationFrame(() => requestAnimationFrame(() => {
+                        h1.style.clipPath = 'inset(0 0% 0 0)';
+                    }));
+                    h1.addEventListener('transitionend', function done(e) {
+                        if (e.propertyName !== 'clip-path') return;
+                        h1.style.transition = '';
+                        h1.style.clipPath = '';
+                        h1.removeEventListener('transitionend', done);
+                    });
+                } catch (err) { console.error('Title write-on failed:', err); }
+            })();
+
+            /* Physics-based blossom petals used to replace the plain
+               CSS-keyframe ones with a canvas simulation on desktop.
+               Removed entirely — drawn as flat solid-color ellipses,
+               they looked noticeably less authentic than the plain CSS
+               petals (which have the soft pink gradient, glow, and
+               teardrop shape below), and weren't wanted anyway. Cherry
+               blossom now always uses the same simple, no-physics
+               falling-span approach as autumn drizzle, on both desktop
+               and mobile. */
+        } catch (err) {
+            console.error('Desktop flourishes failed to initialize (core site unaffected):', err);
         }
     })();
 
@@ -29162,6 +29722,7 @@
                         <textarea class="diary-page-body" data-f="body" placeholder="Write whatever's on your mind..."></textarea>
                         <div class="diary-page-images" data-f="images">
                             <button type="button" class="diary-page-add-img" data-f="addimg" aria-label="Add a photo">📷</button>
+                            <button type="button" class="diary-page-add-text" data-f="addtext" aria-label="Add text">✒️</button>
                         </div>
                         <div class="diary-page-canvas" data-f="canvas"></div>
                     </div>
@@ -29175,6 +29736,7 @@
                         <textarea class="diary-page-body" data-f="body" placeholder="Write whatever's on your mind..."></textarea>
                         <div class="diary-page-images" data-f="images">
                             <button type="button" class="diary-page-add-img" data-f="addimg" aria-label="Add a photo">📷</button>
+                            <button type="button" class="diary-page-add-text" data-f="addtext" aria-label="Add text">✒️</button>
                         </div>
                         <div class="diary-page-canvas" data-f="canvas"></div>
                     </div>
@@ -29244,6 +29806,14 @@
                         <option value="'Patrick Hand', cursive">Neat handwriting</option>
                         <option value="Georgia, serif">Printed serif</option>
                         <option value="'Courier New', monospace">Typewriter</option>
+                        <option value="'Permanent Marker', cursive">Bold marker</option>
+                        <option value="'Kalam', cursive">Casual pen</option>
+                        <option value="'Amatic SC', cursive">Tall & sketchy</option>
+                        <option value="'Playfair Display', serif">Elegant serif</option>
+                        <option value="'Pacifico', cursive">Playful script</option>
+                        <option value="'Architects Daughter', cursive">Sketchbook</option>
+                        <option value="'Dancing Script', cursive">Fancy script</option>
+                        <option value="'Special Elite', cursive">Vintage typewriter</option>
                     </select>
                 </div>
                 <div class="diary-popover-row">
@@ -29285,7 +29855,7 @@
         <div class="diary-popover-backdrop hidden" id="diaryLockBackdrop">
             <div class="diary-popover-card">
                 <h3>This diary is locked</h3>
-                <input type="password" inputmode="numeric" class="diary-lock-input" id="diaryLockInput" placeholder="••••" maxlength="6">
+                <input type="password" inputmode="numeric" class="diary-lock-input" id="diaryLockInput" placeholder="Passcode" maxlength="6">
                 <p class="diary-popover-hint" id="diaryLockHint" style="text-align:center;"></p>
                 <div class="diary-popover-actions">
                     <button type="button" class="diary-popover-secondary" id="diaryLockCancelBtn">Cancel</button>
@@ -29662,6 +30232,12 @@
             /* ================= VIEW SWITCHING ================= */
             function showView(name) {
                 state.view = name;
+                // Re-lock whenever navigating back to the cover — a
+                // passcode unlock used to last until the page reloaded,
+                // no matter how many times you closed and reopened the
+                // diary in between. This makes the unlock last only for
+                // as long as you're actually inside it.
+                if (name === 'cover') state.unlockedAuthors.delete(state.author);
                 ['Cover', 'Toc', 'Book'].forEach(v => $('diaryView' + v).classList.toggle('active', v.toLowerCase() === name));
             }
             function authorEntries() {
@@ -29797,8 +30373,17 @@
                 pageEl.style.setProperty('--diary-page-bg', p.pageBg || d.pageBg);
                 pageEl.style.setProperty('--diary-ink', p.ink || d.ink);
                 pageEl.style.setProperty('--diary-font', p.font || d.font);
-                pageEl.style.setProperty('--diary-page-lines-img', LINES_PATTERNS[lines] || 'none');
-                pageEl.style.setProperty('--diary-page-lines-size', LINES_SIZE[lines] || 'auto');
+                // Ruled pages need the pattern on .diary-page-body itself
+                // (see the comment there on why); every other style
+                // needs it on .diary-page-canvas instead, since that's
+                // the layer actually visible when the body is hidden.
+                // Only one of the two ever gets a real value at a time,
+                // so the two layers never stack and double-darken lines.
+                const isRuledStyle = lines === 'ruled';
+                pageEl.style.setProperty('--diary-page-lines-img', isRuledStyle ? (LINES_PATTERNS[lines] || 'none') : 'none');
+                pageEl.style.setProperty('--diary-page-lines-size', isRuledStyle ? (LINES_SIZE[lines] || 'auto') : 'auto');
+                pageEl.style.setProperty('--diary-canvas-lines-img', isRuledStyle ? 'none' : (LINES_PATTERNS[lines] || 'none'));
+                pageEl.style.setProperty('--diary-canvas-lines-size', isRuledStyle ? 'auto' : (LINES_SIZE[lines] || 'auto'));
                 pageEl.querySelector('[data-f="date"]').textContent = formatDateLong(entry.entry_date);
                 pageEl.querySelector('[data-f="title"]').value = entry.title || '';
                 const favBtn = pageEl.querySelector('[data-f="fav"]');
@@ -29807,7 +30392,18 @@
                 const moodsEl = pageEl.querySelector('[data-f="moods"]');
                 moodsEl.innerHTML = moodRowHtml();
                 moodsEl.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.mood === entry.mood));
-                pageEl.querySelector('[data-f="body"]').value = entry.body || '';
+                // Ruled pages keep the single plain textarea they've
+                // always had — free-floating text blocks only apply to
+                // blank/grid/dots, where there's no printed line for
+                // continuous writing to fight against anyway.
+                const isRuled = lines === 'ruled';
+                const bodyEl = pageEl.querySelector('[data-f="body"]');
+                const addTextBtn = pageEl.querySelector('[data-f="addtext"]');
+                bodyEl.style.display = isRuled ? '' : 'none';
+                addTextBtn.style.display = isRuled ? 'none' : '';
+                bodyEl.value = entry.body || '';
+                if (!isRuled) renderPageTextBlocks(pageEl, entry);
+                else pageEl.querySelectorAll('.diary-text-block').forEach(el => el.remove());
                 renderPageImages(pageEl, entry);
             }
 
@@ -29953,15 +30549,244 @@
                 chip.addEventListener('pointercancel', release);
             }
 
+            /* ================= PAGE TEXT BLOCKS (blank/grid/dots only) =================
+               Freely positioned, resized, rotated pieces of text, each
+               with its own font — the "whole page under your control"
+               layout, as opposed to the ruled pages' single continuous
+               textarea. Mirrors the image-chip system above (same
+               drag/resize-rotate mechanics), with a contenteditable
+               div for the text itself and a small font <select> in
+               place of that system's image. */
+            function normalizeEntryTextBlocks(entry) {
+                entry.text_blocks = entry.text_blocks || [];
+                return entry.text_blocks;
+            }
+            function textBlockTransform(tb) {
+                return `translate(-50%,-50%) scale(${tb.scale || 1}) rotate(${tb.rot || 0}deg)`;
+            }
+            function applyTextBlockTransform(chip, tb) {
+                chip.style.transform = textBlockTransform(tb);
+                chip.style.setProperty('--el-scale', tb.scale || 1);
+            }
+            let textBlocksSaveTimer = null;
+            function debouncedSaveTextBlocks(entry) {
+                clearTimeout(textBlocksSaveTimer);
+                textBlocksSaveTimer = setTimeout(() => saveEntryField(entry, { text_blocks: entry.text_blocks }),
+                    500);
+            }
+            const TEXT_BLOCK_FONTS = [
+                ["'Caveat', cursive", 'Flowing script'],
+                ["'Patrick Hand', cursive", 'Neat handwriting'],
+                ['Georgia, serif', 'Printed serif'],
+                ["'Courier New', monospace", 'Typewriter'],
+                ["'Permanent Marker', cursive", 'Bold marker'],
+                ["'Kalam', cursive", 'Casual pen'],
+                ["'Amatic SC', cursive", 'Tall & sketchy'],
+                ["'Playfair Display', serif", 'Elegant serif'],
+                ["'Pacifico', cursive", 'Playful script'],
+                ["'Architects Daughter', cursive", 'Sketchbook'],
+                ["'Dancing Script', cursive", 'Fancy script'],
+                ["'Special Elite', cursive", 'Vintage typewriter'],
+            ];
+            function renderPageTextBlocks(pageEl, entry) {
+                const canvas = pageEl.querySelector('[data-f="canvas"]');
+                canvas.querySelectorAll('.diary-text-block').forEach(el => el.remove());
+                normalizeEntryTextBlocks(entry).forEach((tb) => {
+                    const chip = document.createElement('div');
+                    chip.className = 'diary-text-block';
+                    chip.style.left = (tb.xr * 100) + '%';
+                    chip.style.top = (tb.yr * 100) + '%';
+                    applyTextBlockTransform(chip, tb);
+
+                    const content = document.createElement('div');
+                    content.className = 'diary-text-block-content';
+                    content.contentEditable = 'true';
+                    content.style.fontFamily = tb.font || "'Caveat', cursive";
+                    content.textContent = tb.text || '';
+                    content.setAttribute('data-placeholder', 'Type something…');
+                    // Deliberately does NOT stop propagation here anymore —
+                    // that used to swallow every pointerdown that started on
+                    // the text itself (i.e. almost the entire block), which
+                    // left no draggable surface once you'd typed something.
+                    // wireTextBlockDrag below now tells a tap-to-place-caret
+                    // apart from a press-and-drag by movement distance, so
+                    // dragging works from anywhere on the block, including
+                    // the text, while a plain tap still just places the
+                    // caret normally.
+                    content.addEventListener('input', () => {
+                        tb.text = content.textContent;
+                        debouncedSaveTextBlocks(entry);
+                    });
+                    chip.appendChild(content);
+
+                    const remove = document.createElement('button');
+                    remove.type = 'button'; remove.className = 'diary-text-remove diary-text-ctrl'; remove.textContent = '✕';
+                    remove.setAttribute('aria-label', 'Remove text');
+                    chip.appendChild(remove);
+
+                    const handle = document.createElement('button');
+                    handle.type = 'button'; handle.className = 'diary-text-handle diary-text-ctrl';
+                    handle.innerHTML = RESIZE_ROTATE_ICON_SVG;
+                    handle.setAttribute('aria-label', 'Drag to resize and rotate');
+                    chip.appendChild(handle);
+
+                    // A wrapper with a fixed "Aa" label on top of an
+                    // otherwise-invisible native <select> — showing
+                    // which font is actually selected (its name, which
+                    // can be long) ate into the limited space on a
+                    // small block and wasn't that useful at a glance
+                    // anyway. The select underneath is still fully
+                    // functional (opacity:0 only hides the CLOSED box;
+                    // the opened options list is native OS chrome and
+                    // renders regardless), so tapping it still opens
+                    // the real font picker.
+                    const fontWrap = document.createElement('div');
+                    fontWrap.className = 'diary-text-font-select';
+                    fontWrap.innerHTML = '<span class="diary-text-font-label" aria-hidden="true">Aa</span>';
+                    const fontSelect = document.createElement('select');
+                    fontSelect.className = 'diary-text-font-select-input';
+                    fontSelect.setAttribute('aria-label', 'Font for this text');
+                    fontSelect.innerHTML = TEXT_BLOCK_FONTS.map(([val, label]) =>
+                        `<option value="${val}">${label}</option>`).join('');
+                    fontSelect.value = tb.font || "'Caveat', cursive";
+                    fontSelect.addEventListener('pointerdown', (e) => e.stopPropagation());
+                    fontSelect.addEventListener('click', (e) => e.stopPropagation());
+                    fontSelect.addEventListener('change', (e) => {
+                        tb.font = e.target.value;
+                        content.style.fontFamily = tb.font;
+                        debouncedSaveTextBlocks(entry);
+                    });
+                    fontWrap.appendChild(fontSelect);
+                    chip.appendChild(fontWrap);
+
+                    remove.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        entry.text_blocks = entry.text_blocks.filter(x => x !== tb);
+                        renderPageTextBlocks(pageEl, entry);
+                        saveEntryField(entry, { text_blocks: entry.text_blocks });
+                    });
+                    wireTextBlockResizeRotateHandle(handle, chip, tb, entry);
+                    wireTextBlockDrag(chip, tb, entry, content);
+                    canvas.appendChild(chip);
+                });
+            }
+            function wireTextBlockResizeRotateHandle(handle, chip, tb, entry) {
+                let active = false, cx = 0, cy = 0, r0 = 1, a0 = 0, scale0 = 1, rot0 = 0;
+                handle.addEventListener('pointerdown', (e) => {
+                    e.stopPropagation();
+                    handle.setPointerCapture(e.pointerId);
+                    const rect = chip.getBoundingClientRect();
+                    cx = rect.left + rect.width / 2;
+                    cy = rect.top + rect.height / 2;
+                    r0 = Math.max(1, Math.hypot(e.clientX - cx, e.clientY - cy));
+                    a0 = Math.atan2(e.clientY - cy, e.clientX - cx);
+                    scale0 = tb.scale || 1;
+                    rot0 = tb.rot || 0;
+                    active = true;
+                });
+                handle.addEventListener('pointermove', (e) => {
+                    if (!active) return;
+                    e.stopPropagation();
+                    const r1 = Math.hypot(e.clientX - cx, e.clientY - cy);
+                    const a1 = Math.atan2(e.clientY - cy, e.clientX - cx);
+                    tb.scale = Math.max(.4, Math.min(4, scale0 * (r1 / r0)));
+                    tb.rot = (rot0 + (a1 - a0) * 180 / Math.PI + 360) % 360;
+                    applyTextBlockTransform(chip, tb);
+                });
+                function release(e) { if (!active) return; active = false; debouncedSaveTextBlocks(entry); }
+                handle.addEventListener('pointerup', release);
+                handle.addEventListener('pointercancel', release);
+            }
+            // Places the caret in a contenteditable at a specific screen
+            // point, falling back to just focusing it (caret at whatever
+            // the browser defaults to) if the point-to-caret APIs aren't
+            // available.
+            function focusTextBlockAt(content, x, y) {
+                content.focus();
+                try {
+                    let range = null;
+                    if (document.caretRangeFromPoint) {
+                        range = document.caretRangeFromPoint(x, y);
+                    } else if (document.caretPositionFromPoint) {
+                        const pos = document.caretPositionFromPoint(x, y);
+                        if (pos && pos.offsetNode) {
+                            range = document.createRange();
+                            range.setStart(pos.offsetNode, pos.offset);
+                        }
+                    }
+                    if (range) {
+                        const sel = window.getSelection();
+                        range.collapse(true);
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                    }
+                } catch (err) { /* focused is good enough on its own */ }
+            }
+            function wireTextBlockDrag(chip, tb, entry, content) {
+                // Mirrors the photo-chip drag exactly (capture the
+                // pointer immediately on pointerdown, always track it —
+                // no branching, no deferred capture) because that's the
+                // version that's actually reliable. An earlier attempt
+                // delayed capture until a movement threshold was crossed
+                // so the browser's native caret placement could still
+                // happen on a plain tap, but competing with native
+                // text-selection drag on a contenteditable sometimes
+                // left the block "stuck" following the cursor with no
+                // pointerup ever arriving to release it.
+                //
+                // Caret placement is now handled entirely by us instead:
+                // a tap (little/no movement) on an *already-selected*
+                // block's text enters edit mode and drops the caret
+                // exactly where tapped; a tap on a not-yet-selected
+                // block just selects it (shows its controls) without
+                // opening the keyboard. Dragging always works from
+                // anywhere on the block, including directly on the text.
+                let dragging = false, startX = 0, startY = 0, moved = false;
+                let tapEditIntent = false, tapX = 0, tapY = 0;
+                chip.addEventListener('pointerdown', (e) => {
+                    if (e.target.closest('.diary-text-ctrl, .diary-text-font-select')) return;
+                    e.preventDefault();
+                    chip.setPointerCapture(e.pointerId);
+                    const wasSelected = chip.classList.contains('selected');
+                    const targetIsContent = !!e.target.closest('.diary-text-block-content');
+                    chip.parentElement.querySelectorAll('.diary-text-block').forEach(c => c.classList.remove('selected'));
+                    chip.classList.add('selected');
+                    dragging = true; moved = false;
+                    startX = e.clientX; startY = e.clientY;
+                    tapEditIntent = wasSelected && targetIsContent;
+                    tapX = e.clientX; tapY = e.clientY;
+                });
+                chip.addEventListener('pointermove', (e) => {
+                    if (!dragging) return;
+                    const wrapRect = chip.parentElement.getBoundingClientRect();
+                    const dx = e.clientX - startX, dy = e.clientY - startY;
+                    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+                    startX = e.clientX; startY = e.clientY;
+                    if (!moved) return;
+                    tb.xr = Math.max(0, Math.min(1, tb.xr + dx / wrapRect.width));
+                    tb.yr = Math.max(0, Math.min(1, tb.yr + dy / wrapRect.height));
+                    chip.style.left = (tb.xr * 100) + '%';
+                    chip.style.top = (tb.yr * 100) + '%';
+                });
+                function release(e) {
+                    if (!dragging) return;
+                    dragging = false;
+                    if (moved) { debouncedSaveTextBlocks(entry); return; }
+                    if (tapEditIntent) focusTextBlockAt(content, tapX, tapY);
+                }
+                chip.addEventListener('pointerup', release);
+                chip.addEventListener('pointercancel', release);
+            }
+
             function wirePageEl(pageEl) {
-                // Tapping anywhere on the page that isn't a photo
-                // deselects whatever photo was selected, hiding its
-                // ✕/resize-rotate controls again — they should only
+                // Tapping anywhere on the page that isn't a photo or
+                // text block deselects whatever was selected, hiding
+                // its ✕/resize-rotate controls again — they should only
                 // show while you're actually working on that one.
                 pageEl.addEventListener('pointerdown', (e) => {
-                    if (e.target.closest('.diary-page-image-chip')) return;
-                    pageEl.querySelectorAll('.diary-page-image-chip.selected').forEach(c => c.classList.remove(
-                        'selected'));
+                    if (e.target.closest('.diary-page-image-chip, .diary-text-block')) return;
+                    pageEl.querySelectorAll('.diary-page-image-chip.selected, .diary-text-block.selected').forEach(c => c
+                        .classList.remove('selected'));
                 });
                 pageEl.querySelector('[data-f="title"]').addEventListener('input', (e) => {
                     const entry = currentEntries()[state.currentIndex];
@@ -29983,6 +30808,28 @@
                     renderToc();
                 });
                 pageEl.querySelector('[data-f="addimg"]').addEventListener('click', (e) => { e.stopPropagation(); $('diaryImageInput').click(); });
+                pageEl.querySelector('[data-f="addtext"]').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const entry = currentEntries()[state.currentIndex];
+                    if (!entry) return;
+                    const d = state.design[state.author];
+                    const p = entry.page_style || {};
+                    const blocks = normalizeEntryTextBlocks(entry);
+                    const tb = {
+                        text: '', xr: 0.5, yr: 0.15 + (blocks.length % 5) * 0.14, scale: 1, rot: 0,
+                        font: p.font || d.font || "'Caveat', cursive",
+                    };
+                    blocks.push(tb);
+                    renderPageTextBlocks(pageEl, entry);
+                    saveEntryField(entry, { text_blocks: blocks });
+                    // Focus the new block for immediate typing.
+                    const chip = [...pageEl.querySelectorAll('.diary-text-block')].pop();
+                    if (chip) {
+                        chip.classList.add('selected');
+                        const editable = chip.querySelector('.diary-text-block-content');
+                        if (editable) { editable.focus(); }
+                    }
+                });
                 pageEl.querySelector('[data-f="fav"]').addEventListener('click', (e) => {
                     e.stopPropagation();
                     const entry = currentEntries()[state.currentIndex];
@@ -30131,6 +30978,10 @@
                 overlay.classList.add('hidden');
                 document.body.style.overflow = state._prevBodyOverflow || '';
                 document.documentElement.style.overflow = state._prevHtmlOverflow || '';
+                // Re-lock on close too, same reasoning as showView('cover')
+                // above — closing the whole diary section shouldn't leave
+                // it silently unlocked for whoever opens it next.
+                state.unlockedAuthors.clear();
                 // If a photo was left open in the full-screen lightbox
                 // (opened by tapping a diary photo) and the diary got
                 // closed some other way — back gesture, etc. — without
@@ -30497,6 +31348,182 @@
         } catch (err) {
             console.error('Per-page customize failed to initialize (core site unaffected):', err);
         }
+    })();
+    </script>
+
+    <!-- ════════════════════════════════════════════════════════
+         DESKTOP INTERACTIVE PHYSICS & PLAYFUL MOTION SUITE
+         Strictly gated to (hover: hover) and (pointer: fine) + no-
+         reduced-motion. Mobile devices remain 100% unaffected,
+         lightweight, and butter-smooth. Wrapped so a failure here
+         can never affect the rest of the site. ═══════════════ -->
+    <script>
+    (function initDesktopMotionSuite() {
+      try {
+        // 1. Strict device & motion capability gating
+        const isDesktop = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+        const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!isDesktop || prefersReducedMotion) return;
+
+        // ─── 3. Magnetic Buttons ───
+        function setupMagneticButtons() {
+            const magneticSelectors = '.add-btn, .fav-filter-btn, .theme-btn, .music-btn, .nav-dock-btn, .touch-heart';
+
+            document.addEventListener('mousemove', (e) => {
+                const btns = document.querySelectorAll(magneticSelectors);
+                btns.forEach((btn) => {
+                    const rect = btn.getBoundingClientRect();
+                    const btnCenterX = rect.left + rect.width / 2;
+                    const btnCenterY = rect.top + rect.height / 2;
+
+                    const dist = Math.hypot(e.clientX - btnCenterX, e.clientY - btnCenterY);
+                    const magnetRadius = Math.max(rect.width, 60);
+
+                    if (dist < magnetRadius) {
+                        const pull = (1 - dist / magnetRadius) * 8;
+                        const angle = Math.atan2(e.clientY - btnCenterY, e.clientX - btnCenterX);
+                        const pullX = Math.cos(angle) * pull;
+                        const pullY = Math.sin(angle) * pull;
+                        btn.style.transform = `translate(${pullX.toFixed(1)}px, ${pullY.toFixed(1)}px)`;
+                    } else if (btn.style.transform && btn.style.transform.startsWith('translate(')) {
+                        btn.style.transform = '';
+                    }
+                });
+            }, { passive: true });
+        }
+
+        // ─── 4. Memory Constellation Stardust Lines ───
+        function setupConstellationStardust() {
+            const sky = document.getElementById('constellationSky');
+            if (!sky) return;
+
+            let canvas = document.getElementById('constellationCanvas');
+            if (!canvas) {
+                canvas = document.createElement('canvas');
+                canvas.id = 'constellationCanvas';
+                sky.prepend(canvas);
+            }
+
+            const ctx = canvas.getContext('2d');
+            function syncCanvasSize() {
+                canvas.width = sky.clientWidth;
+                canvas.height = sky.clientHeight;
+            }
+            syncCanvasSize();
+            window.addEventListener('resize', syncCanvasSize, { passive: true });
+
+            let activeStar = null;
+            sky.addEventListener('mouseover', (e) => {
+                const star = e.target.closest('.constellation-star');
+                if (star) {
+                    activeStar = star;
+                    drawStardustConnections();
+                }
+            });
+
+            sky.addEventListener('mouseout', (e) => {
+                if (e.target.closest('.constellation-star')) {
+                    activeStar = null;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            });
+
+            function drawStardustConnections() {
+                if (!activeStar) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                const allStars = Array.from(sky.querySelectorAll('.constellation-star'));
+                const rectSky = sky.getBoundingClientRect();
+                const actRect = activeStar.getBoundingClientRect();
+                const ax = actRect.left + actRect.width / 2 - rectSky.left;
+                const ay = actRect.top + actRect.height / 2 - rectSky.top;
+
+                allStars.forEach((star) => {
+                    if (star === activeStar) return;
+                    const sr = star.getBoundingClientRect();
+                    const sx = sr.left + sr.width / 2 - rectSky.left;
+                    const sy = sr.top + sr.height / 2 - rectSky.top;
+                    const dist = Math.hypot(ax - sx, ay - sy);
+
+                    if (dist < 220) {
+                        const alpha = (1 - dist / 220) * 0.85;
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.moveTo(ax, ay);
+                        ctx.lineTo(sx, sy);
+                        ctx.strokeStyle = `rgba(255, 242, 177, ${alpha.toFixed(2)})`;
+                        ctx.lineWidth = 1.6;
+                        ctx.setLineDash([4, 4]);
+                        ctx.stroke();
+
+                        // Tiny stardust point along line
+                        const midX = (ax + sx) / 2;
+                        const midY = (ay + sy) / 2;
+                        ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(2)})`;
+                        ctx.beginPath();
+                        ctx.arc(midX, midY, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                });
+            }
+        }
+
+        // ─── 5. Origami Paper Stamp Delivery (wax seal removed completely) ───
+        function setupOrigamiDelivery() {
+            function triggerDeliveryAnimation(originBtn, targetWallSelector) {
+                const originRect = originBtn.getBoundingClientRect();
+                const targetWall = document.querySelector(targetWallSelector);
+                if (!targetWall) return;
+                const targetRect = targetWall.getBoundingClientRect();
+
+                const targetX = (targetRect.left + targetRect.width / 2) - (originRect.left + originRect.width / 2);
+                const targetY = (targetRect.top + targetRect.height / 2) - (originRect.top + originRect.height / 2);
+
+                // Create flying origami envelope stamp
+                const stamp = document.createElement('div');
+                stamp.className = 'origami-stamp-fly';
+                stamp.textContent = '💌';
+                stamp.style.left = `${originRect.left + originRect.width / 2 - 30}px`;
+                stamp.style.top = `${originRect.top + originRect.height / 2 - 24}px`;
+                stamp.style.setProperty('--target-x', `${targetX}px`);
+                stamp.style.setProperty('--target-y', `${targetY}px`);
+                document.body.appendChild(stamp);
+                setTimeout(() => stamp.remove(), 900);
+            }
+
+            const noteForm = document.getElementById('noteForm');
+            if (noteForm) {
+                noteForm.addEventListener('submit', () => {
+                    const submitBtn = noteForm.querySelector('button[type="submit"]');
+                    if (submitBtn) triggerDeliveryAnimation(submitBtn, '#notesWall');
+                });
+            }
+
+            const doodleForm = document.getElementById('doodleForm');
+            if (doodleForm) {
+                doodleForm.addEventListener('submit', () => {
+                    const submitBtn = document.getElementById('doodleSubmitBtn');
+                    if (submitBtn) triggerDeliveryAnimation(submitBtn, '#doodlesWall');
+                });
+            }
+        }
+
+        // Initialize all desktop interactions once DOM is ready
+        function init() {
+            setupMagneticButtons();
+            setupConstellationStardust();
+            setupOrigamiDelivery();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+      } catch (err) {
+          console.error('Desktop motion suite failed to initialize (core site unaffected):', err);
+      }
     })();
     </script>
 
