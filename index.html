@@ -9224,6 +9224,70 @@
             box-shadow: 0 0 6px rgba(255, 175, 205, .5);
             animation: blossomFall linear infinite;
         }
+        /* ─── Bubbles: rises from the bottom instead of falling, and is
+           interactive (pointer-events re-enabled per-sprite, popped on
+           click) — the only seasonal theme that is, so it also needs a
+           higher z-index than every other theme's -1 to actually be
+           reachable by the cursor/finger above the page content.
+           .bubble-sprite's own look is unscoped (not nested under
+           .seasonal-layer.bubbles) since the cursor-trail bubbles are
+           appended straight to <body>, outside that layer entirely. */
+        .seasonal-layer.bubbles {
+            z-index: 15;
+            background: linear-gradient(0deg, rgba(160, 211, 235, .06), transparent 55%);
+        }
+        .bubble-sprite {
+            position: absolute;
+            top: auto;
+            border-radius: 50%;
+            pointer-events: auto;
+            cursor: pointer;
+            background: radial-gradient(circle at 30% 26%, rgba(255, 255, 255, .9), rgba(210, 240, 255, .35) 45%, rgba(150, 210, 245, .14) 75%, rgba(150, 210, 245, .05) 100%);
+            box-shadow: inset -3px -4px 7px rgba(60, 110, 160, .22), inset 2px 3px 5px rgba(255, 255, 255, .65), 0 0 8px rgba(160, 211, 235, .28);
+            animation: bubbleRise linear infinite;
+        }
+        @keyframes bubbleRise {
+            0% { transform: translate3d(0, 0, 0); }
+            25% { transform: translate3d(2.4vw, -28vh, 0); }
+            50% { transform: translate3d(-2vw, -56vh, 0); }
+            75% { transform: translate3d(2.1vw, -84vh, 0); }
+            100% { transform: translate3d(-1.4vw, -114vh, 0); }
+        }
+        @keyframes bubbleTrailRise {
+            0% { transform: translate3d(0, 0, 0) scale(1); opacity: .75; }
+            100% { transform: translate3d(0, -70px, 0) scale(.5); opacity: 0; }
+        }
+        .bubble-pop {
+            position: fixed;
+            z-index: 16;
+            pointer-events: none;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, .8);
+            box-shadow: 0 0 6px rgba(160, 211, 235, .5);
+            animation: bubblePop .45s ease-out forwards;
+        }
+        @keyframes bubblePop {
+            0% { transform: scale(.6); opacity: 1; }
+            70% { transform: scale(1.55); opacity: .5; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+        .bubble-droplet {
+            position: fixed;
+            z-index: 16;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: rgba(180, 225, 255, .95);
+            pointer-events: none;
+            animation: bubbleDroplet .55s ease-out forwards;
+        }
+        @keyframes bubbleDroplet {
+            0% { transform: translate(0, 0); opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)); opacity: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .bubble-sprite { animation: none; }
+        }
         /* blossomPhysics (the desktop canvas petal simulation) has
            been removed — blossom now always uses the plain CSS
            spans below, same approach as autumn drizzle. */
@@ -12725,6 +12789,205 @@
             animation: none;
             color: var(--page-accent, var(--rose-deep));
         }
+
+        /* ═══════════════════ "Just Us" — private, login-gated section ═══════════════════
+           Everything here is UI only — the real security is the Supabase
+           Auth session + Row Level Security policies behind it. This
+           overlay simply reflects whether that session exists; it never
+           makes an access decision on its own. */
+        .secure-section-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 20000;
+            background: rgba(20, 14, 12, .68);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.2rem;
+        }
+        .secure-section-overlay.hidden { display: none; }
+        .secure-section-card {
+            position: relative;
+            width: min(420px, 100%);
+            max-height: 88vh;
+            overflow-y: auto;
+            background: var(--white);
+            border-radius: 22px;
+            padding: 2.1rem 1.7rem 1.7rem;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, .45);
+            animation: jellySpringIn .42s cubic-bezier(.34, 1.56, .64, 1) both;
+        }
+        body.dark-mode .secure-section-card { background: var(--paper-deep, #2a2320); }
+        .secure-section-close {
+            position: absolute;
+            top: .8rem;
+            right: .8rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(107, 83, 68, .08);
+            color: var(--ink);
+            font-size: .9rem;
+            cursor: pointer;
+        }
+        .secure-lock-icon { font-size: 2.4rem; text-align: center; }
+        .secure-lock-screen h2, .secure-gallery-header h2 {
+            text-align: center;
+            margin: .3rem 0 .2rem;
+            color: var(--ink);
+            font-size: 1.3rem;
+        }
+        .secure-lock-sub {
+            text-align: center;
+            color: var(--ink-soft);
+            font-size: .85rem;
+            margin: 0 0 1.3rem;
+        }
+        .secure-identity-row {
+            display: flex;
+            gap: .6rem;
+            margin-bottom: 1rem;
+        }
+        .secure-identity-btn {
+            flex: 1;
+            padding: .7rem;
+            border-radius: 14px;
+            border: 1.5px solid var(--card-border);
+            background: var(--paper);
+            color: var(--ink);
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color .2s ease, background .2s ease;
+        }
+        .secure-identity-btn.active {
+            border-color: var(--rose-deep);
+            background: var(--rose);
+            color: var(--white);
+        }
+        #secureAuthForm { display: flex; flex-direction: column; gap: .7rem; }
+        #secureAuthForm input {
+            width: 100%;
+            padding: .75rem .9rem;
+            border-radius: 12px;
+            border: 1.5px solid var(--card-border);
+            background: var(--paper);
+            color: var(--ink);
+            font-size: .95rem;
+            box-sizing: border-box;
+        }
+        #secureAuthForm input:focus { outline: none; border-color: var(--rose-deep); }
+        #secureAuthForm input[readonly] { opacity: .75; }
+        .secure-error {
+            color: #b3413a;
+            font-size: .82rem;
+            text-align: center;
+            margin: 0;
+        }
+        .secure-primary-btn {
+            padding: .8rem;
+            border-radius: 14px;
+            border: none;
+            background: var(--rose-deep);
+            color: var(--white);
+            font-weight: 700;
+            font-size: .95rem;
+            cursor: pointer;
+        }
+        .secure-primary-btn:disabled { opacity: .6; cursor: default; }
+        .secure-link-btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: none;
+            border: none;
+            color: var(--ink-soft);
+            font-size: .8rem;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-top: .7rem;
+        }
+        .secure-gallery-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .6rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .secure-gallery-header h2 { margin: 0; text-align: left; }
+        .secure-gallery-header-actions { display: flex; gap: .5rem; }
+        .secure-upload-btn, .secure-logout-btn {
+            padding: .55rem .9rem;
+            border-radius: 12px;
+            border: 1.5px solid var(--card-border);
+            background: var(--paper);
+            color: var(--ink);
+            font-size: .82rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .secure-upload-status {
+            font-size: .8rem;
+            color: var(--ink-soft);
+            text-align: center;
+            margin: 0 0 .8rem;
+        }
+        .secure-photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+            gap: .5rem;
+        }
+        .secure-photo-thumb {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            background: var(--paper);
+        }
+        .secure-photo-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .secure-empty-msg {
+            text-align: center;
+            color: var(--ink-soft);
+            font-size: .85rem;
+            padding: 1.5rem 0;
+        }
+        .secure-lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 20010;
+            background: rgba(0, 0, 0, .88);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .secure-lightbox.hidden { display: none; }
+        .secure-lightbox img {
+            max-width: 92vw;
+            max-height: 82vh;
+            border-radius: 10px;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, .5);
+            animation: jellySpringIn .35s cubic-bezier(.34, 1.56, .64, 1) both;
+        }
+        .secure-lightbox-close, .secure-lightbox-delete {
+            position: absolute;
+            top: 1rem;
+            border: none;
+            border-radius: 20px;
+            padding: .5rem .9rem;
+            font-size: .85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .secure-lightbox-close { right: 1rem; background: rgba(255, 255, 255, .9); color: var(--ink); }
+        .secure-lightbox-delete { left: 1rem; background: #b3413a; color: var(--white); }
     </style>
 
     <style>
@@ -13051,10 +13314,57 @@
                     <button type="button" id="navDockMoreTheme" role="menuitem">🎨 Themes</button>
                     <button type="button" id="navDockMoreWand" role="menuitem">🪄 Magic Wand</button>
                     <button type="button" id="navDockMoreFight" role="menuitem">🔨 In case of a fight<span class="nav-dock-dot nav-dock-dot-inline" id="navDockFightDot"></span></button>
+                    <button type="button" id="navDockMoreSecure" role="menuitem">🔒 Just Us</button>
                 </div>
             </nav>
         </div>
         <button type="button" class="nav-dock-collapsed-btn" id="navDockCollapsedBtn" aria-label="Open quick navigation">D</button>
+
+        <!-- ─── "Just Us" — private, login-gated photo section ─── -->
+        <div class="secure-section-overlay hidden" id="secureSectionOverlay" aria-hidden="true">
+            <div class="secure-section-card">
+                <button type="button" class="secure-section-close" id="secureSectionCloseBtn" aria-label="Close">✕</button>
+
+                <div class="secure-lock-screen" id="secureLockScreen">
+                    <div class="secure-lock-icon">🔒</div>
+                    <h2>Just Us</h2>
+                    <p class="secure-lock-sub">Only the two of you can open this.</p>
+                    <div class="secure-identity-row" id="secureIdentityRow">
+                        <button type="button" class="secure-identity-btn" data-email="kavisetti2001@gmail.com">Jaggu</button>
+                        <button type="button" class="secure-identity-btn" data-email="lalithamalavika@gmail.com">Malavika</button>
+                    </div>
+                    <form id="secureAuthForm" autocomplete="on">
+                        <input type="email" id="secureEmailInput" placeholder="Pick who you are above" autocomplete="username" readonly>
+                        <input type="password" id="securePasswordInput" placeholder="Password" autocomplete="current-password">
+                        <input type="password" id="secureConfirmInput" placeholder="Confirm password" autocomplete="new-password" class="hidden">
+                        <p class="secure-error hidden" id="secureErrorMsg"></p>
+                        <button type="submit" class="secure-primary-btn" id="secureSubmitBtn" disabled>Sign in</button>
+                    </form>
+                    <button type="button" class="secure-link-btn" id="secureToggleModeBtn">First time here? Create your account</button>
+                    <button type="button" class="secure-link-btn" id="secureForgotBtn">Forgot password?</button>
+                </div>
+
+                <div class="secure-gallery-screen hidden" id="secureGalleryScreen">
+                    <div class="secure-gallery-header">
+                        <h2>🔒 Just Us</h2>
+                        <div class="secure-gallery-header-actions">
+                            <label class="secure-upload-btn" for="secureUploadInput">+ Add photo</label>
+                            <input type="file" id="secureUploadInput" accept="image/*" multiple hidden>
+                            <button type="button" class="secure-logout-btn" id="secureLogoutBtn">Log out</button>
+                        </div>
+                    </div>
+                    <p class="secure-upload-status hidden" id="secureUploadStatus"></p>
+                    <div class="secure-photo-grid" id="securePhotoGrid"></div>
+                    <p class="secure-empty-msg hidden" id="secureEmptyMsg">No photos yet — add your first one.</p>
+                </div>
+            </div>
+
+            <div class="secure-lightbox hidden" id="secureLightbox">
+                <button type="button" class="secure-lightbox-close" id="secureLightboxClose">✕</button>
+                <button type="button" class="secure-lightbox-delete" id="secureLightboxDelete">🗑 Delete</button>
+                <img id="secureLightboxImg" alt="">
+            </div>
+        </div>
 
         <!-- ─── Chat ─── -->
         <button type="button" class="chat-fab" id="chatFabBtn" aria-label="Open chat" title="Chat">
@@ -13326,6 +13636,7 @@
                 <button type="button" data-season="blossom">🌸 Cherry blossom</button>
                 <button type="button" data-season="fireworks">🎆 Fireworks</button>
                 <button type="button" data-season="aura">🌌 Aura</button>
+                <button type="button" data-season="bubbles">🫧 Bubbles</button>
                 <button type="button" data-season="autumn">🍂 Autumn drizzle</button>
                 <button type="button" data-season="stars">🎈 Birthday stars</button>
                 <button type="button" data-season="night">🌙 Night sky</button>
@@ -13344,6 +13655,7 @@
                     <button type="button" data-season="blossom">🌸 Cherry blossom</button>
                     <button type="button" data-season="fireworks">🎆 Fireworks</button>
                     <button type="button" data-season="aura">🌌 Aura</button>
+                    <button type="button" data-season="bubbles">🫧 Bubbles</button>
                     <button type="button" data-season="autumn">🍂 Autumn drizzle</button>
                     <button type="button" data-season="stars">🎈 Birthday stars</button>
                     <button type="button" data-season="night">🌙 Night sky</button>
@@ -14973,6 +15285,26 @@
             if (supportsHover && !prefersReducedMotion) {
                 let lastTrailAt = 0;
                 document.addEventListener('mousemove', (e) => {
+                    // Bubbles gets its own trail — small rising bubbles
+                    // instead of hearts, matching the theme.
+                    if (seasonalLayer.classList.contains('bubbles')) {
+                        const now = Date.now();
+                        if (now - lastTrailAt < 130) return;
+                        lastTrailAt = now;
+                        const size = 8 + Math.random() * 14;
+                        const b = document.createElement('span');
+                        b.className = 'bubble-sprite';
+                        b.style.position = 'fixed';
+                        b.style.width = size + 'px';
+                        b.style.height = size + 'px';
+                        b.style.left = (e.clientX - size / 2) + 'px';
+                        b.style.top = (e.clientY - size / 2) + 'px';
+                        b.style.bottom = 'auto';
+                        b.style.animation = 'bubbleTrailRise 1.3s ease-out forwards';
+                        document.body.appendChild(b);
+                        setTimeout(() => b.remove(), 1300);
+                        return;
+                    }
                     // Only the default heart/flower trail when no theme
                     // is selected — themes with their own cursor trail
                     // (aura, fireworks, rain's ripples, etc.) handle
@@ -22150,6 +22482,7 @@
                     snow: { count: scale(20), symbols: ['❄', '❅', '❆'] },
                     blossom: { count: scale(18), symbols: [''] },
                     autumn: { count: scale(16), symbols: [''] },
+                    bubbles: { count: scale(16), symbols: [''] },
                     stars: { count: scale(28), symbols: ['✦', '✧', '⋆'] },
                     festival: { count: scale(14), symbols: ['🪔', '🌸', '🎊', '✨'] },
                     night: { count: scale(40), symbols: ['·', '✦', '⋆'] },
@@ -22166,10 +22499,12 @@
                             'sparkle' : '');
                         if (renderKey === 'autumn') piece.className = 'leaf';
                         if (renderKey === 'fireflies') piece.className = 'firefly';
+                        if (renderKey === 'bubbles') piece.className = 'bubble-sprite';
                         piece.style.left = `${Math.random() * 100}%`;
                         if (renderKey === 'rain' || renderKey === 'snow' || renderKey === 'blossom' || renderKey ===
                             'autumn') piece.style.top = `${-15 - Math.random() * 90}px`;
                         else if (renderKey === 'fireflies') piece.style.top = `${12 + Math.random() * 76}%`;
+                        else if (renderKey === 'bubbles') piece.style.bottom = `${-40 - Math.random() * 220}px`;
                         else piece.style.top = `${Math.random() * 90}%`;
                         piece.style.fontSize = (renderKey === 'rain' || renderKey === 'blossom') ? '1px' :
                             renderKey === 'snow' ? `${.55 + Math.random() * .85}rem` :
@@ -22178,9 +22513,17 @@
                             renderKey === 'snow' ? `${7 + Math.random() * 7}s` :
                             renderKey === 'blossom' ? `${8 + Math.random() * 8}s` :
                             renderKey === 'autumn' ? `${9 + Math.random() * 8}s` :
+                            renderKey === 'bubbles' ? `${9 + Math.random() * 10}s` :
                             renderKey === 'fireflies' ? `${5 + Math.random() * 6}s` :
                             `${1.4 + Math.random() * 2.6}s`;
-                        piece.style.animationDelay = `${-Math.random() * 3}s`;
+                        piece.style.animationDelay = renderKey === 'bubbles' ? `${-Math.random() * 18}s` :
+                            `${-Math.random() * 3}s`;
+                        if (renderKey === 'bubbles') {
+                            const size = 14 + Math.random() * 30;
+                            piece.style.width = `${size}px`;
+                            piece.style.height = `${size}px`;
+                            piece.style.opacity = `${.5 + Math.random() * .4}`;
+                        }
                         if (renderKey === 'rain') {
                             piece.style.opacity = `${.4 + Math.random() * .55}`;
                             piece.style.filter = (!isSmallScreen && Math.random() < .4) ? 'blur(.6px)' : 'none';
@@ -22276,6 +22619,54 @@
                 // which starts/stops on its own by watching this element's
                 // class, so there's nothing left to build in the DOM for it.
             }
+
+            /* ─── Bubbles: pop-on-click + a steady-state replacement so
+               popping bubbles doesn't thin the ambient effect out over
+               time — one new bubble rises from the bottom a little
+               while after each pop. ─── */
+            function spawnBubble() {
+                if (!seasonalLayer.classList.contains('bubbles')) return;
+                const piece = document.createElement('span');
+                piece.className = 'bubble-sprite';
+                piece.style.left = `${Math.random() * 100}%`;
+                piece.style.bottom = `${-40 - Math.random() * 60}px`;
+                const size = 14 + Math.random() * 30;
+                piece.style.width = `${size}px`;
+                piece.style.height = `${size}px`;
+                piece.style.opacity = `${.5 + Math.random() * .4}`;
+                piece.style.animationDuration = `${9 + Math.random() * 10}s`;
+                seasonalLayer.appendChild(piece);
+            }
+            function popBubble(el) {
+                const rect = el.getBoundingClientRect();
+                el.remove();
+                const ring = document.createElement('div');
+                ring.className = 'bubble-pop';
+                ring.style.left = `${rect.left}px`;
+                ring.style.top = `${rect.top}px`;
+                ring.style.width = `${rect.width}px`;
+                ring.style.height = `${rect.height}px`;
+                document.body.appendChild(ring);
+                setTimeout(() => ring.remove(), 500);
+                const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+                for (let i = 0; i < 5; i++) {
+                    const drop = document.createElement('span');
+                    drop.className = 'bubble-droplet';
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 14 + Math.random() * 22;
+                    drop.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+                    drop.style.setProperty('--dy', `${Math.sin(angle) * dist - 10}px`);
+                    drop.style.left = `${cx}px`;
+                    drop.style.top = `${cy}px`;
+                    document.body.appendChild(drop);
+                    setTimeout(() => drop.remove(), 550);
+                }
+                setTimeout(spawnBubble, 400 + Math.random() * 1200);
+            }
+            document.addEventListener('click', (e) => {
+                const bubble = e.target.closest('.bubble-sprite');
+                if (bubble) popBubble(bubble);
+            });
 
             function mapWeatherCodeToScene(code) {
                 if (code === null || code === undefined) return 'none';
@@ -29199,7 +29590,6 @@
                 lastFrameTime = now;
                 ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
                 if (mode === 'rain') drawRipples(dt);
-                else if (mode === 'aura') drawAura(dt);
                 else if (mode === 'snow') drawSnow(dt, now / 1000);
                 else if (mode === 'fireworks') drawFireworks(dt);
             }
@@ -29265,13 +29655,636 @@
                     if (mode === 'rain') {
                         const now = performance.now();
                         if (now - lastRippleSpawn > 160) { spawnRipple(e.clientX, e.clientY); lastRippleSpawn = now; }
-                    } else if (mode === 'aura') {
-                        spawnAura(e.clientX, e.clientY);
                     }
+                    // Aura used to spawn its cursor trail here too — that's
+                    // now the WebGL fluid-cursor module further down the
+                    // page (fluidAuraCursor), which watches #seasonalLayer's
+                    // class itself instead of hooking in here.
                 }, { passive: true });
             }
         } catch (err) {
             console.error('Seasonal canvas FX failed to initialize (core site unaffected):', err);
+        }
+    })();
+
+    /* ═══════════════════════════════════════════════════════════════
+       Aura's cursor trail — WebGL fluid simulation (replaces the old
+       canvas-2D colour-blob trail). Same Navier–Stokes-style solver
+       approach as the "Fluid Cursor" component at
+       https://cursify.ui-layouts.com/components/fluid-cursor, adapted
+       to run as a plain module instead of a React hook, on its own
+       canvas (a WebGL context can't share a canvas that already has a
+       2D context, which #seasonalFxCanvas above already does), and
+       gated so it only ever runs while the Aura theme is selected —
+       laptop/desktop only, this is the heaviest visual effect on the
+       page and the person specifically asked to keep effects like
+       this off of phones. Entirely self-contained and defensively
+       wrapped so a WebGL failure here can't take out the rest of the
+       site. ═══════════════════════════════════════════════════════ */
+    (function fluidAuraCursor() {
+        try {
+            const isDesktop = window.matchMedia &&
+                window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+            const reduceMotion = window.matchMedia &&
+                window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (!isDesktop || reduceMotion) return;
+
+            const seasonalLayerEl = document.getElementById('seasonalLayer');
+            if (!seasonalLayerEl) return;
+
+            let canvas = null, sim = null, active = false;
+
+            function ensureCanvas() {
+                if (canvas) return canvas;
+                canvas = document.createElement('canvas');
+                canvas.id = 'fluidAuraCanvas';
+                canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;' +
+                    'z-index:500;pointer-events:none;display:none;';
+                document.body.appendChild(canvas);
+                return canvas;
+            }
+
+            function start() {
+                if (active) return;
+                active = true;
+                ensureCanvas();
+                canvas.style.display = 'block';
+                if (!sim) sim = createFluidSim(canvas);
+                sim.resume();
+            }
+            function stop() {
+                if (!active) return;
+                active = false;
+                if (sim) sim.pause();
+                if (canvas) canvas.style.display = 'none';
+            }
+
+            function sync() { seasonalLayerEl.classList.contains('aura') ? start() : stop(); }
+            const mo = new MutationObserver(sync);
+            mo.observe(seasonalLayerEl, { attributes: true, attributeFilter: ['class'] });
+            sync();
+
+            document.addEventListener('visibilitychange', () => {
+                if (!sim) return;
+                if (document.hidden) sim.pause();
+                else if (active) sim.resume();
+            });
+
+            /* ───────────────── the solver itself ───────────────── */
+            function createFluidSim(canvas) {
+                // Soft purple/pink/blue palette matching the Aura
+                // theme's own aurora gradient, instead of a fully
+                // random rainbow — small jitter per splat so it still
+                // feels alive rather than repeating three flat hues.
+                const AURA_HUES = [0.78, 0.83, 0.90, 0.58, 0.63];
+                let hueIdx = 0;
+
+                let config = {
+                    SIM_RESOLUTION: 128,
+                    DYE_RESOLUTION: 1024,
+                    CAPTURE_RESOLUTION: 512,
+                    DENSITY_DISSIPATION: 3.2,
+                    VELOCITY_DISSIPATION: 2,
+                    PRESSURE: 0.1,
+                    PRESSURE_ITERATIONS: 18,
+                    CURL: 3,
+                    SPLAT_RADIUS: 0.22,
+                    SPLAT_FORCE: 5200,
+                    SHADING: true,
+                    COLOR_UPDATE_SPEED: 6,
+                    BACK_COLOR: { r: 0, g: 0, b: 0 },
+                    TRANSPARENT: true,
+                };
+
+                function pointerPrototype() {
+                    this.id = -1; this.texcoordX = 0; this.texcoordY = 0;
+                    this.prevTexcoordX = 0; this.prevTexcoordY = 0;
+                    this.deltaX = 0; this.deltaY = 0; this.down = false;
+                    this.moved = false; this.color = [0, 0, 0];
+                }
+                const pointer = new pointerPrototype();
+
+                const params = { alpha: true, depth: false, stencil: false, antialias: false, preserveDrawingBuffer: false };
+                let gl = canvas.getContext('webgl2', params);
+                const isWebGL2 = !!gl;
+                if (!isWebGL2) gl = canvas.getContext('webgl', params) || canvas.getContext('experimental-webgl', params);
+                if (!gl) throw new Error('WebGL unavailable');
+
+                let halfFloat, supportLinearFiltering;
+                if (isWebGL2) {
+                    gl.getExtension('EXT_color_buffer_float');
+                    supportLinearFiltering = gl.getExtension('OES_texture_float_linear');
+                } else {
+                    halfFloat = gl.getExtension('OES_texture_half_float');
+                    supportLinearFiltering = gl.getExtension('OES_texture_half_float_linear');
+                }
+                if (!supportLinearFiltering) { config.DYE_RESOLUTION = 256; config.SHADING = false; }
+
+                gl.clearColor(0, 0, 0, 1);
+                const halfFloatTexType = isWebGL2 ? gl.HALF_FLOAT : (halfFloat && halfFloat.HALF_FLOAT_OES);
+
+                function getSupportedFormat(internalFormat, format, type) {
+                    if (!supportRenderTextureFormat(internalFormat, format, type)) {
+                        if (isWebGL2) {
+                            if (internalFormat === gl.R16F) return getSupportedFormat(gl.RG16F, gl.RG, type);
+                            if (internalFormat === gl.RG16F) return getSupportedFormat(gl.RGBA16F, gl.RGBA, type);
+                        }
+                        return null;
+                    }
+                    return { internalFormat, format };
+                }
+                function supportRenderTextureFormat(internalFormat, format, type) {
+                    const texture = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, texture);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, 4, 4, 0, format, type, null);
+                    const fbo = gl.createFramebuffer();
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+                    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+                    return gl.checkFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE;
+                }
+
+                let formatRGBA, formatRG, formatR;
+                if (isWebGL2) {
+                    formatRGBA = getSupportedFormat(gl.RGBA16F, gl.RGBA, halfFloatTexType);
+                    formatRG = getSupportedFormat(gl.RG16F, gl.RG, halfFloatTexType);
+                    formatR = getSupportedFormat(gl.R16F, gl.RED, halfFloatTexType);
+                } else {
+                    formatRGBA = getSupportedFormat(gl.RGBA, gl.RGBA, halfFloatTexType);
+                    formatRG = formatRGBA; formatR = formatRGBA;
+                }
+
+                class Material {
+                    constructor(vertexShader, fragmentShaderSource) {
+                        this.vertexShader = vertexShader;
+                        this.fragmentShaderSource = fragmentShaderSource;
+                        this.programs = []; this.activeProgram = null; this.uniforms = [];
+                    }
+                    setKeywords(keywords) {
+                        let hash = 0;
+                        for (let i = 0; i < keywords.length; i++) hash += hashCode(keywords[i]);
+                        let program = this.programs[hash];
+                        if (program == null) {
+                            const fs = compileShader(gl.FRAGMENT_SHADER, this.fragmentShaderSource, keywords);
+                            program = createProgram(this.vertexShader, fs);
+                            this.programs[hash] = program;
+                        }
+                        if (program == this.activeProgram) return;
+                        this.uniforms = getUniforms(program);
+                        this.activeProgram = program;
+                    }
+                    bind() { gl.useProgram(this.activeProgram); }
+                }
+                class Program {
+                    constructor(vertexShader, fragmentShader) {
+                        this.uniforms = {};
+                        this.program = createProgram(vertexShader, fragmentShader);
+                        this.uniforms = getUniforms(this.program);
+                    }
+                    bind() { gl.useProgram(this.program); }
+                }
+                function createProgram(vs, fs) {
+                    const program = gl.createProgram();
+                    gl.attachShader(program, vs); gl.attachShader(program, fs);
+                    gl.linkProgram(program);
+                    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) console.warn(gl.getProgramInfoLog(program));
+                    return program;
+                }
+                function getUniforms(program) {
+                    const uniforms = [];
+                    const count = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+                    for (let i = 0; i < count; i++) {
+                        const name = gl.getActiveUniform(program, i).name;
+                        uniforms[name] = gl.getUniformLocation(program, name);
+                    }
+                    return uniforms;
+                }
+                function compileShader(type, source, keywords) {
+                    source = addKeywords(source, keywords);
+                    const shader = gl.createShader(type);
+                    gl.shaderSource(shader, source);
+                    gl.compileShader(shader);
+                    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) console.warn(gl.getShaderInfoLog(shader));
+                    return shader;
+                }
+                function addKeywords(source, keywords) {
+                    if (!keywords) return source;
+                    let s = '';
+                    keywords.forEach(k => { s += '#define ' + k + '\n'; });
+                    return s + source;
+                }
+
+                const baseVertexShader = compileShader(gl.VERTEX_SHADER, `
+                    precision highp float;
+                    attribute vec2 aPosition;
+                    varying vec2 vUv, vL, vR, vT, vB;
+                    uniform vec2 texelSize;
+                    void main () {
+                        vUv = aPosition * 0.5 + 0.5;
+                        vL = vUv - vec2(texelSize.x, 0.0); vR = vUv + vec2(texelSize.x, 0.0);
+                        vT = vUv + vec2(0.0, texelSize.y); vB = vUv - vec2(0.0, texelSize.y);
+                        gl_Position = vec4(aPosition, 0.0, 1.0);
+                    }`);
+                const copyShader = compileShader(gl.FRAGMENT_SHADER, `
+                    precision mediump float; varying highp vec2 vUv; uniform sampler2D uTexture;
+                    void main () { gl_FragColor = texture2D(uTexture, vUv); }`);
+                const clearShader = compileShader(gl.FRAGMENT_SHADER, `
+                    precision mediump float; varying highp vec2 vUv; uniform sampler2D uTexture; uniform float value;
+                    void main () { gl_FragColor = value * texture2D(uTexture, vUv); }`);
+                const displayShaderSource = `
+                    precision highp float; precision highp sampler2D;
+                    varying vec2 vUv, vL, vR, vT, vB;
+                    uniform sampler2D uTexture; uniform vec2 texelSize;
+                    void main () {
+                        vec3 c = texture2D(uTexture, vUv).rgb;
+                        #ifdef SHADING
+                        vec3 lc = texture2D(uTexture, vL).rgb; vec3 rc = texture2D(uTexture, vR).rgb;
+                        vec3 tc = texture2D(uTexture, vT).rgb; vec3 bc = texture2D(uTexture, vB).rgb;
+                        float dx = length(rc) - length(lc); float dy = length(tc) - length(bc);
+                        vec3 n = normalize(vec3(dx, dy, length(texelSize)));
+                        vec3 l = vec3(0.0, 0.0, 1.0);
+                        float diffuse = clamp(dot(n, l) + 0.7, 0.7, 1.0);
+                        c *= diffuse;
+                        #endif
+                        float a = max(c.r, max(c.g, c.b));
+                        gl_FragColor = vec4(c, a);
+                    }`;
+                const splatShader = compileShader(gl.FRAGMENT_SHADER, `
+                    precision highp float; precision highp sampler2D;
+                    varying vec2 vUv; uniform sampler2D uTarget; uniform float aspectRatio;
+                    uniform vec3 color; uniform vec2 point; uniform float radius;
+                    void main () {
+                        vec2 p = vUv - point.xy; p.x *= aspectRatio;
+                        vec3 splat = exp(-dot(p, p) / radius) * color;
+                        vec3 base = texture2D(uTarget, vUv).xyz;
+                        gl_FragColor = vec4(base + splat, 1.0);
+                    }`);
+                const advectionShader = compileShader(gl.FRAGMENT_SHADER, `
+                    precision highp float; precision highp sampler2D;
+                    varying vec2 vUv; uniform sampler2D uVelocity; uniform sampler2D uSource;
+                    uniform vec2 texelSize; uniform vec2 dyeTexelSize; uniform float dt; uniform float dissipation;
+                    vec4 bilerp (sampler2D sam, vec2 uv, vec2 tsize) {
+                        vec2 st = uv / tsize - 0.5; vec2 iuv = floor(st); vec2 fuv = fract(st);
+                        vec4 a = texture2D(sam, (iuv + vec2(0.5, 0.5)) * tsize);
+                        vec4 b = texture2D(sam, (iuv + vec2(1.5, 0.5)) * tsize);
+                        vec4 c = texture2D(sam, (iuv + vec2(0.5, 1.5)) * tsize);
+                        vec4 d = texture2D(sam, (iuv + vec2(1.5, 1.5)) * tsize);
+                        return mix(mix(a, b, fuv.x), mix(c, d, fuv.x), fuv.y);
+                    }
+                    void main () {
+                        #ifdef MANUAL_FILTERING
+                        vec2 coord = vUv - dt * bilerp(uVelocity, vUv, texelSize).xy * texelSize;
+                        vec4 result = bilerp(uSource, coord, dyeTexelSize);
+                        #else
+                        vec2 coord = vUv - dt * texture2D(uVelocity, vUv).xy * texelSize;
+                        vec4 result = texture2D(uSource, coord);
+                        #endif
+                        float decay = 1.0 + dissipation * dt;
+                        gl_FragColor = result / decay;
+                    }`, supportLinearFiltering ? null : ['MANUAL_FILTERING']);
+                const divergenceShader = compileShader(gl.FRAGMENT_SHADER, `
+                    precision mediump float; precision mediump sampler2D;
+                    varying highp vec2 vUv, vL, vR, vT, vB; uniform sampler2D uVelocity;
+                    void main () {
+                        float L = texture2D(uVelocity, vL).x; float R = texture2D(uVelocity, vR).x;
+                        float T = texture2D(uVelocity, vT).y; float B = texture2D(uVelocity, vB).y;
+                        vec2 C = texture2D(uVelocity, vUv).xy;
+                        if (vL.x < 0.0) L = -C.x; if (vR.x > 1.0) R = -C.x;
+                        if (vT.y > 1.0) T = -C.y; if (vB.y < 0.0) B = -C.y;
+                        float div = 0.5 * (R - L + T - B);
+                        gl_FragColor = vec4(div, 0.0, 0.0, 1.0);
+                    }`);
+                const curlShader = compileShader(gl.FRAGMENT_SHADER, `
+                    precision mediump float; precision mediump sampler2D;
+                    varying highp vec2 vUv, vL, vR, vT, vB; uniform sampler2D uVelocity;
+                    void main () {
+                        float L = texture2D(uVelocity, vL).y; float R = texture2D(uVelocity, vR).y;
+                        float T = texture2D(uVelocity, vT).x; float B = texture2D(uVelocity, vB).x;
+                        float vorticity = R - L - T + B;
+                        gl_FragColor = vec4(0.5 * vorticity, 0.0, 0.0, 1.0);
+                    }`);
+                const vorticityShader = compileShader(gl.FRAGMENT_SHADER, `
+                    precision highp float; precision highp sampler2D;
+                    varying vec2 vUv, vL, vR, vT, vB; uniform sampler2D uVelocity; uniform sampler2D uCurl;
+                    uniform float curl; uniform float dt;
+                    void main () {
+                        float L = texture2D(uCurl, vL).x; float R = texture2D(uCurl, vR).x;
+                        float T = texture2D(uCurl, vT).x; float B = texture2D(uCurl, vB).x;
+                        float C = texture2D(uCurl, vUv).x;
+                        vec2 force = 0.5 * vec2(abs(T) - abs(B), abs(R) - abs(L));
+                        force /= length(force) + 0.0001; force *= curl * C; force.y *= -1.0;
+                        vec2 velocity = texture2D(uVelocity, vUv).xy;
+                        velocity += force * dt;
+                        velocity = min(max(velocity, -1000.0), 1000.0);
+                        gl_FragColor = vec4(velocity, 0.0, 1.0);
+                    }`);
+                const pressureShader = compileShader(gl.FRAGMENT_SHADER, `
+                    precision mediump float; precision mediump sampler2D;
+                    varying highp vec2 vUv, vL, vR, vT, vB; uniform sampler2D uPressure; uniform sampler2D uDivergence;
+                    void main () {
+                        float L = texture2D(uPressure, vL).x; float R = texture2D(uPressure, vR).x;
+                        float T = texture2D(uPressure, vT).x; float B = texture2D(uPressure, vB).x;
+                        float divergence = texture2D(uDivergence, vUv).x;
+                        float pressure = (L + R + B + T - divergence) * 0.25;
+                        gl_FragColor = vec4(pressure, 0.0, 0.0, 1.0);
+                    }`);
+                const gradientSubtractShader = compileShader(gl.FRAGMENT_SHADER, `
+                    precision mediump float; precision mediump sampler2D;
+                    varying highp vec2 vUv, vL, vR, vT, vB; uniform sampler2D uPressure; uniform sampler2D uVelocity;
+                    void main () {
+                        float L = texture2D(uPressure, vL).x; float R = texture2D(uPressure, vR).x;
+                        float T = texture2D(uPressure, vT).x; float B = texture2D(uPressure, vB).x;
+                        vec2 velocity = texture2D(uVelocity, vUv).xy;
+                        velocity.xy -= vec2(R - L, T - B);
+                        gl_FragColor = vec4(velocity, 0.0, 1.0);
+                    }`);
+
+                const blit = (() => {
+                    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]), gl.STATIC_DRAW);
+                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
+                    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 0, 2, 3]), gl.STATIC_DRAW);
+                    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+                    gl.enableVertexAttribArray(0);
+                    return (target) => {
+                        if (target == null) { gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight); gl.bindFramebuffer(gl.FRAMEBUFFER, null); }
+                        else { gl.viewport(0, 0, target.width, target.height); gl.bindFramebuffer(gl.FRAMEBUFFER, target.fbo); }
+                        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+                    };
+                })();
+
+                let dye, velocity, divergence, curl, pressure;
+                const copyProgram = new Program(baseVertexShader, copyShader);
+                const clearProgram = new Program(baseVertexShader, clearShader);
+                const splatProgram = new Program(baseVertexShader, splatShader);
+                const advectionProgram = new Program(baseVertexShader, advectionShader);
+                const divergenceProgram = new Program(baseVertexShader, divergenceShader);
+                const curlProgram = new Program(baseVertexShader, curlShader);
+                const vorticityProgram = new Program(baseVertexShader, vorticityShader);
+                const pressureProgram = new Program(baseVertexShader, pressureShader);
+                const gradienSubtractProgram = new Program(baseVertexShader, gradientSubtractShader);
+                const displayMaterial = new Material(baseVertexShader, displayShaderSource);
+
+                function createFBO(w, h, internalFormat, format, type, param) {
+                    gl.activeTexture(gl.TEXTURE0);
+                    const texture = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, texture);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, param);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, param);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, w, h, 0, format, type, null);
+                    const fbo = gl.createFramebuffer();
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+                    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+                    gl.viewport(0, 0, w, h); gl.clear(gl.COLOR_BUFFER_BIT);
+                    return { texture, fbo, width: w, height: h, texelSizeX: 1 / w, texelSizeY: 1 / h,
+                        attach(id) { gl.activeTexture(gl.TEXTURE0 + id); gl.bindTexture(gl.TEXTURE_2D, texture); return id; } };
+                }
+                function createDoubleFBO(w, h, internalFormat, format, type, param) {
+                    let fbo1 = createFBO(w, h, internalFormat, format, type, param);
+                    let fbo2 = createFBO(w, h, internalFormat, format, type, param);
+                    return { width: w, height: h, texelSizeX: fbo1.texelSizeX, texelSizeY: fbo1.texelSizeY,
+                        get read() { return fbo1; }, set read(v) { fbo1 = v; },
+                        get write() { return fbo2; }, set write(v) { fbo2 = v; },
+                        swap() { const t = fbo1; fbo1 = fbo2; fbo2 = t; } };
+                }
+                function resizeFBO(target, w, h, internalFormat, format, type, param) {
+                    const newFBO = createFBO(w, h, internalFormat, format, type, param);
+                    copyProgram.bind();
+                    gl.uniform1i(copyProgram.uniforms.uTexture, target.attach(0));
+                    blit(newFBO);
+                    return newFBO;
+                }
+                function resizeDoubleFBO(target, w, h, internalFormat, format, type, param) {
+                    if (target.width == w && target.height == h) return target;
+                    target.read = resizeFBO(target.read, w, h, internalFormat, format, type, param);
+                    target.write = createFBO(w, h, internalFormat, format, type, param);
+                    target.width = w; target.height = h;
+                    target.texelSizeX = 1 / w; target.texelSizeY = 1 / h;
+                    return target;
+                }
+
+                function getResolution(resolution) {
+                    let aspectRatio = gl.drawingBufferWidth / gl.drawingBufferHeight;
+                    if (aspectRatio < 1) aspectRatio = 1 / aspectRatio;
+                    const min = Math.round(resolution), max = Math.round(resolution * aspectRatio);
+                    return gl.drawingBufferWidth > gl.drawingBufferHeight ? { width: max, height: min } : { width: min, height: max };
+                }
+                function initFramebuffers() {
+                    const simRes = getResolution(config.SIM_RESOLUTION);
+                    const dyeRes = getResolution(config.DYE_RESOLUTION);
+                    const texType = halfFloatTexType;
+                    const filtering = supportLinearFiltering ? gl.LINEAR : gl.NEAREST;
+                    gl.disable(gl.BLEND);
+                    dye = dye == null
+                        ? createDoubleFBO(dyeRes.width, dyeRes.height, formatRGBA.internalFormat, formatRGBA.format, texType, filtering)
+                        : resizeDoubleFBO(dye, dyeRes.width, dyeRes.height, formatRGBA.internalFormat, formatRGBA.format, texType, filtering);
+                    velocity = velocity == null
+                        ? createDoubleFBO(simRes.width, simRes.height, formatRG.internalFormat, formatRG.format, texType, filtering)
+                        : resizeDoubleFBO(velocity, simRes.width, simRes.height, formatRG.internalFormat, formatRG.format, texType, filtering);
+                    divergence = createFBO(simRes.width, simRes.height, formatR.internalFormat, formatR.format, texType, gl.NEAREST);
+                    curl = createFBO(simRes.width, simRes.height, formatR.internalFormat, formatR.format, texType, gl.NEAREST);
+                    pressure = createDoubleFBO(simRes.width, simRes.height, formatR.internalFormat, formatR.format, texType, gl.NEAREST);
+                }
+
+                function updateKeywords() {
+                    const kw = [];
+                    if (config.SHADING) kw.push('SHADING');
+                    displayMaterial.setKeywords(kw);
+                }
+                updateKeywords();
+                initFramebuffers();
+
+                let raf = 0, lastUpdateTime = Date.now(), colorUpdateTimer = 0;
+
+                function scaleByPixelRatio(input) { return Math.floor(input * (window.devicePixelRatio || 1)); }
+                function resizeCanvasIfNeeded() {
+                    const width = scaleByPixelRatio(canvas.clientWidth), height = scaleByPixelRatio(canvas.clientHeight);
+                    if (canvas.width != width || canvas.height != height) { canvas.width = width; canvas.height = height; return true; }
+                    return false;
+                }
+                function calcDeltaTime() {
+                    const now = Date.now();
+                    let dt = (now - lastUpdateTime) / 1000;
+                    dt = Math.min(dt, 0.0166666);
+                    lastUpdateTime = now;
+                    return dt;
+                }
+                function generateColor() {
+                    // Cycle gently through the aura palette rather than
+                    // pure random hue, and keep it soft (not neon).
+                    hueIdx = (hueIdx + (0.15 + Math.random() * 0.25)) % AURA_HUES.length;
+                    const h = AURA_HUES[Math.floor(hueIdx)] + (Math.random() * 0.04 - 0.02);
+                    const c = HSVtoRGB(h, 0.65, 1.0);
+                    c.r *= 0.16; c.g *= 0.16; c.b *= 0.16;
+                    return c;
+                }
+                function HSVtoRGB(h, s, v) {
+                    let r, g, b;
+                    const i = Math.floor(h * 6), f = h * 6 - i;
+                    const p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
+                    switch (i % 6) {
+                        case 0: r = v; g = t; b = p; break;
+                        case 1: r = q; g = v; b = p; break;
+                        case 2: r = p; g = v; b = t; break;
+                        case 3: r = p; g = q; b = v; break;
+                        case 4: r = t; g = p; b = v; break;
+                        case 5: r = v; g = p; b = q; break;
+                    }
+                    return { r, g, b };
+                }
+                function correctRadius(radius) {
+                    const aspectRatio = canvas.width / canvas.height;
+                    if (aspectRatio > 1) radius *= aspectRatio;
+                    return radius;
+                }
+                function splat(x, y, dx, dy, color) {
+                    splatProgram.bind();
+                    gl.uniform1i(splatProgram.uniforms.uTarget, velocity.read.attach(0));
+                    gl.uniform1f(splatProgram.uniforms.aspectRatio, canvas.width / canvas.height);
+                    gl.uniform2f(splatProgram.uniforms.point, x, y);
+                    gl.uniform3f(splatProgram.uniforms.color, dx, dy, 0.0);
+                    gl.uniform1f(splatProgram.uniforms.radius, correctRadius(config.SPLAT_RADIUS / 100));
+                    blit(velocity.write); velocity.swap();
+                    gl.uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
+                    gl.uniform3f(splatProgram.uniforms.color, color.r, color.g, color.b);
+                    blit(dye.write); dye.swap();
+                }
+                function splatPointer(p) {
+                    splat(p.texcoordX, p.texcoordY, p.deltaX * config.SPLAT_FORCE, p.deltaY * config.SPLAT_FORCE, p.color);
+                }
+
+                function step(dt) {
+                    gl.disable(gl.BLEND);
+                    curlProgram.bind();
+                    gl.uniform2f(curlProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+                    gl.uniform1i(curlProgram.uniforms.uVelocity, velocity.read.attach(0));
+                    blit(curl);
+                    vorticityProgram.bind();
+                    gl.uniform2f(vorticityProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+                    gl.uniform1i(vorticityProgram.uniforms.uVelocity, velocity.read.attach(0));
+                    gl.uniform1i(vorticityProgram.uniforms.uCurl, curl.attach(1));
+                    gl.uniform1f(vorticityProgram.uniforms.curl, config.CURL);
+                    gl.uniform1f(vorticityProgram.uniforms.dt, dt);
+                    blit(velocity.write); velocity.swap();
+                    divergenceProgram.bind();
+                    gl.uniform2f(divergenceProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+                    gl.uniform1i(divergenceProgram.uniforms.uVelocity, velocity.read.attach(0));
+                    blit(divergence);
+                    clearProgram.bind();
+                    gl.uniform1i(clearProgram.uniforms.uTexture, pressure.read.attach(0));
+                    gl.uniform1f(clearProgram.uniforms.value, config.PRESSURE);
+                    blit(pressure.write); pressure.swap();
+                    pressureProgram.bind();
+                    gl.uniform2f(pressureProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+                    gl.uniform1i(pressureProgram.uniforms.uDivergence, divergence.attach(0));
+                    for (let i = 0; i < config.PRESSURE_ITERATIONS; i++) {
+                        gl.uniform1i(pressureProgram.uniforms.uPressure, pressure.read.attach(1));
+                        blit(pressure.write); pressure.swap();
+                    }
+                    gradienSubtractProgram.bind();
+                    gl.uniform2f(gradienSubtractProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+                    gl.uniform1i(gradienSubtractProgram.uniforms.uPressure, pressure.read.attach(0));
+                    gl.uniform1i(gradienSubtractProgram.uniforms.uVelocity, velocity.read.attach(1));
+                    blit(velocity.write); velocity.swap();
+                    advectionProgram.bind();
+                    gl.uniform2f(advectionProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+                    if (!supportLinearFiltering) gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, velocity.texelSizeX, velocity.texelSizeY);
+                    const velocityId = velocity.read.attach(0);
+                    gl.uniform1i(advectionProgram.uniforms.uVelocity, velocityId);
+                    gl.uniform1i(advectionProgram.uniforms.uSource, velocityId);
+                    gl.uniform1f(advectionProgram.uniforms.dt, dt);
+                    gl.uniform1f(advectionProgram.uniforms.dissipation, config.VELOCITY_DISSIPATION);
+                    blit(velocity.write); velocity.swap();
+                    if (!supportLinearFiltering) gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, dye.texelSizeX, dye.texelSizeY);
+                    gl.uniform1i(advectionProgram.uniforms.uVelocity, velocity.read.attach(0));
+                    gl.uniform1i(advectionProgram.uniforms.uSource, dye.read.attach(1));
+                    gl.uniform1f(advectionProgram.uniforms.dissipation, config.DENSITY_DISSIPATION);
+                    blit(dye.write); dye.swap();
+                }
+                function render() {
+                    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+                    gl.enable(gl.BLEND);
+                    displayMaterial.bind();
+                    if (config.SHADING) gl.uniform2f(displayMaterial.uniforms.texelSize, 1 / gl.drawingBufferWidth, 1 / gl.drawingBufferHeight);
+                    gl.uniform1i(displayMaterial.uniforms.uTexture, dye.read.attach(0));
+                    blit(null);
+                }
+                function updateColors(dt) {
+                    colorUpdateTimer += dt * config.COLOR_UPDATE_SPEED;
+                    if (colorUpdateTimer >= 1) { colorUpdateTimer = colorUpdateTimer % 1; pointer.color = generateColor(); }
+                }
+                function update() {
+                    const dt = calcDeltaTime();
+                    if (resizeCanvasIfNeeded()) initFramebuffers();
+                    updateColors(dt);
+                    if (pointer.moved) { pointer.moved = false; splatPointer(pointer); }
+                    step(dt);
+                    render();
+                    raf = requestAnimationFrame(update);
+                }
+
+                function updatePointerDown(posX, posY) {
+                    pointer.down = true; pointer.moved = false;
+                    pointer.texcoordX = posX / canvas.width; pointer.texcoordY = 1 - posY / canvas.height;
+                    pointer.prevTexcoordX = pointer.texcoordX; pointer.prevTexcoordY = pointer.texcoordY;
+                    pointer.deltaX = 0; pointer.deltaY = 0; pointer.color = generateColor();
+                }
+                function updatePointerMove(posX, posY) {
+                    pointer.prevTexcoordX = pointer.texcoordX; pointer.prevTexcoordY = pointer.texcoordY;
+                    pointer.texcoordX = posX / canvas.width; pointer.texcoordY = 1 - posY / canvas.height;
+                    pointer.deltaX = correctDeltaX(pointer.texcoordX - pointer.prevTexcoordX);
+                    pointer.deltaY = correctDeltaY(pointer.texcoordY - pointer.prevTexcoordY);
+                    pointer.moved = Math.abs(pointer.deltaX) > 0 || Math.abs(pointer.deltaY) > 0;
+                }
+                function correctDeltaX(delta) { const a = canvas.width / canvas.height; return a < 1 ? delta * a : delta; }
+                function correctDeltaY(delta) { const a = canvas.width / canvas.height; return a > 1 ? delta / a : delta; }
+                function hashCode(s) {
+                    if (!s.length) return 0;
+                    let hash = 0;
+                    for (let i = 0; i < s.length; i++) { hash = (hash << 5) - hash + s.charCodeAt(i); hash |= 0; }
+                    return hash;
+                }
+
+                // Gate every listener on `active` — this module's own
+                // start()/stop() toggles that, so these only ever feed
+                // the sim while the Aura theme is actually selected.
+                function onMove(clientX, clientY) {
+                    if (!active) return;
+                    updatePointerMove(scaleByPixelRatio(clientX), scaleByPixelRatio(clientY));
+                }
+                function onDown(clientX, clientY) {
+                    if (!active) return;
+                    updatePointerDown(scaleByPixelRatio(clientX), scaleByPixelRatio(clientY));
+                }
+                window.addEventListener('pointermove', (e) => onMove(e.clientX, e.clientY), { passive: true });
+                window.addEventListener('pointerdown', (e) => onDown(e.clientX, e.clientY), { passive: true });
+
+                return {
+                    resume() {
+                        if (raf) return;
+                        lastUpdateTime = Date.now();
+                        raf = requestAnimationFrame(update);
+                    },
+                    pause() {
+                        if (raf) { cancelAnimationFrame(raf); raf = 0; }
+                        // Clear the dye buffer so reopening Aura later
+                        // starts fresh instead of flashing old colour.
+                        if (dye) {
+                            clearProgram.bind();
+                            gl.uniform1i(clearProgram.uniforms.uTexture, dye.read.attach(0));
+                            gl.uniform1f(clearProgram.uniforms.value, 0);
+                            blit(dye.write); dye.swap();
+                        }
+                    },
+                };
+            }
+        } catch (err) {
+            console.error('Fluid aura cursor failed to initialize (core site unaffected):', err);
         }
     })();
 
@@ -31596,6 +32609,245 @@
       } catch (err) {
           console.error('Desktop motion suite failed to initialize (core site unaffected):', err);
       }
+    })();
+    </script>
+
+    <script>
+    /* ═══════════════════════════════════════════════════════════════
+       "Just Us" — private, login-gated photo section.
+       This is UI ONLY. The real access control lives in Supabase:
+       Row Level Security policies on secure_photos and on the
+       secure-photos storage bucket, both scoped to
+       auth.email() IN (the two allowed addresses) — enforced by
+       Postgres itself, not by anything in this script. Even if every
+       line here were deleted, the data underneath stays locked. This
+       module just reflects whether a valid session exists and gives
+       the two of you a way to create one. Wrapped in try/catch and
+       fully self-contained (its own Supabase client) so a failure
+       here can't affect the rest of the site. ═══════════════════════ */
+    (function secureSection() {
+        try {
+            const SUPABASE_URL = 'https://cctlzqlchijwrxrxnmmm.supabase.co';
+            const SUPABASE_ANON_KEY =
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjdGx6cWxjaGlqd3J4cnhubW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MDg1NTksImV4cCI6MjA5OTQ4NDU1OX0.5cEM69NsRjiN2d1XqzFcqVmSp8Db0AqxRr6wLJmm5Yc';
+            if (!window.supabase) { console.warn('secureSection: Supabase JS not loaded.'); return; }
+            const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                auth: { persistSession: true, autoRefreshToken: true, storageKey: 'sb-just-us-auth' }
+            });
+
+            const ALLOWED = ['kavisetti2001@gmail.com', 'lalithamalavika@gmail.com'];
+            const BUCKET = 'secure-photos';
+            const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+
+            const $ = (id) => document.getElementById(id);
+            const overlay = $('secureSectionOverlay');
+            const lockScreen = $('secureLockScreen');
+            const galleryScreen = $('secureGalleryScreen');
+            const identityRow = $('secureIdentityRow');
+            const emailInput = $('secureEmailInput');
+            const passwordInput = $('securePasswordInput');
+            const confirmInput = $('secureConfirmInput');
+            const errorMsg = $('secureErrorMsg');
+            const authForm = $('secureAuthForm');
+            const submitBtn = $('secureSubmitBtn');
+            const toggleModeBtn = $('secureToggleModeBtn');
+            const forgotBtn = $('secureForgotBtn');
+            const uploadInput = $('secureUploadInput');
+            const uploadStatus = $('secureUploadStatus');
+            const photoGrid = $('securePhotoGrid');
+            const emptyMsg = $('secureEmptyMsg');
+            const logoutBtn = $('secureLogoutBtn');
+            const closeBtn = $('secureSectionCloseBtn');
+            const lightbox = $('secureLightbox');
+            const lightboxImg = $('secureLightboxImg');
+            const lightboxClose = $('secureLightboxClose');
+            const lightboxDelete = $('secureLightboxDelete');
+            const openBtn = $('navDockMoreSecure');
+
+            if (!overlay || !authForm) return;
+
+            let signUpMode = false;
+            let currentLightboxRow = null;
+
+            function showError(msg) {
+                errorMsg.textContent = msg;
+                errorMsg.classList.toggle('hidden', !msg);
+            }
+
+            function pickIdentity(btn) {
+                identityRow.querySelectorAll('.secure-identity-btn').forEach(b => b.classList.toggle('active', b === btn));
+                emailInput.value = btn.dataset.email;
+                submitBtn.disabled = false;
+                showError('');
+            }
+            identityRow.querySelectorAll('.secure-identity-btn').forEach(btn => {
+                btn.addEventListener('click', () => pickIdentity(btn));
+            });
+
+            function setSignUpMode(on) {
+                signUpMode = on;
+                confirmInput.classList.toggle('hidden', !on);
+                submitBtn.textContent = on ? 'Create account' : 'Sign in';
+                toggleModeBtn.textContent = on ? 'Already have an account? Sign in' : 'First time here? Create your account';
+                showError('');
+            }
+            toggleModeBtn.addEventListener('click', () => setSignUpMode(!signUpMode));
+
+            forgotBtn.addEventListener('click', async () => {
+                if (!emailInput.value) { showError('Pick who you are first.'); return; }
+                showError('');
+                const { error } = await sb.auth.resetPasswordForEmail(emailInput.value);
+                showError(error ? error.message : 'Password reset email sent — check your inbox.');
+            });
+
+            authForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = emailInput.value;
+                const password = passwordInput.value;
+                if (!ALLOWED.includes(email)) { showError('Pick who you are first.'); return; }
+                if (!password || password.length < 8) { showError('Password needs to be at least 8 characters.'); return; }
+                submitBtn.disabled = true;
+                showError('');
+                try {
+                    if (signUpMode) {
+                        if (password !== confirmInput.value) { showError("Passwords don't match."); return; }
+                        const { error } = await sb.auth.signUp({ email, password });
+                        if (error) { showError(error.message); return; }
+                        showError('Account created — check your email to confirm it, then sign in.');
+                        setSignUpMode(false);
+                    } else {
+                        const { error } = await sb.auth.signInWithPassword({ email, password });
+                        if (error) { showError(error.message); return; }
+                        passwordInput.value = '';
+                        await enterGallery();
+                    }
+                } finally {
+                    submitBtn.disabled = false;
+                }
+            });
+
+            function openOverlay() {
+                overlay.classList.remove('hidden');
+                overlay.setAttribute('aria-hidden', 'false');
+                sb.auth.getSession().then(({ data }) => {
+                    if (data && data.session) enterGallery();
+                    else showLockScreen();
+                });
+            }
+            function closeOverlay() {
+                overlay.classList.add('hidden');
+                overlay.setAttribute('aria-hidden', 'true');
+                lightbox.classList.add('hidden');
+            }
+            if (openBtn) openBtn.addEventListener('click', openOverlay);
+            closeBtn.addEventListener('click', closeOverlay);
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) closeOverlay(); });
+
+            function showLockScreen() {
+                lockScreen.classList.remove('hidden');
+                galleryScreen.classList.add('hidden');
+                passwordInput.value = ''; confirmInput.value = '';
+                showError('');
+            }
+
+            async function enterGallery() {
+                lockScreen.classList.add('hidden');
+                galleryScreen.classList.remove('hidden');
+                await loadPhotos();
+            }
+
+            logoutBtn.addEventListener('click', async () => {
+                await sb.auth.signOut();
+                showLockScreen();
+            });
+
+            /* ───────────── photos ───────────── */
+            async function loadPhotos() {
+                photoGrid.innerHTML = '';
+                const { data, error } = await sb.from('secure_photos').select('*').order('created_at', { ascending: false });
+                if (error) { uploadStatus.textContent = 'Could not load photos: ' + error.message; uploadStatus.classList.remove('hidden'); return; }
+                uploadStatus.classList.add('hidden');
+                emptyMsg.classList.toggle('hidden', !!(data && data.length));
+                if (!data) return;
+                for (const row of data) {
+                    const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(row.storage_path, 3600);
+                    const thumb = document.createElement('div');
+                    thumb.className = 'secure-photo-thumb';
+                    const img = document.createElement('img');
+                    img.src = signed ? signed.signedUrl : '';
+                    img.alt = row.caption || '';
+                    img.loading = 'lazy';
+                    thumb.appendChild(img);
+                    thumb.addEventListener('click', () => openLightbox(row, img.src));
+                    photoGrid.appendChild(thumb);
+                }
+            }
+
+            function openLightbox(row, src) {
+                currentLightboxRow = row;
+                lightboxImg.src = src;
+                lightbox.classList.remove('hidden');
+            }
+            lightboxClose.addEventListener('click', () => lightbox.classList.add('hidden'));
+            lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.classList.add('hidden'); });
+            lightboxDelete.addEventListener('click', async () => {
+                if (!currentLightboxRow) return;
+                if (!confirm('Delete this photo? This cannot be undone.')) return;
+                const row = currentLightboxRow;
+                await sb.storage.from(BUCKET).remove([row.storage_path]);
+                await sb.from('secure_photos').delete().eq('id', row.id);
+                lightbox.classList.add('hidden');
+                await loadPhotos();
+            });
+
+            uploadInput.addEventListener('change', async () => {
+                const files = Array.from(uploadInput.files || []);
+                if (!files.length) return;
+                uploadStatus.classList.remove('hidden');
+                const { data: sessionData } = await sb.auth.getSession();
+                const email = sessionData && sessionData.session ? sessionData.session.user.email : '';
+                let done = 0;
+                for (const file of files) {
+                    uploadStatus.textContent = `Uploading ${done + 1} of ${files.length}…`;
+                    const path = `${crypto.randomUUID()}-${file.name}`.replace(/\s+/g, '_');
+                    const { error: upErr } = await sb.storage.from(BUCKET).upload(path, file, { upsert: false });
+                    if (upErr) { uploadStatus.textContent = 'Upload failed: ' + upErr.message; continue; }
+                    await sb.from('secure_photos').insert({ storage_path: path, uploaded_by: email });
+                    done++;
+                }
+                uploadStatus.textContent = `Added ${done} photo${done === 1 ? '' : 's'}.`;
+                uploadInput.value = '';
+                await loadPhotos();
+                setTimeout(() => uploadStatus.classList.add('hidden'), 2500);
+            });
+
+            /* ───────────── inactivity auto-lock ─────────────
+               Tracked site-wide (not just while this section is open)
+               so a session left open on a shared computer doesn't stay
+               valid indefinitely just because the tab was idle
+               elsewhere on the site. */
+            let idleTimer = null;
+            function resetIdleTimer() {
+                if (idleTimer) clearTimeout(idleTimer);
+                idleTimer = setTimeout(async () => {
+                    const { data } = await sb.auth.getSession();
+                    if (data && data.session) {
+                        await sb.auth.signOut();
+                        if (!overlay.classList.contains('hidden')) showLockScreen();
+                    }
+                }, IDLE_TIMEOUT_MS);
+            }
+            ['mousemove', 'keydown', 'touchstart', 'click', 'scroll'].forEach(ev => {
+                document.addEventListener(ev, resetIdleTimer, { passive: true });
+            });
+            resetIdleTimer();
+
+            sb.auth.onAuthStateChange((_event, session) => {
+                if (!session && !overlay.classList.contains('hidden')) showLockScreen();
+            });
+        } catch (err) {
+            console.error('Secure section failed to initialize (core site unaffected):', err);
+        }
     })();
     </script>
 
