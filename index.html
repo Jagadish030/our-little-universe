@@ -12926,6 +12926,26 @@
     .expanded-player-overlay:not(.hidden) .expanded-player-card {
         animation: jellySpringIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
     }
+
+    /* Every other true pop-up dialog on the site (not a menu/dropdown)
+       gets the same jelly-spring entrance, mobile included — these
+       previously had no entrance animation at all, appearing instantly
+       the moment their backdrop's .hidden class was removed. */
+    .identity-modal:not(.hidden) .identity-card,
+    .style-modal:not(.hidden) .style-card,
+    .glass-modal:not(.hidden) .glass-card,
+    .countdown-overlay:not(.hidden) .countdown-card,
+    .page-customize-backdrop:not(.hidden) .page-customize-card,
+    .diary-popover-backdrop:not(.hidden) .diary-popover-card {
+        animation: jellySpringIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    /* Photo lightboxes — same jelly-spring pop, matching the diary
+       lightbox's existing pop-in (same curve) for consistency. */
+    .mw-lightbox:not(.hidden) .mw-lightbox-media,
+    .pb-lightbox:not(.hidden) img {
+        animation: jellySpringIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
     </style>
 
 </head>
@@ -31009,6 +31029,12 @@
                     showView('toc');
                 } else { showToast('Incorrect passcode.'); }
             });
+            // Pressing Enter/Return/Go on a physical or on-screen keyboard
+            // submits the passcode too — these fields aren't inside a
+            // <form>, so nothing does this by default without it.
+            $('diaryLockInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); $('diaryLockUnlockBtn').click(); }
+            });
 
             /* ================= CUSTOMIZE (look + privacy) ================= */
             function refreshPrivacyStatus() {
@@ -31205,6 +31231,12 @@
                 showToast('Passcode set.');
                 refreshPrivacyStatus();
             });
+            // Same Enter-to-submit convenience as the unlock field above.
+            [$('diaryPrivacyPin1'), $('diaryPrivacyPin2'), $('diaryPrivacyHint')].forEach(el => {
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); $('diaryPrivacySaveBtn').click(); }
+                });
+            });
 
             document.querySelectorAll('.diary-popover-backdrop').forEach(bd => {
                 bd.addEventListener('click', (e) => { if (e.target === bd) bd.classList.add('hidden'); });
@@ -31225,6 +31257,46 @@
             window.openDiary = openDiary;
             const openBtn = $('diaryOpenBtn');
             if (openBtn) openBtn.addEventListener('click', openDiary);
+
+            /* ================= KEEP POPOVERS ABOVE THE KEYBOARD =================
+               Every diary popover (the lock-passcode sheet, and the
+               design/privacy settings sheet) is a fixed, bottom-anchored
+               sheet. On mobile, the on-screen keyboard shrinks the
+               visible area without shrinking window.innerHeight, so a
+               plain inset:0 sheet ends up sitting partly *behind* the
+               keyboard instead of above it — exactly what was hiding the
+               passcode field while typing. Same fix the chat panel
+               already uses elsewhere on this page: constrain the
+               backdrop's own height to visualViewport's height so its
+               bottom-anchored card lifts to sit right above the
+               keyboard instead of underneath it. */
+            (function keepDiaryPopoversAboveKeyboard() {
+                const backdrops = Array.from(document.querySelectorAll('.diary-popover-backdrop'));
+                if (!backdrops.length) return;
+                function update() {
+                    const vv = window.visualViewport;
+                    const visibleH = vv ? vv.height : window.innerHeight;
+                    const keyboardOpen = visibleH < window.innerHeight - 80;
+                    backdrops.forEach(bd => {
+                        if (bd.classList.contains('hidden')) return;
+                        bd.style.height = keyboardOpen ? visibleH + 'px' : '';
+                    });
+                    if (keyboardOpen) {
+                        const active = document.activeElement;
+                        if (active && active.closest('.diary-popover-card')) {
+                            setTimeout(() => active.scrollIntoView({ block: 'center' }), 60);
+                        }
+                    }
+                }
+                if (window.visualViewport) {
+                    window.visualViewport.addEventListener('resize', update);
+                    window.visualViewport.addEventListener('scroll', update);
+                }
+                backdrops.forEach(bd => {
+                    bd.addEventListener('focusin', () => setTimeout(update, 80));
+                    bd.addEventListener('focusout', () => setTimeout(update, 350));
+                });
+            })();
 
             if (!sb) console.warn('diary: Supabase client not available — entries will not persist.');
         } catch (err) {
