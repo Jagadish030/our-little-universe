@@ -13182,23 +13182,31 @@
         }
         .secure-lightbox-delete { left: 1rem; background: #b3413a; color: var(--white); }
 
-        /* Video-length-choice modal (replaces confirm()/prompt() for
-           "compress or keep original" after a video passes the 10s cap) */
-        .secure-video-choice-overlay {
+        /* Generic modal shell shared by the "Add memory" popup and the
+           "enter passcode" popup below — same premium card look as the
+           rest of the site's confirm()/prompt() replacements, but with a
+           z-index above the secure wall (15000) and its own lightbox
+           (20010) since both of these can be opened while a photo is
+           already open full-screen. */
+        .secure-modal-overlay {
             position: fixed;
             inset: 0;
-            z-index: 20015;
+            z-index: 20020;
             background: rgba(20, 14, 12, .68);
             backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 1.2rem;
             box-sizing: border-box;
         }
-        .secure-video-choice-overlay.hidden { display: none; }
-        .secure-video-choice-card {
-            width: min(360px, 100%);
+        .secure-modal-overlay.hidden { display: none; }
+        .secure-modal-card {
+            position: relative;
+            width: min(400px, 100%);
+            max-height: 90vh;
+            overflow-y: auto;
             background: var(--white);
             border-radius: 20px;
             padding: 1.6rem;
@@ -13207,11 +13215,246 @@
             box-shadow: 0 30px 70px rgba(0, 0, 0, .45);
             animation: jellySpringIn .4s cubic-bezier(.34, 1.56, .64, 1) both;
         }
-        body.dark-mode .secure-video-choice-card { background: var(--paper-deep, #2a2320); }
-        .secure-video-choice-card h3 { margin: 0 0 .5rem; color: var(--ink); }
-        .secure-video-choice-card p { margin: 0 0 1.1rem; color: var(--ink-soft); font-size: .85rem; }
-        .secure-video-choice-actions { display: flex; flex-direction: column; gap: .6rem; }
-        .secure-video-choice-actions .secure-upload-btn { text-align: center; }
+        body.dark-mode .secure-modal-card { background: var(--paper-deep, #2a2320); }
+        .secure-modal-card h3 {
+            margin: 0 0 1rem;
+            color: var(--ink);
+            font-family: 'Caveat', cursive;
+            font-size: 1.5rem;
+        }
+        .secure-modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, .06);
+            color: var(--ink-soft);
+            font-size: .8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        body.dark-mode .secure-modal-close { background: rgba(255, 255, 255, .1); }
+        .secure-modal-close:hover { background: var(--rose-deep); color: var(--white); }
+
+        /* ── "Add memory" popup: caption, filter, quality + secret-reveal
+           options, shown right after a photo/video is picked, before it
+           ever leaves the device. ── */
+        .secure-add-card { text-align: left; }
+        .secure-add-card h3 { text-align: center; }
+        .secure-add-preview-wrap {
+            position: relative;
+            width: 100%;
+            max-height: 240px;
+            min-height: 120px;
+            border-radius: 14px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            background: #14100e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .secure-add-preview-media {
+            max-width: 100%;
+            max-height: 240px;
+            display: block;
+            transition: filter .2s ease;
+        }
+        .secure-add-preview-media.hidden { display: none; }
+        .secure-add-vignette {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .2s ease;
+            background: radial-gradient(circle, rgba(0, 0, 0, 0) 55%, rgba(60, 40, 20, .35) 100%);
+        }
+        .secure-add-vignette.active { opacity: 1; }
+        .secure-add-label {
+            display: block;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 600;
+            font-size: .76rem;
+            color: var(--ink-soft);
+            margin: .9rem 0 .4rem;
+        }
+        .secure-add-caption-input,
+        .secure-add-text-input {
+            width: 100%;
+            box-sizing: border-box;
+            font-family: 'Caveat', cursive;
+            font-size: 1.05rem;
+            padding: .6rem .85rem;
+            border-radius: 10px;
+            border: 1.5px solid var(--card-border);
+            background: var(--paper);
+            color: var(--ink);
+            outline: none;
+        }
+        .secure-add-caption-input:focus,
+        .secure-add-text-input:focus { border-color: var(--rose-deep); }
+        .secure-add-filter-row {
+            display: flex;
+            gap: .6rem;
+            overflow-x: auto;
+            padding: .15rem .1rem .5rem;
+            -webkit-overflow-scrolling: touch;
+        }
+        .secure-add-filter-chip {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            padding: 0;
+        }
+        .secure-add-filter-chip .swatch {
+            width: 52px;
+            height: 52px;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-color: var(--paper-deep);
+            background-size: cover;
+            background-position: center;
+            transition: border-color .2s ease, transform .2s ease;
+        }
+        .secure-add-filter-chip.active .swatch {
+            border-color: var(--rose-deep);
+            transform: translateY(-2px);
+        }
+        .secure-add-filter-chip span {
+            font-size: .62rem;
+            font-weight: 600;
+            color: var(--ink-soft);
+            max-width: 58px;
+            text-align: center;
+            line-height: 1.15;
+        }
+        .secure-add-filter-chip.active span { color: var(--rose-deep); }
+        .secure-secret-field {
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: .5rem;
+            padding: .7rem .1rem 0;
+            border-top: 1px dashed var(--card-border);
+            display: flex;
+            flex-direction: column;
+            gap: .55rem;
+        }
+        .secure-secret-field.hidden { display: none; }
+        .secure-secret-field .secure-add-label { margin: .1rem 0 0; }
+        .secure-secret-note {
+            font-size: .72rem;
+            color: var(--ink-soft);
+            margin: 0;
+            line-height: 1.35;
+        }
+        .secure-add-error,
+        #secureAddError { margin-top: .8rem; }
+        .secure-add-actions {
+            display: flex;
+            gap: .6rem;
+            margin-top: 1.2rem;
+        }
+        .secure-add-actions .secure-primary-btn,
+        .secure-add-actions .secure-link-btn {
+            flex: 1;
+            margin-top: 0;
+        }
+
+        /* ── Enter-passcode popup for a secret-reveal photo/video ── */
+        .secure-passcode-card { text-align: center; }
+        .secure-passcode-icon { font-size: 2rem; margin-bottom: .3rem; }
+        .secure-passcode-hint {
+            font-size: .85rem;
+            color: var(--ink-soft);
+            font-style: italic;
+            margin: 0 0 1.1rem;
+            word-break: break-word;
+        }
+        #securePasscodeInput {
+            width: 100%;
+            box-sizing: border-box;
+            padding: .75rem .9rem;
+            border-radius: 12px;
+            border: 1.5px solid var(--card-border);
+            background: var(--paper);
+            color: var(--ink);
+            font-size: .95rem;
+            text-align: center;
+            outline: none;
+        }
+        #securePasscodeInput:focus { border-color: var(--rose-deep); }
+        .secure-passcode-actions {
+            display: flex;
+            gap: .6rem;
+            margin-top: 1rem;
+        }
+        .secure-passcode-actions .secure-primary-btn,
+        .secure-passcode-actions .secure-link-btn {
+            flex: 1;
+            margin-top: 0;
+        }
+
+        /* ── Secret-reveal lock state on a gallery card: the media itself
+           blurs (via a wrapping div, so the lock icon/hint sitting on top
+           of it stays crisp) until the correct passcode has been entered
+           once for that viewer. ── */
+        .secure-media-wrap { width: 100%; height: 100%; }
+        .secure-media-wrap.secure-locked {
+            filter: blur(28px) saturate(1.15) brightness(.8);
+            transform: scale(1.08);
+            transition: filter .4s ease, transform .4s ease;
+        }
+        .secure-locked-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: .4rem;
+            text-align: center;
+            padding: .8rem;
+            color: #fff;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, .65);
+        }
+        .secure-locked-icon { font-size: 1.7rem; }
+        .secure-locked-hint {
+            font-size: .72rem;
+            font-weight: 600;
+            max-width: 92%;
+            line-height: 1.3;
+        }
+        .secure-locked-unlock-btn {
+            margin-top: .35rem;
+            padding: .45rem .95rem;
+            border-radius: 999px;
+            border: none;
+            background: rgba(255, 255, 255, .92);
+            color: #6B5344;
+            font-size: .7rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, .3);
+        }
+        .secure-locked-unlock-btn:active { transform: scale(.95); }
+        .secure-locked-unlock-btn-back { align-self: center; }
+        .secure-locked-back-msg {
+            color: var(--ink-soft);
+            font-size: .85rem;
+            text-align: center;
+            margin: 1.2rem 0;
+        }
 
         /* Video thumbnails inside a card front match the photo sizing. */
         .face.front video {
@@ -13636,21 +13879,10 @@
             <video id="secureLightboxVideo" class="hidden" controls playsinline></video>
         </div>
 
-        <!-- Aesthetic choice for a video that passed the 10s cap — replaces
-             any native confirm()/prompt() for this decision. -->
-        <div class="secure-video-choice-overlay hidden" id="secureVideoChoiceOverlay">
-            <div class="secure-video-choice-card">
-                <h3>Add this video</h3>
-                <p>Compress it for a faster, lighter upload — or keep the original quality.</p>
-                <div class="secure-video-choice-actions">
-                    <button type="button" class="secure-primary-btn" id="secureVideoCompressBtn">Compress &amp; upload</button>
-                    <button type="button" class="secure-upload-btn" id="secureVideoOriginalBtn">Upload original quality</button>
-                    <button type="button" class="secure-link-btn" id="secureVideoCancelBtn">Cancel</button>
-                </div>
-                <p class="secure-upload-status hidden" id="secureVideoChoiceStatus"></p>
-            </div>
-        </div>
-
+        <!-- "Add memory" popup — shown right after picking a photo or
+             video, before it ever uploads. Caption, filter, quality and
+             the secret-reveal option all live here (replaces the old
+             video-only compress/original choice, which this supersedes). -->
         <!-- ─── Chat ─── -->
         <button type="button" class="chat-fab" id="chatFabBtn" aria-label="Open chat" title="Chat">
             <span class="chat-fab-icon">💬</span>
@@ -14613,6 +14845,72 @@
         <button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
 
     </div>
+
+    <!-- These two live OUTSIDE #siteContent too, same reasoning
+         as #secureWall itself (see the note where that moved) —
+         they only ever open while #secureWall is already open,
+         but keeping them consistent avoids relying on that. -->
+        <div class="secure-modal-overlay hidden" id="secureAddModal">
+            <div class="secure-modal-card secure-add-card">
+                <button type="button" class="secure-modal-close" id="secureAddModalClose" aria-label="Cancel">✕</button>
+                <h3 id="secureAddModalTitle">Add this photo</h3>
+
+                <div class="secure-add-preview-wrap">
+                    <img id="secureAddPreviewImg" class="secure-add-preview-media hidden" alt="Preview">
+                    <video id="secureAddPreviewVideo" class="secure-add-preview-media hidden" muted playsinline loop></video>
+                    <div class="secure-add-vignette" id="secureAddVignette"></div>
+                </div>
+
+                <label class="secure-add-label" for="secureAddCaptionInput">Caption</label>
+                <input type="text" id="secureAddCaptionInput" class="secure-add-caption-input" maxlength="200" placeholder="Add a caption...">
+
+                <label class="secure-add-label">Filter</label>
+                <div class="secure-add-filter-row" id="secureAddFilterRow"></div>
+
+                <div class="upload-toggle-group">
+                    <label class="quality-toggle">
+                        <input type="checkbox" id="secureQualityToggle">
+                        Upload original quality (larger file size)
+                    </label>
+                    <label class="quality-toggle">
+                        <input type="checkbox" id="secureSecretToggle">
+                        🔒 Secret reveal for <span id="secureSecretToggleName">the other person</span>
+                    </label>
+                    <div class="secure-secret-field hidden" id="secureSecretField">
+                        <label class="secure-add-label" for="secureSecretPasswordInput">Set a passcode to unlock this</label>
+                        <input type="password" id="secureSecretPasswordInput" class="secure-add-text-input" maxlength="40" placeholder="Passcode" autocomplete="new-password">
+                        <label class="secure-add-label" for="secureSecretConfirmInput">Confirm passcode</label>
+                        <input type="password" id="secureSecretConfirmInput" class="secure-add-text-input" maxlength="40" placeholder="Confirm passcode" autocomplete="new-password">
+                        <label class="secure-add-label" for="secureSecretHintInput">Overlay hint shown on the blurred photo</label>
+                        <input type="text" id="secureSecretHintInput" class="secure-add-text-input" maxlength="60" placeholder="a clue for the passcode…">
+                        <p class="secure-secret-note">The caption above stays hidden until the correct passcode is entered — then it shows automatically, and it'll never ask again for whoever unlocked it.</p>
+                    </div>
+                </div>
+
+                <p class="secure-error hidden" id="secureAddError"></p>
+                <div class="secure-add-actions">
+                    <button type="button" class="secure-link-btn" id="secureAddCancelBtn">Cancel</button>
+                    <button type="button" class="secure-primary-btn" id="secureAddConfirmBtn">Add</button>
+                </div>
+                <p class="secure-upload-status hidden" id="secureAddStatus"></p>
+            </div>
+        </div>
+
+        <!-- Enter-passcode popup for a secret-reveal photo/video -->
+        <div class="secure-modal-overlay hidden" id="securePasscodeOverlay">
+            <div class="secure-modal-card secure-passcode-card">
+                <button type="button" class="secure-modal-close" id="securePasscodeCloseBtn" aria-label="Cancel">✕</button>
+                <div class="secure-passcode-icon">🔒</div>
+                <p class="secure-passcode-hint" id="securePasscodeHint">Enter the passcode to reveal this.</p>
+                <input type="password" id="securePasscodeInput" placeholder="Passcode" autocomplete="off">
+                <p class="secure-error hidden" id="securePasscodeError"></p>
+                <div class="secure-passcode-actions">
+                    <button type="button" class="secure-link-btn" id="securePasscodeCancelBtn">Cancel</button>
+                    <button type="button" class="secure-primary-btn" id="securePasscodeSubmitBtn">Unlock</button>
+                </div>
+            </div>
+        </div>
+
 
     <script>
         (function() {
@@ -32966,6 +33264,35 @@
             const lightboxDelete = $('secureLightboxDelete');
             const openBtn = $('navDockMoreSecure');
 
+            // "Add memory" popup (caption + filter + quality + secret-reveal)
+            const addModal = $('secureAddModal');
+            const addModalTitle = $('secureAddModalTitle');
+            const addModalClose = $('secureAddModalClose');
+            const addPreviewImg = $('secureAddPreviewImg');
+            const addPreviewVideo = $('secureAddPreviewVideo');
+            const addVignette = $('secureAddVignette');
+            const addCaptionInput = $('secureAddCaptionInput');
+            const addFilterRow = $('secureAddFilterRow');
+            const addQualityToggle = $('secureQualityToggle');
+            const addSecretToggle = $('secureSecretToggle');
+            const addSecretField = $('secureSecretField');
+            const addSecretPasswordInput = $('secureSecretPasswordInput');
+            const addSecretConfirmInput = $('secureSecretConfirmInput');
+            const addSecretHintInput = $('secureSecretHintInput');
+            const addErrorEl = $('secureAddError');
+            const addConfirmBtn = $('secureAddConfirmBtn');
+            const addCancelBtn = $('secureAddCancelBtn');
+            const addStatus = $('secureAddStatus');
+
+            // Enter-passcode popup (for revealing a secret photo/video)
+            const passcodeOverlay = $('securePasscodeOverlay');
+            const passcodeCloseBtn = $('securePasscodeCloseBtn');
+            const passcodeHintEl = $('securePasscodeHint');
+            const passcodeInput = $('securePasscodeInput');
+            const passcodeErrorEl = $('securePasscodeError');
+            const passcodeCancelBtn = $('securePasscodeCancelBtn');
+            const passcodeSubmitBtn = $('securePasscodeSubmitBtn');
+
             if (!wall || !authForm) return;
 
             // Every other "wall" section on the site hides its siblings
@@ -32986,6 +33313,172 @@
             let personFilter = null; // null | one of ALLOWED
             const HIS_EMAIL = ALLOWED[0]; // kavisetti2001@gmail.com — J / Jaggu
             const HER_EMAIL = ALLOWED[1]; // lalithamalavika@gmail.com — M / Malavika
+            // Friendly display names, matching the sign-in screen's own
+            // "Kavisetti" / "Lalitha" identity buttons — used so the
+            // secret-reveal checkbox can name the actual other person
+            // instead of a generic placeholder.
+            const DISPLAY_NAME_BY_EMAIL = { [HIS_EMAIL]: 'Kavisetti', [HER_EMAIL]: 'Lalitha' };
+            function otherPersonName() {
+                const other = currentUserEmail === HIS_EMAIL ? HER_EMAIL :
+                    (currentUserEmail === HER_EMAIL ? HIS_EMAIL : null);
+                return (other && DISPLAY_NAME_BY_EMAIL[other]) || 'the other person';
+            }
+            // Maps a signed-in email to the short key used by the
+            // secret-reveal columns (revealed_by_j / revealed_by_m).
+            function keyForEmail(email) {
+                if (email === HIS_EMAIL) return 'j';
+                if (email === HER_EMAIL) return 'm';
+                return null;
+            }
+
+            /* ───────────── passcode hashing ─────────────
+               The passcode itself is never stored — only a SHA-256 hash of
+               it, computed client-side via the Web Crypto API (available
+               on every modern browser over https). This is a "don't ask
+               the same person twice" mechanism between the two of you,
+               not a defense against a determined attacker with database
+               access — same trust model as everything else in this
+               section (see the header note up top). */
+            async function sha256Hex(text) {
+                const bytes = new TextEncoder().encode(text);
+                const digest = await crypto.subtle.digest('SHA-256', bytes);
+                return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+
+            /* ───────────── filters for the "Add memory" popup ─────────────
+               Same filter recipes (and the same Black & White / Golden
+               Hour pair) as the main memory wall's own upload popup, so
+               a "Golden Hour" photo looks the same whichever wall it's
+               added from. The filter is baked into the actual image/video
+               pixels before upload (via canvas) rather than applied live
+               with CSS, so it survives downloads, signed URLs, anywhere
+               the file ends up — not just inside this page. */
+            const SECURE_FILTERS = [
+                { key: 'none', label: 'As it is', css: 'none' },
+                { key: 'bw', label: 'Black & White', css: 'grayscale(1) contrast(1.12)' },
+                { key: 'goldenhour', label: 'Golden Hour',
+                    css: 'sepia(0.2) saturate(1.3) contrast(1.08) brightness(1.05) hue-rotate(-6deg)', vignette: true },
+                { key: 'vintage', label: 'Vintage', css: 'sepia(0.5) contrast(1.05) brightness(0.96) saturate(1.15)',
+                    vignette: true },
+                { key: 'cool', label: 'Cool Tone', css: 'saturate(1.05) hue-rotate(-6deg) brightness(1.03) contrast(1.03)' },
+                { key: 'bright', label: 'Bright & Airy', css: 'brightness(1.14) saturate(0.88) contrast(0.94)' },
+                { key: 'dramatic', label: 'Dramatic', css: 'contrast(1.32) saturate(1.18) brightness(0.9)' },
+                { key: 'faded', label: 'Faded', css: 'contrast(0.82) brightness(1.1) saturate(0.7)' },
+            ];
+            function getSecureFilter(key) { return SECURE_FILTERS.find(f => f.key === key) || SECURE_FILTERS[0]; }
+
+            function fileToImage(file) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    const url = URL.createObjectURL(file);
+                    img.onload = () => resolve({ img, url });
+                    img.onerror = reject;
+                    img.src = url;
+                });
+            }
+            // Grabs a single frame from a video file to use as the source
+            // for the filter-chip thumbnails in the Add-memory popup —
+            // the live preview player shows the real video with the
+            // filter applied via CSS, this frame is only for the small
+            // filter swatches.
+            function videoPosterImage(file) {
+                return new Promise((resolve, reject) => {
+                    const video = document.createElement('video');
+                    video.muted = true;
+                    video.playsInline = true;
+                    video.preload = 'auto';
+                    const url = URL.createObjectURL(file);
+                    video.src = url;
+                    let settled = false;
+                    function finish() {
+                        if (settled) return;
+                        settled = true;
+                        try {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = video.videoWidth || 320;
+                            canvas.height = video.videoHeight || 240;
+                            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                            URL.revokeObjectURL(url);
+                            const img = new Image();
+                            img.onload = () => resolve({ img, url: null });
+                            img.onerror = reject;
+                            img.src = canvas.toDataURL('image/jpeg', .82);
+                        } catch (e) { URL.revokeObjectURL(url); reject(e); }
+                    }
+                    video.addEventListener('loadeddata', () => {
+                        try { video.currentTime = Math.min(0.2, (video.duration || 1) / 3); } catch (e) { finish(); }
+                    });
+                    video.addEventListener('seeked', finish);
+                    video.addEventListener('error', () => { URL.revokeObjectURL(url); reject(new Error(
+                        'Could not read video frame.')); });
+                    setTimeout(finish, 1500); // safety net if 'seeked' never fires on some browsers
+                });
+            }
+            function drawWithFilter(ctx, img, w, h, filterCss, withVignette) {
+                ctx.filter = filterCss || 'none';
+                ctx.drawImage(img, 0, 0, w, h);
+                ctx.filter = 'none';
+                if (withVignette) {
+                    const grad = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(
+                        w, h) * 0.7);
+                    grad.addColorStop(0, 'rgba(0,0,0,0)');
+                    grad.addColorStop(1, 'rgba(60,40,20,0.18)');
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, w, h);
+                }
+            }
+            const SECURE_MAX_DIMENSION = 1920;
+            const SECURE_JPEG_QUALITY = 0.85;
+            const SECURE_JPEG_QUALITY_HIGH = 0.95;
+            // Bakes the chosen filter into the actual photo pixels (and
+            // downsizes it, unless "upload original quality" is ticked)
+            // via an offscreen canvas — this is the "compress automatically
+            // unless the tickbox is checked" step for photos.
+            async function processPhotoFile(file, filterKey, keepOriginal) {
+                const { img, url } = await fileToImage(file);
+                let w = img.naturalWidth,
+                    h = img.naturalHeight;
+                if (!keepOriginal && Math.max(w, h) > SECURE_MAX_DIMENSION) {
+                    const scale = SECURE_MAX_DIMENSION / Math.max(w, h);
+                    w = Math.round(w * scale);
+                    h = Math.round(h * scale);
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                const filter = getSecureFilter(filterKey);
+                drawWithFilter(ctx, img, w, h, filter.css, filter.vignette);
+                URL.revokeObjectURL(url);
+                const quality = keepOriginal ? SECURE_JPEG_QUALITY_HIGH : SECURE_JPEG_QUALITY;
+                return new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/jpeg', quality));
+            }
+            function makeFilterThumb(posterImg, filterKey) {
+                const size = 52;
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                const scale = Math.max(size / posterImg.naturalWidth, size / posterImg.naturalHeight);
+                const dw = posterImg.naturalWidth * scale,
+                    dh = posterImg.naturalHeight * scale;
+                ctx.save();
+                ctx.translate((size - dw) / 2, (size - dh) / 2);
+                const filter = getSecureFilter(filterKey);
+                ctx.filter = filter.css || 'none';
+                ctx.drawImage(posterImg, 0, 0, dw, dh);
+                ctx.restore();
+                return canvas.toDataURL('image/jpeg', 0.82);
+            }
+            // Decides the initial revealed_by_j / revealed_by_m values for
+            // a new row: a non-secret upload is visible to both right
+            // away; a secret one starts revealed only for whoever just
+            // added it — the other person has to enter the passcode once.
+            function revealedFieldsForUpload(isSecret) {
+                const uploaderKey = keyForEmail(currentUserEmail);
+                if (!isSecret || !uploaderKey) return { revealed_by_j: true, revealed_by_m: true };
+                return { revealed_by_j: uploaderKey === 'j', revealed_by_m: uploaderKey === 'm' };
+            }
 
             function escapeHtmlLocal(s) {
                 return (s || '').replace(/[&<>"']/g, c => ({
@@ -33195,13 +33688,22 @@
                     'Nothing matches these filters yet.' : 'No photos yet — add your first one.';
                 emptyMsg.classList.toggle('hidden', !!rows.length);
                 for (const row of rows) {
-                    const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(row.storage_path, SIGNED_URL_TTL);
-                    row._signedUrl = signed ? signed.signedUrl : '';
-                    if (row.voice_path) {
-                        const { data: vsigned } = await sb.storage.from(BUCKET).createSignedUrl(row.voice_path, SIGNED_URL_TTL);
-                        row._voiceUrl = vsigned ? vsigned.signedUrl : null;
+                    try {
+                        const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(row.storage_path, SIGNED_URL_TTL);
+                        row._signedUrl = signed ? signed.signedUrl : '';
+                        if (row.voice_path) {
+                            const { data: vsigned } = await sb.storage.from(BUCKET).createSignedUrl(row.voice_path, SIGNED_URL_TTL);
+                            row._voiceUrl = vsigned ? vsigned.signedUrl : null;
+                        }
+                        photoRow.appendChild(buildSecureCard(row));
+                    } catch (err) {
+                        // One bad row (a missing file, a signing hiccup) should
+                        // never take the rest of the gallery down with it —
+                        // this is what used to make only the newest photo ever
+                        // show up: an uncaught error here silently broke the
+                        // whole loop after the first item.
+                        console.error('secureSection: could not render a photo row', row && row.id, err);
                     }
-                    photoRow.appendChild(buildSecureCard(row));
                 }
             }
 
@@ -33218,40 +33720,59 @@
                 const dateLabel = row.created_at ? new Date(row.created_at).toLocaleDateString(undefined,
                     { month: 'short', day: 'numeric', year: 'numeric' }) : '';
                 const isVideo = row.media_type === 'video';
+                // Secret-reveal: locked for anyone but the uploader until
+                // they've entered the correct passcode once — after that,
+                // revealed_by_<them> flips true in the database forever,
+                // so it never asks that viewer again.
+                const viewerKey = keyForEmail(currentUserEmail);
+                const isLocked = !!row.is_secret && row.uploaded_by !== currentUserEmail &&
+                    !(viewerKey && row['revealed_by_' + viewerKey]);
+                row.__locked = isLocked;
                 const mediaHtml = isVideo
                     ? `<video src="${row._signedUrl}" muted playsinline preload="metadata"></video>`
                     : `<img src="${row._signedUrl}" alt="A private photo" loading="lazy" decoding="async">`;
+                const lockLayerHtml = isLocked ? `
+                        <div class="secure-locked-layer">
+                          <span class="secure-locked-icon">🔒</span>
+                          <span class="secure-locked-hint">${row.overlay_text ? escapeHtmlLocal(row.overlay_text) : 'enter the passcode to reveal'}</span>
+                          <button type="button" class="secure-locked-unlock-btn" aria-label="Enter passcode">Enter passcode</button>
+                        </div>` : '';
                 wrap.innerHTML = `
                   <div class="pin"></div>
-                  <div class="polaroid" tabindex="0" role="button" aria-label="Flip photo to see the note">
+                  <div class="polaroid" tabindex="0" role="button" aria-label="${isLocked ? 'Locked — enter passcode to reveal' : 'Flip photo to see the note'}">
                     <div class="face front">
                       <button class="fav-heart" type="button" aria-label="Toggle favorite">${row.favorite ? '♥' : '♡'}</button>
                       <div class="photo-frame">
-                        ${mediaHtml}
-                        ${isVideo ? `<button type="button" class="secure-video-play-badge" aria-label="Play video"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>` : ''}
-                        <button class="expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>
+                        <div class="secure-media-wrap${isLocked ? ' secure-locked' : ''}">${mediaHtml}</div>
+                        ${lockLayerHtml}
+                        ${(!isLocked && isVideo) ? `<button type="button" class="secure-video-play-badge" aria-label="Play video"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>` : ''}
+                        ${!isLocked ? `<button class="expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>` : ''}
                       </div>
                       <div class="cap-preview-row">
-                        ${row.voice_path ? `<button type="button" class="caption-voice-play secure-voice-preview-play" aria-label="Play voice caption">▶</button>` : ''}
-                        <div class="cap-preview">${row.caption ? escapeHtmlLocal(row.caption) : 'tap to add a caption…'}</div>
+                        ${(!isLocked && row.voice_path) ? `<button type="button" class="caption-voice-play secure-voice-preview-play" aria-label="Play voice caption">▶</button>` : ''}
+                        <div class="cap-preview">${isLocked ? '🔒 secret — tap to unlock' : (row.caption ? escapeHtmlLocal(row.caption) : 'tap to add a caption…')}</div>
                       </div>
                     </div>
                     <div class="face back">
                       <div class="back-panels secure-back-panels">
-                        <textarea class="secure-caption-textarea" maxlength="200" placeholder="Add a caption..." aria-label="Write a note for this photo">${escapeHtmlLocal(row.caption || '')}</textarea>
+                        ${isLocked
+                          ? `<p class="secure-locked-back-msg">🔒 This note stays hidden until the passcode is entered.</p>`
+                          : `<textarea class="secure-caption-textarea" maxlength="200" placeholder="Add a caption..." aria-label="Write a note for this photo">${escapeHtmlLocal(row.caption || '')}</textarea>`}
                         <button class="flip-back-btn" type="button" aria-label="Flip back to photo">‹ back to photo</button>
-                        <div class="dual-mic-row secure-mic-row">
+                        ${isLocked
+                          ? `<button type="button" class="secure-locked-unlock-btn secure-locked-unlock-btn-back">Enter passcode</button>`
+                          : `<div class="dual-mic-row secure-mic-row">
                           <div class="dual-mic-item">
                             <button type="button" class="mini-mic-btn secure-mic-btn" aria-label="Record a voice caption"></button>
                             <span class="dual-mic-label">voice caption</span>
                           </div>
                         </div>
-                        <div class="voice-attachment secure-voice-attach${row.voice_path ? '' : ' hidden'}"></div>
+                        <div class="voice-attachment secure-voice-attach${row.voice_path ? '' : ' hidden'}"></div>`}
                         <div class="back-footer">
                           <span>${dateLabel}</span>
                           <div class="secure-back-footer-actions">
-                            <button class="secure-save-btn" type="button" aria-label="Save to device" title="Save to device"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 19h14"/></svg></button>
-                            <button class="unpin secure-remove-btn" type="button">remove</button>
+                            ${!isLocked ? `<button class="secure-save-btn" type="button" aria-label="Save to device" title="Save to device"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 19h14"/></svg></button>` : ''}
+                            ${!isLocked ? `<button class="unpin secure-remove-btn" type="button">remove</button>` : ''}
                           </div>
                         </div>
                       </div>
@@ -33272,6 +33793,8 @@
                 const capPreview = wrap.querySelector('.cap-preview');
                 const photoMedia = wrap.querySelector('.photo-frame img, .photo-frame video');
                 const photoFrame = wrap.querySelector('.photo-frame');
+                const unlockBtns = wrap.querySelectorAll('.secure-locked-unlock-btn');
+                unlockBtns.forEach(btn => wireTap(btn, () => openPasscodeOverlay(row)));
                 if (photoMedia) {
                     const markLoaded = () => { photoMedia.classList.add('loaded'); if (photoFrame) photoFrame.classList.add(
                         'loaded'); };
@@ -33309,18 +33832,24 @@
                 wireTap(expandBtn, () => openLightbox(row));
                 wireTap(playBadge, () => openLightbox(row));
 
-                textarea.addEventListener('click', (e) => e.stopPropagation());
-                let saveTimer = null;
-                textarea.addEventListener('input', () => {
-                    capPreview.textContent = textarea.value || 'tap to add a caption…';
-                    clearTimeout(saveTimer);
-                    saveTimer = setTimeout(async () => {
-                        row.caption = textarea.value;
-                        await sb.from('secure_photos').update({ caption: row.caption }).eq('id', row.id);
-                    }, 500);
-                });
+                // Caption box, mic row and voice attachment only exist in
+                // the DOM when the card isn't locked (see markup above) —
+                // guard every reference to them.
+                if (textarea) {
+                    textarea.addEventListener('click', (e) => e.stopPropagation());
+                    let saveTimer = null;
+                    textarea.addEventListener('input', () => {
+                        capPreview.textContent = textarea.value || 'tap to add a caption…';
+                        clearTimeout(saveTimer);
+                        saveTimer = setTimeout(async () => {
+                            row.caption = textarea.value;
+                            await sb.from('secure_photos').update({ caption: row.caption }).eq('id', row.id);
+                        }, 500);
+                    });
+                }
 
                 function renderVoice() {
+                    if (!voiceBox) return;
                     voiceBox.innerHTML = '';
                     if (!row.voice_path || !row._voiceUrl) { voiceBox.classList.add('hidden'); return; }
                     voiceBox.classList.remove('hidden');
@@ -33381,7 +33910,7 @@
                 }
 
                 let mediaRecorder = null, chunks = [];
-                micBtn.addEventListener('click', async (e) => {
+                if (micBtn) micBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     if (micBtn.classList.contains('recording')) { mediaRecorder && mediaRecorder.stop(); return; }
                     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
@@ -33494,6 +34023,10 @@
             }
 
             function openLightbox(row) {
+                // Safety net: the expand/play buttons are never rendered
+                // for a locked secret card in the first place, but guard
+                // here too in case anything else ever calls this directly.
+                if (row.__locked) { openPasscodeOverlay(row); return; }
                 currentLightboxRow = row;
                 if (row.media_type === 'video') {
                     lightboxImg.classList.add('hidden');
@@ -33532,41 +34065,22 @@
 
             uploadInput.addEventListener('change', async () => {
                 const files = Array.from(uploadInput.files || []);
-                if (!files.length) return;
-                uploadStatus.classList.remove('hidden');
-                let done = 0;
-                for (const file of files) {
-                    uploadStatus.textContent = `Uploading ${done + 1} of ${files.length}…`;
-                    const path = `${crypto.randomUUID()}-${file.name}`.replace(/\s+/g, '_');
-                    const { error: upErr } = await sb.storage.from(BUCKET).upload(path, file, { upsert: false });
-                    if (upErr) { toast('Upload failed: ' + upErr.message, { type: 'error' }); continue; }
-                    const { error: insErr } = await sb.from('secure_photos').insert({
-                        storage_path: path, media_type: 'photo', uploaded_by: currentUserEmail || 'unknown'
-                    });
-                    if (insErr) {
-                        toast('Could not save photo: ' + insErr.message, { type: 'error' });
-                        await sb.storage.from(BUCKET).remove([path]);
-                        continue;
-                    }
-                    done++;
-                }
-                uploadStatus.classList.add('hidden');
                 uploadInput.value = '';
+                if (!files.length) return;
+                for (let i = 0; i < files.length; i++) {
+                    await openAddModal(files[i], 'photo', files.length > 1 ? { index: i + 1, total: files.length } :
+                        null);
+                }
                 await loadPhotos();
-                if (done) toast(`Added ${done} photo${done === 1 ? '' : 's'}.`);
             });
 
-            /* ───────────── video upload: 10s cap + compress-or-original
-               choice. The choice itself is a custom card (see HTML),
-               never a native confirm()/prompt(). ───────────── */
+            /* ───────────── video upload: 10s cap, then the same
+               "Add memory" popup as photos (caption / filter / quality /
+               secret-reveal) — no separate compress-or-original choice
+               screen any more, that decision now lives in the popup's own
+               "upload original quality" tickbox. ───────────── */
             const videoUploadInput = $('secureUploadVideoInput');
-            const videoChoiceOverlay = $('secureVideoChoiceOverlay');
-            const videoChoiceStatus = $('secureVideoChoiceStatus');
-            const videoCompressBtn = $('secureVideoCompressBtn');
-            const videoOriginalBtn = $('secureVideoOriginalBtn');
-            const videoCancelBtn = $('secureVideoCancelBtn');
             const MAX_VIDEO_SECONDS = 10;
-            let pendingVideoFile = null;
 
             videoUploadInput.addEventListener('change', () => {
                 const file = videoUploadInput.files && videoUploadInput.files[0];
@@ -33576,7 +34090,7 @@
                 probe.preload = 'metadata';
                 const probeUrl = URL.createObjectURL(file);
                 probe.src = probeUrl;
-                probe.addEventListener('loadedmetadata', () => {
+                probe.addEventListener('loadedmetadata', async () => {
                     const duration = probe.duration;
                     URL.revokeObjectURL(probeUrl);
                     if (!isFinite(duration) || duration > MAX_VIDEO_SECONDS + 0.5) {
@@ -33585,9 +34099,8 @@
                         });
                         return;
                     }
-                    pendingVideoFile = file;
-                    videoChoiceStatus.classList.add('hidden');
-                    videoChoiceOverlay.classList.remove('hidden');
+                    await openAddModal(file, 'video');
+                    await loadPhotos();
                 });
                 probe.addEventListener('error', () => {
                     URL.revokeObjectURL(probeUrl);
@@ -33595,21 +34108,22 @@
                 });
             });
 
-            function closeVideoChoice() {
-                videoChoiceOverlay.classList.add('hidden');
-                pendingVideoFile = null;
-            }
-            videoCancelBtn.addEventListener('click', closeVideoChoice);
-            videoChoiceOverlay.addEventListener('click', (e) => { if (e.target === videoChoiceOverlay) closeVideoChoice(); });
-
             // Re-encodes the clip through a <canvas> at a smaller frame
             // size and a modest bitrate — a lightweight, dependency-free
-            // way to shrink file size in-browser (no ffmpeg.wasm). Audio
-            // is preserved via HTMLMediaElement.captureStream() where the
-            // browser supports it; if not, the compressed clip is silent
-            // (a console note is left, but the upload still succeeds) —
-            // "Upload original quality" always keeps the sound.
-            function compressVideo(file) {
+            // way to shrink file size in-browser (no ffmpeg.wasm), and
+            // also how a filter gets baked into video pixels (ctx.filter
+            // on every drawn frame). Audio is preserved via
+            // HTMLMediaElement.captureStream() where the browser supports
+            // it; if not, the re-encoded clip is silent (a console note is
+            // left, but the upload still succeeds).
+            //   opts.filterCss   — CSS filter() string to bake in, or 'none'
+            //   opts.keepOriginal — true keeps the source resolution and
+            //                       uses a higher bitrate; false caps the
+            //                       width at 640px (the old "compress" size)
+            function compressVideo(file, opts) {
+                opts = opts || {};
+                const filterCss = opts.filterCss || 'none';
+                const keepOriginal = !!opts.keepOriginal;
                 return new Promise((resolve, reject) => {
                     const video = document.createElement('video');
                     video.muted = false;
@@ -33619,7 +34133,7 @@
                     video.addEventListener('loadedmetadata', () => {
                         const srcW = video.videoWidth || 640;
                         const srcH = video.videoHeight || 360;
-                        const targetW = Math.min(640, srcW);
+                        const targetW = keepOriginal ? srcW : Math.min(640, srcW);
                         const targetH = Math.round(srcH * (targetW / srcW)) || 360;
                         const canvas = document.createElement('canvas');
                         canvas.width = targetW;
@@ -33636,9 +34150,10 @@
                             }
                         } catch (e) { console.warn('secureSection: audio capture unavailable, compressing video-only.', e); }
                         let recorder;
+                        const bitrate = keepOriginal ? 2500000 : 900000;
                         try {
                             recorder = new MediaRecorder(combined, { mimeType: 'video/webm;codecs=vp8,opus',
-                                videoBitsPerSecond: 900000 });
+                                videoBitsPerSecond: bitrate });
                         } catch (e) { recorder = new MediaRecorder(combined); }
                         const chunks = [];
                         recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
@@ -33649,7 +34164,9 @@
                             recorder.start();
                             (function draw() {
                                 if (video.paused || video.ended) { recorder.stop(); return; }
+                                ctx.filter = filterCss;
                                 ctx.drawImage(video, 0, 0, targetW, targetH);
+                                ctx.filter = 'none';
                                 requestAnimationFrame(draw);
                             })();
                         }).catch((e) => { URL.revokeObjectURL(url); reject(e); });
@@ -33658,52 +34175,279 @@
                 });
             }
 
-            async function uploadVideoBlob(blobOrFile, ext) {
-                const path = `${crypto.randomUUID()}.${ext}`;
-                const { error: upErr } = await sb.storage.from(BUCKET).upload(path, blobOrFile, {
-                    upsert: false, contentType: blobOrFile.type || 'video/mp4'
-                });
-                if (upErr) { toast('Upload failed: ' + upErr.message, { type: 'error' }); return false; }
+            // Shared insert step for both photo and video uploads: writes
+            // the row with caption / filter / secret-reveal fields, rolling
+            // back the just-uploaded file from storage if the insert fails.
+            async function insertSecureRow(path, mediaType, extra) {
+                const revealFields = revealedFieldsForUpload(extra.is_secret);
                 const { error: insErr } = await sb.from('secure_photos').insert({
-                    storage_path: path, media_type: 'video', uploaded_by: currentUserEmail || 'unknown'
+                    storage_path: path,
+                    media_type: mediaType,
+                    uploaded_by: currentUserEmail || 'unknown',
+                    caption: extra.caption,
+                    filter_id: extra.filter_id,
+                    is_secret: extra.is_secret,
+                    secret_password_hash: extra.secret_password_hash,
+                    overlay_text: extra.overlay_text,
+                    ...revealFields
                 });
                 if (insErr) {
-                    toast('Could not save video: ' + insErr.message, { type: 'error' });
+                    toast(`Could not save ${mediaType}: ` + insErr.message, { type: 'error' });
                     await sb.storage.from(BUCKET).remove([path]);
                     return false;
                 }
                 return true;
             }
 
-            videoOriginalBtn.addEventListener('click', async () => {
-                if (!pendingVideoFile) return;
-                const file = pendingVideoFile;
-                videoChoiceStatus.textContent = 'Uploading original…';
-                videoChoiceStatus.classList.remove('hidden');
-                const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
-                const ok = await uploadVideoBlob(file, ext);
-                videoChoiceOverlay.classList.add('hidden');
-                pendingVideoFile = null;
-                if (ok) { await loadPhotos(); toast('Video added.'); }
+            // Bakes the chosen filter (unless "none") and applies the
+            // compress-by-default rule, then uploads + inserts.
+            async function finalizePhotoUpload(file, filterKey, keepOriginal, extra) {
+                let uploadBlob, ext;
+                if (filterKey === 'none' && keepOriginal) {
+                    uploadBlob = file;
+                    ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+                } else {
+                    uploadBlob = await processPhotoFile(file, filterKey, keepOriginal);
+                    ext = 'jpg';
+                }
+                const path = `${crypto.randomUUID()}.${ext}`;
+                const { error: upErr } = await sb.storage.from(BUCKET).upload(path, uploadBlob, {
+                    upsert: false, contentType: uploadBlob.type || 'image/jpeg'
+                });
+                if (upErr) { toast('Upload failed: ' + upErr.message, { type: 'error' }); return false; }
+                return insertSecureRow(path, 'photo', extra);
+            }
+
+            // Same idea for video: only re-encodes through the canvas path
+            // (compressVideo) when a filter needs baking in or the
+            // "original quality" box wasn't ticked — a plain original
+            // upload with no filter skips re-encoding entirely.
+            async function finalizeVideoUpload(file, filterKey, keepOriginal, extra) {
+                const filter = getSecureFilter(filterKey);
+                let blobOrFile, ext;
+                if (filterKey === 'none' && keepOriginal) {
+                    blobOrFile = file;
+                    ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
+                } else {
+                    blobOrFile = await compressVideo(file, { filterCss: filter.css, keepOriginal });
+                    ext = 'webm';
+                }
+                const path = `${crypto.randomUUID()}.${ext}`;
+                const { error: upErr } = await sb.storage.from(BUCKET).upload(path, blobOrFile, {
+                    upsert: false, contentType: blobOrFile.type || 'video/mp4'
+                });
+                if (upErr) { toast('Upload failed: ' + upErr.message, { type: 'error' }); return false; }
+                return insertSecureRow(path, 'video', extra);
+            }
+
+            /* ───────────── "Add memory" popup ───────────── */
+            let addSelectedFilter = 'none';
+            let addPosterImg = null;
+
+            function showAddError(msg) {
+                addErrorEl.textContent = msg || '';
+                addErrorEl.classList.toggle('hidden', !msg);
+            }
+
+            function resetAddModalFields() {
+                addCaptionInput.value = '';
+                addQualityToggle.checked = false;
+                addSecretToggle.checked = false;
+                addSecretField.classList.add('hidden');
+                addSecretPasswordInput.value = '';
+                addSecretConfirmInput.value = '';
+                addSecretHintInput.value = '';
+                showAddError('');
+                addStatus.classList.add('hidden');
+                addSelectedFilter = 'none';
+                const nameEl = $('secureSecretToggleName');
+                if (nameEl) nameEl.textContent = otherPersonName();
+            }
+
+            addSecretToggle.addEventListener('change', () => {
+                addSecretField.classList.toggle('hidden', !addSecretToggle.checked);
             });
 
-            videoCompressBtn.addEventListener('click', async () => {
-                if (!pendingVideoFile) return;
-                const file = pendingVideoFile;
-                videoChoiceStatus.textContent = 'Compressing…';
-                videoChoiceStatus.classList.remove('hidden');
+            function applyLivePreviewFilter() {
+                const filter = getSecureFilter(addSelectedFilter);
+                const target = addPreviewImg.classList.contains('hidden') ? addPreviewVideo : addPreviewImg;
+                target.style.filter = filter.css || 'none';
+                addVignette.classList.toggle('active', !!filter.vignette);
+            }
+
+            function buildAddFilterRow() {
+                addFilterRow.innerHTML = '';
+                SECURE_FILTERS.forEach((f) => {
+                    const chip = document.createElement('button');
+                    chip.type = 'button';
+                    chip.className = 'secure-add-filter-chip' + (f.key === addSelectedFilter ? ' active' : '');
+                    const swatch = document.createElement('div');
+                    swatch.className = 'swatch';
+                    if (addPosterImg) swatch.style.backgroundImage = `url(${makeFilterThumb(addPosterImg, f.key)})`;
+                    const label = document.createElement('span');
+                    label.textContent = f.label;
+                    chip.appendChild(swatch);
+                    chip.appendChild(label);
+                    chip.addEventListener('click', () => {
+                        addSelectedFilter = f.key;
+                        Array.from(addFilterRow.children).forEach((c) => c.classList.remove('active'));
+                        chip.classList.add('active');
+                        applyLivePreviewFilter();
+                    });
+                    addFilterRow.appendChild(chip);
+                });
+            }
+
+            // Shows the popup for exactly one file and resolves once the
+            // user has either added it or cancelled — callers await this
+            // per-file so a multi-photo selection shows the popup once per
+            // photo, in order.
+            function openAddModal(file, mediaType, progressLabel) {
+                return new Promise((resolve) => {
+                    resetAddModalFields();
+                    addModalTitle.textContent = mediaType === 'video'
+                        ? 'Add this video'
+                        : (progressLabel ? `Add this photo (${progressLabel.index} of ${progressLabel.total})` :
+                            'Add this photo');
+
+                    const previewUrl = URL.createObjectURL(file);
+                    if (mediaType === 'video') {
+                        addPreviewImg.classList.add('hidden');
+                        addPreviewImg.removeAttribute('src');
+                        addPreviewVideo.classList.remove('hidden');
+                        addPreviewVideo.src = previewUrl;
+                        addPreviewVideo.muted = true;
+                        addPreviewVideo.play().catch(() => {});
+                    } else {
+                        addPreviewVideo.classList.add('hidden');
+                        addPreviewVideo.pause();
+                        addPreviewVideo.removeAttribute('src');
+                        addPreviewImg.classList.remove('hidden');
+                        addPreviewImg.src = previewUrl;
+                    }
+
+                    addModal.classList.remove('hidden');
+
+                    addPosterImg = null;
+                    (mediaType === 'video' ? videoPosterImage(file) : fileToImage(file))
+                        .then(({ img }) => { addPosterImg = img; })
+                        .catch((e) => console.warn('secureSection: could not build filter previews.', e))
+                        .finally(() => {
+                            buildAddFilterRow();
+                            applyLivePreviewFilter();
+                        });
+
+                    function cleanup() {
+                        addModal.classList.add('hidden');
+                        URL.revokeObjectURL(previewUrl);
+                        addPreviewVideo.pause();
+                        addConfirmBtn.removeEventListener('click', onConfirm);
+                        addCancelBtn.removeEventListener('click', onCancel);
+                        addModalClose.removeEventListener('click', onCancel);
+                    }
+                    function onCancel() { cleanup(); resolve(false); }
+                    async function onConfirm() {
+                        showAddError('');
+                        const caption = addCaptionInput.value.trim();
+                        const keepOriginal = addQualityToggle.checked;
+                        const isSecret = addSecretToggle.checked;
+                        let secretHash = null,
+                            overlayText = null;
+                        if (isSecret) {
+                            const pass = addSecretPasswordInput.value;
+                            const confirmPass = addSecretConfirmInput.value;
+                            if (!pass || pass.length < 4) { showAddError(
+                                'Set a passcode of at least 4 characters.'); return; }
+                            if (pass !== confirmPass) { showAddError('Passcodes don\u2019t match.'); return; }
+                            overlayText = addSecretHintInput.value.trim() || null;
+                            secretHash = await sha256Hex(pass);
+                        }
+                        addConfirmBtn.disabled = true;
+                        addCancelBtn.disabled = true;
+                        addStatus.textContent = 'Uploading…';
+                        addStatus.classList.remove('hidden');
+                        try {
+                            const extra = {
+                                caption: caption || null,
+                                filter_id: addSelectedFilter,
+                                is_secret: isSecret,
+                                secret_password_hash: secretHash,
+                                overlay_text: overlayText
+                            };
+                            const ok = mediaType === 'video'
+                                ? await finalizeVideoUpload(file, addSelectedFilter, keepOriginal, extra)
+                                : await finalizePhotoUpload(file, addSelectedFilter, keepOriginal, extra);
+                            if (ok) toast(mediaType === 'video' ? 'Video added.' : 'Photo added.');
+                            cleanup();
+                            resolve(true);
+                        } catch (err) {
+                            console.error('secureSection: upload failed', err);
+                            showAddError('Something went wrong — try again.');
+                            addStatus.classList.add('hidden');
+                        } finally {
+                            addConfirmBtn.disabled = false;
+                            addCancelBtn.disabled = false;
+                        }
+                    }
+
+                    addConfirmBtn.addEventListener('click', onConfirm);
+                    addCancelBtn.addEventListener('click', onCancel);
+                    addModalClose.addEventListener('click', onCancel);
+                });
+            }
+
+            /* ───────────── enter-passcode popup ───────────── */
+            let pendingUnlockRow = null;
+
+            function showPasscodeError(msg) {
+                passcodeErrorEl.textContent = msg || '';
+                passcodeErrorEl.classList.toggle('hidden', !msg);
+            }
+
+            function openPasscodeOverlay(row) {
+                pendingUnlockRow = row;
+                passcodeHintEl.textContent = row.overlay_text ? row.overlay_text : 'Enter the passcode to reveal this.';
+                passcodeInput.value = '';
+                showPasscodeError('');
+                passcodeOverlay.classList.remove('hidden');
+                setTimeout(() => passcodeInput.focus(), 50);
+            }
+            function closePasscodeOverlay() {
+                passcodeOverlay.classList.add('hidden');
+                pendingUnlockRow = null;
+            }
+            passcodeCancelBtn.addEventListener('click', closePasscodeOverlay);
+            passcodeCloseBtn.addEventListener('click', closePasscodeOverlay);
+            passcodeOverlay.addEventListener('click', (e) => { if (e.target === passcodeOverlay) closePasscodeOverlay(); });
+            passcodeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') attemptUnlock(); });
+            passcodeSubmitBtn.addEventListener('click', attemptUnlock);
+
+            async function attemptUnlock() {
+                if (!pendingUnlockRow) return;
+                const row = pendingUnlockRow;
+                const entered = passcodeInput.value;
+                if (!entered) { showPasscodeError('Enter a passcode.'); return; }
+                passcodeSubmitBtn.disabled = true;
                 try {
-                    const blob = await compressVideo(file);
-                    videoChoiceStatus.textContent = 'Uploading…';
-                    const ok = await uploadVideoBlob(blob, 'webm');
-                    videoChoiceOverlay.classList.add('hidden');
-                    pendingVideoFile = null;
-                    if (ok) { await loadPhotos(); toast('Video added (compressed).'); }
-                } catch (err) {
-                    videoChoiceStatus.classList.add('hidden');
-                    toast('Compression failed — try "Upload original quality" instead.', { type: 'error' });
+                    const hash = await sha256Hex(entered);
+                    if (hash !== row.secret_password_hash) {
+                        showPasscodeError('That passcode is not correct.');
+                        return;
+                    }
+                    const viewerKey = keyForEmail(currentUserEmail);
+                    if (!viewerKey) { showPasscodeError('Could not verify who you are.'); return; }
+                    const field = 'revealed_by_' + viewerKey;
+                    const { error } = await sb.from('secure_photos').update({ [field]: true }).eq('id', row.id);
+                    if (error) { showPasscodeError('Could not save — try again.'); return; }
+                    row[field] = true;
+                    closePasscodeOverlay();
+                    toast('Unlocked 🔓');
+                    await loadPhotos();
+                } finally {
+                    passcodeSubmitBtn.disabled = false;
                 }
-            });
+            }
+
 
             /* ───────────── inactivity auto-lock ─────────────
                Tracked site-wide (not just while this section is open)
