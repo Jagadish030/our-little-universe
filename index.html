@@ -12846,6 +12846,17 @@
            on top of and overlapping the "Just Us" header. Explicitly hide
            it whenever this section is open. */
         body.secure-section-open .top-right-controls { display: none !important; }
+        /* Chat stays usable even while "Just Us" is open — every other
+           floating control (nav dock, top-right icons, etc.) stays
+           hidden behind the wall as before; only the chat bubble, its
+           panel, and its message-reaction popover are lifted above it,
+           since being able to chat while in this section is wanted here
+           specifically. Still below the Add-memory/passcode popups
+           (20020) and the photo lightbox (20010), so those keep
+           priority if opened at the same time as chat. */
+        body.secure-section-open .chat-fab { z-index: 15006; }
+        body.secure-section-open .chat-panel { z-index: 15008; }
+        body.secure-section-open .chat-pin-menu { z-index: 15010; }
         .secure-wall .notes-header,
         .secure-wall .secure-lock-screen,
         .secure-wall .secure-gallery-screen {
@@ -13192,7 +13203,12 @@
             position: fixed;
             inset: 0;
             z-index: 20020;
-            background: rgba(20, 14, 12, .68);
+            /* Solid enough on its own (not just relying on the blur) —
+               some WebViews (this content:// downloads viewer included)
+               composite backdrop-filter over a scrolling background
+               unreliably, and a mostly-transparent backdrop would let
+               the homepage underneath show through during that glitch. */
+            background: rgba(18, 13, 11, .92);
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
             display: flex;
@@ -13200,6 +13216,7 @@
             justify-content: center;
             padding: 1.2rem;
             box-sizing: border-box;
+            overscroll-behavior: contain;
         }
         .secure-modal-overlay.hidden { display: none; }
         .secure-modal-card {
@@ -13207,6 +13224,16 @@
             width: min(400px, 100%);
             max-height: 90vh;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            /* Same fix, same reasoning as .secure-wall's own
+               overscroll-behavior-y above: without this, scrolling to the
+               end of the popup's content and continuing to swipe "chains"
+               the leftover gesture to whatever the browser finds next —
+               on this content:// WebView that's the homepage's memory
+               wall underneath, briefly showing through during the
+               overscroll bounce even though this card sits in a fully
+               opaque, fixed, higher-stacked overlay. */
+            overscroll-behavior-y: contain;
             background: var(--white);
             border-radius: 20px;
             padding: 1.6rem;
@@ -13304,6 +13331,7 @@
             overflow-x: auto;
             padding: .15rem .1rem .5rem;
             -webkit-overflow-scrolling: touch;
+            overscroll-behavior-x: contain;
         }
         .secure-add-filter-chip {
             flex-shrink: 0;
@@ -13454,6 +13482,47 @@
             font-size: .85rem;
             text-align: center;
             margin: 1.2rem 0;
+        }
+
+        /* ── Secret-reveal status badge on an unlocked card — sits
+           opposite the favorite heart (top-left, heart is top-right) so
+           the two never collide. Three looks, one shared shape: see the
+           three render branches in buildSecureCard(). ── */
+        .secure-secret-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            z-index: 4;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            max-width: calc(100% - 56px);
+            padding: .25rem .55rem;
+            border-radius: 999px;
+            font-size: .62rem;
+            font-weight: 700;
+            line-height: 1.25;
+            color: #fff;
+            background: rgba(0, 0, 0, .5);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            pointer-events: none;
+        }
+        .secure-secret-badge--pending {
+            background: rgba(107, 83, 68, .68);
+        }
+        .secure-secret-badge--revealed-new {
+            background: linear-gradient(135deg, var(--rose-deep), #f2a154);
+            animation: secureRevealBadgePulse 1.6s ease-in-out infinite;
+        }
+        @keyframes secureRevealBadgePulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(242, 161, 84, .5); }
+            50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(242, 161, 84, .65); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .secure-secret-badge--revealed-new { animation: none; }
         }
 
         /* Video thumbnails inside a card front match the photo sizing. */
@@ -13833,8 +13902,8 @@
                 <div class="secure-lock-icon">🔒</div>
                 <p class="secure-lock-sub">Only the two of you can open this.</p>
                 <div class="secure-identity-row" id="secureIdentityRow">
-                    <button type="button" class="secure-identity-btn" data-email="kavisetti2001@gmail.com">Kavisetti</button>
-                    <button type="button" class="secure-identity-btn" data-email="lalithamalavika@gmail.com">Lalitha</button>
+                    <button type="button" class="secure-identity-btn" data-email="kavisetti2001@gmail.com">Jaggu</button>
+                    <button type="button" class="secure-identity-btn" data-email="lalithamalavika@gmail.com">Malavika</button>
                 </div>
                 <form id="secureAuthForm" autocomplete="on">
                     <input type="email" id="secureEmailInput" placeholder="Pick who you are above" autocomplete="username" readonly>
@@ -33228,6 +33297,10 @@
             const STOP_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
             const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
             const SIGNED_URL_TTL = 3600;
+            // How long the "✨ so-and-so revealed this!" badge stays on
+            // screen (from when it renders) before quietly downgrading to
+            // the plain, permanent "secret reveal" tag.
+            const REVEAL_ACK_DELAY_MS = 3 * 60 * 1000;
             const UNDO_WINDOW_MS = 6000;
             // showToast is exposed on window by the main script specifically
             // so standalone script blocks like this one can use the site's
@@ -33314,15 +33387,17 @@
             const HIS_EMAIL = ALLOWED[0]; // kavisetti2001@gmail.com — J / Jaggu
             const HER_EMAIL = ALLOWED[1]; // lalithamalavika@gmail.com — M / Malavika
             // Friendly display names, matching the sign-in screen's own
-            // "Kavisetti" / "Lalitha" identity buttons — used so the
-            // secret-reveal checkbox can name the actual other person
-            // instead of a generic placeholder.
-            const DISPLAY_NAME_BY_EMAIL = { [HIS_EMAIL]: 'Kavisetti', [HER_EMAIL]: 'Lalitha' };
+            // "Jaggu" / "Malavika" identity buttons — used so the
+            // secret-reveal checkbox (and the reveal-status badges below)
+            // can name the actual person instead of a generic placeholder.
+            const DISPLAY_NAME_BY_EMAIL = { [HIS_EMAIL]: 'Jaggu', [HER_EMAIL]: 'Malavika' };
             function otherPersonName() {
                 const other = currentUserEmail === HIS_EMAIL ? HER_EMAIL :
                     (currentUserEmail === HER_EMAIL ? HIS_EMAIL : null);
                 return (other && DISPLAY_NAME_BY_EMAIL[other]) || 'the other person';
             }
+            function nameForKey(key) { return key === 'j' ? DISPLAY_NAME_BY_EMAIL[HIS_EMAIL] : (key === 'm' ?
+                DISPLAY_NAME_BY_EMAIL[HER_EMAIL] : 'they'); }
             // Maps a signed-in email to the short key used by the
             // secret-reveal columns (revealed_by_j / revealed_by_m).
             function keyForEmail(email) {
@@ -33728,6 +33803,37 @@
                 const isLocked = !!row.is_secret && row.uploaded_by !== currentUserEmail &&
                     !(viewerKey && row['revealed_by_' + viewerKey]);
                 row.__locked = isLocked;
+                // Secret-reveal status badge — only shown once the photo
+                // itself is visible (locked cards already say "secret"
+                // via the lock layer, no need to repeat it). Three looks:
+                //  · uploader, other person hasn't opened it yet — muted
+                //    "waiting for <name>"
+                //  · uploader, other person just opened it and this is
+                //    the first time the uploader is seeing that — bright,
+                //    pulsing "<name> revealed this!" (see the timer below
+                //    that quietly marks it seen after a few minutes)
+                //  · everyone else (uploader after acknowledging, or the
+                //    other person after their own unlock) — a small
+                //    permanent "secret reveal" tag, so it stays
+                //    identifiable even long after the surprise is over
+                let secretBadgeHtml = '';
+                if (row.is_secret && !isLocked) {
+                    const iAmUploader = row.uploaded_by === currentUserEmail;
+                    if (iAmUploader) {
+                        const uploaderKey = keyForEmail(row.uploaded_by);
+                        const otherKey = uploaderKey === 'j' ? 'm' : 'j';
+                        const otherRevealed = !!row['revealed_by_' + otherKey];
+                        if (!otherRevealed) {
+                            secretBadgeHtml = `<div class="secure-secret-badge secure-secret-badge--pending">🔒 waiting for ${escapeHtmlLocal(nameForKey(otherKey))}</div>`;
+                        } else if (!row.reveal_seen_by_uploader) {
+                            secretBadgeHtml = `<div class="secure-secret-badge secure-secret-badge--revealed-new">✨ ${escapeHtmlLocal(nameForKey(otherKey))} revealed this!</div>`;
+                        } else {
+                            secretBadgeHtml = `<div class="secure-secret-badge">🔒 secret reveal</div>`;
+                        }
+                    } else {
+                        secretBadgeHtml = `<div class="secure-secret-badge">🔒 secret reveal</div>`;
+                    }
+                }
                 const mediaHtml = isVideo
                     ? `<video src="${row._signedUrl}" muted playsinline preload="metadata"></video>`
                     : `<img src="${row._signedUrl}" alt="A private photo" loading="lazy" decoding="async">`;
@@ -33745,6 +33851,7 @@
                       <div class="photo-frame">
                         <div class="secure-media-wrap${isLocked ? ' secure-locked' : ''}">${mediaHtml}</div>
                         ${lockLayerHtml}
+                        ${secretBadgeHtml}
                         ${(!isLocked && isVideo) ? `<button type="button" class="secure-video-play-badge" aria-label="Play video"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>` : ''}
                         ${!isLocked ? `<button class="expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>` : ''}
                       </div>
@@ -33795,6 +33902,30 @@
                 const photoFrame = wrap.querySelector('.photo-frame');
                 const unlockBtns = wrap.querySelectorAll('.secure-locked-unlock-btn');
                 unlockBtns.forEach(btn => wireTap(btn, () => openPasscodeOverlay(row)));
+
+                // The bright "revealed!" badge quietly downgrades itself
+                // to the plain permanent "secret reveal" tag once it's
+                // had a few minutes on screen — that's "seen" it in the
+                // sense that mattered, not merely that the section was
+                // opened and closed instantly. The DB write happens
+                // regardless of whether this card is still on screen when
+                // the timer fires, so it won't re-show next visit even if
+                // the section was closed early.
+                const revealAckBadge = wrap.querySelector('.secure-secret-badge--revealed-new');
+                if (revealAckBadge) {
+                    setTimeout(async () => {
+                        try {
+                            const { error } = await sb.from('secure_photos').update({ reveal_seen_by_uploader: true })
+                                .eq('id', row.id);
+                            if (error) return;
+                            row.reveal_seen_by_uploader = true;
+                            if (revealAckBadge.isConnected) {
+                                revealAckBadge.textContent = '🔒 secret reveal';
+                                revealAckBadge.classList.remove('secure-secret-badge--revealed-new');
+                            }
+                        } catch (err) { console.error('secureSection: could not mark reveal as seen', err); }
+                    }, REVEAL_ACK_DELAY_MS);
+                }
                 if (photoMedia) {
                     const markLoaded = () => { photoMedia.classList.add('loaded'); if (photoFrame) photoFrame.classList.add(
                         'loaded'); };
@@ -34437,9 +34568,15 @@
                     const viewerKey = keyForEmail(currentUserEmail);
                     if (!viewerKey) { showPasscodeError('Could not verify who you are.'); return; }
                     const field = 'revealed_by_' + viewerKey;
-                    const { error } = await sb.from('secure_photos').update({ [field]: true }).eq('id', row.id);
+                    // Also flips reveal_seen_by_uploader back to false in the
+                    // same update — this is the "a reveal just happened and
+                    // the person who set it up hasn't seen that yet" flag
+                    // that drives their "✨ revealed!" badge below.
+                    const { error } = await sb.from('secure_photos').update({ [field]: true,
+                        reveal_seen_by_uploader: false }).eq('id', row.id);
                     if (error) { showPasscodeError('Could not save — try again.'); return; }
                     row[field] = true;
+                    row.reveal_seen_by_uploader = false;
                     closePasscodeOverlay();
                     toast('Unlocked 🔓');
                     await loadPhotos();
