@@ -8540,7 +8540,12 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 1000;
+            /* Must beat every modal in the app, including "Just Us"
+               (z-index 15000) and its own lightbox/video-choice overlays
+               (20010/20015) — otherwise a toast fired while one of those
+               is open (e.g. the undo toast after deleting a secure photo)
+               renders invisibly behind it instead of on top. */
+            z-index: 21000;
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -10500,9 +10505,13 @@
             color: var(--rose-deep);
             transition: background .18s ease;
         }
-        .fav-heart:hover,
         .fav-heart:active {
             background: rgba(255, 253, 249, 0.75);
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .fav-heart:hover {
+                background: rgba(255, 253, 249, 0.75);
+            }
         }
         .fav-heart.active {
             color: var(--rose-deep);
@@ -10933,10 +10942,14 @@
         .lightbox-close,
         .lightbox-nav {
             position: fixed;
-            background: rgba(255, 255, 255, 0.15);
+            /* Solid dark circle, not translucent glass — the previous
+               near-white-on-white glass style could all but disappear
+               over a bright photo. This reads clearly over any image. */
+            background: rgba(20, 14, 12, .78);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .35);
             color: #FFFDF9;
             border-radius: 50%;
             cursor: pointer;
@@ -12793,57 +12806,71 @@
         /* ═══════════════════ "Just Us" — private, login-gated section ═══════════════════
            Everything here is UI only — the real security is the Supabase
            Auth session + Row Level Security policies behind it. This
-           overlay simply reflects whether that session exists; it never
-           makes an access decision on its own. */
-        .secure-section-overlay {
+           section simply reflects whether that session exists; it never
+           makes an access decision on its own.
+           A genuine full-page takeover: fixed, fully opaque, above
+           absolutely everything else (including the bottom nav dock,
+           which is explicitly hidden too — see JS) — nothing from the
+           rest of the site shows through or scrolls behind it. Closed
+           via the ✕ or the device/browser back button, both of which
+           just return to the normal page underneath, untouched. */
+        .secure-wall {
             position: fixed;
             inset: 0;
-            z-index: 20000;
-            background: rgba(20, 14, 12, .68);
-            backdrop-filter: blur(6px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1.2rem;
-        }
-        .secure-section-overlay.hidden { display: none; }
-        .secure-section-card {
-            position: relative;
-            width: min(420px, 100%);
-            max-height: 88vh;
+            z-index: 15000;
+            background: var(--paper);
             overflow-y: auto;
-            background: var(--white);
-            border-radius: 22px;
-            padding: 2.1rem 1.7rem 1.7rem;
-            box-shadow: 0 30px 70px rgba(0, 0, 0, .45);
-            animation: jellySpringIn .42s cubic-bezier(.34, 1.56, .64, 1) both;
+            -webkit-overflow-scrolling: touch;
+            /* Without this, scrolling to the end of the wall's own content
+               and continuing to swipe "chains" the leftover scroll gesture
+               to the page underneath — sliding the homepage's polaroids
+               into view at the bottom even though this section is
+               position:fixed and meant to cover it completely. */
+            overscroll-behavior-y: contain;
+            padding: 1.6rem 1.2rem calc(1.6rem + env(safe-area-inset-bottom));
+            box-sizing: border-box;
         }
-        body.dark-mode .secure-section-card { background: var(--paper-deep, #2a2320); }
-        .secure-section-close {
-            position: absolute;
-            top: .8rem;
-            right: .8rem;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(107, 83, 68, .08);
+        body.dark-mode .secure-wall { background: var(--paper-deep, #2a2320); }
+        .secure-wall.hidden { display: none; }
+        /* Belt-and-suspenders alongside the opaque full-viewport
+           background above: the nav dock is position:fixed and its
+           "More" popover deliberately renders outside its own bounds
+           (see the dock's own CSS comment), so simply sitting behind
+           in z-order isn't quite enough — it's fully hidden instead. */
+        #navDockWrap.secure-hide-behind { display: none; }
+        body.secure-section-open { overflow: hidden; overscroll-behavior: contain; }
+        /* The top-right icon cluster (✍️⚙️🖼️🔒) is position:fixed at the
+           <body> level, outside #siteContent's stacking context, so its
+           own z-index competes with #siteContent's (not with secure-wall's
+           much higher one nested inside it) and it was winning — floating
+           on top of and overlapping the "Just Us" header. Explicitly hide
+           it whenever this section is open. */
+        body.secure-section-open .top-right-controls { display: none !important; }
+        .secure-wall .notes-header,
+        .secure-wall .secure-lock-screen,
+        .secure-wall .secure-gallery-screen {
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .secure-lock-screen {
+            max-width: 360px;
+            margin: 1.5rem auto 0;
+            box-sizing: border-box;
+        }
+        .secure-wall .notes-header h2 {
+            font-family: 'Caveat', cursive;
+            font-size: 2rem;
+            text-align: center;
             color: var(--ink);
-            font-size: .9rem;
-            cursor: pointer;
+            margin: 0;
         }
         .secure-lock-icon { font-size: 2.4rem; text-align: center; }
-        .secure-lock-screen h2, .secure-gallery-header h2 {
-            text-align: center;
-            margin: .3rem 0 .2rem;
-            color: var(--ink);
-            font-size: 1.3rem;
-        }
         .secure-lock-sub {
             text-align: center;
             color: var(--ink-soft);
             font-size: .85rem;
-            margin: 0 0 1.3rem;
+            margin: .3rem 0 1.3rem;
         }
         .secure-identity-row {
             display: flex;
@@ -12852,6 +12879,7 @@
         }
         .secure-identity-btn {
             flex: 1;
+            min-width: 0;
             padding: .7rem;
             border-radius: 14px;
             border: 1.5px solid var(--card-border);
@@ -12908,25 +12936,115 @@
             cursor: pointer;
             margin-top: .7rem;
         }
-        .secure-gallery-header {
+        /* Privacy shield: the gallery re-locks visually (not just behind
+           auth) every time it's opened, since it holds private photos —
+           a glance at the phone shouldn't reveal anything. A double-tap
+           (or double-click on desktop) on the shield reveals it for that
+           viewing; it re-covers next time the section is opened, and if
+           the tab/app is backgrounded while it's open. */
+        .secure-gallery-screen {
+            position: relative;
+        }
+        .secure-gallery-screen.privacy-locked > *:not(.secure-privacy-shield) {
+            filter: blur(22px);
+            pointer-events: none;
+            user-select: none;
+        }
+        .secure-privacy-shield {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: .4rem;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(0, 0, 0, .04);
+            border-radius: 18px;
+        }
+        .secure-gallery-screen.privacy-locked .secure-privacy-shield {
+            display: flex;
+        }
+        .secure-privacy-icon {
+            font-size: 2rem;
+        }
+        .secure-privacy-shield p {
+            margin: 0;
+            color: var(--ink-soft);
+            font-size: .85rem;
+            font-weight: 600;
+        }
+        .secure-gallery-toolbar {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             gap: .6rem;
             flex-wrap: wrap;
-            margin-bottom: 1rem;
+            margin-bottom: .9rem;
         }
-        .secure-gallery-header h2 { margin: 0; text-align: left; }
-        .secure-gallery-header-actions { display: flex; gap: .5rem; }
-        .secure-upload-btn, .secure-logout-btn {
-            padding: .55rem .9rem;
-            border-radius: 12px;
-            border: 1.5px solid var(--card-border);
-            background: var(--paper);
-            color: var(--ink);
-            font-size: .82rem;
+        .secure-filter-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.4rem;
+        }
+        .secure-filter-btn {
+            font-family: 'Quicksand', sans-serif;
+            padding: .55rem .95rem;
+            border-radius: 999px;
+            border: 1.5px solid var(--rose-deep);
+            background: var(--white);
+            color: var(--rose-deep);
+            font-size: .78rem;
             font-weight: 600;
             cursor: pointer;
+            transition: background .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease;
+        }
+        .secure-filter-btn:active { transform: scale(.95); }
+        @media (hover: hover) and (pointer: fine) {
+            .secure-filter-btn:hover { box-shadow: 0 4px 12px var(--shadow); }
+        }
+        .secure-filter-btn.active {
+            border-color: var(--rose-deep);
+            background: var(--rose-deep);
+            color: var(--white);
+        }
+        .secure-upload-btn, .secure-logout-btn {
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 600;
+            font-size: .82rem;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+        }
+        .secure-upload-btn {
+            padding: .7rem 1.15rem;
+            color: var(--white);
+            background: var(--rose-deep);
+            border: none;
+            box-shadow: 0 6px 16px var(--shadow);
+        }
+        .secure-upload-btn:active { transform: scale(.96); }
+        @media (hover: hover) and (pointer: fine) {
+            .secure-upload-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 22px var(--shadow);
+                background: #C97781;
+            }
+        }
+        .secure-logout-btn {
+            padding: .65rem 1.05rem;
+            color: var(--ink-soft);
+            background: transparent;
+            border: 1.5px solid var(--card-border);
+        }
+        .secure-logout-btn:active { transform: scale(.96); }
+        @media (hover: hover) and (pointer: fine) {
+            .secure-logout-btn:hover { border-color: var(--rose-deep); color: var(--rose-deep); }
         }
         .secure-upload-status {
             font-size: .8rem;
@@ -12934,24 +13052,81 @@
             text-align: center;
             margin: 0 0 .8rem;
         }
-        .secure-photo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-            gap: .5rem;
+        /* The photos themselves reuse the exact same .polaroid-wrap
+           markup/CSS as the memory wall (built in JS below), so they
+           get identical caption/voice/flip/swipe behaviour and hover
+           styling for free — this row is just a wrapping flex
+           container to hang them in, sized so cards can never push
+           past the section's own edges. */
+        /* The photos/videos themselves use the exact same .row-items +
+           .polaroid-wrap markup/CSS as the memory wall (built in JS
+           below) — same 2-per-row on mobile / natural wrap to ~4 on
+           desktop, same caption/voice/flip/swipe behaviour, all for
+           free since the site already wires that up by class. */
+        /* Unlike the memory wall's photo cards, the "Just Us" back face
+           doesn't use the two-pane .back-panels-track slider (no reply
+           pane needed here) — it's a flat list of controls. Left on the
+           shared .back-panels (flex:1 1 auto + overflow:hidden) with a
+           fixed-height, non-scrolling textarea, a longer caption or a
+           shorter card (from a differently-shaped photo) could push the
+           mic button/voice label/date/remove row past the visible edge
+           and silently clip them. Caps the caption to ~2 lines with its
+           own scroll and stacks everything else right below it instead
+           of letting the whole panel stretch to fit. */
+        .face.back .secure-back-panels {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow-y: auto;
+            scrollbar-width: none;
         }
-        .secure-photo-thumb {
-            position: relative;
-            aspect-ratio: 1;
-            border-radius: 10px;
-            overflow: hidden;
+        .face.back .secure-back-panels::-webkit-scrollbar {
+            display: none;
+        }
+        .secure-back-panels .secure-caption-textarea {
+            flex: 0 0 auto;
+            height: 2.7em;
+            min-height: 2.7em;
+            max-height: 2.7em;
+            overflow-y: auto;
+        }
+        .secure-back-panels .flip-back-btn,
+        .secure-back-panels .secure-mic-row,
+        .secure-back-panels .secure-voice-attach,
+        .secure-back-panels .back-footer {
+            flex-shrink: 0;
+        }
+        /* Keeps date/remove pinned to the bottom edge of the card instead
+           of just trailing right after whatever's above it — which, on a
+           tall card, left it floating awkwardly with empty space below. */
+        .secure-back-panels .back-footer {
+            margin-top: auto;
+        }
+        /* A muted video renders as a still first frame with nothing to
+           mark it as a video, indistinguishable from a photo. This badge
+           sits over the thumbnail and opens the same fullscreen viewer as
+           the expand button, which now also starts playback immediately. */
+        .secure-video-play-badge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, .45);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            background: var(--paper);
+            z-index: 2;
         }
-        .secure-photo-thumb img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
+        .secure-video-play-badge svg {
+            width: 20px;
+            height: 20px;
+            margin-left: 3px;
         }
         .secure-empty-msg {
             text-align: center;
@@ -12967,15 +13142,18 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 1rem;
+            box-sizing: border-box;
         }
         .secure-lightbox.hidden { display: none; }
-        .secure-lightbox img {
+        .secure-lightbox img, .secure-lightbox video {
             max-width: 92vw;
             max-height: 82vh;
             border-radius: 10px;
             box-shadow: 0 30px 70px rgba(0, 0, 0, .5);
             animation: jellySpringIn .35s cubic-bezier(.34, 1.56, .64, 1) both;
         }
+        .secure-lightbox video.hidden, .secure-lightbox img.hidden { display: none; }
         .secure-lightbox-close, .secure-lightbox-delete {
             position: absolute;
             top: 1rem;
@@ -12985,9 +13163,90 @@
             font-size: .85rem;
             font-weight: 600;
             cursor: pointer;
+            /* Solid, high-contrast regardless of what the photo behind
+               them looks like — the old translucent glass style could
+               all but vanish over a bright/light photo. */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .4);
         }
-        .secure-lightbox-close { right: 1rem; background: rgba(255, 255, 255, .9); color: var(--ink); }
+        .secure-lightbox-close {
+            right: 1rem;
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(20, 14, 12, .82);
+            color: #fff;
+            font-size: 1.05rem;
+        }
         .secure-lightbox-delete { left: 1rem; background: #b3413a; color: var(--white); }
+
+        /* Video-length-choice modal (replaces confirm()/prompt() for
+           "compress or keep original" after a video passes the 10s cap) */
+        .secure-video-choice-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 20015;
+            background: rgba(20, 14, 12, .68);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.2rem;
+            box-sizing: border-box;
+        }
+        .secure-video-choice-overlay.hidden { display: none; }
+        .secure-video-choice-card {
+            width: min(360px, 100%);
+            background: var(--white);
+            border-radius: 20px;
+            padding: 1.6rem;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, .45);
+            animation: jellySpringIn .4s cubic-bezier(.34, 1.56, .64, 1) both;
+        }
+        body.dark-mode .secure-video-choice-card { background: var(--paper-deep, #2a2320); }
+        .secure-video-choice-card h3 { margin: 0 0 .5rem; color: var(--ink); }
+        .secure-video-choice-card p { margin: 0 0 1.1rem; color: var(--ink-soft); font-size: .85rem; }
+        .secure-video-choice-actions { display: flex; flex-direction: column; gap: .6rem; }
+        .secure-video-choice-actions .secure-upload-btn { text-align: center; }
+
+        /* Video thumbnails inside a card front match the photo sizing. */
+        .face.front video {
+            width: 100%;
+            height: auto;
+            max-height: 260px;
+            object-fit: contain;
+            display: block;
+            border-radius: 1px;
+        }
+        .secure-back-footer-actions {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+        }
+        .secure-save-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 1px solid var(--rose-deep);
+            background: none;
+            color: var(--rose-deep);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            flex-shrink: 0;
+        }
+        .secure-save-btn svg { width: 13px; height: 13px; }
+        .secure-save-btn:active { transform: scale(.9); }
+        @media (hover: hover) and (pointer: fine) {
+            .secure-save-btn:hover { background: var(--rose-deep); color: var(--white); }
+        }
+        .secure-save-btn.saving { opacity: .5; pointer-events: none; }
     </style>
 
     <style>
@@ -13321,48 +13580,74 @@
         <button type="button" class="nav-dock-collapsed-btn" id="navDockCollapsedBtn" aria-label="Open quick navigation">D</button>
 
         <!-- ─── "Just Us" — private, login-gated photo section ─── -->
-        <div class="secure-section-overlay hidden" id="secureSectionOverlay" aria-hidden="true">
-            <div class="secure-section-card">
-                <button type="button" class="secure-section-close" id="secureSectionCloseBtn" aria-label="Close">✕</button>
-
-                <div class="secure-lock-screen" id="secureLockScreen">
-                    <div class="secure-lock-icon">🔒</div>
-                    <h2>Just Us</h2>
-                    <p class="secure-lock-sub">Only the two of you can open this.</p>
-                    <div class="secure-identity-row" id="secureIdentityRow">
-                        <button type="button" class="secure-identity-btn" data-email="kavisetti2001@gmail.com">Jaggu</button>
-                        <button type="button" class="secure-identity-btn" data-email="lalithamalavika@gmail.com">Malavika</button>
-                    </div>
-                    <form id="secureAuthForm" autocomplete="on">
-                        <input type="email" id="secureEmailInput" placeholder="Pick who you are above" autocomplete="username" readonly>
-                        <input type="password" id="securePasswordInput" placeholder="Password" autocomplete="current-password">
-                        <input type="password" id="secureConfirmInput" placeholder="Confirm password" autocomplete="new-password" class="hidden">
-                        <p class="secure-error hidden" id="secureErrorMsg"></p>
-                        <button type="submit" class="secure-primary-btn" id="secureSubmitBtn" disabled>Sign in</button>
-                    </form>
-                    <button type="button" class="secure-link-btn" id="secureToggleModeBtn">First time here? Create your account</button>
-                    <button type="button" class="secure-link-btn" id="secureForgotBtn">Forgot password?</button>
-                </div>
-
-                <div class="secure-gallery-screen hidden" id="secureGalleryScreen">
-                    <div class="secure-gallery-header">
-                        <h2>🔒 Just Us</h2>
-                        <div class="secure-gallery-header-actions">
-                            <label class="secure-upload-btn" for="secureUploadInput">+ Add photo</label>
-                            <input type="file" id="secureUploadInput" accept="image/*" multiple hidden>
-                            <button type="button" class="secure-logout-btn" id="secureLogoutBtn">Log out</button>
-                        </div>
-                    </div>
-                    <p class="secure-upload-status hidden" id="secureUploadStatus"></p>
-                    <div class="secure-photo-grid" id="securePhotoGrid"></div>
-                    <p class="secure-empty-msg hidden" id="secureEmptyMsg">No photos yet — add your first one.</p>
-                </div>
+        <section class="secure-wall hidden" id="secureWall">
+            <div class="notes-header">
+                <h2>🔒 Just Us</h2>
+                <button class="notes-close-btn" id="secureSectionCloseBtn" type="button" aria-label="Close">✕</button>
             </div>
 
-            <div class="secure-lightbox hidden" id="secureLightbox">
-                <button type="button" class="secure-lightbox-close" id="secureLightboxClose">✕</button>
-                <button type="button" class="secure-lightbox-delete" id="secureLightboxDelete">🗑 Delete</button>
-                <img id="secureLightboxImg" alt="">
+            <div class="secure-lock-screen" id="secureLockScreen">
+                <div class="secure-lock-icon">🔒</div>
+                <p class="secure-lock-sub">Only the two of you can open this.</p>
+                <div class="secure-identity-row" id="secureIdentityRow">
+                    <button type="button" class="secure-identity-btn" data-email="kavisetti2001@gmail.com">Kavisetti</button>
+                    <button type="button" class="secure-identity-btn" data-email="lalithamalavika@gmail.com">Lalitha</button>
+                </div>
+                <form id="secureAuthForm" autocomplete="on">
+                    <input type="email" id="secureEmailInput" placeholder="Pick who you are above" autocomplete="username" readonly>
+                    <input type="password" id="securePasswordInput" placeholder="Password" autocomplete="current-password">
+                    <input type="password" id="secureConfirmInput" placeholder="Confirm password" autocomplete="new-password" class="hidden">
+                    <p class="secure-error hidden" id="secureErrorMsg"></p>
+                    <button type="submit" class="secure-primary-btn" id="secureSubmitBtn" disabled>Sign in</button>
+                </form>
+                <button type="button" class="secure-link-btn" id="secureToggleModeBtn">First time here? Create your account</button>
+                <button type="button" class="secure-link-btn" id="secureForgotBtn">Forgot password?</button>
+            </div>
+
+            <div class="secure-gallery-screen hidden" id="secureGalleryScreen">
+                <div class="secure-privacy-shield" id="securePrivacyShield">
+                    <span class="secure-privacy-icon">🔒</span>
+                    <p>double-tap to view</p>
+                </div>
+                <div class="secure-gallery-toolbar">
+                    <label class="secure-upload-btn" for="secureUploadInput">+ Add photo</label>
+                    <input type="file" id="secureUploadInput" accept="image/*" multiple hidden>
+                    <label class="secure-upload-btn" for="secureUploadVideoInput">+ Add video</label>
+                    <input type="file" id="secureUploadVideoInput" accept="video/*" hidden>
+                    <button type="button" class="secure-logout-btn" id="secureLogoutBtn">Log out</button>
+                </div>
+                <div class="secure-filter-row" id="secureFilterRow">
+                    <button type="button" class="secure-filter-btn" id="secureFavFilterBtn">♡ Favorites</button>
+                    <button type="button" class="secure-filter-btn" id="secureSortBtn">Sort: Latest</button>
+                    <button type="button" class="secure-filter-btn" id="secureHisBtn">His</button>
+                    <button type="button" class="secure-filter-btn" id="secureHerBtn">Her</button>
+                </div>
+                <p class="secure-upload-status hidden" id="secureUploadStatus"></p>
+                <div class="row-items" id="securePhotoRow"></div>
+                <p class="secure-empty-msg hidden" id="secureEmptyMsg">No photos yet — add your first one.</p>
+            </div>
+        </section>
+
+        <!-- Fullscreen viewer for a single "Just Us" photo/video -->
+        <div class="secure-lightbox hidden" id="secureLightbox">
+            <button type="button" class="secure-lightbox-close" id="secureLightboxClose" aria-label="Close">✕</button>
+            <button type="button" class="secure-lightbox-delete" id="secureLightboxDelete">🗑 Delete</button>
+            <img id="secureLightboxImg" alt="">
+            <video id="secureLightboxVideo" class="hidden" controls playsinline></video>
+        </div>
+
+        <!-- Aesthetic choice for a video that passed the 10s cap — replaces
+             any native confirm()/prompt() for this decision. -->
+        <div class="secure-video-choice-overlay hidden" id="secureVideoChoiceOverlay">
+            <div class="secure-video-choice-card">
+                <h3>Add this video</h3>
+                <p>Compress it for a faster, lighter upload — or keep the original quality.</p>
+                <div class="secure-video-choice-actions">
+                    <button type="button" class="secure-primary-btn" id="secureVideoCompressBtn">Compress &amp; upload</button>
+                    <button type="button" class="secure-upload-btn" id="secureVideoOriginalBtn">Upload original quality</button>
+                    <button type="button" class="secure-link-btn" id="secureVideoCancelBtn">Cancel</button>
+                </div>
+                <p class="secure-upload-status hidden" id="secureVideoChoiceStatus"></p>
             </div>
         </div>
 
@@ -32637,10 +32922,22 @@
 
             const ALLOWED = ['kavisetti2001@gmail.com', 'lalithamalavika@gmail.com'];
             const BUCKET = 'secure-photos';
+            // This module is standalone (see header note) so it can't reach
+            // the main script's createMiniVoiceRecorder/MIC_SVG closure —
+            // that's why these mic buttons were rendering blank. Local copy
+            // of the same icons so they match the rest of the site.
+            const MIC_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V20H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-2v-2.08A7 7 0 0 0 19 11z"/></svg>';
+            const STOP_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
             const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+            const SIGNED_URL_TTL = 3600;
+            const UNDO_WINDOW_MS = 6000;
+            // showToast is exposed on window by the main script specifically
+            // so standalone script blocks like this one can use the site's
+            // own aesthetic toast instead of falling back to window.alert().
+            const toast = (msg, opts) => { if (typeof window.showToast === 'function') window.showToast(msg, opts); };
 
             const $ = (id) => document.getElementById(id);
-            const overlay = $('secureSectionOverlay');
+            const wall = $('secureWall');
             const lockScreen = $('secureLockScreen');
             const galleryScreen = $('secureGalleryScreen');
             const identityRow = $('secureIdentityRow');
@@ -32654,20 +32951,47 @@
             const forgotBtn = $('secureForgotBtn');
             const uploadInput = $('secureUploadInput');
             const uploadStatus = $('secureUploadStatus');
-            const photoGrid = $('securePhotoGrid');
+            const photoRow = $('securePhotoRow');
             const emptyMsg = $('secureEmptyMsg');
+            const favFilterBtn = $('secureFavFilterBtn');
+            const sortBtn = $('secureSortBtn');
+            const hisBtn = $('secureHisBtn');
+            const herBtn = $('secureHerBtn');
             const logoutBtn = $('secureLogoutBtn');
             const closeBtn = $('secureSectionCloseBtn');
             const lightbox = $('secureLightbox');
             const lightboxImg = $('secureLightboxImg');
+            const lightboxVideo = $('secureLightboxVideo');
             const lightboxClose = $('secureLightboxClose');
             const lightboxDelete = $('secureLightboxDelete');
             const openBtn = $('navDockMoreSecure');
 
-            if (!overlay || !authForm) return;
+            if (!wall || !authForm) return;
+
+            // Every other "wall" section on the site hides its siblings
+            // the same way when it opens — replicated here by ID rather
+            // than reaching into the main script's closure (this module
+            // is deliberately standalone, see the header note above).
+            const OTHER_WALL_IDS = ['notesWall', 'doodlesWall', 'moodsWall', 'capsulesWall', 'bucketWall',
+                'constellationWall', 'gamesWall', 'specialDaysWall'
+            ];
 
             let signUpMode = false;
             let currentLightboxRow = null;
+            let currentUserEmail = null;
+            // Filter/sort state for the toolbar's Favorites/Sort/His/Her
+            // controls — client-side on top of the same loadPhotos() query.
+            let favoritesOnly = false;
+            let sortMode = 'latest'; // 'latest' | 'oldest' | 'shuffle'
+            let personFilter = null; // null | one of ALLOWED
+            const HIS_EMAIL = ALLOWED[0]; // kavisetti2001@gmail.com — J / Jaggu
+            const HER_EMAIL = ALLOWED[1]; // lalithamalavika@gmail.com — M / Malavika
+
+            function escapeHtmlLocal(s) {
+                return (s || '').replace(/[&<>"']/g, c => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                } [c]));
+            }
 
             function showError(msg) {
                 errorMsg.textContent = msg;
@@ -32726,33 +33050,91 @@
                 }
             });
 
-            function openOverlay() {
-                overlay.classList.remove('hidden');
-                overlay.setAttribute('aria-hidden', 'false');
+            function openWall() {
+                OTHER_WALL_IDS.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('hidden'); });
+                // Full takeover: nothing else from the site should be
+                // visible or reachable while this is open. The nav dock
+                // is fixed-position and would otherwise float on top of
+                // (or peek from behind) this section regardless of
+                // scroll position, so it's explicitly hidden too.
+                const navDock = document.getElementById('navDockWrap');
+                if (navDock) navDock.classList.add('secure-hide-behind');
+                document.body.classList.add('secure-section-open');
+                wall.classList.remove('hidden');
+                wall.scrollTop = 0;
+                history.pushState({ secureSection: true }, '');
                 sb.auth.getSession().then(({ data }) => {
                     if (data && data.session) enterGallery();
                     else showLockScreen();
                 });
             }
-            function closeOverlay() {
-                overlay.classList.add('hidden');
-                overlay.setAttribute('aria-hidden', 'true');
+            function closeWall(fromPopstate) {
+                wall.classList.add('hidden');
                 lightbox.classList.add('hidden');
+                showPrivacyShield();
+                const navDock = document.getElementById('navDockWrap');
+                if (navDock) navDock.classList.remove('secure-hide-behind');
+                document.body.classList.remove('secure-section-open');
+                if (!fromPopstate && history.state && history.state.secureSection) history.back();
             }
-            if (openBtn) openBtn.addEventListener('click', openOverlay);
-            closeBtn.addEventListener('click', closeOverlay);
-            overlay.addEventListener('click', (e) => { if (e.target === overlay) closeOverlay(); });
+            if (openBtn) openBtn.addEventListener('click', openWall);
+            closeBtn.addEventListener('click', () => closeWall(false));
+            // Device/browser back button closes it too, same as the ✕.
+            window.addEventListener('popstate', () => {
+                if (!wall.classList.contains('hidden')) closeWall(true);
+            });
 
             function showLockScreen() {
                 lockScreen.classList.remove('hidden');
                 galleryScreen.classList.add('hidden');
                 passwordInput.value = ''; confirmInput.value = '';
                 showError('');
+                showPrivacyShield();
             }
+
+            function showPrivacyShield() { galleryScreen.classList.add('privacy-locked'); }
+            function revealPrivacyShield() { galleryScreen.classList.remove('privacy-locked'); }
+            // Listens on the whole wall, not just the shield's own hint box —
+            // that box is only as tall as the gallery's actual content
+            // (often much shorter than the screen), so a shield-only
+            // listener only caught double-taps in that small top area.
+            // This works anywhere on screen while the shield is up.
+            let lastShieldTap = 0;
+            wall.addEventListener('dblclick', (e) => {
+                if (!galleryScreen.classList.contains('privacy-locked')) return;
+                // Without this, the same double-tap that reveals the
+                // gallery also lands as a click on whatever card/button is
+                // now sitting underneath it (a "ghost click" straight
+                // through to content that was blurred a moment ago).
+                e.preventDefault();
+                e.stopPropagation();
+                revealPrivacyShield();
+            });
+            wall.addEventListener('touchend', (e) => {
+                if (!galleryScreen.classList.contains('privacy-locked')) return;
+                const now = Date.now();
+                if (now - lastShieldTap < 350) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    revealPrivacyShield();
+                }
+                lastShieldTap = now;
+            });
+            // Re-cover if the tab/app is backgrounded while this section is
+            // open, same reasoning as the idle auto-lock further below.
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && !wall.classList.contains('hidden')) showPrivacyShield();
+            });
 
             async function enterGallery() {
                 lockScreen.classList.add('hidden');
                 galleryScreen.classList.remove('hidden');
+                // secure_photos.uploaded_by is NOT NULL in Supabase — grab the
+                // signed-in email now so uploads below can actually satisfy it.
+                const { data: sessData } = await sb.auth.getSession();
+                currentUserEmail = (sessData && sessData.session && sessData.session.user) ?
+                    sessData.session.user.email : null;
+                showPrivacyShield();
                 await loadPhotos();
             }
 
@@ -32761,64 +33143,566 @@
                 showLockScreen();
             });
 
-            /* ───────────── photos ───────────── */
+            const SORT_LABELS = { latest: 'Sort: Latest', oldest: 'Sort: Oldest', shuffle: 'Sort: Shuffle' };
+            const SORT_CYCLE = ['latest', 'oldest', 'shuffle'];
+            favFilterBtn.addEventListener('click', () => {
+                favoritesOnly = !favoritesOnly;
+                favFilterBtn.classList.toggle('active', favoritesOnly);
+                favFilterBtn.textContent = favoritesOnly ? '♥ Favorites' : '♡ Favorites';
+                loadPhotos();
+            });
+            sortBtn.addEventListener('click', () => {
+                sortMode = SORT_CYCLE[(SORT_CYCLE.indexOf(sortMode) + 1) % SORT_CYCLE.length];
+                sortBtn.textContent = SORT_LABELS[sortMode];
+                sortBtn.classList.toggle('active', sortMode !== 'latest');
+                loadPhotos();
+            });
+            hisBtn.addEventListener('click', () => {
+                personFilter = (personFilter === HIS_EMAIL) ? null : HIS_EMAIL;
+                hisBtn.classList.toggle('active', personFilter === HIS_EMAIL);
+                herBtn.classList.remove('active');
+                loadPhotos();
+            });
+            herBtn.addEventListener('click', () => {
+                personFilter = (personFilter === HER_EMAIL) ? null : HER_EMAIL;
+                herBtn.classList.toggle('active', personFilter === HER_EMAIL);
+                hisBtn.classList.remove('active');
+                loadPhotos();
+            });
+
+            /* ───────────── photos, styled + wired exactly like the
+               memory wall's own Polaroids (same classes, same flip/
+               swipe behaviour, same hover/tilt CSS — all of that is
+               already wired site-wide by class selector, so reusing
+               the classes is what makes it "just work" here too). */
             async function loadPhotos() {
-                photoGrid.innerHTML = '';
-                const { data, error } = await sb.from('secure_photos').select('*').order('created_at', { ascending: false });
-                if (error) { uploadStatus.textContent = 'Could not load photos: ' + error.message; uploadStatus.classList.remove('hidden'); return; }
-                uploadStatus.classList.add('hidden');
-                emptyMsg.classList.toggle('hidden', !!(data && data.length));
-                if (!data) return;
-                for (const row of data) {
-                    const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(row.storage_path, 3600);
-                    const thumb = document.createElement('div');
-                    thumb.className = 'secure-photo-thumb';
-                    const img = document.createElement('img');
-                    img.src = signed ? signed.signedUrl : '';
-                    img.alt = row.caption || '';
-                    img.loading = 'lazy';
-                    thumb.appendChild(img);
-                    thumb.addEventListener('click', () => openLightbox(row, img.src));
-                    photoGrid.appendChild(thumb);
+                photoRow.innerHTML = '';
+                let query = sb.from('secure_photos').select('*');
+                if (favoritesOnly) query = query.eq('favorite', true);
+                if (personFilter) query = query.eq('uploaded_by', personFilter);
+                query = query.order('created_at', { ascending: sortMode === 'oldest' });
+                const { data, error } = await query;
+                if (error) { toast('Could not load photos: ' + error.message, { type: 'error' }); return; }
+                let rows = data || [];
+                if (sortMode === 'shuffle') {
+                    for (let i = rows.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [rows[i], rows[j]] = [rows[j], rows[i]];
+                    }
+                }
+                const filtered = favoritesOnly || personFilter;
+                emptyMsg.textContent = (filtered && !rows.length) ?
+                    'Nothing matches these filters yet.' : 'No photos yet — add your first one.';
+                emptyMsg.classList.toggle('hidden', !!rows.length);
+                for (const row of rows) {
+                    const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(row.storage_path, SIGNED_URL_TTL);
+                    row._signedUrl = signed ? signed.signedUrl : '';
+                    if (row.voice_path) {
+                        const { data: vsigned } = await sb.storage.from(BUCKET).createSignedUrl(row.voice_path, SIGNED_URL_TTL);
+                        row._voiceUrl = vsigned ? vsigned.signedUrl : null;
+                    }
+                    photoRow.appendChild(buildSecureCard(row));
                 }
             }
 
-            function openLightbox(row, src) {
+            function wireTap(el, fn) {
+                if (!el) return;
+                el.addEventListener('click', (e) => { e.stopPropagation(); fn(e); });
+            }
+
+            function buildSecureCard(row) {
+                const wrap = document.createElement('div');
+                wrap.className = 'polaroid-wrap';
+                wrap.dataset.id = row.id;
+                wrap.style.setProperty('--tilt', (Math.random() * 6 - 3).toFixed(2) + 'deg');
+                const dateLabel = row.created_at ? new Date(row.created_at).toLocaleDateString(undefined,
+                    { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+                const isVideo = row.media_type === 'video';
+                const mediaHtml = isVideo
+                    ? `<video src="${row._signedUrl}" muted playsinline preload="metadata"></video>`
+                    : `<img src="${row._signedUrl}" alt="A private photo" loading="lazy" decoding="async">`;
+                wrap.innerHTML = `
+                  <div class="pin"></div>
+                  <div class="polaroid" tabindex="0" role="button" aria-label="Flip photo to see the note">
+                    <div class="face front">
+                      <button class="fav-heart" type="button" aria-label="Toggle favorite">${row.favorite ? '♥' : '♡'}</button>
+                      <div class="photo-frame">
+                        ${mediaHtml}
+                        ${isVideo ? `<button type="button" class="secure-video-play-badge" aria-label="Play video"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>` : ''}
+                        <button class="expand-btn" type="button" aria-label="View full size"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>
+                      </div>
+                      <div class="cap-preview-row">
+                        ${row.voice_path ? `<button type="button" class="caption-voice-play secure-voice-preview-play" aria-label="Play voice caption">▶</button>` : ''}
+                        <div class="cap-preview">${row.caption ? escapeHtmlLocal(row.caption) : 'tap to add a caption…'}</div>
+                      </div>
+                    </div>
+                    <div class="face back">
+                      <div class="back-panels secure-back-panels">
+                        <textarea class="secure-caption-textarea" maxlength="200" placeholder="Add a caption..." aria-label="Write a note for this photo">${escapeHtmlLocal(row.caption || '')}</textarea>
+                        <button class="flip-back-btn" type="button" aria-label="Flip back to photo">‹ back to photo</button>
+                        <div class="dual-mic-row secure-mic-row">
+                          <div class="dual-mic-item">
+                            <button type="button" class="mini-mic-btn secure-mic-btn" aria-label="Record a voice caption"></button>
+                            <span class="dual-mic-label">voice caption</span>
+                          </div>
+                        </div>
+                        <div class="voice-attachment secure-voice-attach${row.voice_path ? '' : ' hidden'}"></div>
+                        <div class="back-footer">
+                          <span>${dateLabel}</span>
+                          <div class="secure-back-footer-actions">
+                            <button class="secure-save-btn" type="button" aria-label="Save to device" title="Save to device"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 19h14"/></svg></button>
+                            <button class="unpin secure-remove-btn" type="button">remove</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                `;
+                const card = wrap.querySelector('.polaroid');
+                const textarea = wrap.querySelector('textarea');
+                const flipBackBtn = wrap.querySelector('.flip-back-btn');
+                const favBtn = wrap.querySelector('.fav-heart');
+                const expandBtn = wrap.querySelector('.expand-btn');
+                const playBadge = wrap.querySelector('.secure-video-play-badge');
+                const micBtn = wrap.querySelector('.secure-mic-btn');
+                if (micBtn) micBtn.innerHTML = MIC_SVG;
+                const voiceBox = wrap.querySelector('.secure-voice-attach');
+                const removeBtn = wrap.querySelector('.secure-remove-btn');
+                const previewPlayBtn = wrap.querySelector('.secure-voice-preview-play');
+                const capPreview = wrap.querySelector('.cap-preview');
+                const photoMedia = wrap.querySelector('.photo-frame img, .photo-frame video');
+                const photoFrame = wrap.querySelector('.photo-frame');
+                if (photoMedia) {
+                    const markLoaded = () => { photoMedia.classList.add('loaded'); if (photoFrame) photoFrame.classList.add(
+                        'loaded'); };
+                    if (isVideo) {
+                        if (photoMedia.readyState >= 1) markLoaded(); else photoMedia.addEventListener('loadedmetadata',
+                            markLoaded);
+                    } else {
+                        if (photoMedia.complete) markLoaded(); else photoMedia.addEventListener('load', markLoaded);
+                    }
+                }
+
+                function flip(e) {
+                    // Was checking e.target against the button elements by
+                    // exact reference — but mic/expand buttons render an
+                    // inline <svg> icon, so tapping the icon itself makes
+                    // e.target the <svg>, not the <button>, and this check
+                    // missed it: the card flipped away mid-tap, right as
+                    // you tried to start a recording.
+                    if (e.target.closest && e.target.closest('button, textarea, .voice-attachment')) return;
+                    card.classList.toggle('flipped');
+                }
+                card.addEventListener('click', flip);
+                card.addEventListener('keydown', (e) => {
+                    if ((e.key === 'Enter' || e.key === ' ') && e.target === card) { e.preventDefault(); card.classList.toggle(
+                        'flipped'); }
+                });
+                wireTap(flipBackBtn, () => card.classList.remove('flipped'));
+
+                wireTap(favBtn, async () => {
+                    row.favorite = !row.favorite;
+                    favBtn.textContent = row.favorite ? '♥' : '♡';
+                    await sb.from('secure_photos').update({ favorite: row.favorite }).eq('id', row.id);
+                });
+
+                wireTap(expandBtn, () => openLightbox(row));
+                wireTap(playBadge, () => openLightbox(row));
+
+                textarea.addEventListener('click', (e) => e.stopPropagation());
+                let saveTimer = null;
+                textarea.addEventListener('input', () => {
+                    capPreview.textContent = textarea.value || 'tap to add a caption…';
+                    clearTimeout(saveTimer);
+                    saveTimer = setTimeout(async () => {
+                        row.caption = textarea.value;
+                        await sb.from('secure_photos').update({ caption: row.caption }).eq('id', row.id);
+                    }, 500);
+                });
+
+                function renderVoice() {
+                    voiceBox.innerHTML = '';
+                    if (!row.voice_path || !row._voiceUrl) { voiceBox.classList.add('hidden'); return; }
+                    voiceBox.classList.remove('hidden');
+                    let audio = null;
+                    const playBtn = document.createElement('button');
+                    playBtn.type = 'button';
+                    playBtn.className = 'secure-voice-mini-btn';
+                    playBtn.textContent = '▶ voice caption';
+                    playBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (!audio) audio = new Audio(row._voiceUrl);
+                        if (audio.paused) { audio.play(); playBtn.textContent = '⏸ playing…'; } else { audio.pause();
+                            playBtn.textContent = '▶ voice caption'; }
+                        audio.onended = () => { playBtn.textContent = '▶ voice caption'; };
+                    });
+                    const rmBtn = document.createElement('button');
+                    rmBtn.type = 'button';
+                    rmBtn.className = 'voice-attachment-remove';
+                    rmBtn.setAttribute('aria-label', 'Remove voice caption');
+                    rmBtn.textContent = '✕';
+                    rmBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (audio) audio.pause();
+                        const oldPath = row.voice_path;
+                        row.voice_path = null; row._voiceUrl = null;
+                        renderVoice();
+                        if (previewPlayBtn) previewPlayBtn.remove();
+                        let undone = false;
+                        toast('Voice caption removed.', {
+                            actionLabel: 'Undo', duration: UNDO_WINDOW_MS, onAction: () => {
+                                undone = true;
+                                row.voice_path = oldPath;
+                                sb.storage.from(BUCKET).createSignedUrl(oldPath, SIGNED_URL_TTL).then(({ data }) => {
+                                    row._voiceUrl = data ? data.signedUrl : null;
+                                    renderVoice();
+                                });
+                            }
+                        });
+                        setTimeout(async () => {
+                            if (undone) return;
+                            await sb.storage.from(BUCKET).remove([oldPath]);
+                            await sb.from('secure_photos').update({ voice_path: null }).eq('id', row.id);
+                        }, UNDO_WINDOW_MS);
+                    });
+                    voiceBox.appendChild(playBtn);
+                    voiceBox.appendChild(rmBtn);
+                }
+                renderVoice();
+
+                if (previewPlayBtn) {
+                    let pAudio = null;
+                    previewPlayBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (!row._voiceUrl) return;
+                        if (!pAudio) pAudio = new Audio(row._voiceUrl);
+                        if (pAudio.paused) pAudio.play(); else pAudio.pause();
+                    });
+                }
+
+                let mediaRecorder = null, chunks = [];
+                micBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if (micBtn.classList.contains('recording')) { mediaRecorder && mediaRecorder.stop(); return; }
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+                        toast('Voice recording is not supported on this device.', { type: 'error' }); return;
+                    }
+                    let stream;
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    } catch (err) {
+                        toast('Microphone access was denied.', { type: 'error' });
+                        return;
+                    }
+                    try {
+                        chunks = [];
+                        mediaRecorder = new MediaRecorder(stream);
+                        mediaRecorder.ondataavailable = (ev) => { if (ev.data.size) chunks.push(ev.data); };
+                        mediaRecorder.onerror = () => {
+                            toast('Recording failed — please try again.', { type: 'error' });
+                            micBtn.classList.remove('recording');
+                            micBtn.innerHTML = MIC_SVG;
+                            stream.getTracks().forEach(t => t.stop());
+                        };
+                        mediaRecorder.onstop = async () => {
+                            micBtn.classList.remove('recording');
+                            micBtn.innerHTML = MIC_SVG;
+                            stream.getTracks().forEach(t => t.stop());
+                            const blob = new Blob(chunks, { type: 'audio/webm' });
+                            if (blob.size < 500) {
+                                toast('That recording was too short to save.', { type: 'error' });
+                                return;
+                            }
+                            const path = `voice-${crypto.randomUUID()}.webm`;
+                            const { error: upErr } = await sb.storage.from(BUCKET).upload(path, blob);
+                            if (upErr) { toast('Could not save voice caption: ' + upErr.message, { type: 'error' }); return; }
+                            const previousPath = row.voice_path;
+                            const { error: updErr } = await sb.from('secure_photos').update({ voice_path: path }).eq(
+                                'id', row.id);
+                            if (updErr) {
+                                toast('Could not save voice caption: ' + updErr.message, { type: 'error' });
+                                await sb.storage.from(BUCKET).remove([path]);
+                                return;
+                            }
+                            row.voice_path = path;
+                            if (previousPath) await sb.storage.from(BUCKET).remove([previousPath]);
+                            const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(path, SIGNED_URL_TTL);
+                            row._voiceUrl = signed ? signed.signedUrl : null;
+                            renderVoice();
+                        };
+                        mediaRecorder.start();
+                        micBtn.classList.add('recording');
+                        micBtn.innerHTML = STOP_SVG;
+                    } catch (err) {
+                        toast('Could not start recording — please try again.', { type: 'error' });
+                        stream.getTracks().forEach(t => t.stop());
+                    }
+                });
+
+                wireTap(removeBtn, () => softDeletePhoto(row, wrap));
+
+                const saveBtn = wrap.querySelector('.secure-save-btn');
+                wireTap(saveBtn, () => saveMediaToDevice(row, saveBtn));
+
+                return wrap;
+            }
+
+            // Fetches the actual file (never just opens the signed URL in a
+            // new tab, which on many mobile browsers *views* an image/video
+            // rather than saving it) and forces a real download via a
+            // temporary <a download> link.
+            async function saveMediaToDevice(row, btn) {
+                if (btn) btn.classList.add('saving');
+                try {
+                    const res = await fetch(row._signedUrl);
+                    if (!res.ok) throw new Error('Download failed');
+                    const blob = await res.blob();
+                    const ext = row.media_type === 'video' ? (row.storage_path.split('.').pop() || 'webm') :
+                        (row.storage_path.split('.').pop() || 'jpg');
+                    const filename = `just-us-${row.id}.${ext}`;
+                    const blobUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
+                } catch (err) {
+                    toast('Could not save that to your device.', { type: 'error' });
+                } finally {
+                    if (btn) btn.classList.remove('saving');
+                }
+            }
+
+            function softDeletePhoto(row, wrap) {
+                if (wrap && wrap.parentNode) wrap.remove();
+                emptyMsg.classList.toggle('hidden', photoRow.children.length > 0);
+                let undone = false;
+                toast('Photo deleted.', {
+                    actionLabel: 'Undo', duration: UNDO_WINDOW_MS, onAction: () => {
+                        undone = true;
+                        loadPhotos();
+                    }
+                });
+                setTimeout(async () => {
+                    if (undone) return;
+                    await sb.storage.from(BUCKET).remove([row.storage_path]);
+                    if (row.voice_path) await sb.storage.from(BUCKET).remove([row.voice_path]);
+                    await sb.from('secure_photos').delete().eq('id', row.id);
+                }, UNDO_WINDOW_MS);
+            }
+
+            function openLightbox(row) {
                 currentLightboxRow = row;
-                lightboxImg.src = src;
+                if (row.media_type === 'video') {
+                    lightboxImg.classList.add('hidden');
+                    lightboxImg.removeAttribute('src');
+                    lightboxVideo.classList.remove('hidden');
+                    lightboxVideo.src = row._signedUrl;
+                    lightboxVideo.currentTime = 0;
+                    // Tapping a video should drop straight into fullscreen
+                    // playback, not just open a paused viewer that needs a
+                    // second tap — this call happens inside the click
+                    // handler's own call stack, so it still counts as a
+                    // user gesture and isn't blocked by autoplay policy.
+                    lightboxVideo.play().catch(() => {});
+                } else {
+                    lightboxVideo.classList.add('hidden');
+                    lightboxVideo.pause();
+                    lightboxVideo.removeAttribute('src');
+                    lightboxImg.classList.remove('hidden');
+                    lightboxImg.src = row._signedUrl;
+                }
                 lightbox.classList.remove('hidden');
             }
-            lightboxClose.addEventListener('click', () => lightbox.classList.add('hidden'));
-            lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.classList.add('hidden'); });
-            lightboxDelete.addEventListener('click', async () => {
-                if (!currentLightboxRow) return;
-                if (!confirm('Delete this photo? This cannot be undone.')) return;
-                const row = currentLightboxRow;
-                await sb.storage.from(BUCKET).remove([row.storage_path]);
-                await sb.from('secure_photos').delete().eq('id', row.id);
+            function closeLightbox() {
                 lightbox.classList.add('hidden');
-                await loadPhotos();
+                lightboxVideo.pause();
+            }
+            lightboxClose.addEventListener('click', closeLightbox);
+            lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+            lightboxDelete.addEventListener('click', () => {
+                if (!currentLightboxRow) return;
+                const row = currentLightboxRow;
+                closeLightbox();
+                const wrap = photoRow.querySelector(`[data-id="${row.id}"]`);
+                softDeletePhoto(row, wrap);
             });
 
             uploadInput.addEventListener('change', async () => {
                 const files = Array.from(uploadInput.files || []);
                 if (!files.length) return;
                 uploadStatus.classList.remove('hidden');
-                const { data: sessionData } = await sb.auth.getSession();
-                const email = sessionData && sessionData.session ? sessionData.session.user.email : '';
                 let done = 0;
                 for (const file of files) {
                     uploadStatus.textContent = `Uploading ${done + 1} of ${files.length}…`;
                     const path = `${crypto.randomUUID()}-${file.name}`.replace(/\s+/g, '_');
                     const { error: upErr } = await sb.storage.from(BUCKET).upload(path, file, { upsert: false });
-                    if (upErr) { uploadStatus.textContent = 'Upload failed: ' + upErr.message; continue; }
-                    await sb.from('secure_photos').insert({ storage_path: path, uploaded_by: email });
+                    if (upErr) { toast('Upload failed: ' + upErr.message, { type: 'error' }); continue; }
+                    const { error: insErr } = await sb.from('secure_photos').insert({
+                        storage_path: path, media_type: 'photo', uploaded_by: currentUserEmail || 'unknown'
+                    });
+                    if (insErr) {
+                        toast('Could not save photo: ' + insErr.message, { type: 'error' });
+                        await sb.storage.from(BUCKET).remove([path]);
+                        continue;
+                    }
                     done++;
                 }
-                uploadStatus.textContent = `Added ${done} photo${done === 1 ? '' : 's'}.`;
+                uploadStatus.classList.add('hidden');
                 uploadInput.value = '';
                 await loadPhotos();
-                setTimeout(() => uploadStatus.classList.add('hidden'), 2500);
+                if (done) toast(`Added ${done} photo${done === 1 ? '' : 's'}.`);
+            });
+
+            /* ───────────── video upload: 10s cap + compress-or-original
+               choice. The choice itself is a custom card (see HTML),
+               never a native confirm()/prompt(). ───────────── */
+            const videoUploadInput = $('secureUploadVideoInput');
+            const videoChoiceOverlay = $('secureVideoChoiceOverlay');
+            const videoChoiceStatus = $('secureVideoChoiceStatus');
+            const videoCompressBtn = $('secureVideoCompressBtn');
+            const videoOriginalBtn = $('secureVideoOriginalBtn');
+            const videoCancelBtn = $('secureVideoCancelBtn');
+            const MAX_VIDEO_SECONDS = 10;
+            let pendingVideoFile = null;
+
+            videoUploadInput.addEventListener('change', () => {
+                const file = videoUploadInput.files && videoUploadInput.files[0];
+                videoUploadInput.value = '';
+                if (!file) return;
+                const probe = document.createElement('video');
+                probe.preload = 'metadata';
+                const probeUrl = URL.createObjectURL(file);
+                probe.src = probeUrl;
+                probe.addEventListener('loadedmetadata', () => {
+                    const duration = probe.duration;
+                    URL.revokeObjectURL(probeUrl);
+                    if (!isFinite(duration) || duration > MAX_VIDEO_SECONDS + 0.5) {
+                        toast(`Videos need to be ${MAX_VIDEO_SECONDS} seconds or under — trim it and try again.`, {
+                            type: 'error'
+                        });
+                        return;
+                    }
+                    pendingVideoFile = file;
+                    videoChoiceStatus.classList.add('hidden');
+                    videoChoiceOverlay.classList.remove('hidden');
+                });
+                probe.addEventListener('error', () => {
+                    URL.revokeObjectURL(probeUrl);
+                    toast('Could not read that video file.', { type: 'error' });
+                });
+            });
+
+            function closeVideoChoice() {
+                videoChoiceOverlay.classList.add('hidden');
+                pendingVideoFile = null;
+            }
+            videoCancelBtn.addEventListener('click', closeVideoChoice);
+            videoChoiceOverlay.addEventListener('click', (e) => { if (e.target === videoChoiceOverlay) closeVideoChoice(); });
+
+            // Re-encodes the clip through a <canvas> at a smaller frame
+            // size and a modest bitrate — a lightweight, dependency-free
+            // way to shrink file size in-browser (no ffmpeg.wasm). Audio
+            // is preserved via HTMLMediaElement.captureStream() where the
+            // browser supports it; if not, the compressed clip is silent
+            // (a console note is left, but the upload still succeeds) —
+            // "Upload original quality" always keeps the sound.
+            function compressVideo(file) {
+                return new Promise((resolve, reject) => {
+                    const video = document.createElement('video');
+                    video.muted = false;
+                    video.playsInline = true;
+                    const url = URL.createObjectURL(file);
+                    video.src = url;
+                    video.addEventListener('loadedmetadata', () => {
+                        const srcW = video.videoWidth || 640;
+                        const srcH = video.videoHeight || 360;
+                        const targetW = Math.min(640, srcW);
+                        const targetH = Math.round(srcH * (targetW / srcW)) || 360;
+                        const canvas = document.createElement('canvas');
+                        canvas.width = targetW;
+                        canvas.height = targetH;
+                        const ctx = canvas.getContext('2d');
+                        const canvasStream = canvas.captureStream(24);
+                        let combined = canvasStream;
+                        try {
+                            if (video.captureStream) {
+                                const audioTracks = video.captureStream().getAudioTracks();
+                                if (audioTracks.length) combined = new MediaStream([...canvasStream.getVideoTracks(), ...
+                                    audioTracks
+                                ]);
+                            }
+                        } catch (e) { console.warn('secureSection: audio capture unavailable, compressing video-only.', e); }
+                        let recorder;
+                        try {
+                            recorder = new MediaRecorder(combined, { mimeType: 'video/webm;codecs=vp8,opus',
+                                videoBitsPerSecond: 900000 });
+                        } catch (e) { recorder = new MediaRecorder(combined); }
+                        const chunks = [];
+                        recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+                        recorder.onstop = () => { URL.revokeObjectURL(url); resolve(new Blob(chunks, { type: 'video/webm' })); };
+                        recorder.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+                        video.currentTime = 0;
+                        video.play().then(() => {
+                            recorder.start();
+                            (function draw() {
+                                if (video.paused || video.ended) { recorder.stop(); return; }
+                                ctx.drawImage(video, 0, 0, targetW, targetH);
+                                requestAnimationFrame(draw);
+                            })();
+                        }).catch((e) => { URL.revokeObjectURL(url); reject(e); });
+                    });
+                    video.addEventListener('error', () => { URL.revokeObjectURL(url); reject(new Error('Could not load video.')); });
+                });
+            }
+
+            async function uploadVideoBlob(blobOrFile, ext) {
+                const path = `${crypto.randomUUID()}.${ext}`;
+                const { error: upErr } = await sb.storage.from(BUCKET).upload(path, blobOrFile, {
+                    upsert: false, contentType: blobOrFile.type || 'video/mp4'
+                });
+                if (upErr) { toast('Upload failed: ' + upErr.message, { type: 'error' }); return false; }
+                const { error: insErr } = await sb.from('secure_photos').insert({
+                    storage_path: path, media_type: 'video', uploaded_by: currentUserEmail || 'unknown'
+                });
+                if (insErr) {
+                    toast('Could not save video: ' + insErr.message, { type: 'error' });
+                    await sb.storage.from(BUCKET).remove([path]);
+                    return false;
+                }
+                return true;
+            }
+
+            videoOriginalBtn.addEventListener('click', async () => {
+                if (!pendingVideoFile) return;
+                const file = pendingVideoFile;
+                videoChoiceStatus.textContent = 'Uploading original…';
+                videoChoiceStatus.classList.remove('hidden');
+                const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
+                const ok = await uploadVideoBlob(file, ext);
+                videoChoiceOverlay.classList.add('hidden');
+                pendingVideoFile = null;
+                if (ok) { await loadPhotos(); toast('Video added.'); }
+            });
+
+            videoCompressBtn.addEventListener('click', async () => {
+                if (!pendingVideoFile) return;
+                const file = pendingVideoFile;
+                videoChoiceStatus.textContent = 'Compressing…';
+                videoChoiceStatus.classList.remove('hidden');
+                try {
+                    const blob = await compressVideo(file);
+                    videoChoiceStatus.textContent = 'Uploading…';
+                    const ok = await uploadVideoBlob(blob, 'webm');
+                    videoChoiceOverlay.classList.add('hidden');
+                    pendingVideoFile = null;
+                    if (ok) { await loadPhotos(); toast('Video added (compressed).'); }
+                } catch (err) {
+                    videoChoiceStatus.classList.add('hidden');
+                    toast('Compression failed — try "Upload original quality" instead.', { type: 'error' });
+                }
             });
 
             /* ───────────── inactivity auto-lock ─────────────
@@ -32833,7 +33717,7 @@
                     const { data } = await sb.auth.getSession();
                     if (data && data.session) {
                         await sb.auth.signOut();
-                        if (!overlay.classList.contains('hidden')) showLockScreen();
+                        if (!wall.classList.contains('hidden')) showLockScreen();
                     }
                 }, IDLE_TIMEOUT_MS);
             }
@@ -32843,7 +33727,7 @@
             resetIdleTimer();
 
             sb.auth.onAuthStateChange((_event, session) => {
-                if (!session && !overlay.classList.contains('hidden')) showLockScreen();
+                if (!session && !wall.classList.contains('hidden')) showLockScreen();
             });
         } catch (err) {
             console.error('Secure section failed to initialize (core site unaffected):', err);
