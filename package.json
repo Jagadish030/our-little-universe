@@ -1,0 +1,16 @@
+{
+  "name": "our-little-universe",
+  "version": "1.0.0",
+  "description": "Our Little Universe - A personal relationship app",
+  "main": "index.html",
+  "scripts": {
+    "dev": "echo 'Static site - open index.html in browser'",
+    "build": "echo 'Static site - no build required'"
+  },
+  "keywords": ["vercel", "analytics", "pwa"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/analytics": "^1.3.1"
+  }
+}
