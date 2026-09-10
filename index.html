@@ -13074,44 +13074,57 @@
            below) — same 2-per-row on mobile / natural wrap to ~4 on
            desktop, same caption/voice/flip/swipe behaviour, all for
            free since the site already wires that up by class. */
-        /* Unlike the memory wall's photo cards, the "Just Us" back face
-           doesn't use the two-pane .back-panels-track slider (no reply
-           pane needed here) — it's a flat list of controls. Left on the
-           shared .back-panels (flex:1 1 auto + overflow:hidden) with a
-           fixed-height, non-scrolling textarea, a longer caption or a
-           shorter card (from a differently-shaped photo) could push the
-           mic button/voice label/date/remove row past the visible edge
-           and silently clip them. Caps the caption to ~2 lines with its
-           own scroll and stacks everything else right below it instead
-           of letting the whole panel stretch to fit. */
-        .face.back .secure-back-panels {
+        /* The "Just Us" back face now uses the SAME two-pane
+           .back-panels-track slider as the memory wall's own cards (a
+           caption page and a reply page, swipeable via the shared
+           document-level swipe handlers or the tab-arrow buttons) — see
+           buildSecureCard(). It used to be a flat, single-pane list
+           instead (no reply pane existed), with its own custom sizing
+           to avoid a clipping bug that design had; that custom sizing
+           is gone now that the shared .back-panel/.back-panel-main
+           rules (near line 10711) handle the same problem the same way
+           the memory wall's cards do. A locked card still gets the old
+           flat, non-sliding layout (.secure-back-panels-flat) rather
+           than the two-pane one — there's no reply page while locked,
+           and giving the shared swipe handler a lone 50%-wide panel to
+           slide inside a 200%-wide track would swipe to a blank half
+           rather than doing nothing. */
+        .secure-back-panels-flat {
             display: flex;
             flex-direction: column;
             gap: 6px;
             overflow-y: auto;
             scrollbar-width: none;
         }
-        .face.back .secure-back-panels::-webkit-scrollbar {
+        .secure-back-panels-flat::-webkit-scrollbar {
             display: none;
         }
-        .secure-back-panels .secure-caption-textarea {
-            flex: 0 0 auto;
-            height: 2.7em;
-            min-height: 2.7em;
-            max-height: 2.7em;
-            overflow-y: auto;
-        }
-        .secure-back-panels .flip-back-btn,
-        .secure-back-panels .secure-mic-row,
-        .secure-back-panels .secure-voice-attach,
-        .secure-back-panels .back-footer {
+        .secure-back-panels-flat .flip-back-btn,
+        .secure-back-panels-flat .secure-locked-unlock-btn-back {
             flex-shrink: 0;
         }
-        /* Keeps date/remove pinned to the bottom edge of the card instead
-           of just trailing right after whatever's above it — which, on a
-           tall card, left it floating awkwardly with empty space below. */
-        .secure-back-panels .back-footer {
+        .secure-back-panels-flat .back-footer {
+            flex-shrink: 0;
             margin-top: auto;
+        }
+        /* Overrides the generic ".face.back textarea { height: 120px }"
+           rule (needs this two-class selector to actually win against
+           it — a bare .secure-reply-textarea alone loses that
+           specificity fight and the 120px sticks). Capped to roughly
+           2.5–3 lines with its own internal scroll for anything longer,
+           rather than growing to fill the panel — that was pushing the
+           mic button and voice attachment below the fold on shorter
+           cards, forcing a scroll just to reach them. */
+        .face.back .secure-reply-textarea {
+            flex: 0 0 auto;
+            height: 3.6em;
+            min-height: 3.6em;
+            max-height: 3.6em;
+            overflow-y: auto;
+        }
+        .secure-mic-row,
+        .secure-voice-attach {
+            flex-shrink: 0;
         }
         /* A muted video renders as a still first frame with nothing to
            mark it as a video, indistinguishable from a photo. This badge
@@ -13487,15 +13500,17 @@
         /* ── Secret-reveal status badge on an unlocked card — sits
            opposite the favorite heart (top-left, heart is top-right) so
            the two never collide. Three looks, one shared shape: see the
-           three render branches in buildSecureCard(). ── */
+           three render branches in buildSecureCard(). The badge itself
+           is just the pill/clipping window; .secure-secret-badge-text
+           inside it is what actually holds and (when it doesn't fit)
+           scrolls the message — see the JS measurement right after this
+           card's markup is built. ── */
         .secure-secret-badge {
             position: absolute;
             top: 8px;
             left: 8px;
             z-index: 4;
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
+            display: block;
             max-width: calc(100% - 56px);
             padding: .25rem .55rem;
             border-radius: 999px;
@@ -13505,10 +13520,27 @@
             color: #fff;
             background: rgba(0, 0, 0, .5);
             text-shadow: 0 1px 3px rgba(0, 0, 0, .5);
-            white-space: nowrap;
             overflow: hidden;
-            text-overflow: ellipsis;
             pointer-events: none;
+        }
+        .secure-secret-badge-text {
+            display: inline-block;
+            white-space: nowrap;
+            will-change: transform;
+        }
+        .secure-secret-badge-text.secure-secret-badge-marquee {
+            animation: secureSecretBadgeMarquee var(--marquee-duration, 4s) ease-in-out infinite;
+        }
+        /* Scrolls left to reveal the clipped tail, holds there a beat,
+           then scrolls back — rather than a one-way looping scroll — so
+           there's no jump-cut when it resets. */
+        @keyframes secureSecretBadgeMarquee {
+            0%, 12% { transform: translateX(0); }
+            50%, 62% { transform: translateX(var(--marquee-shift, 0)); }
+            100% { transform: translateX(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .secure-secret-badge-text.secure-secret-badge-marquee { animation: none; }
         }
         .secure-secret-badge--pending {
             background: rgba(107, 83, 68, .68);
@@ -15094,6 +15126,19 @@
                 const top = backableStack.pop();
                 try { top.onClose(); } catch (err) { console.error('backable close failed:', err); }
             });
+            // Exposed so the "Just Us" section — a deliberately separate,
+            // self-contained script (see its own header comment) — can
+            // share this same stack instead of running its own parallel
+            // history.pushState()/popstate pair. Two independent
+            // listeners each reacting to every popstate was the actual
+            // bug behind "closing chat also closes Just Us": chat's
+            // backableClose() calls history.back() to pop its own entry,
+            // but a second, unrelated popstate listener has no way to
+            // tell that back() was already accounted for, so it closed
+            // the wall too. One shared stack means each popstate only
+            // ever closes whichever screen is actually on top of it.
+            window.openBackable = openBackable;
+            window.backableClose = backableClose;
 
             /* ─── Heart bloom ─── */
             function heartBloom(x, y) {
@@ -33284,7 +33329,17 @@
                 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjdGx6cWxjaGlqd3J4cnhubW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MDg1NTksImV4cCI6MjA5OTQ4NDU1OX0.5cEM69NsRjiN2d1XqzFcqVmSp8Db0AqxRr6wLJmm5Yc';
             if (!window.supabase) { console.warn('secureSection: Supabase JS not loaded.'); return; }
             const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-                auth: { persistSession: true, autoRefreshToken: true, storageKey: 'sb-just-us-auth' }
+                // persistSession stays true so a same-tab page refresh
+                // doesn't force a re-login mid-visit — but the storage
+                // it persists TO matters: localStorage (the default)
+                // survives closing and reopening the site entirely, which
+                // is exactly what shouldn't happen here. sessionStorage
+                // is scoped to this tab's lifetime — cleared the moment
+                // the tab/app is closed — so closing and reopening always
+                // lands back on the passcode screen, while a plain reload
+                // of the still-open tab does not.
+                auth: { persistSession: true, autoRefreshToken: true, storageKey: 'sb-just-us-auth',
+                    storage: window.sessionStorage }
             });
 
             const ALLOWED = ['kavisetti2001@gmail.com', 'lalithamalavika@gmail.com'];
@@ -33295,12 +33350,29 @@
             // of the same icons so they match the rest of the site.
             const MIC_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V20H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-2v-2.08A7 7 0 0 0 19 11z"/></svg>';
             const STOP_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+            // Same shape as the main script's own LEFT_ARROW_SVG/
+            // RIGHT_ARROW_SVG, for the reply-slide tab arrows below —
+            // local copy for the same reason as MIC_SVG/STOP_SVG above.
+            const LEFT_ARROW_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
+            const RIGHT_ARROW_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
             const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
             const SIGNED_URL_TTL = 3600;
-            // How long the "✨ so-and-so revealed this!" badge stays on
-            // screen (from when it renders) before quietly downgrading to
-            // the plain, permanent "secret reveal" tag.
-            const REVEAL_ACK_DELAY_MS = 3 * 60 * 1000;
+            // Row ids whose "✨ so-and-so revealed this!" badge rendered
+            // during THIS visit to the section — flushed (marked seen in
+            // the database, downgrading them to the plain permanent
+            // "secret reveal" tag from then on) the moment the visit
+            // ends, by flushRevealAcks() below. That's what makes the
+            // badge "shows on the entrance right after a reveal, gone by
+            // the next entrance" rather than tied to any fixed delay.
+            let pendingRevealAcks = new Set();
+            async function flushRevealAcks() {
+                if (!pendingRevealAcks.size) return;
+                const ids = Array.from(pendingRevealAcks);
+                pendingRevealAcks.clear();
+                try {
+                    await sb.from('secure_photos').update({ reveal_seen_by_uploader: true }).in('id', ids);
+                } catch (err) { console.error('secureSection: could not flush reveal acknowledgements', err); }
+            }
             const UNDO_WINDOW_MS = 6000;
             // showToast is exposed on window by the main script specifically
             // so standalone script blocks like this one can use the site's
@@ -33630,26 +33702,50 @@
                 document.body.classList.add('secure-section-open');
                 wall.classList.remove('hidden');
                 wall.scrollTop = 0;
-                history.pushState({ secureSection: true }, '');
+                // Shares the main site's back-button/screen-stack system
+                // (see its own header comment) instead of pushing a
+                // separate, unrelated history entry — that used to mean
+                // closing something else on top of this (chat, say) via
+                // its own history.back() would blindly trip this
+                // section's popstate listener too and close it as well.
+                // One shared stack means only the actual top screen
+                // reacts to a given back. Falls back to the old
+                // standalone behavior if that shared stack isn't
+                // available for any reason (this section is meant to
+                // survive the rest of the site failing).
+                if (typeof window.openBackable === 'function') window.openBackable('justUs', closeWallUI);
+                else { usingFallbackHistory = true; history.pushState({ secureSection: true }, ''); }
                 sb.auth.getSession().then(({ data }) => {
                     if (data && data.session) enterGallery();
                     else showLockScreen();
                 });
             }
-            function closeWall(fromPopstate) {
+            // The actual "hide this screen" work, and nothing else — this
+            // is the contract window.openBackable's onClose expects (no
+            // history manipulation of its own; see the main script's note
+            // above openBackable for why).
+            function closeWallUI() {
                 wall.classList.add('hidden');
                 lightbox.classList.add('hidden');
                 showPrivacyShield();
                 const navDock = document.getElementById('navDockWrap');
                 if (navDock) navDock.classList.remove('secure-hide-behind');
                 document.body.classList.remove('secure-section-open');
-                if (!fromPopstate && history.state && history.state.secureSection) history.back();
+                flushRevealAcks();
+            }
+            let usingFallbackHistory = false;
+            function closeWall() {
+                if (typeof window.backableClose === 'function') window.backableClose('justUs');
+                else closeWallUI();
             }
             if (openBtn) openBtn.addEventListener('click', openWall);
-            closeBtn.addEventListener('click', () => closeWall(false));
-            // Device/browser back button closes it too, same as the ✕.
+            closeBtn.addEventListener('click', closeWall);
+            // Fallback-only: device/browser back button closes it too,
+            // same as the ✕ — but only wired up when the shared stack
+            // isn't available, since that stack already covers this via
+            // closeWallUI as its onClose.
             window.addEventListener('popstate', () => {
-                if (!wall.classList.contains('hidden')) closeWall(true);
+                if (usingFallbackHistory && !wall.classList.contains('hidden')) closeWallUI();
             });
 
             function showLockScreen() {
@@ -33707,6 +33803,7 @@
             }
 
             logoutBtn.addEventListener('click', async () => {
+                flushRevealAcks();
                 await sb.auth.signOut();
                 showLockScreen();
             });
@@ -33770,6 +33867,11 @@
                             const { data: vsigned } = await sb.storage.from(BUCKET).createSignedUrl(row.voice_path, SIGNED_URL_TTL);
                             row._voiceUrl = vsigned ? vsigned.signedUrl : null;
                         }
+                        if (row.reply_voice_path) {
+                            const { data: rvsigned } = await sb.storage.from(BUCKET).createSignedUrl(row.reply_voice_path,
+                                SIGNED_URL_TTL);
+                            row._replyVoiceUrl = rvsigned ? rvsigned.signedUrl : null;
+                        }
                         photoRow.appendChild(buildSecureCard(row));
                     } catch (err) {
                         // One bad row (a missing file, a signing hiccup) should
@@ -33803,19 +33905,15 @@
                 const isLocked = !!row.is_secret && row.uploaded_by !== currentUserEmail &&
                     !(viewerKey && row['revealed_by_' + viewerKey]);
                 row.__locked = isLocked;
-                // Secret-reveal status badge — only shown once the photo
-                // itself is visible (locked cards already say "secret"
-                // via the lock layer, no need to repeat it). Three looks:
-                //  · uploader, other person hasn't opened it yet — muted
-                //    "waiting for <name>"
-                //  · uploader, other person just opened it and this is
-                //    the first time the uploader is seeing that — bright,
-                //    pulsing "<name> revealed this!" (see the timer below
-                //    that quietly marks it seen after a few minutes)
-                //  · everyone else (uploader after acknowledging, or the
-                //    other person after their own unlock) — a small
-                //    permanent "secret reveal" tag, so it stays
-                //    identifiable even long after the surprise is over
+                // Secret-reveal status badge — only shown for the two
+                // states that are actually still "live": still waiting on
+                // the other person, or freshly revealed and not yet
+                // acknowledged. Once resolved (revealed AND acknowledged
+                // for the uploader; immediately for the person who just
+                // unlocked it themselves) the card goes back to looking
+                // like any other photo — no permanent marker, by design:
+                // "default look... once I know the revealer has
+                // revealed" was the point, not a lasting tag.
                 let secretBadgeHtml = '';
                 if (row.is_secret && !isLocked) {
                     const iAmUploader = row.uploaded_by === currentUserEmail;
@@ -33824,14 +33922,10 @@
                         const otherKey = uploaderKey === 'j' ? 'm' : 'j';
                         const otherRevealed = !!row['revealed_by_' + otherKey];
                         if (!otherRevealed) {
-                            secretBadgeHtml = `<div class="secure-secret-badge secure-secret-badge--pending">🔒 waiting for ${escapeHtmlLocal(nameForKey(otherKey))}</div>`;
+                            secretBadgeHtml = `<div class="secure-secret-badge secure-secret-badge--pending"><span class="secure-secret-badge-text">🔒 waiting for ${escapeHtmlLocal(nameForKey(otherKey))}</span></div>`;
                         } else if (!row.reveal_seen_by_uploader) {
-                            secretBadgeHtml = `<div class="secure-secret-badge secure-secret-badge--revealed-new">✨ ${escapeHtmlLocal(nameForKey(otherKey))} revealed this!</div>`;
-                        } else {
-                            secretBadgeHtml = `<div class="secure-secret-badge">🔒 secret reveal</div>`;
+                            secretBadgeHtml = `<div class="secure-secret-badge secure-secret-badge--revealed-new"><span class="secure-secret-badge-text">✨ ${escapeHtmlLocal(nameForKey(otherKey))} revealed this!</span></div>`;
                         }
-                    } else {
-                        secretBadgeHtml = `<div class="secure-secret-badge">🔒 secret reveal</div>`;
                     }
                 }
                 const mediaHtml = isVideo
@@ -33861,70 +33955,110 @@
                       </div>
                     </div>
                     <div class="face back">
-                      <div class="back-panels secure-back-panels">
-                        ${isLocked
-                          ? `<p class="secure-locked-back-msg">🔒 This note stays hidden until the passcode is entered.</p>`
-                          : `<textarea class="secure-caption-textarea" maxlength="200" placeholder="Add a caption..." aria-label="Write a note for this photo">${escapeHtmlLocal(row.caption || '')}</textarea>`}
+                      <div class="back-panels secure-back-panels${isLocked ? ' secure-back-panels-flat' : ''}">
+                        ${isLocked ? `
+                        <p class="secure-locked-back-msg">🔒 This note stays hidden until the passcode is entered.</p>
                         <button class="flip-back-btn" type="button" aria-label="Flip back to photo">‹ back to photo</button>
-                        ${isLocked
-                          ? `<button type="button" class="secure-locked-unlock-btn secure-locked-unlock-btn-back">Enter passcode</button>`
-                          : `<div class="dual-mic-row secure-mic-row">
-                          <div class="dual-mic-item">
-                            <button type="button" class="mini-mic-btn secure-mic-btn" aria-label="Record a voice caption"></button>
-                            <span class="dual-mic-label">voice caption</span>
-                          </div>
-                        </div>
-                        <div class="voice-attachment secure-voice-attach${row.voice_path ? '' : ' hidden'}"></div>`}
+                        <button type="button" class="secure-locked-unlock-btn secure-locked-unlock-btn-back">Enter passcode</button>
                         <div class="back-footer">
                           <span>${dateLabel}</span>
                           <div class="secure-back-footer-actions">
-                            ${!isLocked ? `<button class="secure-save-btn" type="button" aria-label="Save to device" title="Save to device"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 19h14"/></svg></button>` : ''}
-                            ${!isLocked ? `<button class="unpin secure-remove-btn" type="button">remove</button>` : ''}
+                            <button class="unpin secure-remove-btn" type="button">remove</button>
                           </div>
-                        </div>
+                        </div>` : `
+                        <div class="back-panels-track">
+                          <div class="back-panel back-panel-main">
+                            <textarea class="secure-caption-textarea" maxlength="200" placeholder="Add a caption..." aria-label="Write a note for this photo">${escapeHtmlLocal(row.caption || '')}</textarea>
+                            <button class="flip-back-btn" type="button" aria-label="Flip back to photo">‹ back to photo</button>
+                            <div class="dual-mic-row secure-mic-row">
+                              <div class="dual-mic-item">
+                                <button type="button" class="mini-mic-btn secure-mic-btn" aria-label="Record a voice caption"></button>
+                                <span class="dual-mic-label">voice caption</span>
+                              </div>
+                            </div>
+                            <div class="voice-attachment secure-voice-attach${row.voice_path ? '' : ' hidden'}"></div>
+                            <div class="back-footer">
+                              <span>${dateLabel}</span>
+                              <div class="secure-back-footer-actions">
+                                <button class="secure-save-btn" type="button" aria-label="Save to device" title="Save to device"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 19h14"/></svg></button>
+                                <button class="unpin secure-remove-btn" type="button">remove</button>
+                              </div>
+                            </div>
+                            <button type="button" class="tab-arrow-btn tab-arrow-next" aria-label="View reply">${RIGHT_ARROW_SVG}</button>
+                          </div>
+                          <div class="back-panel back-panel-reply">
+                            <button type="button" class="tab-arrow-btn tab-arrow-prev" aria-label="Back">${LEFT_ARROW_SVG}</button>
+                            <textarea class="secure-reply-textarea" maxlength="200" placeholder="Write a reply..." aria-label="Write a reply to this photo">${escapeHtmlLocal(row.reply_text || '')}</textarea>
+                            <div class="dual-mic-row secure-mic-row">
+                              <div class="dual-mic-item">
+                                <button type="button" class="mini-mic-btn secure-reply-mic-btn" aria-label="Record a voice reply"></button>
+                                <span class="dual-mic-label">voice reply</span>
+                              </div>
+                            </div>
+                            <div class="voice-attachment secure-reply-voice-attach${row.reply_voice_path ? '' : ' hidden'}"></div>
+                          </div>
+                        </div>`}
                       </div>
                     </div>
                   </div>
                 `;
                 const card = wrap.querySelector('.polaroid');
-                const textarea = wrap.querySelector('textarea');
+                const backPanels = wrap.querySelector('.back-panels');
+                const replyTabBtn = wrap.querySelector('.tab-arrow-next');
+                const backTabBtn = wrap.querySelector('.tab-arrow-prev');
+                const textarea = wrap.querySelector('.secure-caption-textarea');
+                const replyTextarea = wrap.querySelector('.secure-reply-textarea');
                 const flipBackBtn = wrap.querySelector('.flip-back-btn');
                 const favBtn = wrap.querySelector('.fav-heart');
                 const expandBtn = wrap.querySelector('.expand-btn');
                 const playBadge = wrap.querySelector('.secure-video-play-badge');
                 const micBtn = wrap.querySelector('.secure-mic-btn');
                 if (micBtn) micBtn.innerHTML = MIC_SVG;
+                const replyMicBtn = wrap.querySelector('.secure-reply-mic-btn');
+                if (replyMicBtn) replyMicBtn.innerHTML = MIC_SVG;
                 const voiceBox = wrap.querySelector('.secure-voice-attach');
+                const replyVoiceBox = wrap.querySelector('.secure-reply-voice-attach');
                 const removeBtn = wrap.querySelector('.secure-remove-btn');
                 const previewPlayBtn = wrap.querySelector('.secure-voice-preview-play');
                 const capPreview = wrap.querySelector('.cap-preview');
                 const photoMedia = wrap.querySelector('.photo-frame img, .photo-frame video');
                 const photoFrame = wrap.querySelector('.photo-frame');
+                // Secret badge text (a name can push "waiting for X" or
+                // "X revealed this!" past the badge's available width)
+                // scrolls back and forth to show the full message instead
+                // of clipping it with an ellipsis — but only when it
+                // actually doesn't fit, so short text like the plain
+                // "secret reveal" tag just sits still. Measuring has to
+                // wait a frame for layout to settle now that this card is
+                // actually in the DOM.
+                const secretBadgeTextEl = wrap.querySelector('.secure-secret-badge-text');
+                if (secretBadgeTextEl) {
+                    requestAnimationFrame(() => {
+                        const container = secretBadgeTextEl.parentElement;
+                        if (!container) return;
+                        const overflowPx = secretBadgeTextEl.scrollWidth - container.clientWidth;
+                        if (overflowPx > 4) {
+                            secretBadgeTextEl.style.setProperty('--marquee-shift', `-${overflowPx}px`);
+                            const duration = Math.max(2.5, Math.min(7, overflowPx / 18 + 2));
+                            secretBadgeTextEl.style.setProperty('--marquee-duration', duration + 's');
+                            secretBadgeTextEl.classList.add('secure-secret-badge-marquee');
+                        }
+                    });
+                }
+
                 const unlockBtns = wrap.querySelectorAll('.secure-locked-unlock-btn');
                 unlockBtns.forEach(btn => wireTap(btn, () => openPasscodeOverlay(row)));
 
-                // The bright "revealed!" badge quietly downgrades itself
-                // to the plain permanent "secret reveal" tag once it's
-                // had a few minutes on screen — that's "seen" it in the
-                // sense that mattered, not merely that the section was
-                // opened and closed instantly. The DB write happens
-                // regardless of whether this card is still on screen when
-                // the timer fires, so it won't re-show next visit even if
-                // the section was closed early.
-                const revealAckBadge = wrap.querySelector('.secure-secret-badge--revealed-new');
-                if (revealAckBadge) {
-                    setTimeout(async () => {
-                        try {
-                            const { error } = await sb.from('secure_photos').update({ reveal_seen_by_uploader: true })
-                                .eq('id', row.id);
-                            if (error) return;
-                            row.reveal_seen_by_uploader = true;
-                            if (revealAckBadge.isConnected) {
-                                revealAckBadge.textContent = '🔒 secret reveal';
-                                revealAckBadge.classList.remove('secure-secret-badge--revealed-new');
-                            }
-                        } catch (err) { console.error('secureSection: could not mark reveal as seen', err); }
-                    }, REVEAL_ACK_DELAY_MS);
+                // The bright "revealed!" badge is acknowledged (and
+                // downgrades to the plain permanent tag) the moment this
+                // whole section is left — see flushRevealAcks(), called
+                // from closeWallUI/logout/the idle auto-lock — rather
+                // than on any fixed delay. That's what makes it "shows
+                // once on the entrance right after the reveal, gone by
+                // the next entrance" instead of racing an arbitrary
+                // timer against how long the visit happens to last.
+                if (wrap.querySelector('.secure-secret-badge--revealed-new')) {
+                    pendingRevealAcks.add(row.id);
                 }
                 if (photoMedia) {
                     const markLoaded = () => { photoMedia.classList.add('loaded'); if (photoFrame) photoFrame.classList.add(
@@ -33946,13 +34080,20 @@
                     // you tried to start a recording.
                     if (e.target.closest && e.target.closest('button, textarea, .voice-attachment')) return;
                     card.classList.toggle('flipped');
+                    // Unflipping straight back to the front shouldn't leave
+                    // the reply slide sitting mid-track for next time it's
+                    // opened — same reset the memory wall's own cards do.
+                    if (!card.classList.contains('flipped') && backPanels) backPanels.classList.remove('showing-reply');
                 }
                 card.addEventListener('click', flip);
                 card.addEventListener('keydown', (e) => {
                     if ((e.key === 'Enter' || e.key === ' ') && e.target === card) { e.preventDefault(); card.classList.toggle(
-                        'flipped'); }
+                        'flipped'); if (!card.classList.contains('flipped') && backPanels) backPanels.classList.remove(
+                        'showing-reply'); }
                 });
                 wireTap(flipBackBtn, () => card.classList.remove('flipped'));
+                wireTap(replyTabBtn, () => backPanels && backPanels.classList.add('showing-reply'));
+                wireTap(backTabBtn, () => backPanels && backPanels.classList.remove('showing-reply'));
 
                 wireTap(favBtn, async () => {
                     row.favorite = !row.favorite;
@@ -33975,6 +34116,20 @@
                         saveTimer = setTimeout(async () => {
                             row.caption = textarea.value;
                             await sb.from('secure_photos').update({ caption: row.caption }).eq('id', row.id);
+                        }, 500);
+                    });
+                }
+                // Same autosave pattern for the reply slide — nothing on
+                // the front face previews it, so no capPreview-equivalent
+                // to keep in sync here.
+                if (replyTextarea) {
+                    replyTextarea.addEventListener('click', (e) => e.stopPropagation());
+                    let replySaveTimer = null;
+                    replyTextarea.addEventListener('input', () => {
+                        clearTimeout(replySaveTimer);
+                        replySaveTimer = setTimeout(async () => {
+                            row.reply_text = replyTextarea.value;
+                            await sb.from('secure_photos').update({ reply_text: row.reply_text }).eq('id', row.id);
                         }, 500);
                     });
                 }
@@ -34029,6 +34184,56 @@
                     voiceBox.appendChild(rmBtn);
                 }
                 renderVoice();
+
+                function renderReplyVoice() {
+                    if (!replyVoiceBox) return;
+                    replyVoiceBox.innerHTML = '';
+                    if (!row.reply_voice_path || !row._replyVoiceUrl) { replyVoiceBox.classList.add('hidden'); return; }
+                    replyVoiceBox.classList.remove('hidden');
+                    let audio = null;
+                    const playBtn = document.createElement('button');
+                    playBtn.type = 'button';
+                    playBtn.className = 'secure-voice-mini-btn';
+                    playBtn.textContent = '▶ voice reply';
+                    playBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (!audio) audio = new Audio(row._replyVoiceUrl);
+                        if (audio.paused) { audio.play(); playBtn.textContent = '⏸ playing…'; } else { audio.pause();
+                            playBtn.textContent = '▶ voice reply'; }
+                        audio.onended = () => { playBtn.textContent = '▶ voice reply'; };
+                    });
+                    const rmBtn = document.createElement('button');
+                    rmBtn.type = 'button';
+                    rmBtn.className = 'voice-attachment-remove';
+                    rmBtn.setAttribute('aria-label', 'Remove voice reply');
+                    rmBtn.textContent = '✕';
+                    rmBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (audio) audio.pause();
+                        const oldPath = row.reply_voice_path;
+                        row.reply_voice_path = null; row._replyVoiceUrl = null;
+                        renderReplyVoice();
+                        let undone = false;
+                        toast('Voice reply removed.', {
+                            actionLabel: 'Undo', duration: UNDO_WINDOW_MS, onAction: () => {
+                                undone = true;
+                                row.reply_voice_path = oldPath;
+                                sb.storage.from(BUCKET).createSignedUrl(oldPath, SIGNED_URL_TTL).then(({ data }) => {
+                                    row._replyVoiceUrl = data ? data.signedUrl : null;
+                                    renderReplyVoice();
+                                });
+                            }
+                        });
+                        setTimeout(async () => {
+                            if (undone) return;
+                            await sb.storage.from(BUCKET).remove([oldPath]);
+                            await sb.from('secure_photos').update({ reply_voice_path: null }).eq('id', row.id);
+                        }, UNDO_WINDOW_MS);
+                    });
+                    replyVoiceBox.appendChild(playBtn);
+                    replyVoiceBox.appendChild(rmBtn);
+                }
+                renderReplyVoice();
 
                 if (previewPlayBtn) {
                     let pAudio = null;
@@ -34093,6 +34298,72 @@
                         mediaRecorder.start();
                         micBtn.classList.add('recording');
                         micBtn.innerHTML = STOP_SVG;
+                    } catch (err) {
+                        toast('Could not start recording — please try again.', { type: 'error' });
+                        stream.getTracks().forEach(t => t.stop());
+                    }
+                });
+
+                // Same recorder logic, aimed at the reply slide's own mic
+                // button and its own row column — kept as a separate
+                // block (rather than one shared helper) for the same
+                // reason the main site keeps its caption/reply mics
+                // separate: each needs its own closure over which button,
+                // which storage column, and which render function to
+                // refresh afterwards.
+                let replyMediaRecorder = null, replyChunks = [];
+                if (replyMicBtn) replyMicBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if (replyMicBtn.classList.contains('recording')) { replyMediaRecorder && replyMediaRecorder.stop(); return; }
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+                        toast('Voice recording is not supported on this device.', { type: 'error' }); return;
+                    }
+                    let stream;
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    } catch (err) {
+                        toast('Microphone access was denied.', { type: 'error' });
+                        return;
+                    }
+                    try {
+                        replyChunks = [];
+                        replyMediaRecorder = new MediaRecorder(stream);
+                        replyMediaRecorder.ondataavailable = (ev) => { if (ev.data.size) replyChunks.push(ev.data); };
+                        replyMediaRecorder.onerror = () => {
+                            toast('Recording failed — please try again.', { type: 'error' });
+                            replyMicBtn.classList.remove('recording');
+                            replyMicBtn.innerHTML = MIC_SVG;
+                            stream.getTracks().forEach(t => t.stop());
+                        };
+                        replyMediaRecorder.onstop = async () => {
+                            replyMicBtn.classList.remove('recording');
+                            replyMicBtn.innerHTML = MIC_SVG;
+                            stream.getTracks().forEach(t => t.stop());
+                            const blob = new Blob(replyChunks, { type: 'audio/webm' });
+                            if (blob.size < 500) {
+                                toast('That recording was too short to save.', { type: 'error' });
+                                return;
+                            }
+                            const path = `voice-${crypto.randomUUID()}.webm`;
+                            const { error: upErr } = await sb.storage.from(BUCKET).upload(path, blob);
+                            if (upErr) { toast('Could not save voice reply: ' + upErr.message, { type: 'error' }); return; }
+                            const previousPath = row.reply_voice_path;
+                            const { error: updErr } = await sb.from('secure_photos').update({ reply_voice_path: path })
+                                .eq('id', row.id);
+                            if (updErr) {
+                                toast('Could not save voice reply: ' + updErr.message, { type: 'error' });
+                                await sb.storage.from(BUCKET).remove([path]);
+                                return;
+                            }
+                            row.reply_voice_path = path;
+                            if (previousPath) await sb.storage.from(BUCKET).remove([previousPath]);
+                            const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(path, SIGNED_URL_TTL);
+                            row._replyVoiceUrl = signed ? signed.signedUrl : null;
+                            renderReplyVoice();
+                        };
+                        replyMediaRecorder.start();
+                        replyMicBtn.classList.add('recording');
+                        replyMicBtn.innerHTML = STOP_SVG;
                     } catch (err) {
                         toast('Could not start recording — please try again.', { type: 'error' });
                         stream.getTracks().forEach(t => t.stop());
@@ -34597,6 +34868,7 @@
                 idleTimer = setTimeout(async () => {
                     const { data } = await sb.auth.getSession();
                     if (data && data.session) {
+                        if (!wall.classList.contains('hidden')) flushRevealAcks();
                         await sb.auth.signOut();
                         if (!wall.classList.contains('hidden')) showLockScreen();
                     }
