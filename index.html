@@ -17,15 +17,6 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
     </script>
-    <script>
-        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-    </script>
-    <script defer src="/_vercel/insights/script.js"></script>
-    <script>
-        window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
-    </script>
-    <script defer src="/_vercel/speed-insights/script.js"></script>
-
     <style>
         /* ─── root variables ─── */
         :root {
@@ -12892,13 +12883,6 @@
             font-size: .85rem;
             margin: .3rem 0 1.3rem;
         }
-        .secure-vault-title {
-            text-align: center;
-            color: var(--ink);
-            font-family: 'Caveat', cursive;
-            font-size: 1.4rem;
-            margin: 0 0 .3rem;
-        }
         .secure-identity-row {
             display: flex;
             gap: .6rem;
@@ -12921,8 +12905,8 @@
             background: var(--rose);
             color: var(--white);
         }
-        #secureAuthForm, #secureVaultForm { display: flex; flex-direction: column; gap: .7rem; }
-        #secureAuthForm input, #secureVaultForm input {
+        #secureAuthForm { display: flex; flex-direction: column; gap: .7rem; }
+        #secureAuthForm input {
             width: 100%;
             padding: .75rem .9rem;
             border-radius: 12px;
@@ -12932,7 +12916,7 @@
             font-size: .95rem;
             box-sizing: border-box;
         }
-        #secureAuthForm input:focus, #secureVaultForm input:focus { outline: none; border-color: var(--rose-deep); }
+        #secureAuthForm input:focus { outline: none; border-color: var(--rose-deep); }
         #secureAuthForm input[readonly] { opacity: .75; }
         .secure-error {
             color: #b3413a;
@@ -13962,26 +13946,6 @@
                 </form>
                 <button type="button" class="secure-link-btn" id="secureToggleModeBtn">First time here? Create your account</button>
                 <button type="button" class="secure-link-btn" id="secureForgotBtn">Forgot password?</button>
-            </div>
-
-            <!-- Shown after the account password succeeds, before the
-                 gallery — either "choose a shared passphrase" (first
-                 time ever, also runs the one-time migration of anything
-                 uploaded before encryption existed) or "enter it" (every
-                 other time, on a device that hasn't unlocked it yet).
-                 This passphrase is never sent anywhere; see the vault
-                 crypto helpers in the script below for what it gates. -->
-            <div class="secure-lock-screen secure-vault-screen hidden" id="secureVaultScreen">
-                <div class="secure-lock-icon">🔐</div>
-                <h3 class="secure-vault-title" id="secureVaultTitle">Set up end-to-end encryption</h3>
-                <p class="secure-lock-sub" id="secureVaultSub">Choose a passphrase only the two of you know. It can't be recovered if forgotten, so make sure you both have it written down somewhere safe.</p>
-                <form id="secureVaultForm" autocomplete="off">
-                    <input type="password" id="secureVaultPassInput" placeholder="Passphrase" autocomplete="new-password">
-                    <input type="password" id="secureVaultConfirmInput" placeholder="Confirm passphrase" autocomplete="new-password">
-                    <p class="secure-error hidden" id="secureVaultError"></p>
-                    <button type="submit" class="secure-primary-btn" id="secureVaultSubmitBtn">Set up &amp; encrypt</button>
-                </form>
-                <p class="secure-upload-status hidden" id="secureVaultProgress"></p>
             </div>
 
             <div class="secure-gallery-screen hidden" id="secureGalleryScreen">
@@ -33393,164 +33357,6 @@
             const RIGHT_ARROW_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
             const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
             const SIGNED_URL_TTL = 3600;
-
-            /* ═══════════════════ End-to-end encryption ═══════════════════
-               Everything content-bearing — photo/video/voice bytes,
-               captions, replies, the secret-reveal hint text, and the
-               secret-reveal passcode hash — is encrypted client-side
-               with AES-GCM before it ever reaches Supabase. The key is
-               derived (via PBKDF2) from a passphrase only the two of you
-               know, and that passphrase is never sent anywhere or stored
-               anywhere retrievable — there is deliberately no "forgot
-               passphrase" path, because any such path would itself be a
-               way in that doesn't need the passphrase.
-
-               What's NOT encrypted, on purpose: favorite, created_at,
-               uploaded_by, media_type, filter_id, is_secret, and the
-               revealed_by/reveal_seen flags. These are structural
-               metadata the gallery needs to query, filter, and sort by —
-               encrypting them would break Favorites/Sort/His/Her and
-               buys little, since a backend-level viewer already knows
-               "two people, some photos, these dates" from the existence
-               of the table regardless. The actual content is what's
-               protected.
-
-               Key lifecycle: derived once (setup or unlock), cached in
-               this browser's localStorage so it isn't re-asked "every
-               visit" (see VAULT_KEY_CACHE_KEY below), and cleared on
-               logout or the idle auto-lock — same spirit as the account
-               password's own session storage, just a separate secret. */
-            const VAULT_PBKDF2_ITERATIONS = 250000;
-            const VAULT_KEY_CACHE_KEY = 'sb-just-us-vault-key';
-            const VAULT_VERIFIER_PLAINTEXT = 'just-us-vault-verified-v1';
-            let vaultKey = null; // CryptoKey, held in memory only
-
-            function bytesToBase64(bytes) {
-                let binary = '';
-                const chunk = 0x8000;
-                for (let i = 0; i < bytes.length; i += chunk) {
-                    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
-                }
-                return btoa(binary);
-            }
-            function base64ToBytes(b64) {
-                const binary = atob(b64);
-                const bytes = new Uint8Array(binary.length);
-                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-                return bytes;
-            }
-            async function deriveVaultKey(passphrase, saltBytes) {
-                const enc = new TextEncoder();
-                const baseKey = await crypto.subtle.importKey('raw', enc.encode(passphrase), 'PBKDF2', false, [
-                    'deriveKey'
-                ]);
-                return crypto.subtle.deriveKey(
-                    { name: 'PBKDF2', salt: saltBytes, iterations: VAULT_PBKDF2_ITERATIONS, hash: 'SHA-256' },
-                    baseKey,
-                    { name: 'AES-GCM', length: 256 },
-                    true, // extractable — needed to cache it locally on this device, see below
-                    ['encrypt', 'decrypt']
-                );
-            }
-            // A fresh random 12-byte IV (the recommended size for
-            // AES-GCM) is generated per encryption and prepended to the
-            // ciphertext, so one blob in, one blob out — no separate IV
-            // bookkeeping anywhere it's stored.
-            async function vaultEncryptBytes(bytes) {
-                const iv = crypto.getRandomValues(new Uint8Array(12));
-                const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, vaultKey, bytes);
-                const combined = new Uint8Array(iv.length + ciphertext.byteLength);
-                combined.set(iv, 0);
-                combined.set(new Uint8Array(ciphertext), iv.length);
-                return combined;
-            }
-            async function vaultDecryptBytes(combined) {
-                const iv = combined.slice(0, 12);
-                const ciphertext = combined.slice(12);
-                const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, vaultKey, ciphertext);
-                return new Uint8Array(plain);
-            }
-            async function vaultEncryptText(str) {
-                if (str === null || str === undefined || str === '') return null;
-                const bytes = await vaultEncryptBytes(new TextEncoder().encode(str));
-                return bytesToBase64(bytes);
-            }
-            async function vaultDecryptText(b64) {
-                if (!b64) return b64;
-                try {
-                    const bytes = await vaultDecryptBytes(base64ToBytes(b64));
-                    return new TextDecoder().decode(bytes);
-                } catch (err) {
-                    console.error('secureSection: could not decrypt a text field', err);
-                    return '⚠️ could not decrypt';
-                }
-            }
-            // Encrypts whichever of these fields are present, leaving the
-            // structural ones (filter_id, is_secret) alone — the shared
-            // shape used right before every insert into secure_photos.
-            async function encryptExtraFields(extra) {
-                return {
-                    ...extra,
-                    caption: await vaultEncryptText(extra.caption),
-                    secret_password_hash: await vaultEncryptText(extra.secret_password_hash),
-                    overlay_text: await vaultEncryptText(extra.overlay_text)
-                };
-            }
-            // Fetches a signed URL's bytes, decrypts them, and returns an
-            // object URL safe to hand to <img>/<video>/Audio — the same
-            // pattern the rest of this file already uses for those
-            // elements' src, just with a decrypt step in between the
-            // fetch and the URL.
-            async function decryptToObjectUrl(signedUrl, mimeType) {
-                const res = await fetch(signedUrl);
-                const buf = new Uint8Array(await res.arrayBuffer());
-                const plainBytes = await vaultDecryptBytes(buf);
-                const blob = new Blob([plainBytes], { type: mimeType || 'application/octet-stream' });
-                return URL.createObjectURL(blob);
-            }
-            function mimeFromPath(path, isVideo) {
-                const ext = (path.split('.').pop() || '').toLowerCase();
-                const map = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
-                    gif: 'image/gif', heic: 'image/heic', webm: 'video/webm', mp4: 'video/mp4',
-                    mov: 'video/quicktime', m4v: 'video/mp4' };
-                return map[ext] || (isVideo ? 'video/mp4' : 'image/jpeg');
-            }
-            async function makeVaultVerifier() {
-                const bytes = await vaultEncryptBytes(new TextEncoder().encode(VAULT_VERIFIER_PLAINTEXT));
-                return bytesToBase64(bytes);
-            }
-            async function checkVaultVerifier(verifierB64) {
-                try {
-                    const bytes = await vaultDecryptBytes(base64ToBytes(verifierB64));
-                    return new TextDecoder().decode(bytes) === VAULT_VERIFIER_PLAINTEXT;
-                } catch (err) {
-                    return false; // wrong passphrase — decrypt fails rather than returning garbage
-                }
-            }
-            function cacheVaultKeyLocally(cryptoKey) {
-                crypto.subtle.exportKey('raw', cryptoKey).then((raw) => {
-                    try { localStorage.setItem(VAULT_KEY_CACHE_KEY, bytesToBase64(new Uint8Array(raw))); }
-                    catch (err) { console.warn('secureSection: could not cache vault key locally', err); }
-                });
-            }
-            async function loadCachedVaultKey() {
-                let raw;
-                try { raw = localStorage.getItem(VAULT_KEY_CACHE_KEY); } catch (err) { return null; }
-                if (!raw) return null;
-                try {
-                    const bytes = base64ToBytes(raw);
-                    return await crypto.subtle.importKey('raw', bytes, { name: 'AES-GCM' }, true, ['encrypt',
-                        'decrypt']);
-                } catch (err) {
-                    console.error('secureSection: cached vault key was invalid', err);
-                    return null;
-                }
-            }
-            function clearCachedVaultKey() {
-                try { localStorage.removeItem(VAULT_KEY_CACHE_KEY); } catch (err) {}
-                vaultKey = null;
-            }
-
             // Row ids whose "✨ so-and-so revealed this!" badge rendered
             // during THIS visit to the section — flushed (marked seen in
             // the database, downgrading them to the plain permanent
@@ -33603,19 +33409,6 @@
             const lightboxDelete = $('secureLightboxDelete');
             const openBtn = $('navDockMoreSecure');
 
-            // End-to-end encryption "vault" screen — choose/enter the
-            // shared passphrase, shown between account login and the
-            // gallery itself. See the crypto helpers further down.
-            const vaultScreen = $('secureVaultScreen');
-            const vaultTitle = $('secureVaultTitle');
-            const vaultSub = $('secureVaultSub');
-            const vaultForm = $('secureVaultForm');
-            const vaultPassInput = $('secureVaultPassInput');
-            const vaultConfirmInput = $('secureVaultConfirmInput');
-            const vaultErrorEl = $('secureVaultError');
-            const vaultSubmitBtn = $('secureVaultSubmitBtn');
-            const vaultProgress = $('secureVaultProgress');
-
             // "Add memory" popup (caption + filter + quality + secret-reveal)
             const addModal = $('secureAddModal');
             const addModalTitle = $('secureAddModalTitle');
@@ -33645,7 +33438,7 @@
             const passcodeCancelBtn = $('securePasscodeCancelBtn');
             const passcodeSubmitBtn = $('securePasscodeSubmitBtn');
 
-            if (!wall || !authForm || !vaultForm) return;
+            if (!wall || !authForm) return;
 
             // Every other "wall" section on the site hides its siblings
             // the same way when it opens — replicated here by ID rather
@@ -33890,7 +33683,7 @@
                         const { error } = await sb.auth.signInWithPassword({ email, password });
                         if (error) { showError(error.message); return; }
                         passwordInput.value = '';
-                        await enterVaultGate();
+                        await enterGallery();
                     }
                 } finally {
                     submitBtn.disabled = false;
@@ -33923,7 +33716,7 @@
                 if (typeof window.openBackable === 'function') window.openBackable('justUs', closeWallUI);
                 else { usingFallbackHistory = true; history.pushState({ secureSection: true }, ''); }
                 sb.auth.getSession().then(({ data }) => {
-                    if (data && data.session) enterVaultGate();
+                    if (data && data.session) enterGallery();
                     else showLockScreen();
                 });
             }
@@ -33957,69 +33750,10 @@
 
             function showLockScreen() {
                 lockScreen.classList.remove('hidden');
-                vaultScreen.classList.add('hidden');
                 galleryScreen.classList.add('hidden');
                 passwordInput.value = ''; confirmInput.value = '';
                 showError('');
                 showPrivacyShield();
-            }
-
-            function showVaultError(msg) {
-                vaultErrorEl.textContent = msg || '';
-                vaultErrorEl.classList.toggle('hidden', !msg);
-            }
-            function applyVaultScreenMode() {
-                if (vaultMetaCache) {
-                    vaultTitle.textContent = 'Enter your vault passphrase';
-                    vaultSub.textContent = 'The shared passphrase the two of you set up — needed once on this device.';
-                    vaultConfirmInput.classList.add('hidden');
-                    vaultSubmitBtn.textContent = 'Unlock';
-                } else {
-                    vaultTitle.textContent = 'Set up end-to-end encryption';
-                    vaultSub.textContent = 'Choose a passphrase only the two of you know. It can\u2019t be recovered ' +
-                        'if forgotten, so make sure you both have it written down somewhere safe.';
-                    vaultConfirmInput.classList.remove('hidden');
-                    vaultSubmitBtn.textContent = 'Set up & encrypt';
-                }
-            }
-            // The row from secure_vault_meta, if one already exists —
-            // fetched fresh each time the vault screen is shown, since
-            // the other person may have set it up on another device
-            // since the last time this one checked.
-            let vaultMetaCache = null;
-            async function showVaultScreen() {
-                lockScreen.classList.add('hidden');
-                galleryScreen.classList.add('hidden');
-                vaultScreen.classList.remove('hidden');
-                vaultPassInput.value = '';
-                vaultConfirmInput.value = '';
-                showVaultError('');
-                vaultProgress.classList.add('hidden');
-                vaultSubmitBtn.disabled = true;
-                const { data: meta, error } = await sb.from('secure_vault_meta').select('*').eq('id', 1).maybeSingle();
-                vaultSubmitBtn.disabled = false;
-                if (error) {
-                    showVaultError('Could not check encryption setup: ' + error.message);
-                    vaultMetaCache = null;
-                    return;
-                }
-                vaultMetaCache = meta || null;
-                applyVaultScreenMode();
-            }
-            // Sits between the account password and the gallery: if this
-            // device already has a working cached key, skip straight
-            // through; otherwise ask for the passphrase (or, the very
-            // first time ever, to choose one).
-            async function enterVaultGate() {
-                if (vaultKey) { await enterGallery(); return; }
-                const cached = await loadCachedVaultKey();
-                if (cached) {
-                    vaultKey = cached;
-                    const { data: meta } = await sb.from('secure_vault_meta').select('*').eq('id', 1).maybeSingle();
-                    if (meta && await checkVaultVerifier(meta.verifier)) { await enterGallery(); return; }
-                    clearCachedVaultKey(); // stale/invalid — fall through to asking again
-                }
-                await showVaultScreen();
             }
 
             function showPrivacyShield() { galleryScreen.classList.add('privacy-locked'); }
@@ -34058,7 +33792,6 @@
 
             async function enterGallery() {
                 lockScreen.classList.add('hidden');
-                vaultScreen.classList.add('hidden');
                 galleryScreen.classList.remove('hidden');
                 // secure_photos.uploaded_by is NOT NULL in Supabase — grab the
                 // signed-in email now so uploads below can actually satisfy it.
@@ -34069,129 +33802,8 @@
                 await loadPhotos();
             }
 
-            vaultForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                showVaultError('');
-                const passphrase = vaultPassInput.value;
-                if (!passphrase || passphrase.length < 6) {
-                    showVaultError('Use a passphrase of at least 6 characters.');
-                    return;
-                }
-                vaultSubmitBtn.disabled = true;
-                try {
-                    if (vaultMetaCache) {
-                        // Unlock mode: derive with the stored salt, check
-                        // against the stored verifier before trusting it.
-                        const saltBytes = base64ToBytes(vaultMetaCache.salt);
-                        vaultKey = await deriveVaultKey(passphrase, saltBytes);
-                        const ok = await checkVaultVerifier(vaultMetaCache.verifier);
-                        if (!ok) {
-                            vaultKey = null;
-                            showVaultError('That passphrase is not correct.');
-                            return;
-                        }
-                        cacheVaultKeyLocally(vaultKey);
-                        await enterGallery();
-                    } else {
-                        // Setup mode: first time ever. Also migrates
-                        // anything uploaded before encryption existed.
-                        const confirmPass = vaultConfirmInput.value;
-                        if (passphrase !== confirmPass) {
-                            showVaultError('Passphrases don\u2019t match.');
-                            return;
-                        }
-                        const saltBytes = crypto.getRandomValues(new Uint8Array(16));
-                        vaultKey = await deriveVaultKey(passphrase, saltBytes);
-                        const verifier = await makeVaultVerifier();
-                        const { error: insErr } = await sb.from('secure_vault_meta').insert({
-                            id: 1, salt: bytesToBase64(saltBytes), verifier
-                        });
-                        if (insErr) {
-                            // Someone else (the other person, on another
-                            // device) just set this up first — switch to
-                            // unlock mode rather than silently letting two
-                            // different passphrases exist.
-                            vaultKey = null;
-                            const { data: meta } = await sb.from('secure_vault_meta').select('*').eq('id', 1)
-                                .maybeSingle();
-                            if (meta) {
-                                vaultMetaCache = meta;
-                                applyVaultScreenMode();
-                                showVaultError('Someone already set this up first — enter that passphrase instead.');
-                            } else {
-                                showVaultError('Could not save encryption setup: ' + insErr.message);
-                            }
-                            return;
-                        }
-                        cacheVaultKeyLocally(vaultKey);
-                        await migrateExistingRowsToEncrypted();
-                        await enterGallery();
-                    }
-                } catch (err) {
-                    console.error('secureSection: vault unlock/setup failed', err);
-                    showVaultError('Something went wrong — please try again.');
-                    vaultKey = null;
-                } finally {
-                    vaultSubmitBtn.disabled = false;
-                }
-            });
-
-            // One-time migration, run only from the setup branch above (a
-            // freshly-created vault, right after its very first
-            // passphrase is chosen) — encrypts whatever was uploaded
-            // before encryption existed. One row failing doesn't stop
-            // the rest, same philosophy as loadPhotos()'s own per-row
-            // try/catch.
-            async function migrateExistingRowsToEncrypted() {
-                const { data: rows, error } = await sb.from('secure_photos').select('*');
-                if (error) { showVaultError('Could not load existing photos to encrypt: ' + error.message); return; }
-                const list = rows || [];
-                if (!list.length) return;
-                vaultProgress.classList.remove('hidden');
-                let done = 0;
-                for (const row of list) {
-                    vaultProgress.textContent = `Encrypting your memories… ${done + 1} of ${list.length}`;
-                    try {
-                        await migrateOneRowToEncrypted(row);
-                    } catch (err) {
-                        console.error('secureSection: could not encrypt existing row', row.id, err);
-                    }
-                    done++;
-                }
-                vaultProgress.textContent = `Done — ${done} ${done === 1 ? 'memory' : 'memories'} encrypted.`;
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                vaultProgress.classList.add('hidden');
-            }
-            async function migrateOneRowToEncrypted(row) {
-                async function encryptStoredFile(path) {
-                    const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(path, SIGNED_URL_TTL);
-                    if (!signed) return;
-                    const res = await fetch(signed.signedUrl);
-                    const plainBytes = new Uint8Array(await res.arrayBuffer());
-                    const encBytes = await vaultEncryptBytes(plainBytes);
-                    const { error: upErr } = await sb.storage.from(BUCKET).update(path, new Blob([encBytes], {
-                        type: 'application/octet-stream' }), { contentType: 'application/octet-stream' });
-                    if (upErr) throw upErr;
-                }
-                await encryptStoredFile(row.storage_path);
-                if (row.voice_path) await encryptStoredFile(row.voice_path);
-                if (row.reply_voice_path) await encryptStoredFile(row.reply_voice_path);
-
-                const updates = {};
-                if (row.caption) updates.caption = await vaultEncryptText(row.caption);
-                if (row.reply_text) updates.reply_text = await vaultEncryptText(row.reply_text);
-                if (row.overlay_text) updates.overlay_text = await vaultEncryptText(row.overlay_text);
-                if (row.secret_password_hash) updates.secret_password_hash = await vaultEncryptText(
-                    row.secret_password_hash);
-                if (Object.keys(updates).length) {
-                    const { error: updErr } = await sb.from('secure_photos').update(updates).eq('id', row.id);
-                    if (updErr) throw updErr;
-                }
-            }
-
             logoutBtn.addEventListener('click', async () => {
                 flushRevealAcks();
-                clearCachedVaultKey();
                 await sb.auth.signOut();
                 showLockScreen();
             });
@@ -34249,33 +33861,16 @@
                 emptyMsg.classList.toggle('hidden', !!rows.length);
                 for (const row of rows) {
                     try {
-                        // Text fields first — decrypted in place so
-                        // everything downstream (buildSecureCard, the
-                        // lock-state badge, attemptUnlock's passcode
-                        // comparison) just sees plaintext, same as before
-                        // encryption existed.
-                        row.caption = await vaultDecryptText(row.caption);
-                        row.reply_text = await vaultDecryptText(row.reply_text);
-                        row.overlay_text = await vaultDecryptText(row.overlay_text);
-                        row.secret_password_hash = await vaultDecryptText(row.secret_password_hash);
-
-                        const isVideo = row.media_type === 'video';
                         const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(row.storage_path, SIGNED_URL_TTL);
-                        // _signedUrl ends up holding a decrypted blob: URL,
-                        // not the remote signed URL — the lightbox and
-                        // "save to device" both just read this property
-                        // and need no changes, since they already treat
-                        // it as an opaque src.
-                        row._signedUrl = signed ? await decryptToObjectUrl(signed.signedUrl, mimeFromPath(
-                            row.storage_path, isVideo)) : '';
+                        row._signedUrl = signed ? signed.signedUrl : '';
                         if (row.voice_path) {
                             const { data: vsigned } = await sb.storage.from(BUCKET).createSignedUrl(row.voice_path, SIGNED_URL_TTL);
-                            row._voiceUrl = vsigned ? await decryptToObjectUrl(vsigned.signedUrl, 'audio/webm') : null;
+                            row._voiceUrl = vsigned ? vsigned.signedUrl : null;
                         }
                         if (row.reply_voice_path) {
                             const { data: rvsigned } = await sb.storage.from(BUCKET).createSignedUrl(row.reply_voice_path,
                                 SIGNED_URL_TTL);
-                            row._replyVoiceUrl = rvsigned ? await decryptToObjectUrl(rvsigned.signedUrl, 'audio/webm') : null;
+                            row._replyVoiceUrl = rvsigned ? rvsigned.signedUrl : null;
                         }
                         photoRow.appendChild(buildSecureCard(row));
                     } catch (err) {
@@ -34519,9 +34114,8 @@
                         capPreview.textContent = textarea.value || 'tap to add a caption…';
                         clearTimeout(saveTimer);
                         saveTimer = setTimeout(async () => {
-                            row.caption = textarea.value; // kept plaintext in memory for display
-                            const encrypted = await vaultEncryptText(textarea.value);
-                            await sb.from('secure_photos').update({ caption: encrypted }).eq('id', row.id);
+                            row.caption = textarea.value;
+                            await sb.from('secure_photos').update({ caption: row.caption }).eq('id', row.id);
                         }, 500);
                     });
                 }
@@ -34535,8 +34129,7 @@
                         clearTimeout(replySaveTimer);
                         replySaveTimer = setTimeout(async () => {
                             row.reply_text = replyTextarea.value;
-                            const encrypted = await vaultEncryptText(replyTextarea.value);
-                            await sb.from('secure_photos').update({ reply_text: encrypted }).eq('id', row.id);
+                            await sb.from('secure_photos').update({ reply_text: row.reply_text }).eq('id', row.id);
                         }, 500);
                     });
                 }
@@ -34685,12 +34278,8 @@
                                 toast('That recording was too short to save.', { type: 'error' });
                                 return;
                             }
-                            const plainBytes = new Uint8Array(await blob.arrayBuffer());
-                            const encBytes = await vaultEncryptBytes(plainBytes);
-                            const uploadBlob = new Blob([encBytes], { type: 'application/octet-stream' });
                             const path = `voice-${crypto.randomUUID()}.webm`;
-                            const { error: upErr } = await sb.storage.from(BUCKET).upload(path, uploadBlob, {
-                                contentType: 'application/octet-stream' });
+                            const { error: upErr } = await sb.storage.from(BUCKET).upload(path, blob);
                             if (upErr) { toast('Could not save voice caption: ' + upErr.message, { type: 'error' }); return; }
                             const previousPath = row.voice_path;
                             const { error: updErr } = await sb.from('secure_photos').update({ voice_path: path }).eq(
@@ -34703,7 +34292,7 @@
                             row.voice_path = path;
                             if (previousPath) await sb.storage.from(BUCKET).remove([previousPath]);
                             const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(path, SIGNED_URL_TTL);
-                            row._voiceUrl = signed ? await decryptToObjectUrl(signed.signedUrl, 'audio/webm') : null;
+                            row._voiceUrl = signed ? signed.signedUrl : null;
                             renderVoice();
                         };
                         mediaRecorder.start();
@@ -34755,12 +34344,8 @@
                                 toast('That recording was too short to save.', { type: 'error' });
                                 return;
                             }
-                            const plainBytes = new Uint8Array(await blob.arrayBuffer());
-                            const encBytes = await vaultEncryptBytes(plainBytes);
-                            const uploadBlob = new Blob([encBytes], { type: 'application/octet-stream' });
                             const path = `voice-${crypto.randomUUID()}.webm`;
-                            const { error: upErr } = await sb.storage.from(BUCKET).upload(path, uploadBlob, {
-                                contentType: 'application/octet-stream' });
+                            const { error: upErr } = await sb.storage.from(BUCKET).upload(path, blob);
                             if (upErr) { toast('Could not save voice reply: ' + upErr.message, { type: 'error' }); return; }
                             const previousPath = row.reply_voice_path;
                             const { error: updErr } = await sb.from('secure_photos').update({ reply_voice_path: path })
@@ -34773,7 +34358,7 @@
                             row.reply_voice_path = path;
                             if (previousPath) await sb.storage.from(BUCKET).remove([previousPath]);
                             const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(path, SIGNED_URL_TTL);
-                            row._replyVoiceUrl = signed ? await decryptToObjectUrl(signed.signedUrl, 'audio/webm') : null;
+                            row._replyVoiceUrl = signed ? signed.signedUrl : null;
                             renderReplyVoice();
                         };
                         replyMediaRecorder.start();
@@ -34997,10 +34582,6 @@
             // back the just-uploaded file from storage if the insert fails.
             async function insertSecureRow(path, mediaType, extra) {
                 const revealFields = revealedFieldsForUpload(extra.is_secret);
-                // caption/secret_password_hash/overlay_text arrive already
-                // encrypted (encryptExtraFields ran before this was
-                // called) — filter_id/is_secret stay plain, see the vault
-                // module's header comment for why.
                 const { error: insErr } = await sb.from('secure_photos').insert({
                     storage_path: path,
                     media_type: mediaType,
@@ -35021,57 +34602,44 @@
             }
 
             // Bakes the chosen filter (unless "none") and applies the
-            // compress-by-default rule, then encrypts the result and
-            // uploads + inserts. contentType is always
-            // application/octet-stream now — the stored bytes are
-            // ciphertext, so the original media type isn't meaningful
-            // metadata to advertise on the object any more; decryption
-            // is what decides how to actually display it.
+            // compress-by-default rule, then uploads + inserts.
             async function finalizePhotoUpload(file, filterKey, keepOriginal, extra) {
-                let plainBlob, ext;
+                let uploadBlob, ext;
                 if (filterKey === 'none' && keepOriginal) {
-                    plainBlob = file;
+                    uploadBlob = file;
                     ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
                 } else {
-                    plainBlob = await processPhotoFile(file, filterKey, keepOriginal);
+                    uploadBlob = await processPhotoFile(file, filterKey, keepOriginal);
                     ext = 'jpg';
                 }
-                const plainBytes = new Uint8Array(await plainBlob.arrayBuffer());
-                const encBytes = await vaultEncryptBytes(plainBytes);
-                const uploadBlob = new Blob([encBytes], { type: 'application/octet-stream' });
                 const path = `${crypto.randomUUID()}.${ext}`;
                 const { error: upErr } = await sb.storage.from(BUCKET).upload(path, uploadBlob, {
-                    upsert: false, contentType: 'application/octet-stream'
+                    upsert: false, contentType: uploadBlob.type || 'image/jpeg'
                 });
                 if (upErr) { toast('Upload failed: ' + upErr.message, { type: 'error' }); return false; }
-                return insertSecureRow(path, 'photo', await encryptExtraFields(extra));
+                return insertSecureRow(path, 'photo', extra);
             }
 
             // Same idea for video: only re-encodes through the canvas path
             // (compressVideo) when a filter needs baking in or the
             // "original quality" box wasn't ticked — a plain original
-            // upload with no filter skips re-encoding entirely. Either
-            // way, the final bytes get encrypted before they ever reach
-            // Supabase, same as photos.
+            // upload with no filter skips re-encoding entirely.
             async function finalizeVideoUpload(file, filterKey, keepOriginal, extra) {
                 const filter = getSecureFilter(filterKey);
-                let plainBlob, ext;
+                let blobOrFile, ext;
                 if (filterKey === 'none' && keepOriginal) {
-                    plainBlob = file;
+                    blobOrFile = file;
                     ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
                 } else {
-                    plainBlob = await compressVideo(file, { filterCss: filter.css, keepOriginal });
+                    blobOrFile = await compressVideo(file, { filterCss: filter.css, keepOriginal });
                     ext = 'webm';
                 }
-                const plainBytes = new Uint8Array(await plainBlob.arrayBuffer());
-                const encBytes = await vaultEncryptBytes(plainBytes);
-                const uploadBlob = new Blob([encBytes], { type: 'application/octet-stream' });
                 const path = `${crypto.randomUUID()}.${ext}`;
-                const { error: upErr } = await sb.storage.from(BUCKET).upload(path, uploadBlob, {
-                    upsert: false, contentType: 'application/octet-stream'
+                const { error: upErr } = await sb.storage.from(BUCKET).upload(path, blobOrFile, {
+                    upsert: false, contentType: blobOrFile.type || 'video/mp4'
                 });
                 if (upErr) { toast('Upload failed: ' + upErr.message, { type: 'error' }); return false; }
-                return insertSecureRow(path, 'video', await encryptExtraFields(extra));
+                return insertSecureRow(path, 'video', extra);
             }
 
             /* ───────────── "Add memory" popup ───────────── */
@@ -35301,7 +34869,6 @@
                     const { data } = await sb.auth.getSession();
                     if (data && data.session) {
                         if (!wall.classList.contains('hidden')) flushRevealAcks();
-                        clearCachedVaultKey();
                         await sb.auth.signOut();
                         if (!wall.classList.contains('hidden')) showLockScreen();
                     }
