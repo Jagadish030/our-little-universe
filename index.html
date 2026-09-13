@@ -16791,28 +16791,20 @@
                 try {
                     const { data, error } = await supabase.from(TABLE).select('*').order('created_at', { ascending: true });
                     if (error) throw error;
-                    // Sign every image_path in ONE batched call instead of
-                    // one round trip per photo, then decrypt every row
-                    // concurrently instead of one at a time — with dozens
-                    // of memories, this turns what used to be 2×N
-                    // sequential network round trips into essentially 1.
-                    const pathsToSign = data.filter((row) => row.image_path).map((row) => row.image_path);
-                    const signedUrlByPath = {};
-                    if (pathsToSign.length) {
-                        try {
-                            const { data: signedList } = await supabase.storage.from(BUCKET)
-                                .createSignedUrls(pathsToSign, SIGNED_URL_TTL);
-                            (signedList || []).forEach((s) => { if (s && s.path && s.signedUrl) signedUrlByPath[
-                                s.path] = s.signedUrl; });
-                        } catch (signErr) { /* fall back to each row's legacy image_url below */ }
-                    }
                     const results = await mapWithConcurrency(data, 4, async (row) => {
                         try {
                             // Image bytes: try to decrypt; fall back to the
                             // raw public URL if that fails — this row may
                             // simply not have been migrated to encryption
                             // yet, not an actual error.
-                            let src = (row.image_path && signedUrlByPath[row.image_path]) || row.image_url;
+                            let src = row.image_url;
+                            if (row.image_path && supabase) {
+                                try {
+                                    const { data: signed } = await supabase.storage.from(BUCKET)
+                                        .createSignedUrl(row.image_path, SIGNED_URL_TTL);
+                                    if (signed && signed.signedUrl) src = signed.signedUrl;
+                                } catch (signErr) { /* fall back to the legacy image_url below */ }
+                            }
                             if (typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey() && src) {
                                 try {
                                     src = await window.decryptToObjectUrl(src, window.mimeFromPath(
@@ -18153,19 +18145,16 @@
                     if (error) throw error;
                     const rows = data || [];
                     const vaultReady = typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey();
-                    const pathsToSign = rows.filter((row) => row.storage_path).map((row) => row.storage_path);
-                    const signedUrlByPath = {};
-                    if (pathsToSign.length) {
-                        try {
-                            const { data: signedList } = await supabase.storage.from(DOODLES_BUCKET)
-                                .createSignedUrls(pathsToSign, SIGNED_URL_TTL);
-                            (signedList || []).forEach((s) => { if (s && s.path && s.signedUrl) signedUrlByPath[
-                                s.path] = s.signedUrl; });
-                        } catch (signErr) { /* fall back to each row's legacy image_url below */ }
-                    }
                     const results = await mapWithConcurrency(rows, 4, async (row) => {
                         try {
-                            let sourceUrl = (row.storage_path && signedUrlByPath[row.storage_path]) || row.image_url;
+                            let sourceUrl = row.image_url;
+                            if (row.storage_path && supabase) {
+                                try {
+                                    const { data: signed } = await supabase.storage.from(DOODLES_BUCKET)
+                                        .createSignedUrl(row.storage_path, SIGNED_URL_TTL);
+                                    if (signed && signed.signedUrl) sourceUrl = signed.signedUrl;
+                                } catch (signErr) { /* fall back to the legacy image_url below */ }
+                            }
                             if (vaultReady && sourceUrl) {
                                 try {
                                     row.image_url = await window.decryptToObjectUrl(sourceUrl, 'image/png');
@@ -25989,19 +25978,16 @@
                             ascending: false });
                         if (error) throw error;
                         const rows = data || [];
-                        const pathsToSign = rows.filter((row) => row.image_path).map((row) => row.image_path);
-                        const signedUrlByPath = {};
-                        if (pathsToSign.length) {
-                            try {
-                                const { data: signedList } = await supabase.storage.from(PB_BUCKET)
-                                    .createSignedUrls(pathsToSign, SIGNED_URL_TTL);
-                                (signedList || []).forEach((s) => { if (s && s.path && s.signedUrl) signedUrlByPath[
-                                    s.path] = s.signedUrl; });
-                            } catch (signErr) { /* fall back to each row's legacy image_url below */ }
-                        }
                         const results = await mapWithConcurrency(rows, 4, async (row) => {
                             try {
-                                let sourceUrl = (row.image_path && signedUrlByPath[row.image_path]) || row.image_url;
+                                let sourceUrl = row.image_url;
+                                if (row.image_path && supabase) {
+                                    try {
+                                        const { data: signed } = await supabase.storage.from(PB_BUCKET)
+                                            .createSignedUrl(row.image_path, SIGNED_URL_TTL);
+                                        if (signed && signed.signedUrl) sourceUrl = signed.signedUrl;
+                                    } catch (signErr) { /* fall back to the legacy image_url below */ }
+                                }
                                 if (typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey() && sourceUrl) {
                                     try {
                                         row.image_url = await window.decryptToObjectUrl(sourceUrl, 'image/png');
@@ -28147,21 +28133,18 @@
             // Applied at every entry point a chat row can arrive through
             // (initial load, realtime insert/broadcast, realtime update)
             // so chatData always holds decrypted, render-ready rows no
-            // matter which path a given message came in on.
-            // presignedUrlByPath is optional — the bulk loader below signs
-            // every row's path in one batched call and passes the results
-            // in here; realtime's single-row calls omit it and this signs
-            // that one path itself instead.
-            async function decryptChatRow(row, presignedUrlByPath) {
+            // matter which path a given message came in on. Signs its
+            // own image_path individually — batching signed-url creation
+            // across many rows in one call turned out to be unreliable,
+            // so every loader site-wide just signs one path at a time.
+            async function decryptChatRow(row) {
                 if (!row) return row;
                 row.content_text = await window.resolveDecryptedText(row.content_text);
                 row.reaction = await window.resolveDecryptedText(row.reaction);
                 row.reply_preview_text = await window.resolveDecryptedText(row.reply_preview_text);
                 if (row.image_url || row.image_path) {
                     let sourceUrl = row.image_url;
-                    if (row.image_path && presignedUrlByPath && presignedUrlByPath[row.image_path]) {
-                        sourceUrl = presignedUrlByPath[row.image_path];
-                    } else if (row.image_path && supabase) {
+                    if (row.image_path && supabase) {
                         try {
                             const { data: signed } = await supabase.storage.from(CHAT_BUCKET)
                                 .createSignedUrl(row.image_path, SIGNED_URL_TTL);
@@ -28189,19 +28172,9 @@
                         `deleted_for_${myFieldSuffix()}`, false).order('created_at', { ascending: true });
                     if (error) throw error;
                     const rows = data || [];
-                    const pathsToSign = rows.filter((row) => row.image_path).map((row) => row.image_path);
-                    const signedUrlByPath = {};
-                    if (pathsToSign.length) {
-                        try {
-                            const { data: signedList } = await supabase.storage.from(CHAT_BUCKET)
-                                .createSignedUrls(pathsToSign, SIGNED_URL_TTL);
-                            (signedList || []).forEach((s) => { if (s && s.path && s.signedUrl) signedUrlByPath[
-                                s.path] = s.signedUrl; });
-                        } catch (signErr) { /* fall back to each row's legacy image_url below */ }
-                    }
                     const results = await mapWithConcurrency(rows, 4, async (row) => {
                         try {
-                            return await decryptChatRow(row, signedUrlByPath);
+                            return await decryptChatRow(row);
                         } catch (rowErr) {
                             console.error('Could not decrypt a chat row', row && row.id, rowErr);
                             return null;
@@ -30962,19 +30935,16 @@
                         });
                         if (error) throw error;
                         const rows = data || [];
-                        const pathsToSign = rows.filter((row) => row.media_path).map((row) => row.media_path);
-                        const signedUrlByPath = {};
-                        if (pathsToSign.length) {
-                            try {
-                                const { data: signedList } = await supabase.storage.from(MW_BUCKET)
-                                    .createSignedUrls(pathsToSign, SIGNED_URL_TTL);
-                                (signedList || []).forEach((s) => { if (s && s.path && s.signedUrl) signedUrlByPath[
-                                    s.path] = s.signedUrl; });
-                            } catch (signErr) { /* fall back to each row's legacy media_url below */ }
-                        }
                         const results = await mapWithConcurrency(rows, 4, async (row) => {
                             try {
-                                let sourceUrl = (row.media_path && signedUrlByPath[row.media_path]) || row.media_url;
+                                let sourceUrl = row.media_url;
+                                if (row.media_path && supabase) {
+                                    try {
+                                        const { data: signed } = await supabase.storage.from(MW_BUCKET)
+                                            .createSignedUrl(row.media_path, SIGNED_URL_TTL);
+                                        if (signed && signed.signedUrl) sourceUrl = signed.signedUrl;
+                                    } catch (signErr) { /* fall back to the legacy media_url below */ }
+                                }
                                 if (typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey() && sourceUrl) {
                                     try {
                                         row.media_url = await window.decryptToObjectUrl(sourceUrl,
@@ -33477,26 +33447,7 @@
                     const { data, error } = await sb.from(ENTRIES_TABLE).select('*').order('entry_date', { ascending: true });
                     if (error) throw error;
                     const rows = data || [];
-                    // Collect every image path across every entry and sign
-                    // them all in ONE batched call, instead of one round
-                    // trip per image per entry — this used to be a
-                    // doubly-nested sequential loop (entries × images),
-                    // the slowest pattern of any feature on the site.
                     const vaultReady = typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey();
-                    const allPaths = [];
-                    rows.forEach((row) => { if (Array.isArray(row.images)) row.images.forEach((raw) => {
-                        const p = typeof raw === 'string' ? null : raw && raw.path;
-                        if (p) allPaths.push(p);
-                    }); });
-                    const signedUrlByPath = {};
-                    if (allPaths.length) {
-                        try {
-                            const { data: signedList } = await sb.storage.from(IMAGES_BUCKET)
-                                .createSignedUrls(allPaths, SIGNED_URL_TTL);
-                            (signedList || []).forEach((s) => { if (s && s.path && s.signedUrl) signedUrlByPath[
-                                s.path] = s.signedUrl; });
-                        } catch (signErr) { /* fall back to each image's legacy url below */ }
-                    }
                     const results = await mapWithConcurrency(rows, 4, async (row) => {
                         try {
                             row.title = await window.resolveDecryptedText(row.title);
@@ -33510,8 +33461,7 @@
                                     // object shape first so path (if any)
                                     // survives alongside the rest.
                                     const obj = typeof raw === 'string' ? { url: raw } : { ...raw };
-                                    const sourceUrl = (obj.path && signedUrlByPath[obj.path]) ||
-                                        await resolveDiaryStorageUrl(obj.path, obj.url);
+                                    const sourceUrl = await resolveDiaryStorageUrl(obj.path, obj.url);
                                     if (vaultReady && sourceUrl) {
                                         try { obj._displayUrl = await window.decryptToObjectUrl(sourceUrl, 'image/jpeg'); }
                                         catch (imgErr) { obj._displayUrl = sourceUrl; }
@@ -35657,20 +35607,6 @@
                 emptyMsg.textContent = (filtered && !rows.length) ?
                     'Nothing matches these filters yet.' : 'No photos yet — add your first one.';
                 emptyMsg.classList.toggle('hidden', !!rows.length);
-                // Sign every photo/video/voice path in one batched call
-                // instead of one round trip per file per row.
-                const allPaths = [];
-                rows.forEach((row) => { if (row.storage_path) allPaths.push(row.storage_path);
-                    if (row.voice_path) allPaths.push(row.voice_path);
-                    if (row.reply_voice_path) allPaths.push(row.reply_voice_path); });
-                const signedUrlByPath = {};
-                if (allPaths.length) {
-                    try {
-                        const { data: signedList } = await sb.storage.from(BUCKET).createSignedUrls(allPaths, SIGNED_URL_TTL);
-                        (signedList || []).forEach((s) => { if (s && s.path && s.signedUrl) signedUrlByPath[s.path] =
-                            s.signedUrl; });
-                    } catch (signErr) { /* fall back to signing each path individually below */ }
-                }
                 const cards = await mapWithConcurrency(rows, 4, async (row) => {
                     try {
                         // Text fields first — decrypted in place so
@@ -35689,8 +35625,7 @@
                         row.secret_password_hash = await window.resolveDecryptedText(row.secret_password_hash);
 
                         const isVideo = row.media_type === 'video';
-                        const signedUrl = signedUrlByPath[row.storage_path] || (await sb.storage.from(BUCKET)
-                            .createSignedUrl(row.storage_path, SIGNED_URL_TTL)).data?.signedUrl;
+                        const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(row.storage_path, SIGNED_URL_TTL);
                         // _signedUrl ends up holding a decrypted blob: URL,
                         // not the remote signed URL — the lightbox and
                         // "save to device" both just read this property
@@ -35699,17 +35634,16 @@
                         // the text fields above: try to decrypt, but a row
                         // that isn't (yet) encrypted just shows as-is
                         // rather than vanishing.
-                        row._signedUrl = signedUrl ? await resolveSecureMediaUrl(signedUrl, mimeFromPath(
+                        row._signedUrl = signed ? await resolveSecureMediaUrl(signed.signedUrl, mimeFromPath(
                             row.storage_path, isVideo)) : '';
                         if (row.voice_path) {
-                            const vUrl = signedUrlByPath[row.voice_path] || (await sb.storage.from(BUCKET)
-                                .createSignedUrl(row.voice_path, SIGNED_URL_TTL)).data?.signedUrl;
-                            row._voiceUrl = vUrl ? await resolveSecureMediaUrl(vUrl, 'audio/webm') : null;
+                            const { data: vsigned } = await sb.storage.from(BUCKET).createSignedUrl(row.voice_path, SIGNED_URL_TTL);
+                            row._voiceUrl = vsigned ? await resolveSecureMediaUrl(vsigned.signedUrl, 'audio/webm') : null;
                         }
                         if (row.reply_voice_path) {
-                            const rvUrl = signedUrlByPath[row.reply_voice_path] || (await sb.storage.from(BUCKET)
-                                .createSignedUrl(row.reply_voice_path, SIGNED_URL_TTL)).data?.signedUrl;
-                            row._replyVoiceUrl = rvUrl ? await resolveSecureMediaUrl(rvUrl, 'audio/webm') : null;
+                            const { data: rvsigned } = await sb.storage.from(BUCKET).createSignedUrl(row.reply_voice_path,
+                                SIGNED_URL_TTL);
+                            row._replyVoiceUrl = rvsigned ? await resolveSecureMediaUrl(rvsigned.signedUrl, 'audio/webm') : null;
                         }
                         return buildSecureCard(row);
                     } catch (err) {
