@@ -14146,6 +14146,7 @@
                     <label class="secure-upload-btn" for="secureUploadVideoInput">+ Add video</label>
                     <input type="file" id="secureUploadVideoInput" accept="video/*" hidden>
                     <button type="button" class="secure-logout-btn" id="secureLogoutBtn">Log out</button>
+                    <button type="button" class="secure-logout-btn secure-encrypt-btn hidden" id="secureEncryptBtn">🔒 Encrypt existing items</button>
                 </div>
                 <div class="secure-filter-row" id="secureFilterRow">
                     <button type="button" class="secure-filter-btn" id="secureFavFilterBtn">♡ Favorites</button>
@@ -16773,28 +16774,35 @@
                 try {
                     const { data, error } = await supabase.from(TABLE).select('*').order('created_at', { ascending: true });
                     if (error) throw error;
-                    photos = [];
-                    for (const row of data) {
+                    // Sign every image_path in ONE batched call instead of
+                    // one round trip per photo, then decrypt every row
+                    // concurrently instead of one at a time — with dozens
+                    // of memories, this turns what used to be 2×N
+                    // sequential network round trips into essentially 1.
+                    const pathsToSign = data.filter((row) => row.image_path).map((row) => row.image_path);
+                    const signedUrlByPath = {};
+                    if (pathsToSign.length) {
+                        try {
+                            const { data: signedList } = await supabase.storage.from(BUCKET)
+                                .createSignedUrls(pathsToSign, SIGNED_URL_TTL);
+                            (signedList || []).forEach((s) => { if (s && s.path && s.signedUrl) signedUrlByPath[
+                                s.path] = s.signedUrl; });
+                        } catch (signErr) { /* fall back to each row's legacy image_url below */ }
+                    }
+                    const results = await Promise.all(data.map(async (row) => {
                         try {
                             // Image bytes: try to decrypt; fall back to the
                             // raw public URL if that fails — this row may
                             // simply not have been migrated to encryption
                             // yet, not an actual error.
-                            let src = row.image_url;
-                            if (row.image_path && supabase) {
-                                try {
-                                    const { data: signed } = await supabase.storage.from(BUCKET)
-                                        .createSignedUrl(row.image_path, SIGNED_URL_TTL);
-                                    if (signed && signed.signedUrl) src = signed.signedUrl;
-                                } catch (signErr) { /* fall back to the legacy image_url below */ }
-                            }
+                            let src = (row.image_path && signedUrlByPath[row.image_path]) || row.image_url;
                             if (typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey() && src) {
                                 try {
                                     src = await window.decryptToObjectUrl(src, window.mimeFromPath(
                                         row.image_path || row.image_url, false));
                                 } catch (imgErr) { /* not (yet) encrypted — leave the signed/raw URL as-is */ }
                             }
-                            photos.push({
+                            return {
                                 id: row.id,
                                 src,
                                 caption: await window.resolveDecryptedText(row.caption),
@@ -16817,12 +16825,14 @@
                                 author: row.author || 1,
                                 seen_by_j: row.seen_by_j,
                                 seen_by_m: row.seen_by_m
-                            });
+                            };
                         } catch (rowErr) {
                             // One bad row shouldn't take the whole wall down.
                             console.error('Could not decrypt/render a memory row', row && row.id, rowErr);
+                            return null;
                         }
-                    }
+                    }));
+                    photos = results.filter(Boolean);
                 } catch (err) {
                     console.error('Could not load memories from the cloud:', err);
                     showToast('Could not load your memories — check your connection.', { type: 'error' });
@@ -18126,17 +18136,19 @@
                     if (error) throw error;
                     const rows = data || [];
                     const vaultReady = typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey();
-                    allDoodles = [];
-                    for (const row of rows) {
+                    const pathsToSign = rows.filter((row) => row.storage_path).map((row) => row.storage_path);
+                    const signedUrlByPath = {};
+                    if (pathsToSign.length) {
                         try {
-                            let sourceUrl = row.image_url;
-                            if (row.storage_path && supabase) {
-                                try {
-                                    const { data: signed } = await supabase.storage.from(DOODLES_BUCKET)
-                                        .createSignedUrl(row.storage_path, SIGNED_URL_TTL);
-                                    if (signed && signed.signedUrl) sourceUrl = signed.signedUrl;
-                                } catch (signErr) { /* fall back to the legacy image_url below */ }
-                            }
+                            const { data: signedList } = await supabase.storage.from(DOODLES_BUCKET)
+                                .createSignedUrls(pathsToSign, SIGNED_URL_TTL);
+                            (signedList || []).forEach((s) => { if (s && s.path && s.signedUrl) signedUrlByPath[
+                                s.path] = s.signedUrl; });
+                        } catch (signErr) { /* fall back to each row's legacy image_url below */ }
+                    }
+                    const results = await Promise.all(rows.map(async (row) => {
+                        try {
+                            let sourceUrl = (row.storage_path && signedUrlByPath[row.storage_path]) || row.image_url;
                             if (vaultReady && sourceUrl) {
                                 try {
                                     row.image_url = await window.decryptToObjectUrl(sourceUrl, 'image/png');
@@ -18148,11 +18160,13 @@
                             row.reply = await window.resolveDecryptedText(row.reply);
                             row.reaction = await window.resolveDecryptedText(row.reaction);
                             row.unlock_hint = await window.resolveDecryptedText(row.unlock_hint);
-                            allDoodles.push(row);
+                            return row;
                         } catch (rowErr) {
                             console.error('Could not decrypt/render a doodle row', row && row.id, rowErr);
+                            return null;
                         }
-                    }
+                    }));
+                    allDoodles = results.filter(Boolean);
                     doodlesSkeletonShown = false;
                     renderDoodlesFiltered();
                     updateDoodleModeBadges();
@@ -25958,17 +25972,19 @@
                             ascending: false });
                         if (error) throw error;
                         const rows = data || [];
-                        pbGalleryData = [];
-                        for (const row of rows) {
+                        const pathsToSign = rows.filter((row) => row.image_path).map((row) => row.image_path);
+                        const signedUrlByPath = {};
+                        if (pathsToSign.length) {
                             try {
-                                let sourceUrl = row.image_url;
-                                if (row.image_path && supabase) {
-                                    try {
-                                        const { data: signed } = await supabase.storage.from(PB_BUCKET)
-                                            .createSignedUrl(row.image_path, SIGNED_URL_TTL);
-                                        if (signed && signed.signedUrl) sourceUrl = signed.signedUrl;
-                                    } catch (signErr) { /* fall back to the legacy image_url below */ }
-                                }
+                                const { data: signedList } = await supabase.storage.from(PB_BUCKET)
+                                    .createSignedUrls(pathsToSign, SIGNED_URL_TTL);
+                                (signedList || []).forEach((s) => { if (s && s.path && s.signedUrl) signedUrlByPath[
+                                    s.path] = s.signedUrl; });
+                            } catch (signErr) { /* fall back to each row's legacy image_url below */ }
+                        }
+                        const results = await Promise.all(rows.map(async (row) => {
+                            try {
+                                let sourceUrl = (row.image_path && signedUrlByPath[row.image_path]) || row.image_url;
                                 if (typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey() && sourceUrl) {
                                     try {
                                         row.image_url = await window.decryptToObjectUrl(sourceUrl, 'image/png');
@@ -25977,9 +25993,13 @@
                                     row.image_url = sourceUrl;
                                 }
                                 row.caption = await window.resolveDecryptedText(row.caption);
-                                pbGalleryData.push(row);
-                            } catch (rowErr) { console.error('Could not decrypt a photobooth capture', row && row.id, rowErr); }
-                        }
+                                return row;
+                            } catch (rowErr) {
+                                console.error('Could not decrypt a photobooth capture', row && row.id, rowErr);
+                                return null;
+                            }
+                        }));
+                        pbGalleryData = results.filter(Boolean);
                         if (!pbGalleryData.length) {
                             savedGalleryGrid.innerHTML =
                                 '<div class="mw-gallery-empty">No captures saved yet — strike a pose and tap 📌 Save to Gallery!</div>';
@@ -28111,14 +28131,20 @@
             // (initial load, realtime insert/broadcast, realtime update)
             // so chatData always holds decrypted, render-ready rows no
             // matter which path a given message came in on.
-            async function decryptChatRow(row) {
+            // presignedUrlByPath is optional — the bulk loader below signs
+            // every row's path in one batched call and passes the results
+            // in here; realtime's single-row calls omit it and this signs
+            // that one path itself instead.
+            async function decryptChatRow(row, presignedUrlByPath) {
                 if (!row) return row;
                 row.content_text = await window.resolveDecryptedText(row.content_text);
                 row.reaction = await window.resolveDecryptedText(row.reaction);
                 row.reply_preview_text = await window.resolveDecryptedText(row.reply_preview_text);
                 if (row.image_url || row.image_path) {
                     let sourceUrl = row.image_url;
-                    if (row.image_path && supabase) {
+                    if (row.image_path && presignedUrlByPath && presignedUrlByPath[row.image_path]) {
+                        sourceUrl = presignedUrlByPath[row.image_path];
+                    } else if (row.image_path && supabase) {
                         try {
                             const { data: signed } = await supabase.storage.from(CHAT_BUCKET)
                                 .createSignedUrl(row.image_path, SIGNED_URL_TTL);
@@ -28146,14 +28172,25 @@
                         `deleted_for_${myFieldSuffix()}`, false).order('created_at', { ascending: true });
                     if (error) throw error;
                     const rows = data || [];
-                    chatData = [];
-                    for (const row of rows) {
+                    const pathsToSign = rows.filter((row) => row.image_path).map((row) => row.image_path);
+                    const signedUrlByPath = {};
+                    if (pathsToSign.length) {
                         try {
-                            chatData.push(await decryptChatRow(row));
+                            const { data: signedList } = await supabase.storage.from(CHAT_BUCKET)
+                                .createSignedUrls(pathsToSign, SIGNED_URL_TTL);
+                            (signedList || []).forEach((s) => { if (s && s.path && s.signedUrl) signedUrlByPath[
+                                s.path] = s.signedUrl; });
+                        } catch (signErr) { /* fall back to each row's legacy image_url below */ }
+                    }
+                    const results = await Promise.all(rows.map(async (row) => {
+                        try {
+                            return await decryptChatRow(row, signedUrlByPath);
                         } catch (rowErr) {
                             console.error('Could not decrypt a chat row', row && row.id, rowErr);
+                            return null;
                         }
-                    }
+                    }));
+                    chatData = results.filter(Boolean);
                     renderChatMessages();
                     updateChatBadge();
                 } catch (err) { console.error('Could not load chat:', err); }
@@ -30871,17 +30908,19 @@
                         });
                         if (error) throw error;
                         const rows = data || [];
-                        galleryData = [];
-                        for (const row of rows) {
+                        const pathsToSign = rows.filter((row) => row.media_path).map((row) => row.media_path);
+                        const signedUrlByPath = {};
+                        if (pathsToSign.length) {
                             try {
-                                let sourceUrl = row.media_url;
-                                if (row.media_path && supabase) {
-                                    try {
-                                        const { data: signed } = await supabase.storage.from(MW_BUCKET)
-                                            .createSignedUrl(row.media_path, SIGNED_URL_TTL);
-                                        if (signed && signed.signedUrl) sourceUrl = signed.signedUrl;
-                                    } catch (signErr) { /* fall back to the legacy media_url below */ }
-                                }
+                                const { data: signedList } = await supabase.storage.from(MW_BUCKET)
+                                    .createSignedUrls(pathsToSign, SIGNED_URL_TTL);
+                                (signedList || []).forEach((s) => { if (s && s.path && s.signedUrl) signedUrlByPath[
+                                    s.path] = s.signedUrl; });
+                            } catch (signErr) { /* fall back to each row's legacy media_url below */ }
+                        }
+                        const results = await Promise.all(rows.map(async (row) => {
+                            try {
+                                let sourceUrl = (row.media_path && signedUrlByPath[row.media_path]) || row.media_url;
                                 if (typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey() && sourceUrl) {
                                     try {
                                         row.media_url = await window.decryptToObjectUrl(sourceUrl,
@@ -30892,9 +30931,13 @@
                                 }
                                 row.caption = await window.resolveDecryptedText(row.caption);
                                 row.reply = await window.resolveDecryptedText(row.reply);
-                                galleryData.push(row);
-                            } catch (rowErr) { console.error('Could not decrypt a Magic Wand creation', row && row.id, rowErr); }
-                        }
+                                return row;
+                            } catch (rowErr) {
+                                console.error('Could not decrypt a Magic Wand creation', row && row.id, rowErr);
+                                return null;
+                            }
+                        }));
+                        galleryData = results.filter(Boolean);
                         if (!galleryData.length) {
                             galleryGrid.innerHTML =
                                 '<div class="mw-gallery-empty">No creations saved yet — cast a spell and tap 📸 or ⏺️ to save one!</div>';
@@ -33366,41 +33409,62 @@
                     const { data, error } = await sb.from(ENTRIES_TABLE).select('*').order('entry_date', { ascending: true });
                     if (error) throw error;
                     const rows = data || [];
-                    state.entries = [];
-                    for (const row of rows) {
+                    // Collect every image path across every entry and sign
+                    // them all in ONE batched call, instead of one round
+                    // trip per image per entry — this used to be a
+                    // doubly-nested sequential loop (entries × images),
+                    // the slowest pattern of any feature on the site.
+                    const vaultReady = typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey();
+                    const allPaths = [];
+                    rows.forEach((row) => { if (Array.isArray(row.images)) row.images.forEach((raw) => {
+                        const p = typeof raw === 'string' ? null : raw && raw.path;
+                        if (p) allPaths.push(p);
+                    }); });
+                    const signedUrlByPath = {};
+                    if (allPaths.length) {
+                        try {
+                            const { data: signedList } = await sb.storage.from(IMAGES_BUCKET)
+                                .createSignedUrls(allPaths, SIGNED_URL_TTL);
+                            (signedList || []).forEach((s) => { if (s && s.path && s.signedUrl) signedUrlByPath[
+                                s.path] = s.signedUrl; });
+                        } catch (signErr) { /* fall back to each image's legacy url below */ }
+                    }
+                    const results = await Promise.all(rows.map(async (row) => {
                         try {
                             row.title = await window.resolveDecryptedText(row.title);
                             row.body = await window.resolveDecryptedText(row.body);
                             row.mood = await window.resolveDecryptedText(row.mood);
                             if (Array.isArray(row.images)) {
-                                const resolvedImages = [];
-                                const vaultReady = typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey();
-                                for (const raw of row.images) {
+                                row.images = await Promise.all(row.images.map(async (raw) => {
                                     // Legacy rows stored a bare url string;
                                     // current rows store {url, path, xr,
                                     // yr, scale, rot} — normalize to the
                                     // object shape first so path (if any)
                                     // survives alongside the rest.
                                     const obj = typeof raw === 'string' ? { url: raw } : { ...raw };
-                                    const sourceUrl = await resolveDiaryStorageUrl(obj.path, obj.url);
+                                    const sourceUrl = (obj.path && signedUrlByPath[obj.path]) ||
+                                        await resolveDiaryStorageUrl(obj.path, obj.url);
                                     if (vaultReady && sourceUrl) {
                                         try { obj._displayUrl = await window.decryptToObjectUrl(sourceUrl, 'image/jpeg'); }
                                         catch (imgErr) { obj._displayUrl = sourceUrl; }
                                     } else {
                                         obj._displayUrl = sourceUrl;
                                     }
-                                    resolvedImages.push(obj);
-                                }
-                                row.images = resolvedImages;
+                                    return obj;
+                                }));
                             }
                             if (Array.isArray(row.text_blocks)) {
-                                for (const tb of row.text_blocks) {
+                                await Promise.all(row.text_blocks.map(async (tb) => {
                                     if (tb && tb.text) tb.text = await window.resolveDecryptedText(tb.text);
-                                }
+                                }));
                             }
-                            state.entries.push(row);
-                        } catch (rowErr) { console.error('Could not decrypt a diary entry', row && row.id, rowErr); }
-                    }
+                            return row;
+                        } catch (rowErr) {
+                            console.error('Could not decrypt a diary entry', row && row.id, rowErr);
+                            return null;
+                        }
+                    }));
+                    state.entries = results.filter(Boolean);
                 } catch (e) { state.entries = []; showToast("Couldn't load entries — check your connection."); }
                 state.loaded = true;
             }
@@ -35008,6 +35072,7 @@
             const hisBtn = $('secureHisBtn');
             const herBtn = $('secureHerBtn');
             const logoutBtn = $('secureLogoutBtn');
+            const encryptExistingBtn = $('secureEncryptBtn');
             const closeBtn = $('secureSectionCloseBtn');
             const lightbox = $('secureLightbox');
             const lightboxImg = $('secureLightboxImg');
@@ -35424,6 +35489,121 @@
                     sessData.session.user.email : null;
                 showPrivacyShield();
                 await loadPhotos();
+                await refreshEncryptExistingButton();
+            }
+
+            // The handful of photos/videos added before Just Us was wired
+            // into the site's encryption ever existed are still sitting
+            // there as plain, unencrypted files — this offers a one-time
+            // button to bring them in line with everything else. Only
+            // shown when there's actually something to do: the vault key
+            // is loaded (needed to encrypt with) and the migration hasn't
+            // already run.
+            async function refreshEncryptExistingButton() {
+                if (!encryptExistingBtn) return;
+                const vaultReady = typeof window.getSiteVaultKey === 'function' && !!window.getSiteVaultKey();
+                if (!vaultReady) { encryptExistingBtn.classList.add('hidden'); return; }
+                try {
+                    const { data: meta } = await sb.from('secure_vault_meta').select('just_us_media_migrated_at')
+                        .eq('id', 1).maybeSingle();
+                    encryptExistingBtn.classList.toggle('hidden', !!(meta && meta.just_us_media_migrated_at));
+                } catch (err) {
+                    encryptExistingBtn.classList.add('hidden');
+                }
+            }
+
+            encryptExistingBtn && encryptExistingBtn.addEventListener('click', async () => {
+                if (!window.confirm('Encrypt your existing Just Us photos and videos now? ' +
+                    'This runs once — keep this tab open until it finishes.')) return;
+                encryptExistingBtn.disabled = true;
+                const originalText = encryptExistingBtn.textContent;
+                try {
+                    const result = await migrateSecurePhotosToEncrypted((done, total) => {
+                        encryptExistingBtn.textContent = `Encrypting ${done}/${total}…`;
+                    });
+                    if (result.ok) {
+                        toast(`Encrypted ${result.count} item${result.count === 1 ? '' : 's'} 🔒`);
+                        encryptExistingBtn.classList.add('hidden');
+                        loadPhotos();
+                    } else {
+                        toast('Already encrypted — nothing to do.');
+                        encryptExistingBtn.classList.add('hidden');
+                    }
+                } catch (err) {
+                    console.error('Just Us encryption migration failed:', err);
+                    toast('Something went wrong — please try again.', { type: 'error' });
+                } finally {
+                    encryptExistingBtn.disabled = false;
+                    encryptExistingBtn.textContent = originalText;
+                }
+            });
+
+            // Hardcoded to the exact rows that existed before Just Us had
+            // any encryption at all — deliberately NOT "every row in the
+            // table right now", so this can never reach a row that was
+            // uploaded (and therefore already encrypted, since uploads
+            // always encrypt) after this was written.
+            const PRE_ENCRYPTION_SECURE_PHOTO_IDS = [
+                '973c00b5-7fb2-4fe1-9dc2-e0f05183ae38',
+                '3b41552c-d037-4fe7-96be-70ab697ef728',
+                'a4799751-6920-4582-ad59-49871a1c1b17'
+            ];
+            async function migrateSecurePhotosToEncrypted(onProgress) {
+                if (!sb) return { ok: false };
+                // Claim exclusive, exactly-once execution — if this update
+                // affects no rows, either this already ran, or the vault
+                // was never set up (secure_vault_meta has no row yet).
+                const { data: claimed, error: claimErr } = await sb.from('secure_vault_meta')
+                    .update({ just_us_media_migrated_at: new Date().toISOString() })
+                    .eq('id', 1)
+                    .is('just_us_media_migrated_at', null)
+                    .select();
+                if (claimErr) throw claimErr;
+                if (!claimed || !claimed.length) return { ok: false };
+
+                const { data: rows, error } = await sb.from('secure_photos').select('*')
+                    .in('id', PRE_ENCRYPTION_SECURE_PHOTO_IDS);
+                if (error) throw error;
+                const list = rows || [];
+                let done = 0;
+                for (const row of list) {
+                    try {
+                        await migrateOneSecurePhotoRow(row);
+                    } catch (err) {
+                        console.error('Could not encrypt Just Us row', row.id, err);
+                    }
+                    done++;
+                    if (onProgress) onProgress(done, list.length);
+                }
+                return { ok: true, count: list.length };
+            }
+            async function migrateOneSecurePhotoRow(row) {
+                async function encryptStoredFile(path) {
+                    if (!path) return;
+                    const { data: signed, error: signErr } = await sb.storage.from(BUCKET)
+                        .createSignedUrl(path, SIGNED_URL_TTL);
+                    if (signErr || !signed) throw signErr || new Error('could not sign ' + path);
+                    const res = await fetch(signed.signedUrl);
+                    const plainBytes = new Uint8Array(await res.arrayBuffer());
+                    const encBytes = await window.vaultEncryptBytes(plainBytes);
+                    const { error: upErr } = await sb.storage.from(BUCKET).update(path, new Blob([encBytes], {
+                        type: 'application/octet-stream' }), { contentType: 'application/octet-stream' });
+                    if (upErr) throw upErr;
+                }
+                await encryptStoredFile(row.storage_path);
+                await encryptStoredFile(row.voice_path);
+                await encryptStoredFile(row.reply_voice_path);
+
+                const updates = {};
+                if (row.caption) updates.caption = await window.vaultEncryptText(row.caption);
+                if (row.reply_text) updates.reply_text = await window.vaultEncryptText(row.reply_text);
+                if (row.overlay_text) updates.overlay_text = await window.vaultEncryptText(row.overlay_text);
+                if (row.secret_password_hash) updates.secret_password_hash = await window.vaultEncryptText(
+                    row.secret_password_hash);
+                if (Object.keys(updates).length) {
+                    const { error: updErr } = await sb.from('secure_photos').update(updates).eq('id', row.id);
+                    if (updErr) throw updErr;
+                }
             }
 
             logoutBtn.addEventListener('click', async () => {
@@ -35464,6 +35644,23 @@
                swipe behaviour, same hover/tilt CSS — all of that is
                already wired site-wide by class selector, so reusing
                the classes is what makes it "just work" here too). */
+            // Mirrors window.resolveDecryptedText's philosophy (see the
+            // main script's own copy of that comment) but for media
+            // bytes rather than text: only attempt decryption if the
+            // vault key is actually loaded, and fall back to the raw
+            // (signed) URL if decryption fails — a row that was
+            // uploaded before this was encrypted, or a session where the
+            // passphrase hasn't been entered yet, should still show its
+            // photo rather than silently vanishing from the gallery.
+            async function resolveSecureMediaUrl(url, mimeType) {
+                if (!url) return url;
+                if (typeof window.getSiteVaultKey !== 'function' || !window.getSiteVaultKey()) return url;
+                try {
+                    return await decryptToObjectUrl(url, mimeType);
+                } catch (err) {
+                    return url;
+                }
+            }
             async function loadPhotos() {
                 photoRow.innerHTML = '';
                 let query = sb.from('secure_photos').select('*');
@@ -35483,37 +35680,61 @@
                 emptyMsg.textContent = (filtered && !rows.length) ?
                     'Nothing matches these filters yet.' : 'No photos yet — add your first one.';
                 emptyMsg.classList.toggle('hidden', !!rows.length);
-                for (const row of rows) {
+                // Sign every photo/video/voice path in one batched call
+                // instead of one round trip per file per row.
+                const allPaths = [];
+                rows.forEach((row) => { if (row.storage_path) allPaths.push(row.storage_path);
+                    if (row.voice_path) allPaths.push(row.voice_path);
+                    if (row.reply_voice_path) allPaths.push(row.reply_voice_path); });
+                const signedUrlByPath = {};
+                if (allPaths.length) {
+                    try {
+                        const { data: signedList } = await sb.storage.from(BUCKET).createSignedUrls(allPaths, SIGNED_URL_TTL);
+                        (signedList || []).forEach((s) => { if (s && s.path && s.signedUrl) signedUrlByPath[s.path] =
+                            s.signedUrl; });
+                    } catch (signErr) { /* fall back to signing each path individually below */ }
+                }
+                const cards = await Promise.all(rows.map(async (row) => {
                     try {
                         // Text fields first — decrypted in place so
                         // everything downstream (buildSecureCard, the
                         // lock-state badge, attemptUnlock's passcode
                         // comparison) just sees plaintext, same as before
-                        // encryption existed.
-                        row.caption = await vaultDecryptText(row.caption);
-                        row.reply_text = await vaultDecryptText(row.reply_text);
-                        row.overlay_text = await vaultDecryptText(row.overlay_text);
-                        row.secret_password_hash = await vaultDecryptText(row.secret_password_hash);
+                        // encryption existed. Uses the same safe,
+                        // falls-back-to-raw-on-failure helper every other
+                        // feature uses — a row that isn't actually
+                        // encrypted yet (or a session where the vault key
+                        // hasn't been loaded) shouldn't make the whole
+                        // gallery disappear.
+                        row.caption = await window.resolveDecryptedText(row.caption);
+                        row.reply_text = await window.resolveDecryptedText(row.reply_text);
+                        row.overlay_text = await window.resolveDecryptedText(row.overlay_text);
+                        row.secret_password_hash = await window.resolveDecryptedText(row.secret_password_hash);
 
                         const isVideo = row.media_type === 'video';
-                        const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(row.storage_path, SIGNED_URL_TTL);
+                        const signedUrl = signedUrlByPath[row.storage_path] || (await sb.storage.from(BUCKET)
+                            .createSignedUrl(row.storage_path, SIGNED_URL_TTL)).data?.signedUrl;
                         // _signedUrl ends up holding a decrypted blob: URL,
                         // not the remote signed URL — the lightbox and
                         // "save to device" both just read this property
                         // and need no changes, since they already treat
-                        // it as an opaque src.
-                        row._signedUrl = signed ? await decryptToObjectUrl(signed.signedUrl, mimeFromPath(
+                        // it as an opaque src. Same fallback philosophy as
+                        // the text fields above: try to decrypt, but a row
+                        // that isn't (yet) encrypted just shows as-is
+                        // rather than vanishing.
+                        row._signedUrl = signedUrl ? await resolveSecureMediaUrl(signedUrl, mimeFromPath(
                             row.storage_path, isVideo)) : '';
                         if (row.voice_path) {
-                            const { data: vsigned } = await sb.storage.from(BUCKET).createSignedUrl(row.voice_path, SIGNED_URL_TTL);
-                            row._voiceUrl = vsigned ? await decryptToObjectUrl(vsigned.signedUrl, 'audio/webm') : null;
+                            const vUrl = signedUrlByPath[row.voice_path] || (await sb.storage.from(BUCKET)
+                                .createSignedUrl(row.voice_path, SIGNED_URL_TTL)).data?.signedUrl;
+                            row._voiceUrl = vUrl ? await resolveSecureMediaUrl(vUrl, 'audio/webm') : null;
                         }
                         if (row.reply_voice_path) {
-                            const { data: rvsigned } = await sb.storage.from(BUCKET).createSignedUrl(row.reply_voice_path,
-                                SIGNED_URL_TTL);
-                            row._replyVoiceUrl = rvsigned ? await decryptToObjectUrl(rvsigned.signedUrl, 'audio/webm') : null;
+                            const rvUrl = signedUrlByPath[row.reply_voice_path] || (await sb.storage.from(BUCKET)
+                                .createSignedUrl(row.reply_voice_path, SIGNED_URL_TTL)).data?.signedUrl;
+                            row._replyVoiceUrl = rvUrl ? await resolveSecureMediaUrl(rvUrl, 'audio/webm') : null;
                         }
-                        photoRow.appendChild(buildSecureCard(row));
+                        return buildSecureCard(row);
                     } catch (err) {
                         // One bad row (a missing file, a signing hiccup) should
                         // never take the rest of the gallery down with it —
@@ -35521,8 +35742,10 @@
                         // show up: an uncaught error here silently broke the
                         // whole loop after the first item.
                         console.error('secureSection: could not render a photo row', row && row.id, err);
+                        return null;
                     }
-                }
+                }));
+                cards.filter(Boolean).forEach((card) => photoRow.appendChild(card));
             }
 
             function wireTap(el, fn) {
@@ -35939,7 +36162,7 @@
                             row.voice_path = path;
                             if (previousPath) await sb.storage.from(BUCKET).remove([previousPath]);
                             const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(path, SIGNED_URL_TTL);
-                            row._voiceUrl = signed ? await decryptToObjectUrl(signed.signedUrl, 'audio/webm') : null;
+                            row._voiceUrl = signed ? await resolveSecureMediaUrl(signed.signedUrl, 'audio/webm') : null;
                             renderVoice();
                         };
                         mediaRecorder.start();
@@ -36009,7 +36232,7 @@
                             row.reply_voice_path = path;
                             if (previousPath) await sb.storage.from(BUCKET).remove([previousPath]);
                             const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(path, SIGNED_URL_TTL);
-                            row._replyVoiceUrl = signed ? await decryptToObjectUrl(signed.signedUrl, 'audio/webm') : null;
+                            row._replyVoiceUrl = signed ? await resolveSecureMediaUrl(signed.signedUrl, 'audio/webm') : null;
                             renderReplyVoice();
                         };
                         replyMediaRecorder.start();
