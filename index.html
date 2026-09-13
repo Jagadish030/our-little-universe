@@ -14146,7 +14146,6 @@
                     <label class="secure-upload-btn" for="secureUploadVideoInput">+ Add video</label>
                     <input type="file" id="secureUploadVideoInput" accept="video/*" hidden>
                     <button type="button" class="secure-logout-btn" id="secureLogoutBtn">Log out</button>
-                    <button type="button" class="secure-logout-btn secure-encrypt-btn hidden" id="secureEncryptBtn">🔒 Encrypt existing items</button>
                 </div>
                 <div class="secure-filter-row" id="secureFilterRow">
                     <button type="button" class="secure-filter-btn" id="secureFavFilterBtn">♡ Favorites</button>
@@ -35072,7 +35071,6 @@
             const hisBtn = $('secureHisBtn');
             const herBtn = $('secureHerBtn');
             const logoutBtn = $('secureLogoutBtn');
-            const encryptExistingBtn = $('secureEncryptBtn');
             const closeBtn = $('secureSectionCloseBtn');
             const lightbox = $('secureLightbox');
             const lightboxImg = $('secureLightboxImg');
@@ -35489,121 +35487,6 @@
                     sessData.session.user.email : null;
                 showPrivacyShield();
                 await loadPhotos();
-                await refreshEncryptExistingButton();
-            }
-
-            // The handful of photos/videos added before Just Us was wired
-            // into the site's encryption ever existed are still sitting
-            // there as plain, unencrypted files — this offers a one-time
-            // button to bring them in line with everything else. Only
-            // shown when there's actually something to do: the vault key
-            // is loaded (needed to encrypt with) and the migration hasn't
-            // already run.
-            async function refreshEncryptExistingButton() {
-                if (!encryptExistingBtn) return;
-                const vaultReady = typeof window.getSiteVaultKey === 'function' && !!window.getSiteVaultKey();
-                if (!vaultReady) { encryptExistingBtn.classList.add('hidden'); return; }
-                try {
-                    const { data: meta } = await sb.from('secure_vault_meta').select('just_us_media_migrated_at')
-                        .eq('id', 1).maybeSingle();
-                    encryptExistingBtn.classList.toggle('hidden', !!(meta && meta.just_us_media_migrated_at));
-                } catch (err) {
-                    encryptExistingBtn.classList.add('hidden');
-                }
-            }
-
-            encryptExistingBtn && encryptExistingBtn.addEventListener('click', async () => {
-                if (!window.confirm('Encrypt your existing Just Us photos and videos now? ' +
-                    'This runs once — keep this tab open until it finishes.')) return;
-                encryptExistingBtn.disabled = true;
-                const originalText = encryptExistingBtn.textContent;
-                try {
-                    const result = await migrateSecurePhotosToEncrypted((done, total) => {
-                        encryptExistingBtn.textContent = `Encrypting ${done}/${total}…`;
-                    });
-                    if (result.ok) {
-                        toast(`Encrypted ${result.count} item${result.count === 1 ? '' : 's'} 🔒`);
-                        encryptExistingBtn.classList.add('hidden');
-                        loadPhotos();
-                    } else {
-                        toast('Already encrypted — nothing to do.');
-                        encryptExistingBtn.classList.add('hidden');
-                    }
-                } catch (err) {
-                    console.error('Just Us encryption migration failed:', err);
-                    toast('Something went wrong — please try again.', { type: 'error' });
-                } finally {
-                    encryptExistingBtn.disabled = false;
-                    encryptExistingBtn.textContent = originalText;
-                }
-            });
-
-            // Hardcoded to the exact rows that existed before Just Us had
-            // any encryption at all — deliberately NOT "every row in the
-            // table right now", so this can never reach a row that was
-            // uploaded (and therefore already encrypted, since uploads
-            // always encrypt) after this was written.
-            const PRE_ENCRYPTION_SECURE_PHOTO_IDS = [
-                '973c00b5-7fb2-4fe1-9dc2-e0f05183ae38',
-                '3b41552c-d037-4fe7-96be-70ab697ef728',
-                'a4799751-6920-4582-ad59-49871a1c1b17'
-            ];
-            async function migrateSecurePhotosToEncrypted(onProgress) {
-                if (!sb) return { ok: false };
-                // Claim exclusive, exactly-once execution — if this update
-                // affects no rows, either this already ran, or the vault
-                // was never set up (secure_vault_meta has no row yet).
-                const { data: claimed, error: claimErr } = await sb.from('secure_vault_meta')
-                    .update({ just_us_media_migrated_at: new Date().toISOString() })
-                    .eq('id', 1)
-                    .is('just_us_media_migrated_at', null)
-                    .select();
-                if (claimErr) throw claimErr;
-                if (!claimed || !claimed.length) return { ok: false };
-
-                const { data: rows, error } = await sb.from('secure_photos').select('*')
-                    .in('id', PRE_ENCRYPTION_SECURE_PHOTO_IDS);
-                if (error) throw error;
-                const list = rows || [];
-                let done = 0;
-                for (const row of list) {
-                    try {
-                        await migrateOneSecurePhotoRow(row);
-                    } catch (err) {
-                        console.error('Could not encrypt Just Us row', row.id, err);
-                    }
-                    done++;
-                    if (onProgress) onProgress(done, list.length);
-                }
-                return { ok: true, count: list.length };
-            }
-            async function migrateOneSecurePhotoRow(row) {
-                async function encryptStoredFile(path) {
-                    if (!path) return;
-                    const { data: signed, error: signErr } = await sb.storage.from(BUCKET)
-                        .createSignedUrl(path, SIGNED_URL_TTL);
-                    if (signErr || !signed) throw signErr || new Error('could not sign ' + path);
-                    const res = await fetch(signed.signedUrl);
-                    const plainBytes = new Uint8Array(await res.arrayBuffer());
-                    const encBytes = await window.vaultEncryptBytes(plainBytes);
-                    const { error: upErr } = await sb.storage.from(BUCKET).update(path, new Blob([encBytes], {
-                        type: 'application/octet-stream' }), { contentType: 'application/octet-stream' });
-                    if (upErr) throw upErr;
-                }
-                await encryptStoredFile(row.storage_path);
-                await encryptStoredFile(row.voice_path);
-                await encryptStoredFile(row.reply_voice_path);
-
-                const updates = {};
-                if (row.caption) updates.caption = await window.vaultEncryptText(row.caption);
-                if (row.reply_text) updates.reply_text = await window.vaultEncryptText(row.reply_text);
-                if (row.overlay_text) updates.overlay_text = await window.vaultEncryptText(row.overlay_text);
-                if (row.secret_password_hash) updates.secret_password_hash = await window.vaultEncryptText(
-                    row.secret_password_hash);
-                if (Object.keys(updates).length) {
-                    const { error: updErr } = await sb.from('secure_photos').update(updates).eq('id', row.id);
-                    if (updErr) throw updErr;
-                }
             }
 
             logoutBtn.addEventListener('click', async () => {
