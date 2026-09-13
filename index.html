@@ -15857,6 +15857,24 @@
             // generated one stays valid before it needs to be re-signed.
             // Matches Just Us's own SIGNED_URL_TTL further down the page.
             const SIGNED_URL_TTL = 3600;
+            // Runs `mapper` over `items` with at most `limit` in flight at
+            // once, preserving result order. Used for the actual per-item
+            // fetch + decrypt work (not the lightweight batched
+            // signed-url call) — firing dozens of concurrent Web Crypto +
+            // fetch operations at once is fine on a desktop but can choke
+            // weaker/mobile devices, silently stalling image loads.
+            async function mapWithConcurrency(items, limit, mapper) {
+                const results = new Array(items.length);
+                let nextIndex = 0;
+                async function worker() {
+                    while (nextIndex < items.length) {
+                        const current = nextIndex++;
+                        results[current] = await mapper(items[current], current);
+                    }
+                }
+                await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+                return results;
+            }
 
             if (!isConfigured) setupBanner.classList.add('show');
 
@@ -16788,7 +16806,7 @@
                                 s.path] = s.signedUrl; });
                         } catch (signErr) { /* fall back to each row's legacy image_url below */ }
                     }
-                    const results = await Promise.all(data.map(async (row) => {
+                    const results = await mapWithConcurrency(data, 4, async (row) => {
                         try {
                             // Image bytes: try to decrypt; fall back to the
                             // raw public URL if that fails — this row may
@@ -16830,7 +16848,7 @@
                             console.error('Could not decrypt/render a memory row', row && row.id, rowErr);
                             return null;
                         }
-                    }));
+                    });
                     photos = results.filter(Boolean);
                 } catch (err) {
                     console.error('Could not load memories from the cloud:', err);
@@ -18145,7 +18163,7 @@
                                 s.path] = s.signedUrl; });
                         } catch (signErr) { /* fall back to each row's legacy image_url below */ }
                     }
-                    const results = await Promise.all(rows.map(async (row) => {
+                    const results = await mapWithConcurrency(rows, 4, async (row) => {
                         try {
                             let sourceUrl = (row.storage_path && signedUrlByPath[row.storage_path]) || row.image_url;
                             if (vaultReady && sourceUrl) {
@@ -18164,7 +18182,7 @@
                             console.error('Could not decrypt/render a doodle row', row && row.id, rowErr);
                             return null;
                         }
-                    }));
+                    });
                     allDoodles = results.filter(Boolean);
                     doodlesSkeletonShown = false;
                     renderDoodlesFiltered();
@@ -25981,7 +25999,7 @@
                                     s.path] = s.signedUrl; });
                             } catch (signErr) { /* fall back to each row's legacy image_url below */ }
                         }
-                        const results = await Promise.all(rows.map(async (row) => {
+                        const results = await mapWithConcurrency(rows, 4, async (row) => {
                             try {
                                 let sourceUrl = (row.image_path && signedUrlByPath[row.image_path]) || row.image_url;
                                 if (typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey() && sourceUrl) {
@@ -25997,7 +26015,7 @@
                                 console.error('Could not decrypt a photobooth capture', row && row.id, rowErr);
                                 return null;
                             }
-                        }));
+                        });
                         pbGalleryData = results.filter(Boolean);
                         if (!pbGalleryData.length) {
                             savedGalleryGrid.innerHTML =
@@ -28181,14 +28199,14 @@
                                 s.path] = s.signedUrl; });
                         } catch (signErr) { /* fall back to each row's legacy image_url below */ }
                     }
-                    const results = await Promise.all(rows.map(async (row) => {
+                    const results = await mapWithConcurrency(rows, 4, async (row) => {
                         try {
                             return await decryptChatRow(row, signedUrlByPath);
                         } catch (rowErr) {
                             console.error('Could not decrypt a chat row', row && row.id, rowErr);
                             return null;
                         }
-                    }));
+                    });
                     chatData = results.filter(Boolean);
                     renderChatMessages();
                     updateChatBadge();
@@ -29065,9 +29083,25 @@
 
             let initialized = false;
 
+            // getSession() does more than read the cached session — it's
+            // also what triggers supabase-js's own "refresh if expired"
+            // logic. Two situations both need this: a cold start where
+            // the persisted session hasn't finished loading yet, and —
+            // the one that was actually breaking image loads on mobile —
+            // a tab that sat backgrounded long enough for its access
+            // token to expire while the auto-refresh timer was frozen.
+            // Either way, every storage call this page makes should be
+            // able to assume a valid token, not hope for one.
+            async function ensureFreshSession() {
+                if (!supabase) return;
+                try { await supabase.auth.getSession(); }
+                catch (err) { console.error('Could not refresh session:', err); }
+            }
+
             async function init() {
                 if (initialized) return;
                 initialized = true;
+                await ensureFreshSession();
                 if (!getIdentity()) showIdentityPicker();
                 renderDaysTogether();
                 buildAmbientHearts();
@@ -29085,6 +29119,27 @@
                     cleanupExpiredChat();
                 }
             }
+            // A phone locking, or switching apps for a bit, backgrounds
+            // this tab — which freezes supabase-js's own token-refresh
+            // timer right along with everything else. Coming back to a
+            // since-expired access token is exactly what was breaking
+            // image loads on mobile (confirmed via the storage service's
+            // own logs: signed-url requests that worked moments earlier
+            // started failing right after a gap, for the same files).
+            // Re-checking (and silently refreshing, if needed) the
+            // session the moment the tab becomes visible again, then
+            // re-loading whatever's on screen, closes that gap.
+            let wasHidden = false;
+            document.addEventListener('visibilitychange', async () => {
+                if (document.hidden) { wasHidden = true;
+                    return; }
+                if (!wasHidden) return;
+                wasHidden = false;
+                await ensureFreshSession();
+                loadPhotos();
+                if (typeof loadDoodles === 'function') loadDoodles();
+                if (getIdentity()) loadChatMessages();
+            });
             setInterval(() => { if (!document.hidden && getIdentity()) refreshNavClouds(); }, 30 * 1000);
 
             /* Nav-cloud badges used to update only from that 3-minute
@@ -30917,7 +30972,7 @@
                                     s.path] = s.signedUrl; });
                             } catch (signErr) { /* fall back to each row's legacy media_url below */ }
                         }
-                        const results = await Promise.all(rows.map(async (row) => {
+                        const results = await mapWithConcurrency(rows, 4, async (row) => {
                             try {
                                 let sourceUrl = (row.media_path && signedUrlByPath[row.media_path]) || row.media_url;
                                 if (typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey() && sourceUrl) {
@@ -30935,7 +30990,7 @@
                                 console.error('Could not decrypt a Magic Wand creation', row && row.id, rowErr);
                                 return null;
                             }
-                        }));
+                        });
                         galleryData = results.filter(Boolean);
                         if (!galleryData.length) {
                             galleryGrid.innerHTML =
@@ -33249,6 +33304,20 @@
             // see the RESIZE_ROTATE_ICON_SVG comment below), so it keeps
             // its own copy rather than reaching across script blocks.
             const SIGNED_URL_TTL = 3600;
+            // See the main script's own copy of this comment — same
+            // purpose, kept local since this module is self-contained.
+            async function mapWithConcurrency(items, limit, mapper) {
+                const results = new Array(items.length);
+                let nextIndex = 0;
+                async function worker() {
+                    while (nextIndex < items.length) {
+                        const current = nextIndex++;
+                        results[current] = await mapper(items[current], current);
+                    }
+                }
+                await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+                return results;
+            }
             // Every stored image now carries a `path` (storage object
             // path) alongside its legacy `url` (permanent public URL,
             // kept only as a fallback for rows saved before this
@@ -33428,7 +33497,7 @@
                                 s.path] = s.signedUrl; });
                         } catch (signErr) { /* fall back to each image's legacy url below */ }
                     }
-                    const results = await Promise.all(rows.map(async (row) => {
+                    const results = await mapWithConcurrency(rows, 4, async (row) => {
                         try {
                             row.title = await window.resolveDecryptedText(row.title);
                             row.body = await window.resolveDecryptedText(row.body);
@@ -33462,7 +33531,7 @@
                             console.error('Could not decrypt a diary entry', row && row.id, rowErr);
                             return null;
                         }
-                    }));
+                    });
                     state.entries = results.filter(Boolean);
                 } catch (e) { state.entries = []; showToast("Couldn't load entries — check your connection."); }
                 state.loaded = true;
@@ -34591,12 +34660,23 @@
             });
 
             /* ================= PUBLIC ENTRY POINT ================= */
+            // See the main script's own copy of this comment — same
+            // purpose (a backgrounded tab's frozen refresh timer can
+            // leave this module's own separate client holding an
+            // expired token by the time the diary's opened), kept local
+            // since this module is self-contained.
+            async function ensureFreshSession() {
+                if (!sb) return;
+                try { await sb.auth.getSession(); }
+                catch (err) { console.error('Could not refresh diary session:', err); }
+            }
             async function openDiary() {
                 state._prevBodyOverflow = document.body.style.overflow;
                 state._prevHtmlOverflow = document.documentElement.style.overflow;
                 document.body.style.overflow = 'hidden';
                 document.documentElement.style.overflow = 'hidden';
                 overlay.classList.remove('hidden');
+                await ensureFreshSession();
                 if (!state.loaded) await loadEntries();
                 await loadSettings(state.author);
                 renderCover();
@@ -34995,6 +35075,20 @@
             const RIGHT_ARROW_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
             const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
             const SIGNED_URL_TTL = 3600;
+            // See the main script's own copy of this comment — same
+            // purpose, kept local since this module is self-contained.
+            async function mapWithConcurrency(items, limit, mapper) {
+                const results = new Array(items.length);
+                let nextIndex = 0;
+                async function worker() {
+                    while (nextIndex < items.length) {
+                        const current = nextIndex++;
+                        results[current] = await mapper(items[current], current);
+                    }
+                }
+                await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+                return results;
+            }
 
             /* ═══════════════════ End-to-end encryption ═══════════════════
                Everything content-bearing here — photo/video/voice bytes,
@@ -35577,7 +35671,7 @@
                             s.signedUrl; });
                     } catch (signErr) { /* fall back to signing each path individually below */ }
                 }
-                const cards = await Promise.all(rows.map(async (row) => {
+                const cards = await mapWithConcurrency(rows, 4, async (row) => {
                     try {
                         // Text fields first — decrypted in place so
                         // everything downstream (buildSecureCard, the
@@ -35627,7 +35721,7 @@
                         console.error('secureSection: could not render a photo row', row && row.id, err);
                         return null;
                     }
-                }));
+                });
                 cards.filter(Boolean).forEach((card) => photoRow.appendChild(card));
             }
 
