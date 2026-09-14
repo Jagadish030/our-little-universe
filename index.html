@@ -10733,6 +10733,15 @@
             50% { box-shadow: 0 0 0 7px rgba(214, 69, 69, 0.05); }
         }
 
+        .flip-back-btn,
+        .note-flip-back-btn {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
         .flip-back-btn {
             display: block;
             margin: 4px auto 0;
@@ -12163,6 +12172,24 @@
         #pbVideo { width: 100%; height: 100%; object-fit: cover; display: block; background: #000; transition: filter .25s ease; }
         #pbVideo.pb-mirrored { transform: scaleX(-1); }
         #pbCaptureCanvas { display: none; }
+        .pb-shot-preview {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            z-index: 4;
+            background: #000;
+            pointer-events: none;
+            opacity: 1;
+            animation: pbShotPreviewIn .16s ease-out;
+        }
+        .pb-shot-preview.hidden { display: none; }
+        @keyframes pbShotPreviewIn {
+            from { opacity: .35; transform: scale(1.015); }
+            to { opacity: 1; transform: scale(1); }
+        }
         .pb-grid-overlay { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); pointer-events: none; }
         .pb-grid-overlay.hidden { display: none; }
         .pb-grid-overlay div { border: 1px solid rgba(255,255,255,.35); }
@@ -15247,25 +15274,45 @@
                mistaken for a tap. */
             function wireTapButton(el, handler) {
                 if (!el) return;
-                let tracking = false, firedViaPointer = false, startX = 0, startY = 0;
+                // These controls sit inside 3-D/flippable cards. Use the
+                // release event itself so a tap never has to wait for the
+                // browser's delayed compatibility click. A short guard
+                // absorbs the follow-up click/touch compatibility event.
+                let tracking = false, handledAt = 0, startX = 0, startY = 0;
+                const handleImmediateTap = (e) => {
+                    const now = Date.now();
+                    if (now - handledAt < 500) return false;
+                    handledAt = now;
+                    e.stopPropagation();
+                    handler(e);
+                    return true;
+                };
+                el.style.touchAction = 'manipulation';
                 el.addEventListener('pointerdown', (e) => {
-                    tracking = true; firedViaPointer = false;
+                    tracking = true;
                     startX = e.clientX; startY = e.clientY;
                 });
                 el.addEventListener('pointerup', (e) => {
                     if (!tracking) return;
                     tracking = false;
                     if (Math.abs(e.clientX - startX) > 8 || Math.abs(e.clientY - startY) > 8) return;
-                    e.stopPropagation();
-                    firedViaPointer = true;
-                    handler(e);
+                    handleImmediateTap(e);
                 });
                 el.addEventListener('pointercancel', () => { tracking = false; });
+                // Some mobile browsers can still suppress/delay pointer
+                // compatibility events inside transformed elements.
+                el.addEventListener('touchend', (e) => {
+                    if (!tracking) return;
+                    tracking = false;
+                    const touch = e.changedTouches && e.changedTouches[0];
+                    if (touch && (Math.abs(touch.clientX - startX) > 8 || Math.abs(touch.clientY - startY) > 8)) return;
+                    handleImmediateTap(e);
+                }, { passive: false });
                 el.addEventListener('click', (e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    if (firedViaPointer) { firedViaPointer = false; return; }
-                    handler(e);
+                    if (Date.now() - handledAt < 500) return;
+                    handleImmediateTap(e);
                 });
             }
 
@@ -25349,7 +25396,14 @@
                     shots = [];
                     caption = '';
                     $pb('pbCaptureTitle').textContent = template.name;
-                    $pb('pbRoomLightRow').classList.toggle('hidden', false);
+                    // Room-colour controls are a feature of Colour Room only.
+                    roomLightOn = false;
+                    roomColor = null;
+                    $pb('pbRoomLightRow').classList.toggle('hidden', !template.roomLight);
+                    $pb('pbScreenLightBtn').classList.remove('active');
+                    $pb('pbRoomLightHint').classList.add('hidden');
+                    applyRoomLight();
+                    syncSwatchActive();
                     buildShotSlots();
                     showView('capture');
                     startCamera();
@@ -25365,7 +25419,9 @@
                         dot.className = 'pb-shot-dot' + (i < shots.length ? ' filled' : '');
                         row.appendChild(dot);
                     }
-                    $pb('pbRetakeLastBtn').classList.toggle('hidden', shots.length === 0);
+                    const retake = $pb('pbRetakeLastBtn');
+                    retake.classList.toggle('hidden', shots.length === 0);
+                    retake.disabled = capturing;
                 }
                 async function startCamera() {
                     $pb('pbCamError').classList.add('hidden');
@@ -25435,31 +25491,55 @@
                     cx.drawImage(videoEl, 0, 0, vw, vh);
                     return c;
                 }
+                async function showCapturedPreview(frame, duration = 1000) {
+                    const preview = $pb('pbShotPreview');
+                    if (!preview || !frame) return;
+                    preview.width = frame.width;
+                    preview.height = frame.height;
+                    const ctx = preview.getContext('2d');
+                    ctx.clearRect(0, 0, preview.width, preview.height);
+                    ctx.drawImage(frame, 0, 0);
+                    preview.classList.remove('hidden');
+                    await wait(duration);
+                    preview.classList.add('hidden');
+                }
                 async function captureOne() {
                     await runCountdown(timerSeconds);
-                    if (!stream) return;
-                    shots.push(grabFrame());
+                    if (!stream) return false;
+                    const frame = grabFrame();
+                    shots.push(frame);
                     buildShotSlots();
                     haptic && haptic(12);
+                    // Give the person a full second to actually see the photo
+                    // before any next burst countdown begins. This also makes
+                    // a manual capture feel like a real instant preview.
+                    await showCapturedPreview(frame, 1000);
+                    return true;
                 }
                 $pb('pbShutterBtn').addEventListener('click', async () => {
                     if (capturing || shots.length >= template.count || !stream) return;
                     capturing = true;
+                    buildShotSlots();
                     try {
                         if (burstOn) {
                             while (shots.length < template.count) {
-                                await captureOne();
-                                if (shots.length < template.count) await wait(500);
+                                const captured = await captureOne();
+                                if (!captured) break;
+                                if (shots.length < template.count) await wait(250);
                             }
                         } else {
                             await captureOne();
                         }
                         if (shots.length >= template.count) {
-                            await wait(300);
+                            // The final preview has already been shown for one
+                            // second inside captureOne(). Move to styling only
+                            // after that preview has finished.
+                            await wait(120);
                             enterEditView();
                         }
                     } finally {
                         capturing = false;
+                        buildShotSlots();
                     }
                 });
 
@@ -25811,7 +25891,16 @@
                         $pb('pbPanel' + name).classList.toggle('hidden', name.toLowerCase() !== tab);
                     });
                 });
-                $pb('pbBackToCaptureBtn').addEventListener('click', () => { showView('capture'); startCamera(); });
+                $pb('pbBackToCaptureBtn').addEventListener('click', () => {
+                    stopCamera();
+                    $pb('pbShotPreview').classList.add('hidden');
+                    shots = [];
+                    stickers = [];
+                    caption = '';
+                    finalDataUrl = null;
+                    renderGallery();
+                    showView('gallery');
+                });
 
                 $pb('pbEditDoneBtn').addEventListener('click', () => {
                     // flatten stickers onto a fresh copy of the composite at 2x for a crisper download
@@ -26131,6 +26220,7 @@
                     $pb('pbScreenLightBtn').classList.remove('active');
                     $pb('pbRoomLightHint').classList.add('hidden');
                     applyRoomLight();
+                    $pb('pbShotPreview').classList.add('hidden');
                     renderGallery();
                     showView('gallery');
                 });
@@ -33140,6 +33230,7 @@
                 <div class="pb-stage-inner" id="pbStageInner">
                     <video id="pbVideo" autoplay playsinline muted></video>
                     <canvas id="pbCaptureCanvas" class="hidden"></canvas>
+                    <canvas id="pbShotPreview" class="pb-shot-preview hidden" aria-label="Just captured photo"></canvas>
                     <div class="pb-grid-overlay hidden" id="pbGridOverlay">
                         <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
                     </div>
@@ -33171,7 +33262,7 @@
         <!-- ───────── VIEW 3: style / edit ───────── -->
         <div class="pb-view pb-view-edit hidden" id="pbViewEdit">
             <div class="pb-capture-topbar">
-                <button type="button" class="pb-icon-btn" id="pbBackToCaptureBtn" aria-label="Back to camera">‹</button>
+                <button type="button" class="pb-icon-btn" id="pbBackToCaptureBtn" aria-label="Back to looks">‹</button>
                 <div class="pb-capture-title">Style it</div>
                 <button type="button" class="pb-icon-btn" id="pbUndoStickerBtn" aria-label="Undo last sticker">↩</button>
             </div>
