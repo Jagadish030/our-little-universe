@@ -12166,6 +12166,15 @@
         .pb-grid-overlay { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); pointer-events: none; }
         .pb-grid-overlay.hidden { display: none; }
         .pb-grid-overlay div { border: 1px solid rgba(255,255,255,.35); }
+        /* Freezes on the just-taken shot for a beat before the live
+           feed (and, in burst mode, the next countdown) resumes — the
+           camera used to jump straight back to a live preview with no
+           way to actually register what got captured. */
+        .pb-shot-flash {
+            position: absolute; inset: 0; object-fit: cover; z-index: 3;
+            opacity: 0; pointer-events: none; transition: opacity .18s ease;
+        }
+        .pb-shot-flash.showing { opacity: 1; }
         .pb-countdown {
             position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
             font-family: 'Caveat', cursive; font-size: 7rem; color: #fff;
@@ -15245,26 +15254,27 @@
                falls through to running the handler from that 'click'.
                A small movement tolerance keeps a swipe/drag from being
                mistaken for a tap. */
+            // Used to juggle pointerdown/pointerup with a movement
+            // threshold to make taps feel snappier than a plain click —
+            // but the page already disables pinch-zoom (see the viewport
+            // meta tag), which is the only thing that ever makes `click`
+            // slow on mobile, so there's no delay left to work around.
+            // What that extra machinery actually did was misfire on fast,
+            // real taps: the split-second position reported by
+            // pointerdown vs. pointerup can differ by more than the 8px
+            // threshold purely from touch-sampling jitter during a quick
+            // tap, so pointerup would bail out without ever calling the
+            // handler — and a slower, deliberate press-and-release
+            // avoided that same jitter, which is exactly why holding the
+            // button down worked while a normal tap didn't. A plain
+            // click already gets tap-vs-scroll disambiguation for free
+            // from the browser itself (native buttons have never needed
+            // more than this), so that's all this does now.
             function wireTapButton(el, handler) {
                 if (!el) return;
-                let tracking = false, firedViaPointer = false, startX = 0, startY = 0;
-                el.addEventListener('pointerdown', (e) => {
-                    tracking = true; firedViaPointer = false;
-                    startX = e.clientX; startY = e.clientY;
-                });
-                el.addEventListener('pointerup', (e) => {
-                    if (!tracking) return;
-                    tracking = false;
-                    if (Math.abs(e.clientX - startX) > 8 || Math.abs(e.clientY - startY) > 8) return;
-                    e.stopPropagation();
-                    firedViaPointer = true;
-                    handler(e);
-                });
-                el.addEventListener('pointercancel', () => { tracking = false; });
                 el.addEventListener('click', (e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    if (firedViaPointer) { firedViaPointer = false; return; }
                     handler(e);
                 });
             }
@@ -15853,6 +15863,21 @@
             const supabase = isConfigured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                 auth: { persistSession: true, autoRefreshToken: true, storageKey: 'sb-site-auth', storage: window.localStorage }
             }) : null;
+            // The diary lives in its own separate <script> block (a
+            // different top-level IIFE, so `supabase` above isn't in its
+            // lexical scope) but needs this exact same authenticated
+            // session — exposed here so it can reuse this one client
+            // object instead of creating a second one of its own. Two
+            // separate createClient() calls pointed at the same
+            // storageKey is exactly the "Multiple GoTrueClient
+            // instances... undefined behavior" warning Supabase logs:
+            // two independent clients both trying to read/refresh/write
+            // the one session in localStorage race each other, and a
+            // request can go out carrying whichever copy of the token
+            // just lost that race — a very plausible cause of
+            // intermittent 400s on file loads, worth closing off even
+            // though things are working right now.
+            window.mainSupabaseClient = supabase;
             // Signed URLs (private buckets) expire — this is how long a
             // generated one stays valid before it needs to be re-signed.
             // Matches Just Us's own SIGNED_URL_TTL further down the page.
@@ -25349,7 +25374,18 @@
                     shots = [];
                     caption = '';
                     $pb('pbCaptureTitle').textContent = template.name;
-                    $pb('pbRoomLightRow').classList.toggle('hidden', false);
+                    // Only the "Colour Room" theme actually uses this —
+                    // it was showing (and functional) on every theme
+                    // before, regardless of whether that theme's own
+                    // look had anything to do with room-light color.
+                    $pb('pbRoomLightRow').classList.toggle('hidden', !template.roomLight);
+                    if (!template.roomLight) {
+                        roomLightOn = false;
+                        roomColor = null;
+                        $pb('pbScreenLightBtn').classList.remove('active');
+                        $pb('pbRoomLightHint').classList.add('hidden');
+                        $pb('pbStage').style.background = '';
+                    }
                     buildShotSlots();
                     showView('capture');
                     startCamera();
@@ -25438,9 +25474,23 @@
                 async function captureOne() {
                     await runCountdown(timerSeconds);
                     if (!stream) return;
-                    shots.push(grabFrame());
+                    const frame = grabFrame();
+                    shots.push(frame);
                     buildShotSlots();
                     haptic && haptic(12);
+                    await showShotFlash(frame);
+                }
+                // Freezes the stage on the shot just taken for a beat —
+                // long enough to actually register what got captured —
+                // before the live feed (and, mid-burst, the next
+                // countdown) resumes. Applies the same way whether this
+                // shot came from the burst loop or a single manual tap.
+                async function showShotFlash(canvas) {
+                    const flash = $pb('pbShotFlash');
+                    flash.src = canvas.toDataURL('image/jpeg', 0.9);
+                    flash.classList.add('showing');
+                    await wait(850);
+                    flash.classList.remove('showing');
                 }
                 $pb('pbShutterBtn').addEventListener('click', async () => {
                     if (capturing || shots.length >= template.count || !stream) return;
@@ -25455,7 +25505,6 @@
                             await captureOne();
                         }
                         if (shots.length >= template.count) {
-                            await wait(300);
                             enterEditView();
                         }
                     } finally {
@@ -25811,7 +25860,12 @@
                         $pb('pbPanel' + name).classList.toggle('hidden', name.toLowerCase() !== tab);
                     });
                 });
-                $pb('pbBackToCaptureBtn').addEventListener('click', () => { showView('capture'); startCamera(); });
+                // Takes you all the way back to picking a look, not just
+                // to a re-take within the current one — if the whole set
+                // of shots isn't working out, this is the "start over
+                // with a different theme" path that doesn't require
+                // closing (and losing) the session via the ✕.
+                $pb('pbBackToCaptureBtn').addEventListener('click', () => { stopCamera(); showView('gallery'); });
 
                 $pb('pbEditDoneBtn').addEventListener('click', () => {
                     // flatten stickers onto a fresh copy of the composite at 2x for a crisper download
@@ -33140,6 +33194,7 @@
                 <div class="pb-stage-inner" id="pbStageInner">
                     <video id="pbVideo" autoplay playsinline muted></video>
                     <canvas id="pbCaptureCanvas" class="hidden"></canvas>
+                    <img class="pb-shot-flash" id="pbShotFlash" alt="">
                     <div class="pb-grid-overlay hidden" id="pbGridOverlay">
                         <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
                     </div>
@@ -33171,7 +33226,7 @@
         <!-- ───────── VIEW 3: style / edit ───────── -->
         <div class="pb-view pb-view-edit hidden" id="pbViewEdit">
             <div class="pb-capture-topbar">
-                <button type="button" class="pb-icon-btn" id="pbBackToCaptureBtn" aria-label="Back to camera">‹</button>
+                <button type="button" class="pb-icon-btn" id="pbBackToCaptureBtn" aria-label="Back to looks">‹</button>
                 <div class="pb-capture-title">Style it</div>
                 <button type="button" class="pb-icon-btn" id="pbUndoStickerBtn" aria-label="Undo last sticker">↩</button>
             </div>
@@ -33249,18 +33304,20 @@
             // database. That's why entries (and photos) never actually
             // persisted, even though they appeared to work during a single
             // browser session (kept alive only in memory).
-            const SUPABASE_URL = 'https://cctlzqlchijwrxrxnmmm.supabase.co';
-            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjdGx6cWxjaGlqd3J4cnhubW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MDg1NTksImV4cCI6MjA5OTQ4NDU1OX0.5cEM69NsRjiN2d1XqzFcqVmSp8Db0AqxRr6wLJmm5Yc';
-            // Same storageKey/localStorage as the main script's `supabase`
-            // client (see its own comment near SUPABASE_URL up there) —
-            // this is a separate client instance (this module is
-            // self-contained), but reads the SAME persisted session from
-            // localStorage, so whichever of the two of you already
-            // signed in via the site-wide registration gate is
-            // recognized here too, with no separate diary login needed.
-            const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-                auth: { persistSession: true, autoRefreshToken: true, storageKey: 'sb-site-auth', storage: window.localStorage }
-            }) : null;
+            //
+            // This reuses the MAIN script's actual client object (exposed
+            // as window.mainSupabaseClient right after it's created) rather
+            // than creating a second, separate client of its own — a
+            // second createClient() call pointed at the same storageKey
+            // is exactly what triggers Supabase's own "Multiple
+            // GoTrueClient instances... undefined behavior" warning: two
+            // independent clients both trying to read/refresh/write the
+            // one session in localStorage race each other, and requests
+            // can go out carrying whichever copy of the token just lost
+            // that race. Falls back to null if the main script hasn't run
+            // yet or failed for some reason, matching the previous
+            // (also null-safe) behavior.
+            const sb = window.mainSupabaseClient || null;
 
             const $ = (id) => document.getElementById(id);
             const overlay = $('diaryOverlay');
