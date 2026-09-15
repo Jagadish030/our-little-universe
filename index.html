@@ -5825,9 +5825,11 @@
             justify-content: center;
             z-index: 4;
         }
-        .tab-arrow-btn:hover {
-            opacity: 1;
-            color: var(--rose-deep);
+        @media (hover: hover) and (pointer: fine) {
+            .tab-arrow-btn:hover {
+                opacity: 1;
+                color: var(--rose-deep);
+            }
         }
         .tab-arrow-btn svg {
             width: 13px;
@@ -6187,9 +6189,11 @@
         .note-back .note-flip-back-btn {
             margin-top: 8px;
         }
-        .note-flip-back-btn:hover {
-            opacity: 1;
-            color: var(--rose-deep);
+        @media (hover: hover) and (pointer: fine) {
+            .note-flip-back-btn:hover {
+                opacity: 1;
+                color: var(--rose-deep);
+            }
         }
 
         .doodles-wall {
@@ -12166,6 +12170,20 @@
         .pb-grid-overlay { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); pointer-events: none; }
         .pb-grid-overlay.hidden { display: none; }
         .pb-grid-overlay div { border: 1px solid rgba(255,255,255,.35); }
+        /* The bright rectangle IS what will actually end up in the final
+           photo for the current theme — everything outside it (the
+           box-shadow's huge spread, rather than four separate shade
+           divs) gets dimmed, so a single element positioned/sized by JS
+           (see updateCropGuide) is enough to show exactly what's about
+           to be cropped away, live, as the theme changes. */
+        .pb-crop-guide {
+            position: absolute;
+            border: 1.5px solid rgba(255,255,255,.85);
+            box-shadow: 0 0 0 9999px rgba(0,0,0,.5);
+            pointer-events: none;
+            transition: top .25s ease, left .25s ease, width .25s ease, height .25s ease;
+        }
+        .pb-crop-guide.hidden { display: none; }
         /* Freezes on the just-taken shot for a beat before the live
            feed (and, in burst mode, the next countdown) resumes — the
            camera used to jump straight back to a live preview with no
@@ -15233,27 +15251,7 @@
 
             /* ─── Reliable tap handling for small nav controls on cards
                (expand icon, "back to photo"/"back" buttons, the slide
-               arrows) ───
-               These used to rely on a plain 'click' listener, which was
-               occasionally slow or entirely unresponsive on touch until
-               a second, separate tap — a well-known class of mobile
-               issue where the browser's native click synthesis (which
-               waits to see whether a touch turns into a scroll, a
-               double-tap, a text selection, etc.) doesn't always fire
-               promptly, or at all, for the first tap. Acting directly
-               on pointerup instead sidesteps that ambiguity entirely —
-               it's not waiting on any browser gesture disambiguation,
-               so it responds the instant a finger (or mouse button)
-               lifts, consistently, on both mobile and desktop. The
-               'click' that may still follow afterwards (native for a
-               mouse, synthesized for touch) is only used to stop it
-               from bubbling up to the card's own flip handler — the
-               `firedViaPointer` guard stops it from running the action
-               a second time. Keyboard activation (Enter/Space on a
-               focused button) never fires pointer events, so it still
-               falls through to running the handler from that 'click'.
-               A small movement tolerance keeps a swipe/drag from being
-               mistaken for a tap. */
+               arrows) ─── */
             // Used to juggle pointerdown/pointerup with a movement
             // threshold to make taps feel snappier than a plain click —
             // but the page already disables pinch-zoom (see the viewport
@@ -15900,6 +15898,27 @@
                 await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
                 return results;
             }
+            // Every image/voice load — including the automatic reload
+            // after the tab comes back from being backgrounded — used to
+            // re-sign, re-fetch, and re-decrypt every single file from
+            // scratch, every time, even when nothing about it had
+            // changed. That's the actual reason a resume-reload (and a
+            // fresh page load right after a previous one) felt slow: a
+            // resolved blob: URL never goes stale on its own, so once a
+            // given storage path has been resolved once, it's safe to
+            // reuse for the rest of this tab's lifetime — a cache miss
+            // only ever happens for a path that's genuinely new. Keyed
+            // by storage path (paths are unique across the whole
+            // project), so one cache covers every feature.
+            const mediaUrlCache = new Map();
+            async function resolveCachedMediaUrl(path, resolver) {
+                if (!path) return resolver();
+                if (mediaUrlCache.has(path)) return mediaUrlCache.get(path);
+                const result = await resolver();
+                if (result) mediaUrlCache.set(path, result);
+                return result;
+            }
+            window.resolveCachedMediaUrl = resolveCachedMediaUrl;
 
             if (!isConfigured) setupBanner.classList.add('show');
 
@@ -16816,25 +16835,33 @@
                 try {
                     const { data, error } = await supabase.from(TABLE).select('*').order('created_at', { ascending: true });
                     if (error) throw error;
-                    const results = await mapWithConcurrency(data, 4, async (row) => {
+                    const results = await mapWithConcurrency(data, 6, async (row) => {
                         try {
                             // Image bytes: try to decrypt; fall back to the
                             // raw public URL if that fails — this row may
                             // simply not have been migrated to encryption
-                            // yet, not an actual error.
+                            // yet, not an actual error. Cached by path so a
+                            // reload (e.g. after the tab was backgrounded)
+                            // doesn't redo this work for a photo that's
+                            // already been resolved once this session.
                             let src = row.image_url;
                             if (row.image_path && supabase) {
-                                try {
-                                    const { data: signed } = await supabase.storage.from(BUCKET)
-                                        .createSignedUrl(row.image_path, SIGNED_URL_TTL);
-                                    if (signed && signed.signedUrl) src = signed.signedUrl;
-                                } catch (signErr) { /* fall back to the legacy image_url below */ }
-                            }
-                            if (typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey() && src) {
-                                try {
-                                    src = await window.decryptToObjectUrl(src, window.mimeFromPath(
-                                        row.image_path || row.image_url, false));
-                                } catch (imgErr) { /* not (yet) encrypted — leave the signed/raw URL as-is */ }
+                                const resolved = await resolveCachedMediaUrl(row.image_path, async () => {
+                                    try {
+                                        const { data: signed } = await supabase.storage.from(BUCKET)
+                                            .createSignedUrl(row.image_path, SIGNED_URL_TTL);
+                                        if (!signed || !signed.signedUrl) return null;
+                                        let out = signed.signedUrl;
+                                        if (typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey()) {
+                                            try {
+                                                out = await window.decryptToObjectUrl(out, window.mimeFromPath(
+                                                    row.image_path, false));
+                                            } catch (imgErr) { /* not (yet) encrypted — leave the signed URL as-is */ }
+                                        }
+                                        return out;
+                                    } catch (signErr) { return null; /* fall back to the legacy image_url below */ }
+                                });
+                                if (resolved) src = resolved;
                             }
                             return {
                                 id: row.id,
@@ -18170,20 +18197,24 @@
                     if (error) throw error;
                     const rows = data || [];
                     const vaultReady = typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey();
-                    const results = await mapWithConcurrency(rows, 4, async (row) => {
+                    const results = await mapWithConcurrency(rows, 6, async (row) => {
                         try {
                             let sourceUrl = row.image_url;
                             if (row.storage_path && supabase) {
-                                try {
-                                    const { data: signed } = await supabase.storage.from(DOODLES_BUCKET)
-                                        .createSignedUrl(row.storage_path, SIGNED_URL_TTL);
-                                    if (signed && signed.signedUrl) sourceUrl = signed.signedUrl;
-                                } catch (signErr) { /* fall back to the legacy image_url below */ }
-                            }
-                            if (vaultReady && sourceUrl) {
-                                try {
-                                    row.image_url = await window.decryptToObjectUrl(sourceUrl, 'image/png');
-                                } catch (imgErr) { row.image_url = sourceUrl; /* not (yet) encrypted */ }
+                                const resolved = await resolveCachedMediaUrl(row.storage_path, async () => {
+                                    try {
+                                        const { data: signed } = await supabase.storage.from(DOODLES_BUCKET)
+                                            .createSignedUrl(row.storage_path, SIGNED_URL_TTL);
+                                        if (!signed || !signed.signedUrl) return null;
+                                        let out = signed.signedUrl;
+                                        if (vaultReady) {
+                                            try { out = await window.decryptToObjectUrl(out, 'image/png'); }
+                                            catch (imgErr) { /* not (yet) encrypted — leave the signed URL as-is */ }
+                                        }
+                                        return out;
+                                    } catch (signErr) { return null; /* fall back to the legacy image_url below */ }
+                                });
+                                row.image_url = resolved || sourceUrl;
                             } else {
                                 row.image_url = sourceUrl;
                             }
@@ -23374,20 +23405,24 @@
             // a private bucket now — the raw url is kept only as a
             // fallback for anything saved before paths were tracked.
             async function resolvePlayableAudioUrl(rawUrl, path) {
-                let sourceUrl = rawUrl;
-                if (path && supabase) {
-                    try {
-                        const { data: signed } = await supabase.storage.from(VOICE_BUCKET)
-                            .createSignedUrl(path, SIGNED_URL_TTL);
-                        if (signed && signed.signedUrl) sourceUrl = signed.signedUrl;
-                    } catch (signErr) { /* fall back to the legacy rawUrl below */ }
+                if (!path) {
+                    if (typeof window.getSiteVaultKey !== 'function' || !window.getSiteVaultKey()) return rawUrl;
+                    try { return await window.decryptToObjectUrl(rawUrl, 'audio/webm'); }
+                    catch (err) { return rawUrl; }
                 }
-                if (typeof window.getSiteVaultKey !== 'function' || !window.getSiteVaultKey()) return sourceUrl;
-                try {
-                    return await window.decryptToObjectUrl(sourceUrl, 'audio/webm');
-                } catch (err) {
-                    return sourceUrl;
-                }
+                return (await resolveCachedMediaUrl(path, async () => {
+                    let sourceUrl = rawUrl;
+                    if (supabase) {
+                        try {
+                            const { data: signed } = await supabase.storage.from(VOICE_BUCKET)
+                                .createSignedUrl(path, SIGNED_URL_TTL);
+                            if (signed && signed.signedUrl) sourceUrl = signed.signedUrl;
+                        } catch (signErr) { /* fall back to the legacy rawUrl below */ }
+                    }
+                    if (typeof window.getSiteVaultKey !== 'function' || !window.getSiteVaultKey()) return sourceUrl;
+                    try { return await window.decryptToObjectUrl(sourceUrl, 'audio/webm'); }
+                    catch (err) { return sourceUrl; }
+                })) || rawUrl;
             }
             function wireCaptionPlayButton(btn) {
                 if (!btn || btn.dataset.wired) return;
@@ -25266,6 +25301,21 @@
                     ['Gallery', 'Capture', 'Edit', 'Result'].forEach(v => {
                         $pb('pbView' + v).classList.toggle('hidden', v.toLowerCase() !== name);
                     });
+                    // pbGalleryOpenBtn (🖼) and pbCloseBtn (✕) are global
+                    // overlay buttons (z-index 50) meant for the
+                    // theme-picker and camera views, which have no
+                    // navigation of their own. The edit ("Style it") and
+                    // result views each have their own topbar with a
+                    // working back button already, positioned in that
+                    // same top-left corner — without this, these two
+                    // buttons sit on top of it there, visually burying it
+                    // exactly the way they used to bury the saved
+                    // gallery's own back button (see the comment on
+                    // pbGalleryOpenBtn's click handler below).
+                    const showGlobalOverlayBtns = (name === 'gallery' || name === 'capture') &&
+                        $pb('pbSavedGallery').classList.contains('hidden');
+                    $pb('pbGalleryOpenBtn').style.display = showGlobalOverlayBtns ? '' : 'none';
+                    $pb('pbCloseBtn').style.display = showGlobalOverlayBtns ? '' : 'none';
                 }
 
                 /* ───────────── gallery ───────────── */
@@ -25462,6 +25512,89 @@
                     }
                     el.classList.add('hidden');
                 }
+                // The crop-guide overlay (see updateCropGuide below) needs
+                // to know, per theme, exactly what rectangle of the raw
+                // capture survives into the final photo — this has to
+                // mirror renderComposite()'s own crop math exactly (same
+                // cellW/cellH constants and formulas), or the "live
+                // preview" would lie about what's actually going to be
+                // kept.
+                function getCropSpecForTemplate(tpl) {
+                    const cellW = 480;
+                    const cellH = tpl.layout === 'eyecuts' ? Math.round(cellW * 1.15) : Math.round(cellW * 1.28);
+                    if (tpl.layout === 'grid2x2') {
+                        return { ar: 1 };
+                    } else if (tpl.layout === 'single') {
+                        const w = cellW * .85, h = cellH * .85;
+                        return { ar: w / h };
+                    } else if (tpl.layout === 'duo') {
+                        const w = cellW * .8, h = Math.round(w * .7);
+                        return { ar: w / h };
+                    } else if (tpl.layout === 'eyecuts') {
+                        // Not a centered crop — renderComposite() pulls a
+                        // fixed horizontal band from 38%–60% of each
+                        // shot's height (roughly eye level), same for
+                        // every one of the theme's photos.
+                        const w = cellW * .75, bandH = Math.round(cellH * .16);
+                        return { ar: w / bandH, fixedYFrac: .38, fixedHFrac: .22 };
+                    } else { // strip
+                        const w = cellW * .78, h = Math.round(w * 1.02);
+                        return { ar: w / h };
+                    }
+                }
+                // A "cover" crop (centered by default, or anchored at a
+                // fixed vertical fraction of the source when fixedYFrac is
+                // given) of an nw×nh rectangle down to aspect ratio ar —
+                // the exact same logic drawPhotoWithFilter() uses, kept
+                // separate since that one draws onto a canvas and this one
+                // only needs the rectangle.
+                function computeCoverCropRect(nw, nh, ar, fixedYFrac, fixedHFrac) {
+                    if (fixedYFrac !== undefined) {
+                        const h = nh * fixedHFrac, y = nh * fixedYFrac;
+                        const w = Math.min(nw, h * ar);
+                        return { x: (nw - w) / 2, y, w, h };
+                    }
+                    if (nw / nh > ar) {
+                        const h = nh, w = nh * ar;
+                        return { x: (nw - w) / 2, y: 0, w, h };
+                    }
+                    const w = nw, h = nw / ar;
+                    return { x: 0, y: (nh - h) / 2, w, h };
+                }
+                // Positions the bright cutout (see .pb-crop-guide CSS) so
+                // it exactly frames whatever will survive this theme's
+                // crop — computed by working out where the theme's own
+                // crop of the native camera frame falls WITHIN the
+                // preview's own crop of that same native frame (the live
+                // preview is itself already a "cover" crop to the screen's
+                // aspect ratio, via #pbVideo's object-fit: cover).
+                function updateCropGuide() {
+                    const guide = $pb('pbCropGuide');
+                    if (!guide) return;
+                    const nw = videoEl.videoWidth, nh = videoEl.videoHeight;
+                    const stageRect = $pb('pbStage').getBoundingClientRect();
+                    if (!nw || !nh || !stageRect.width || !stageRect.height) {
+                        guide.classList.add('hidden');
+                        return;
+                    }
+                    const screenAR = stageRect.width / stageRect.height;
+                    const spec = getCropSpecForTemplate(template);
+                    const screenCrop = computeCoverCropRect(nw, nh, screenAR);
+                    const targetCrop = computeCoverCropRect(nw, nh, spec.ar, spec.fixedYFrac, spec.fixedHFrac);
+
+                    const leftPct = Math.max(0, (targetCrop.x - screenCrop.x) / screenCrop.w * 100);
+                    const topPct = Math.max(0, (targetCrop.y - screenCrop.y) / screenCrop.h * 100);
+                    const widthPct = Math.min(100 - leftPct, targetCrop.w / screenCrop.w * 100);
+                    const heightPct = Math.min(100 - topPct, targetCrop.h / screenCrop.h * 100);
+                    guide.style.left = leftPct + '%';
+                    guide.style.top = topPct + '%';
+                    guide.style.width = widthPct + '%';
+                    guide.style.height = heightPct + '%';
+                    guide.classList.remove('hidden');
+                }
+                videoEl.addEventListener('loadedmetadata', updateCropGuide);
+                window.addEventListener('resize', () => { if (!$pb('pbViewCapture').classList.contains('hidden')) updateCropGuide(); });
+
                 function grabFrame() {
                     const c = document.createElement('canvas');
                     const vw = videoEl.videoWidth || 720, vh = videoEl.videoHeight || 960;
@@ -26032,20 +26165,24 @@
                             ascending: false });
                         if (error) throw error;
                         const rows = data || [];
-                        const results = await mapWithConcurrency(rows, 4, async (row) => {
+                        const results = await mapWithConcurrency(rows, 6, async (row) => {
                             try {
                                 let sourceUrl = row.image_url;
                                 if (row.image_path && supabase) {
-                                    try {
-                                        const { data: signed } = await supabase.storage.from(PB_BUCKET)
-                                            .createSignedUrl(row.image_path, SIGNED_URL_TTL);
-                                        if (signed && signed.signedUrl) sourceUrl = signed.signedUrl;
-                                    } catch (signErr) { /* fall back to the legacy image_url below */ }
-                                }
-                                if (typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey() && sourceUrl) {
-                                    try {
-                                        row.image_url = await window.decryptToObjectUrl(sourceUrl, 'image/png');
-                                    } catch (imgErr) { row.image_url = sourceUrl; /* not (yet) encrypted */ }
+                                    const resolved = await resolveCachedMediaUrl(row.image_path, async () => {
+                                        try {
+                                            const { data: signed } = await supabase.storage.from(PB_BUCKET)
+                                                .createSignedUrl(row.image_path, SIGNED_URL_TTL);
+                                            if (!signed || !signed.signedUrl) return null;
+                                            let out = signed.signedUrl;
+                                            if (typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey()) {
+                                                try { out = await window.decryptToObjectUrl(out, 'image/png'); }
+                                                catch (imgErr) { /* not (yet) encrypted — leave the signed URL as-is */ }
+                                            }
+                                            return out;
+                                        } catch (signErr) { return null; /* fall back to the legacy image_url below */ }
+                                    });
+                                    row.image_url = resolved || sourceUrl;
                                 } else {
                                     row.image_url = sourceUrl;
                                 }
@@ -28199,17 +28336,22 @@
                 if (row.image_url || row.image_path) {
                     let sourceUrl = row.image_url;
                     if (row.image_path && supabase) {
-                        try {
-                            const { data: signed } = await supabase.storage.from(CHAT_BUCKET)
-                                .createSignedUrl(row.image_path, SIGNED_URL_TTL);
-                            if (signed && signed.signedUrl) sourceUrl = signed.signedUrl;
-                        } catch (signErr) { /* fall back to the legacy image_url below */ }
-                    }
-                    if (typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey() && sourceUrl) {
-                        try {
-                            row.image_url = await window.decryptToObjectUrl(sourceUrl, window.mimeFromPath(
-                                row.image_path || row.image_url, false));
-                        } catch (err) { row.image_url = sourceUrl; /* not (yet) encrypted */ }
+                        const resolved = await resolveCachedMediaUrl(row.image_path, async () => {
+                            try {
+                                const { data: signed } = await supabase.storage.from(CHAT_BUCKET)
+                                    .createSignedUrl(row.image_path, SIGNED_URL_TTL);
+                                if (!signed || !signed.signedUrl) return null;
+                                let out = signed.signedUrl;
+                                if (typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey()) {
+                                    try {
+                                        out = await window.decryptToObjectUrl(out, window.mimeFromPath(
+                                            row.image_path, false));
+                                    } catch (err) { /* not (yet) encrypted — leave the signed URL as-is */ }
+                                }
+                                return out;
+                            } catch (signErr) { return null; /* fall back to the legacy image_url below */ }
+                        });
+                        row.image_url = resolved || sourceUrl;
                     } else {
                         row.image_url = sourceUrl;
                     }
@@ -28226,7 +28368,7 @@
                         `deleted_for_${myFieldSuffix()}`, false).order('created_at', { ascending: true });
                     if (error) throw error;
                     const rows = data || [];
-                    const results = await mapWithConcurrency(rows, 4, async (row) => {
+                    const results = await mapWithConcurrency(rows, 6, async (row) => {
                         try {
                             return await decryptChatRow(row);
                         } catch (rowErr) {
@@ -30989,21 +31131,26 @@
                         });
                         if (error) throw error;
                         const rows = data || [];
-                        const results = await mapWithConcurrency(rows, 4, async (row) => {
+                        const results = await mapWithConcurrency(rows, 6, async (row) => {
                             try {
                                 let sourceUrl = row.media_url;
                                 if (row.media_path && supabase) {
-                                    try {
-                                        const { data: signed } = await supabase.storage.from(MW_BUCKET)
-                                            .createSignedUrl(row.media_path, SIGNED_URL_TTL);
-                                        if (signed && signed.signedUrl) sourceUrl = signed.signedUrl;
-                                    } catch (signErr) { /* fall back to the legacy media_url below */ }
-                                }
-                                if (typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey() && sourceUrl) {
-                                    try {
-                                        row.media_url = await window.decryptToObjectUrl(sourceUrl,
-                                            row.kind === 'video' ? 'video/webm' : 'image/png');
-                                    } catch (mediaErr) { row.media_url = sourceUrl; /* not (yet) encrypted */ }
+                                    const resolved = await resolveCachedMediaUrl(row.media_path, async () => {
+                                        try {
+                                            const { data: signed } = await supabase.storage.from(MW_BUCKET)
+                                                .createSignedUrl(row.media_path, SIGNED_URL_TTL);
+                                            if (!signed || !signed.signedUrl) return null;
+                                            let out = signed.signedUrl;
+                                            if (typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey()) {
+                                                try {
+                                                    out = await window.decryptToObjectUrl(out,
+                                                        row.kind === 'video' ? 'video/webm' : 'image/png');
+                                                } catch (mediaErr) { /* not (yet) encrypted — leave the signed URL as-is */ }
+                                            }
+                                            return out;
+                                        } catch (signErr) { return null; /* fall back to the legacy media_url below */ }
+                                    });
+                                    row.media_url = resolved || sourceUrl;
                                 } else {
                                     row.media_url = sourceUrl;
                                 }
@@ -33195,6 +33342,7 @@
                     <video id="pbVideo" autoplay playsinline muted></video>
                     <canvas id="pbCaptureCanvas" class="hidden"></canvas>
                     <img class="pb-shot-flash" id="pbShotFlash" alt="">
+                    <div class="pb-crop-guide hidden" id="pbCropGuide"></div>
                     <div class="pb-grid-overlay hidden" id="pbGridOverlay">
                         <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
                     </div>
@@ -33505,7 +33653,7 @@
                     if (error) throw error;
                     const rows = data || [];
                     const vaultReady = typeof window.getSiteVaultKey === 'function' && window.getSiteVaultKey();
-                    const results = await mapWithConcurrency(rows, 4, async (row) => {
+                    const results = await mapWithConcurrency(rows, 6, async (row) => {
                         try {
                             row.title = await window.resolveDecryptedText(row.title);
                             row.body = await window.resolveDecryptedText(row.body);
@@ -33518,12 +33666,23 @@
                                     // object shape first so path (if any)
                                     // survives alongside the rest.
                                     const obj = typeof raw === 'string' ? { url: raw } : { ...raw };
-                                    const sourceUrl = await resolveDiaryStorageUrl(obj.path, obj.url);
-                                    if (vaultReady && sourceUrl) {
-                                        try { obj._displayUrl = await window.decryptToObjectUrl(sourceUrl, 'image/jpeg'); }
-                                        catch (imgErr) { obj._displayUrl = sourceUrl; }
+                                    if (obj.path && window.resolveCachedMediaUrl) {
+                                        obj._displayUrl = await window.resolveCachedMediaUrl(obj.path, async () => {
+                                            const sourceUrl = await resolveDiaryStorageUrl(obj.path, obj.url);
+                                            if (vaultReady && sourceUrl) {
+                                                try { return await window.decryptToObjectUrl(sourceUrl, 'image/jpeg'); }
+                                                catch (imgErr) { return sourceUrl; }
+                                            }
+                                            return sourceUrl;
+                                        }) || obj.url;
                                     } else {
-                                        obj._displayUrl = sourceUrl;
+                                        const sourceUrl = await resolveDiaryStorageUrl(obj.path, obj.url);
+                                        if (vaultReady && sourceUrl) {
+                                            try { obj._displayUrl = await window.decryptToObjectUrl(sourceUrl, 'image/jpeg'); }
+                                            catch (imgErr) { obj._displayUrl = sourceUrl; }
+                                        } else {
+                                            obj._displayUrl = sourceUrl;
+                                        }
                                     }
                                     return obj;
                                 }));
@@ -35664,7 +35823,7 @@
                 emptyMsg.textContent = (filtered && !rows.length) ?
                     'Nothing matches these filters yet.' : 'No photos yet — add your first one.';
                 emptyMsg.classList.toggle('hidden', !!rows.length);
-                const cards = await mapWithConcurrency(rows, 4, async (row) => {
+                const cards = await mapWithConcurrency(rows, 6, async (row) => {
                     try {
                         // Text fields first — decrypted in place so
                         // everything downstream (buildSecureCard, the
@@ -35682,7 +35841,6 @@
                         row.secret_password_hash = await window.resolveDecryptedText(row.secret_password_hash);
 
                         const isVideo = row.media_type === 'video';
-                        const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(row.storage_path, SIGNED_URL_TTL);
                         // _signedUrl ends up holding a decrypted blob: URL,
                         // not the remote signed URL — the lightbox and
                         // "save to device" both just read this property
@@ -35690,17 +35848,25 @@
                         // it as an opaque src. Same fallback philosophy as
                         // the text fields above: try to decrypt, but a row
                         // that isn't (yet) encrypted just shows as-is
-                        // rather than vanishing.
-                        row._signedUrl = signed ? await resolveSecureMediaUrl(signed.signedUrl, mimeFromPath(
-                            row.storage_path, isVideo)) : '';
+                        // rather than vanishing. Cached by path so a
+                        // reload doesn't redo this for an already-resolved
+                        // file.
+                        row._signedUrl = await window.resolveCachedMediaUrl(row.storage_path, async () => {
+                            const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(row.storage_path, SIGNED_URL_TTL);
+                            return signed ? await resolveSecureMediaUrl(signed.signedUrl, mimeFromPath(row.storage_path, isVideo)) : null;
+                        }) || '';
                         if (row.voice_path) {
-                            const { data: vsigned } = await sb.storage.from(BUCKET).createSignedUrl(row.voice_path, SIGNED_URL_TTL);
-                            row._voiceUrl = vsigned ? await resolveSecureMediaUrl(vsigned.signedUrl, 'audio/webm') : null;
+                            row._voiceUrl = await window.resolveCachedMediaUrl(row.voice_path, async () => {
+                                const { data: vsigned } = await sb.storage.from(BUCKET).createSignedUrl(row.voice_path, SIGNED_URL_TTL);
+                                return vsigned ? await resolveSecureMediaUrl(vsigned.signedUrl, 'audio/webm') : null;
+                            });
                         }
                         if (row.reply_voice_path) {
-                            const { data: rvsigned } = await sb.storage.from(BUCKET).createSignedUrl(row.reply_voice_path,
-                                SIGNED_URL_TTL);
-                            row._replyVoiceUrl = rvsigned ? await resolveSecureMediaUrl(rvsigned.signedUrl, 'audio/webm') : null;
+                            row._replyVoiceUrl = await window.resolveCachedMediaUrl(row.reply_voice_path, async () => {
+                                const { data: rvsigned } = await sb.storage.from(BUCKET).createSignedUrl(row.reply_voice_path,
+                                    SIGNED_URL_TTL);
+                                return rvsigned ? await resolveSecureMediaUrl(rvsigned.signedUrl, 'audio/webm') : null;
+                            });
                         }
                         return buildSecureCard(row);
                     } catch (err) {
