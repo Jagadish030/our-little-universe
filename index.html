@@ -12184,12 +12184,51 @@
             transition: top .25s ease, left .25s ease, width .25s ease, height .25s ease;
         }
         .pb-crop-guide.hidden { display: none; }
+        /* A front camera has no real flash hardware to trigger — this
+           washes the stage in a warm-to-cool light instead (the classic
+           "screen as flash" trick), bright enough to act as fill light
+           on its own but translucent enough that framing the shot is
+           still possible underneath it. Deliberately scoped to the
+           stage only, not the whole viewport — the toolbar and topbar
+           buttons live outside .pb-stage, so they're never touched by
+           this and stay fully legible regardless of which color is
+           active. No z-index needed: like the grid overlay and crop
+           guide, it only needs to sit above the video, and staying at
+           the implicit stacking level keeps it (correctly) beneath the
+           shot-flash freeze-frame's explicit z-index. */
+        .pb-flash-wash {
+            position: absolute; inset: 0; pointer-events: none;
+            opacity: .6; transition: background-color .2s ease;
+        }
+        .pb-flash-wash.hidden { display: none; }
+        .pb-flash-warmth-row {
+            display: flex; align-items: center; gap: .5rem; justify-content: center;
+            margin: 0 auto .5rem; max-width: 320px;
+        }
+        .pb-flash-warmth-row.hidden { display: none; }
+        .pb-flash-warmth-icon { font-size: .8rem; opacity: .8; }
+        #pbFlashWarmthSlider {
+            flex: 1; height: 6px; border-radius: 999px; appearance: none; -webkit-appearance: none;
+            background: linear-gradient(90deg, #ff9d42, #eaf3ff, #9ecfff); outline: none; cursor: pointer;
+        }
+        #pbFlashWarmthSlider::-webkit-slider-thumb {
+            appearance: none; -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+            background: #fff; border: 2px solid var(--rose-deep); box-shadow: 0 1px 4px rgba(0,0,0,.3);
+        }
+        #pbFlashWarmthSlider::-moz-range-thumb {
+            width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid var(--rose-deep);
+            box-shadow: 0 1px 4px rgba(0,0,0,.3);
+        }
+        .pb-flash-hint {
+            text-align: center; font-size: .72rem; opacity: .75; margin: 0 0 .6rem; color: var(--ink);
+        }
+        .pb-flash-hint.hidden { display: none; }
         /* Freezes on the just-taken shot for a beat before the live
            feed (and, in burst mode, the next countdown) resumes — the
            camera used to jump straight back to a live preview with no
            way to actually register what got captured. */
         .pb-shot-flash {
-            position: absolute; inset: 0; object-fit: cover; z-index: 3;
+            position: absolute; inset: 0; object-fit: cover; object-position: center; z-index: 3;
             opacity: 0; pointer-events: none; transition: opacity .18s ease;
         }
         .pb-shot-flash.showing { opacity: 1; }
@@ -12293,6 +12332,11 @@
         .pb-sticker-picker button { border: none; background: var(--glass-bg); border-radius: 10px; font-size: 1.3rem; padding: .4rem 0; cursor: pointer; transition: background .2s ease, transform .25s var(--premium-bounce); }
         @media (hover: hover) and (pointer: fine) { .pb-sticker-picker button:hover { background: var(--glass-highlight); transform: scale(1.1); } }
         .pb-sticker-picker button:active { transform: scale(.9); }
+        .pb-sticker-picker button.pb-sticker-add-btn { color: var(--rose-deep); font-weight: 700; }
+        .pb-custom-emoji-input {
+            position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; border: 0;
+            clip: rect(0 0 0 0); clip-path: inset(50%); overflow: hidden; white-space: nowrap;
+        }
         #pbPanelText { display: flex; gap: 8px; }
         #pbPanelText input { flex: 1; }
         .pb-edit-done-btn { width: 100%; margin-top: .8rem; }
@@ -25278,6 +25322,8 @@
                 let gridOn = false;
                 let timerSeconds = 3;
                 let burstOn = false;
+                let flashOn = false;
+                let flashWarmth = 50; // 0 = warm amber, 100 = cool blue-white — screen-flash only
                 let shots = []; // {canvas} raw captured frames, one per slot
                 let roomColor = null;
                 let selectedFilter = 'none';
@@ -25302,17 +25348,19 @@
                         $pb('pbView' + v).classList.toggle('hidden', v.toLowerCase() !== name);
                     });
                     // pbGalleryOpenBtn (🖼) and pbCloseBtn (✕) are global
-                    // overlay buttons (z-index 50) meant for the
-                    // theme-picker and camera views, which have no
-                    // navigation of their own. The edit ("Style it") and
-                    // result views each have their own topbar with a
-                    // working back button already, positioned in that
-                    // same top-left corner — without this, these two
-                    // buttons sit on top of it there, visually burying it
+                    // overlay buttons (z-index 50) meant only for the
+                    // theme-picker screen, which is the one view with no
+                    // navigation of its own. Capture, edit ("Style it"),
+                    // and result each have their own topbar with working
+                    // back/flip controls already, positioned in those
+                    // same top-left/top-right corners — without this,
+                    // these two buttons sit on top of them there,
+                    // visually burying (and on capture, completely
+                    // hiding the tap target of) whatever's underneath —
                     // exactly the way they used to bury the saved
                     // gallery's own back button (see the comment on
                     // pbGalleryOpenBtn's click handler below).
-                    const showGlobalOverlayBtns = (name === 'gallery' || name === 'capture') &&
+                    const showGlobalOverlayBtns = name === 'gallery' &&
                         $pb('pbSavedGallery').classList.contains('hidden');
                     $pb('pbGalleryOpenBtn').style.display = showGlobalOverlayBtns ? '' : 'none';
                     $pb('pbCloseBtn').style.display = showGlobalOverlayBtns ? '' : 'none';
@@ -25453,6 +25501,70 @@
                     }
                     $pb('pbRetakeLastBtn').classList.toggle('hidden', shots.length === 0);
                 }
+                // Maps the warmth slider (0=warm, 100=cool) to an actual
+                // color for the screen-flash wash, matching the same
+                // three-stop gradient the slider's own track uses.
+                function warmthToColor(warmth) {
+                    const stops = [{ p: 0, c: [255, 157, 66] }, { p: 50, c: [234, 243, 255] }, { p: 100, c: [158, 207, 255] }];
+                    const [a, b] = warmth > 50 ? [stops[1], stops[2]] : [stops[0], stops[1]];
+                    const t = (warmth - a.p) / (b.p - a.p);
+                    const mix = (i) => Math.round(a.c[i] + (b.c[i] - a.c[i]) * t);
+                    return `rgb(${mix(0)},${mix(1)},${mix(2)})`;
+                }
+                // A front camera (and a laptop, which is all front-facing)
+                // has no real flash hardware — washing the stage in a
+                // warm-to-cool light is the standard substitute, using
+                // the screen itself as a soft fill light.
+                function applyFlashWash() {
+                    const showWash = flashOn && facingMode === 'user';
+                    $pb('pbFlashWash').classList.toggle('hidden', !showWash);
+                    $pb('pbFlashWarmthRow').classList.toggle('hidden', !showWash);
+                    $pb('pbFlashHint').classList.toggle('hidden', !showWash);
+                    if (showWash) $pb('pbFlashWash').style.backgroundColor = warmthToColor(flashWarmth);
+                }
+                // The back camera's actual flash, where the browser can
+                // reach it — support for the torch constraint is
+                // inconsistent across devices/browsers (mostly Android
+                // Chrome; not exposed at all on iOS Safari), so this
+                // reports back whether it actually worked rather than
+                // just hoping.
+                async function applyTorch(on) {
+                    if (!stream) return false;
+                    const track = stream.getVideoTracks()[0];
+                    if (!track) return false;
+                    const caps = track.getCapabilities ? track.getCapabilities() : {};
+                    if (!caps.torch) return false;
+                    try {
+                        await track.applyConstraints({ advanced: [{ torch: on }] });
+                        return true;
+                    } catch (err) {
+                        console.error('Could not toggle camera flash:', err);
+                        return false;
+                    }
+                }
+                // Re-decides which kind of flash applies (screen wash vs.
+                // real torch) — called both when the toggle is tapped and
+                // after every startCamera(), since flipping cameras while
+                // flash is on needs to switch from one kind to the other.
+                async function updateFlashState() {
+                    if (facingMode === 'user') {
+                        await applyTorch(false);
+                        applyFlashWash();
+                        return;
+                    }
+                    $pb('pbFlashWash').classList.add('hidden');
+                    $pb('pbFlashWarmthRow').classList.add('hidden');
+                    $pb('pbFlashHint').classList.add('hidden');
+                    if (flashOn) {
+                        const ok = await applyTorch(true);
+                        if (!ok) {
+                            flashOn = false;
+                            $pb('pbFlashToggle').classList.remove('active');
+                            $pb('pbFlashToggle').setAttribute('aria-pressed', 'false');
+                            toast("This device's flash isn't controllable from the browser — try your camera app's own flash setting instead.");
+                        }
+                    }
+                }
                 async function startCamera() {
                     $pb('pbCamError').classList.add('hidden');
                     try {
@@ -25463,6 +25575,7 @@
                         videoEl.classList.toggle('pb-mirrored', mirrored);
                         $pb('pbMirrorToggle').classList.toggle('active', mirrored);
                         $pb('pbMirrorToggle').setAttribute('aria-pressed', String(mirrored));
+                        await updateFlashState();
                     } catch (err) {
                         console.error('Photobooth camera error:', err);
                         $pb('pbCamError').classList.remove('hidden');
@@ -25470,6 +25583,12 @@
                 }
                 function stopCamera() {
                     if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+                    flashOn = false;
+                    $pb('pbFlashToggle').classList.remove('active');
+                    $pb('pbFlashToggle').setAttribute('aria-pressed', 'false');
+                    $pb('pbFlashWash').classList.add('hidden');
+                    $pb('pbFlashWarmthRow').classList.add('hidden');
+                    $pb('pbFlashHint').classList.add('hidden');
                 }
                 $pb('pbRetryCameraBtn').addEventListener('click', startCamera);
                 $pb('pbFlipCameraBtn').addEventListener('click', () => { facingMode = facingMode === 'user' ? 'environment' : 'user'; startCamera(); });
@@ -25494,6 +25613,16 @@
                     burstOn = !burstOn;
                     $pb('pbBurstToggle').classList.toggle('active', burstOn);
                     $pb('pbBurstToggle').setAttribute('aria-pressed', String(burstOn));
+                });
+                $pb('pbFlashToggle').addEventListener('click', async () => {
+                    flashOn = !flashOn;
+                    $pb('pbFlashToggle').classList.toggle('active', flashOn);
+                    $pb('pbFlashToggle').setAttribute('aria-pressed', String(flashOn));
+                    await updateFlashState();
+                });
+                $pb('pbFlashWarmthSlider').addEventListener('input', (e) => {
+                    flashWarmth = Number(e.target.value);
+                    applyFlashWash();
                 });
                 $pb('pbRetakeLastBtn').addEventListener('click', () => {
                     if (!shots.length) return;
@@ -25621,6 +25750,11 @@
                 async function showShotFlash(canvas) {
                     const flash = $pb('pbShotFlash');
                     flash.src = canvas.toDataURL('image/jpeg', 0.9);
+                    // Decode before revealing — without this, the fade-in
+                    // could start on a frame the browser hasn't finished
+                    // laying out yet, which is exactly the kind of thing
+                    // that looks like a brief mis-centered glitch.
+                    try { await flash.decode(); } catch (err) { /* show it anyway rather than skip the freeze entirely */ }
                     flash.classList.add('showing');
                     await wait(850);
                     flash.classList.remove('showing');
@@ -25943,10 +26077,48 @@
                             selectedFilter = f.id;
                             [...row.children].forEach(c => c.classList.remove('active'));
                             chip.classList.add('active');
+                            syncFilterRoomColorRow();
                             renderComposite();
                         });
                         row.appendChild(chip);
                     });
+                    syncFilterRoomColorRow();
+                }
+                // The Colour Room filter needs an actual colour to tint
+                // with (see the `f.tint && roomColor` check in
+                // drawShotWithFilter above) — this picker is how you set
+                // one from the editing screen itself, rather than only
+                // being able to set roomColor back on the capture
+                // screen's own (differently-purposed) room-light picker.
+                // Every other filter already has its own fixed look, so
+                // this only ever shows for this one.
+                const filterSwatchRow = $pb('pbFilterSwatchRow');
+                PB_ROOM_COLORS.forEach(c => {
+                    const b = document.createElement('button');
+                    b.type = 'button'; b.className = 'pb-swatch'; b.style.background = c;
+                    b.addEventListener('click', () => {
+                        roomColor = c;
+                        syncFilterSwatchActive();
+                        renderComposite();
+                    });
+                    filterSwatchRow.appendChild(b);
+                });
+                function syncFilterSwatchActive() {
+                    [...filterSwatchRow.children].forEach((el, i) => el.classList.toggle('active', roomColor ===
+                        PB_ROOM_COLORS[i]));
+                }
+                $pb('pbFilterCustomColor').addEventListener('input', (e) => {
+                    roomColor = e.target.value;
+                    syncFilterSwatchActive();
+                    renderComposite();
+                });
+                function syncFilterRoomColorRow() {
+                    const showRow = selectedFilter === 'colorroom';
+                    $pb('pbFilterRoomColorRow').classList.toggle('hidden', !showRow);
+                    if (showRow) {
+                        if (!roomColor) roomColor = PB_ROOM_COLORS[0];
+                        syncFilterSwatchActive();
+                    }
                 }
                 function buildFrameRow() {
                     const row = $pb('pbFrameColorRow');
@@ -25964,7 +26136,9 @@
                 function buildStickerPicker() {
                     const wrap = $pb('pbStickerPicker');
                     wrap.innerHTML = '';
-                    PB_STICKERS.forEach(emoji => {
+                    // Last slot is reserved for the custom-emoji "+"
+                    // button below, not one more fixed emoji.
+                    PB_STICKERS.slice(0, -1).forEach(emoji => {
                         const b = document.createElement('button');
                         b.type = 'button'; b.textContent = emoji;
                         b.addEventListener('click', () => {
@@ -25973,7 +26147,29 @@
                         });
                         wrap.appendChild(b);
                     });
+                    const addBtn = document.createElement('button');
+                    addBtn.type = 'button';
+                    addBtn.className = 'pb-sticker-add-btn';
+                    addBtn.textContent = '+';
+                    addBtn.setAttribute('aria-label', 'Add a custom emoji');
+                    addBtn.addEventListener('click', () => { $pb('pbCustomEmojiInput').focus(); });
+                    wrap.appendChild(addBtn);
                 }
+                // Rather than building our own emoji picker, focusing this
+                // invisible input brings up the device's own keyboard —
+                // with its emoji picker/globe key already built in — as
+                // the way to choose any custom emoji. Whatever comes
+                // through becomes a sticker immediately, and the input
+                // clears right after, so the "+" button is always ready
+                // for the next one instead of ever showing a fixed,
+                // already-picked emoji in its place.
+                $pb('pbCustomEmojiInput').addEventListener('input', (e) => {
+                    const val = e.target.value.trim();
+                    e.target.value = '';
+                    if (!val) return;
+                    stickers.push({ id: ++stickerSeq, kind: 'emoji', content: val, xr: .5, yr: .5, scale: 1 });
+                    renderStickersOnLayer();
+                });
                 $pb('pbAddTextBtn').addEventListener('click', () => {
                     const val = $pb('pbTextInput').value.trim();
                     if (!val) return;
@@ -33343,6 +33539,7 @@
                     <canvas id="pbCaptureCanvas" class="hidden"></canvas>
                     <img class="pb-shot-flash" id="pbShotFlash" alt="">
                     <div class="pb-crop-guide hidden" id="pbCropGuide"></div>
+                    <div class="pb-flash-wash hidden" id="pbFlashWash"></div>
                     <div class="pb-grid-overlay hidden" id="pbGridOverlay">
                         <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
                     </div>
@@ -33360,7 +33557,14 @@
                     <button type="button" class="pb-toggle-btn active" id="pbMirrorToggle" aria-pressed="true">🪞 Mirror</button>
                     <button type="button" class="pb-toggle-btn" id="pbTimerToggle" aria-pressed="false">⏱ 3s</button>
                     <button type="button" class="pb-toggle-btn" id="pbBurstToggle" aria-pressed="false">⚡ Burst</button>
+                    <button type="button" class="pb-toggle-btn" id="pbFlashToggle" aria-pressed="false">🔆 Flash</button>
                 </div>
+                <div class="pb-flash-warmth-row hidden" id="pbFlashWarmthRow">
+                    <span class="pb-flash-warmth-icon" aria-hidden="true">🔥</span>
+                    <input type="range" id="pbFlashWarmthSlider" min="0" max="100" value="50" aria-label="Screen light warmth">
+                    <span class="pb-flash-warmth-icon" aria-hidden="true">❄️</span>
+                </div>
+                <p class="pb-flash-hint hidden" id="pbFlashHint">💡 Turn your screen brightness all the way up for the best light</p>
                 <div class="pb-shots-row">
                     <div class="pb-shot-slots" id="pbShotSlots"></div>
                     <button type="button" class="pb-shutter-btn" id="pbShutterBtn" aria-label="Capture">
@@ -33395,6 +33599,14 @@
 
             <div class="pb-edit-panel" id="pbPanelFilters">
                 <div class="pb-filter-row" id="pbFilterRow"></div>
+                <div class="pb-room-light-row hidden" id="pbFilterRoomColorRow">
+                    <span class="pb-room-light-label">Room colour</span>
+                    <div class="pb-swatch-row" id="pbFilterSwatchRow"></div>
+                    <label class="pb-custom-swatch-wrap">
+                        <input type="color" id="pbFilterCustomColor" value="#ff5c8a">
+                        <span class="pb-custom-swatch-ring"></span>
+                    </label>
+                </div>
             </div>
             <div class="pb-edit-panel hidden" id="pbPanelFrame">
                 <div class="pb-swatch-row" id="pbFrameColorRow"></div>
@@ -33408,6 +33620,12 @@
             </div>
             <div class="pb-edit-panel hidden" id="pbPanelStickers">
                 <div class="pb-sticker-picker" id="pbStickerPicker"></div>
+                <!-- Invisible but focusable — tapping the picker's "+"
+                     button focuses this, which brings up the device's
+                     own keyboard (with its emoji picker/globe key) as
+                     the way to pick any custom emoji, rather than us
+                     trying to build an emoji picker ourselves. -->
+                <input type="text" id="pbCustomEmojiInput" class="pb-custom-emoji-input" inputmode="text" autocomplete="off" aria-label="Type a custom emoji">
             </div>
             <div class="pb-edit-panel hidden" id="pbPanelText">
                 <input type="text" id="pbTextInput" maxlength="30" placeholder="type something...">
