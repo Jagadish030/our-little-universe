@@ -53,13 +53,15 @@ self.addEventListener('push', (event) => {
     tag: data.tag || 'chat-message',
     renotify: true,
     // Carry the raw routing fields through, not just the built URL —
-    // the page can act on scope/id/reply directly without re-parsing
-    // a query string.
+    // the page can act on scope/id/reply/roundId directly without
+    // re-parsing a query string. roundId is used by Duo Snap invites
+    // (photobooth-duel scope) to open straight to the right invite.
     data: {
       url: data.url || './',
       scope: data.scope || null,
       id: data.id || null,
-      reply: !!data.reply
+      reply: !!data.reply,
+      roundId: data.roundId || null
     }
   };
 
@@ -84,7 +86,7 @@ self.addEventListener('push', (event) => {
    fresh window at the full deep-link URL. */
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const { url, scope, id, reply } = event.notification.data || {};
+  const { url, scope, id, reply, roundId } = event.notification.data || {};
   const targetUrl = url || './';
 
   event.waitUntil(
@@ -93,7 +95,7 @@ self.addEventListener('notificationclick', (event) => {
         if ('focus' in client) {
           client.focus();
           if ('postMessage' in client) {
-            client.postMessage({ type: 'mw-deep-link', scope, id, reply });
+            client.postMessage({ type: 'mw-deep-link', scope, id, reply, roundId });
           }
           return;
         }

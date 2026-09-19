@@ -12947,6 +12947,41 @@
         #duoSnapInviteBanner .dsib-accept { background: linear-gradient(135deg, var(--rose-deep), var(--rose)); color: #fff; }
         #duoSnapInviteBanner .dsib-decline { background: rgba(0,0,0,.08); color: var(--ink); }
 
+        /* Duo Snap — Stage 2: the live split-screen stage itself. */
+        .pb-duel-live-stage {
+            position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column;
+            gap: 3px; background: #000; overflow: hidden;
+        }
+        .pb-duel-half { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #111; }
+        .pb-duel-half video { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .pb-duel-half-local video { transform: scaleX(-1); } /* mirror, like a selfie camera */
+        .pb-duel-half-remote { display: flex; align-items: center; justify-content: center; }
+        .pb-duel-frost {
+            position: absolute; inset: 0; backdrop-filter: blur(18px) saturate(1.2);
+            background: rgba(20,10,20,.35); transition: opacity .4s ease; opacity: 1; pointer-events: none;
+        }
+        .pb-duel-frost.connected { opacity: 0; }
+        .pb-duel-fallback-icon { display: none; font-size: 2.4rem; opacity: .5; }
+        .pb-duel-half-remote.pb-duel-fallback .pb-duel-fallback-icon { display: block; }
+        .pb-duel-half-remote.pb-duel-fallback video,
+        .pb-duel-half-remote.pb-duel-fallback .pb-duel-frost { display: none; }
+        .pb-duel-half-label {
+            position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
+            background: rgba(0,0,0,.45); color: #fff; font-size: .78rem; font-weight: 600;
+            padding: .3rem .8rem; border-radius: 999px; pointer-events: none; z-index: 2;
+        }
+        .pb-duel-countdown {
+            position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center;
+            font-size: 5rem; font-weight: 800; color: #fff; text-shadow: 0 4px 20px rgba(0,0,0,.6);
+            pointer-events: none;
+        }
+        .pb-duel-countdown.hidden { display: none; }
+        .pb-duel-live-controls {
+            display: flex; flex-direction: column; align-items: center; gap: .6rem;
+            padding: .9rem 1rem max(.9rem, env(safe-area-inset-bottom));
+        }
+        .pb-duel-live-hint { margin: 0; font-size: .8rem; opacity: .75; text-align: center; }
+
         /* ════════════════════════════════════════════════════════
            PER-PAGE CUSTOMIZE — a small floating icon that appears
            whenever one of the "little things" pages (Notes, Doodles,
@@ -25404,7 +25439,7 @@
                 }
 
                 function showView(name) {
-                    ['Gallery', 'Capture', 'Edit', 'Result'].forEach(v => {
+                    ['Gallery', 'Capture', 'Edit', 'Result', 'DuelLive'].forEach(v => {
                         $pb('pbView' + v).classList.toggle('hidden', v.toLowerCase() !== name);
                     });
                     // pbGalleryOpenBtn (🖼) and pbCloseBtn (✕) are global
@@ -26441,14 +26476,7 @@
                     if (row.status === 'accepted') {
                         clearDuelSendState();
                         haptic([10, 40, 10]);
-                        showDuelModal(`
-                            <div class="pb-duel-emoji">🎉</div>
-                            <h3>${otherLetter()} said yes!</h3>
-                            <p>The live split-screen capture is coming in the next part of Duo Snap — this
-                               confirms the invite reached them and they accepted it.</p>
-                            <button type="button" class="pb-duel-cancel-btn" id="pbDuelOkBtn">Okay</button>
-                        `);
-                        $pb('pbDuelOkBtn')?.addEventListener('click', endDuelSession);
+                        enterDuelLiveSession(row.round_id, 'host');
                     } else if (row.status === 'declined') {
                         clearDuelSendState();
                         showDuelModal(`
@@ -26520,21 +26548,8 @@
                         if (!data || !data.length) { toast('That invite already expired.');
                             return; }
                         if (accept) {
-                            duelRoundId = row.round_id;
-                            duelRole = 'guest';
                             haptic([10, 40, 10]);
-                            window.openPhotobooth?.();
-                            setTimeout(() => {
-                                showDuelModal(`
-                                    <div class="pb-duel-emoji">💞</div>
-                                    <h3>You're in!</h3>
-                                    <p>${otherLetter()} is setting things up — the live split-screen capture is
-                                       coming in the next part of Duo Snap. This confirms your accept made it
-                                       back to them.</p>
-                                    <button type="button" class="pb-duel-cancel-btn" id="pbDuelOkBtn">Okay</button>
-                                `);
-                                $pb('pbDuelOkBtn')?.addEventListener('click', endDuelSession);
-                            }, 200);
+                            enterDuelLiveSession(row.round_id, 'guest');
                         } else {
                             toast('Okay — maybe later 💛');
                         }
@@ -26602,6 +26617,495 @@
                         }
                     } catch (err) { console.error('Could not load Duo Snap invite:', err); }
                 };
+
+                /* ═══════════════════════════════════════════════════
+                   DUO SNAP — Stage 2: the actual live split-screen
+                   call, synced countdown, and capture.
+
+                   WebRTC peer-to-peer video between the two devices,
+                   signaled entirely over a per-round Supabase Realtime
+                   broadcast channel (offer/answer/ICE candidates —
+                   nothing touches the database for this part, it's
+                   all ephemeral). STUN first (free, direct connection,
+                   works on most networks); Open Relay Project's free
+                   public TURN servers as the fallback path ICE tries
+                   automatically if a direct connection can't be found
+                   — no account, no signup.
+
+                   If the call still can't connect within
+                   DUEL_CONNECT_TIMEOUT_MS, this drops to a "synced
+                   still" fallback automatically: both sides capture
+                   their own frame on the same countdown, the guest's
+                   frame is encrypted (matching how every other upload
+                   on this site is handled — see vaultEncryptBlobForUpload)
+                   and sent to the host via a short-lived temp file in
+                   the photobooth bucket, and the host combines them.
+                   Either way, the end result is exactly two canvases
+                   pushed into the SAME `shots` array the solo capture
+                   flow already uses — from there it's 100% the
+                   existing edit/filter/sticker/save pipeline, untouched.
+                   ═══════════════════════════════════════════════════ */
+                const RTC_ICE_SERVERS = [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    {
+                        urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443',
+                            'turn:openrelay.metered.ca:443?transport=tcp'
+                        ],
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    }
+                ];
+                const DUEL_CONNECT_TIMEOUT_MS = 12000;
+                const DUEL_FALLBACK_WAIT_MS = 45000;
+
+                let duelPeer = null;
+                let duelLocalStream = null;
+                let duelSignalChannel = null;
+                let duelIsCaller = false;
+                let duelConnected = false;
+                let duelFallbackMode = false;
+                let duelPartnerReady = false;
+                let duelReadySent = false;
+                let duelOfferSent = false;
+                let duelPendingOffer = null;
+                let duelPendingIce = [];
+                let duelConnectTimer = null;
+                let duelCountdownActive = false;
+                let duelCountdownTimer = null;
+                let duelHostStillCanvas = null;
+                let duelGuestStillPath = null;
+                let duelFallbackWaitTimer = null;
+
+                async function enterDuelLiveSession(roundId, role) {
+                    duelRoundId = roundId;
+                    duelRole = role;
+                    duelIsCaller = (role === 'host');
+                    duelConnected = false;
+                    duelFallbackMode = false;
+                    hideDuelModal();
+                    // Same as tapping "Use this look" — carries whatever
+                    // look was showing in the carousel through, since Duo
+                    // Snap can be tapped without ever tapping that button.
+                    selectedFilter = template.filter;
+                    frameColor = template.frame;
+                    window.openPhotobooth?.();
+                    showView('duellive');
+                    setupDuelLiveUI(role);
+                    startDuelSignaling(roundId);
+                    await startDuelMedia();
+                }
+
+                function setupDuelLiveUI(role) {
+                    $pb('pbDuelRemoteHalf')?.classList.remove('pb-duel-fallback');
+                    $pb('pbDuelRemoteFrost')?.classList.remove('connected');
+                    if ($pb('pbDuelShutterBtn')) $pb('pbDuelShutterBtn').style.display = role === 'host' ? '' : 'none';
+                    if ($pb('pbDuelRemoteLabel')) $pb('pbDuelRemoteLabel').textContent = `connecting to ${otherLetter()}…`;
+                    if ($pb('pbDuelLiveHint')) $pb('pbDuelLiveHint').textContent = role === 'host' ?
+                        'Waiting to connect…' : `${otherLetter()} will start the countdown once you're both ready.`;
+                    const cd = $pb('pbDuelCountdown');
+                    if (cd) { cd.classList.add('hidden');
+                        cd.textContent = ''; }
+                }
+
+                function startDuelSignaling(roundId) {
+                    duelSignalChannel = supabase.channel(`duo-snap-signal-${roundId}`, { config: { broadcast: {
+                        self: false } } })
+                        .on('broadcast', { event: 'rtc-offer' }, ({ payload }) => handleDuelOffer(payload))
+                        .on('broadcast', { event: 'rtc-answer' }, ({ payload }) => handleDuelAnswer(payload))
+                        .on('broadcast', { event: 'rtc-ice' }, ({ payload }) => handleDuelIce(payload))
+                        .on('broadcast', { event: 'ready' }, () => onDuelPeerReady())
+                        .on('broadcast', { event: 'countdown' }, ({ payload }) => onDuelCountdown(payload))
+                        .on('broadcast', { event: 'fallback-still' }, ({ payload }) => onDuelFallbackStill(
+                            payload))
+                        .on('broadcast', { event: 'leave' }, ({ payload }) => onDuelPeerLeft(payload))
+                        .subscribe((status) => {
+                            if (status === 'SUBSCRIBED') {
+                                duelReadySent = true;
+                                duelSignalChannel.send({ type: 'broadcast', event: 'ready', payload: {} });
+                                maybeSendDuelOffer();
+                            }
+                        });
+                }
+
+                async function startDuelMedia() {
+                    try {
+                        duelLocalStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:
+                            'user' }, audio: false });
+                    } catch (err) {
+                        console.error('Duo Snap: could not get camera', err);
+                        toast("Couldn't reach your camera for Duo Snap.");
+                        leaveDuelSession(true, 'left');
+                        showView('gallery');
+                        return;
+                    }
+                    if ($pb('pbDuelLocalVideo')) $pb('pbDuelLocalVideo').srcObject = duelLocalStream;
+                    setupDuelPeerConnection();
+                    clearTimeout(duelConnectTimer);
+                    duelConnectTimer = setTimeout(() => {
+                        if (!duelConnected) startDuelFallback("Live video couldn't connect");
+                    }, DUEL_CONNECT_TIMEOUT_MS);
+                }
+
+                function setupDuelPeerConnection() {
+                    duelPeer = new RTCPeerConnection({ iceServers: RTC_ICE_SERVERS });
+                    duelLocalStream.getTracks().forEach(t => duelPeer.addTrack(t, duelLocalStream));
+                    duelPeer.ontrack = (e) => {
+                        const remoteVideo = $pb('pbDuelRemoteVideo');
+                        if (remoteVideo && remoteVideo.srcObject !== e.streams[0]) remoteVideo.srcObject = e
+                            .streams[0];
+                    };
+                    duelPeer.onicecandidate = (e) => {
+                        if (e.candidate && duelSignalChannel) {
+                            duelSignalChannel.send({ type: 'broadcast', event: 'rtc-ice', payload: {
+                                candidate: e.candidate } });
+                        }
+                    };
+                    duelPeer.onconnectionstatechange = () => {
+                        if (!duelPeer) return;
+                        if (duelPeer.connectionState === 'connected') onDuelConnected();
+                        else if (duelConnected && ['failed', 'disconnected', 'closed'].includes(duelPeer
+                                .connectionState)) {
+                            toast('Connection lost.');
+                            leaveDuelSession(true, 'left');
+                            showView('gallery');
+                        }
+                    };
+                    if (duelPendingOffer) {
+                        const p = duelPendingOffer;
+                        duelPendingOffer = null;
+                        applyDuelOffer(p);
+                    }
+                    maybeSendDuelOffer();
+                }
+
+                function onDuelPeerReady() {
+                    duelPartnerReady = true;
+                    if (!duelReadySent) {
+                        duelReadySent = true;
+                        duelSignalChannel?.send({ type: 'broadcast', event: 'ready', payload: {} });
+                    }
+                    maybeSendDuelOffer();
+                }
+
+                async function maybeSendDuelOffer() {
+                    if (!duelIsCaller || duelOfferSent || !duelPartnerReady || !duelPeer) return;
+                    duelOfferSent = true;
+                    try {
+                        const offer = await duelPeer.createOffer();
+                        await duelPeer.setLocalDescription(offer);
+                        duelSignalChannel?.send({ type: 'broadcast', event: 'rtc-offer', payload: { sdp:
+                            offer } });
+                    } catch (err) { console.error('Duo Snap: could not create offer', err); }
+                }
+
+                function handleDuelOffer(payload) {
+                    if (duelIsCaller || !payload?.sdp) return;
+                    if (!duelPeer) { duelPendingOffer = payload;
+                        return; }
+                    applyDuelOffer(payload);
+                }
+
+                async function applyDuelOffer(payload) {
+                    try {
+                        await duelPeer.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+                        flushDuelPendingIce();
+                        const answer = await duelPeer.createAnswer();
+                        await duelPeer.setLocalDescription(answer);
+                        duelSignalChannel?.send({ type: 'broadcast', event: 'rtc-answer', payload: { sdp:
+                            answer } });
+                    } catch (err) { console.error('Duo Snap: offer handling failed', err); }
+                }
+
+                async function handleDuelAnswer(payload) {
+                    if (!duelIsCaller || !duelPeer || !payload?.sdp) return;
+                    try {
+                        await duelPeer.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+                        flushDuelPendingIce();
+                    } catch (err) { console.error('Duo Snap: answer handling failed', err); }
+                }
+
+                function handleDuelIce(payload) {
+                    if (!payload?.candidate) return;
+                    if (!duelPeer || !duelPeer.remoteDescription) { duelPendingIce.push(payload.candidate);
+                        return; }
+                    duelPeer.addIceCandidate(new RTCIceCandidate(payload.candidate)).catch(err => console
+                        .error('Duo Snap: ICE add failed', err));
+                }
+
+                function flushDuelPendingIce() {
+                    if (!duelPeer) return;
+                    duelPendingIce.forEach(c => duelPeer.addIceCandidate(new RTCIceCandidate(c)).catch(() => {}));
+                    duelPendingIce = [];
+                }
+
+                function onDuelConnected() {
+                    if (duelConnected) return;
+                    duelConnected = true;
+                    clearTimeout(duelConnectTimer);
+                    haptic([10, 30, 10]);
+                    $pb('pbDuelRemoteFrost')?.classList.add('connected');
+                    if ($pb('pbDuelRemoteLabel')) $pb('pbDuelRemoteLabel').textContent = otherLetter();
+                    if ($pb('pbDuelLiveHint')) $pb('pbDuelLiveHint').textContent = duelRole === 'host' ?
+                        "Tap the shutter when you're both ready!" :
+                        `${otherLetter()} will start the countdown when ready.`;
+                }
+
+                // Automatic, silent fallback — live video couldn't connect
+                // (12s timeout with no successful ICE connection). Keeps
+                // the local camera and the signaling channel; only the
+                // peer connection itself is torn down.
+                function startDuelFallback(reason) {
+                    if (duelFallbackMode) return;
+                    duelFallbackMode = true;
+                    clearTimeout(duelConnectTimer);
+                    toast(reason + ' — switching to a synced photo instead.');
+                    if (duelPeer) { try { duelPeer.close(); } catch (e) {}
+                        duelPeer = null; }
+                    $pb('pbDuelRemoteHalf')?.classList.add('pb-duel-fallback');
+                    if ($pb('pbDuelRemoteVideo')) $pb('pbDuelRemoteVideo').srcObject = null;
+                    if ($pb('pbDuelRemoteLabel')) $pb('pbDuelRemoteLabel').textContent =
+                        `${otherLetter()} — ready when you are`;
+                    if ($pb('pbDuelLiveHint')) $pb('pbDuelLiveHint').textContent = duelRole === 'host' ?
+                        "Live video didn't connect, but you can still snap a synced photo together — tap the shutter!" :
+                        `${otherLetter()} will start the countdown — get ready to pose!`;
+                }
+
+                $pb('pbDuelShutterBtn')?.addEventListener('click', () => {
+                    if (duelRole !== 'host' || duelCountdownActive) return;
+                    if (!duelConnected && !duelFallbackMode) { toast('Still connecting…');
+                        return; }
+                    beginDuelCountdown();
+                });
+
+                $pb('pbDuelLeaveBtn')?.addEventListener('click', () => {
+                    leaveDuelSession(true, 'left');
+                    showView('gallery');
+                });
+
+                function beginDuelCountdown() {
+                    duelCountdownActive = true;
+                    const zeroAt = Date.now() + 3200;
+                    duelSignalChannel?.send({ type: 'broadcast', event: 'countdown', payload: { zeroAt } });
+                    runDuelCountdown(zeroAt);
+                }
+
+                function onDuelCountdown(payload) {
+                    if (!payload?.zeroAt || duelCountdownActive) return;
+                    duelCountdownActive = true;
+                    runDuelCountdown(payload.zeroAt);
+                }
+
+                function runDuelCountdown(zeroAt) {
+                    const el = $pb('pbDuelCountdown');
+                    if (!el) return;
+                    el.classList.remove('hidden');
+                    clearInterval(duelCountdownTimer);
+                    duelCountdownTimer = setInterval(() => {
+                        const msLeft = zeroAt - Date.now();
+                        if (msLeft <= 250) {
+                            clearInterval(duelCountdownTimer);
+                            duelCountdownTimer = null;
+                            el.textContent = '📸';
+                            haptic(15);
+                            setTimeout(() => el.classList.add('hidden'), 500);
+                            duelCountdownActive = false;
+                            onDuelCountdownZero();
+                        } else {
+                            el.textContent = String(Math.ceil(msLeft / 1000));
+                        }
+                    }, 150);
+                }
+
+                function onDuelCountdownZero() {
+                    if (duelFallbackMode) {
+                        const myCanvas = grabDuelVideoFrame($pb('pbDuelLocalVideo'), true);
+                        if (duelRole === 'host') {
+                            duelHostStillCanvas = myCanvas;
+                            if ($pb('pbDuelLiveHint')) $pb('pbDuelLiveHint').textContent =
+                                `Got your half — waiting for ${otherLetter()}…`;
+                            clearTimeout(duelFallbackWaitTimer);
+                            duelFallbackWaitTimer = setTimeout(() => {
+                                if (!duelGuestStillPath) {
+                                    toast(`${otherLetter()} hasn't sent their half yet — try again?`);
+                                    leaveDuelSession(true, 'left');
+                                    showView('gallery');
+                                }
+                            }, DUEL_FALLBACK_WAIT_MS);
+                            tryFinishFallback();
+                        } else {
+                            uploadDuelFallbackStill(myCanvas);
+                        }
+                    } else if (duelRole === 'host') {
+                        finishDuelCapture();
+                    }
+                }
+
+                function grabDuelVideoFrame(videoEl, mirror) {
+                    const c = document.createElement('canvas');
+                    const vw = (videoEl && videoEl.videoWidth) || 720, vh = (videoEl && videoEl.videoHeight) ||
+                        960;
+                    c.width = vw; c.height = vh;
+                    const cx = c.getContext('2d');
+                    if (mirror) { cx.translate(vw, 0); cx.scale(-1, 1); }
+                    if (videoEl) cx.drawImage(videoEl, 0, 0, vw, vh);
+                    return c;
+                }
+
+                function finishDuelCapture() {
+                    const localCanvas = grabDuelVideoFrame($pb('pbDuelLocalVideo'), true);
+                    const remoteCanvas = grabDuelVideoFrame($pb('pbDuelRemoteVideo'), false);
+                    shots = [remoteCanvas, localCanvas]; // top = partner, bottom = me
+                    template = { ...template, id: 'liveduel', name: 'Duo Snap', layout: 'duo', count: 2 };
+                    leaveDuelSession(true, 'captured');
+                    enterEditView();
+                }
+
+                async function uploadDuelFallbackStill(canvas) {
+                    if (!supabase) return;
+                    try {
+                        const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.88));
+                        const { blob: uploadBlob, contentType } = await window.vaultEncryptBlobForUpload(blob,
+                            'image/jpeg');
+                        const path = `duel-temp/${duelRoundId}-guest-${Date.now()}.bin`;
+                        const { error } = await supabase.storage.from(PB_BUCKET).upload(path, uploadBlob, {
+                            upsert: true, contentType });
+                        if (error) throw error;
+                        duelSignalChannel?.send({ type: 'broadcast', event: 'fallback-still', payload: {
+                            path } });
+                        if ($pb('pbDuelLiveHint')) $pb('pbDuelLiveHint').textContent =
+                            `Sent! Waiting for ${otherLetter()} to finish styling it…`;
+                    } catch (err) {
+                        console.error('Duo Snap: fallback upload failed', err);
+                        toast('Could not send your photo — try again.');
+                    }
+                }
+
+                function onDuelFallbackStill(payload) {
+                    if (duelRole !== 'host' || !payload?.path) return;
+                    duelGuestStillPath = payload.path;
+                    tryFinishFallback();
+                }
+
+                async function tryFinishFallback() {
+                    if (duelRole !== 'host' || !duelHostStillCanvas || !duelGuestStillPath || !supabase) return;
+                    try {
+                        const { data: signed, error: signErr } = await supabase.storage.from(PB_BUCKET)
+                            .createSignedUrl(duelGuestStillPath, SIGNED_URL_TTL);
+                        if (signErr || !signed?.signedUrl) throw signErr || new Error('no signed url');
+                        let src = signed.signedUrl;
+                        const vaultReady = typeof window.getSiteVaultKey === 'function' && window
+                            .getSiteVaultKey();
+                        if (vaultReady) {
+                            try { src = await window.decryptToObjectUrl(src, 'image/jpeg'); } catch (imgErr) {
+                                console.error("Duo Snap: could not decrypt partner's still", imgErr); }
+                        }
+                        const img = new Image();
+                        await new Promise((resolve, reject) => { img.onload = resolve;
+                            img.onerror = reject;
+                            img.src = src; });
+                        const guestCanvas = document.createElement('canvas');
+                        guestCanvas.width = img.naturalWidth || 720;
+                        guestCanvas.height = img.naturalHeight || 960;
+                        guestCanvas.getContext('2d').drawImage(img, 0, 0);
+                        clearTimeout(duelFallbackWaitTimer);
+                        shots = [guestCanvas, duelHostStillCanvas]; // top = partner, bottom = me
+                        template = { ...template, id: 'liveduel', name: 'Duo Snap', layout: 'duo', count: 2 };
+                        cleanupDuelTempStill(duelGuestStillPath);
+                        leaveDuelSession(true, 'captured');
+                        enterEditView();
+                    } catch (err) {
+                        console.error('Duo Snap: could not combine fallback captures', err);
+                        toast(`Could not load ${otherLetter()}'s photo — try again.`);
+                    }
+                }
+
+                function cleanupDuelTempStill(path) {
+                    if (!supabase || !path) return;
+                    supabase.storage.from(PB_BUCKET).remove([path]).catch(() => {});
+                }
+
+                // Safety net for the fallback path's temp uploads: normally
+                // cleanupDuelTempStill() above deletes each one right after
+                // the host combines it, but an abandoned session (app
+                // killed mid-fallback, not just closed) can leave one
+                // behind. Sweeps anything older than an hour — cheap,
+                // best-effort, runs once per photobooth init rather than
+                // needing a scheduled/cron job on the backend.
+                async function cleanupStaleDuelTempFiles() {
+                    if (!supabase) return;
+                    try {
+                        const { data: files, error } = await supabase.storage.from(PB_BUCKET).list('duel-temp', {
+                            limit: 100 });
+                        if (error || !files || !files.length) return;
+                        const cutoff = Date.now() - 60 * 60 * 1000; // 1 hour
+                        const stale = files.filter(f => {
+                            const t = f.created_at ? new Date(f.created_at).getTime() : 0;
+                            return t && t < cutoff;
+                        }).map(f => `duel-temp/${f.name}`);
+                        if (stale.length) await supabase.storage.from(PB_BUCKET).remove(stale);
+                    } catch (err) { console.error('Duo Snap: stale temp cleanup failed', err); }
+                }
+
+                function onDuelPeerLeft(payload) {
+                    // Nothing left to tear down if I already left myself
+                    // (e.g. both people tapped leave within the same beat).
+                    if (!duelPeer && !duelLocalStream && !duelSignalChannel) return;
+                    const reason = payload?.reason;
+                    leaveDuelSession(false);
+                    if (reason === 'captured') {
+                        showDuelModal(`
+                            <div class="pb-duel-emoji">✨</div>
+                            <h3>All done!</h3>
+                            <p>${otherLetter()} is styling and saving your Duo Snap — it'll show up in the
+                               shared gallery once they're done.</p>
+                            <button type="button" class="pb-duel-cancel-btn" id="pbDuelOkBtn">Okay</button>
+                        `);
+                    } else {
+                        showDuelModal(`
+                            <div class="pb-duel-emoji">👋</div>
+                            <h3>${otherLetter()} left</h3>
+                            <p>The Duo Snap session ended without a photo — you can ask again anytime.</p>
+                            <button type="button" class="pb-duel-cancel-btn" id="pbDuelOkBtn">Okay</button>
+                        `);
+                    }
+                    $pb('pbDuelOkBtn')?.addEventListener('click', () => { hideDuelModal();
+                        showView('gallery'); });
+                }
+
+                function leaveDuelSession(notifyPartner, reason) {
+                    clearTimeout(duelConnectTimer); duelConnectTimer = null;
+                    clearInterval(duelCountdownTimer); duelCountdownTimer = null;
+                    clearTimeout(duelFallbackWaitTimer); duelFallbackWaitTimer = null;
+                    duelCountdownActive = false;
+                    if (notifyPartner && duelSignalChannel) {
+                        try {
+                            duelSignalChannel.send({ type: 'broadcast', event: 'leave', payload: { reason:
+                                reason || 'left' } });
+                        } catch (e) {}
+                    }
+                    if (duelPeer) { try { duelPeer.close(); } catch (e) {}
+                        duelPeer = null; }
+                    if (duelLocalStream) { duelLocalStream.getTracks().forEach(t => t.stop());
+                        duelLocalStream = null; }
+                    if (duelSignalChannel && supabase) {
+                        try { supabase.removeChannel(duelSignalChannel); } catch (e) {}
+                        duelSignalChannel = null;
+                    }
+                    duelConnected = false;
+                    duelFallbackMode = false;
+                    duelIsCaller = false;
+                    duelPartnerReady = false;
+                    duelReadySent = false;
+                    duelOfferSent = false;
+                    duelPendingOffer = null;
+                    duelPendingIce = [];
+                    duelHostStillCanvas = null;
+                    duelGuestStillPath = null;
+                    duelRoundId = null;
+                    duelRole = null;
+                    if ($pb('pbDuelLocalVideo')) $pb('pbDuelLocalVideo').srcObject = null;
+                    if ($pb('pbDuelRemoteVideo')) $pb('pbDuelRemoteVideo').srcObject = null;
+                }
 
                 // One-time migration for captures saved before encryption
                 // existed — same pattern as the other features.
@@ -26850,13 +27354,17 @@
                 function closePhotobooth() {
                     stopCamera();
                     stopRoll();
-                    // If I'm the one who sent a Duo Snap invite and I close
-                    // the photobooth while still waiting on an answer, treat
-                    // that as cancelling it rather than leaving it pending
-                    // forever. Accepted invites (guest side) just close the
-                    // modal — nothing to cancel there.
-                    if (duelRole === 'host' && duelRoundId) cancelDuoSnapInvite();
-                    else hideDuelModal();
+                    // Duo Snap cleanup — order matters: an active live
+                    // session (post-accept) takes priority over the
+                    // "still waiting for accept" case, since duelRole/
+                    // duelRoundId are set in both phases.
+                    if (duelPeer || duelLocalStream || duelSignalChannel) {
+                        leaveDuelSession(true, 'left');
+                    } else if (duelRole === 'host' && duelRoundId) {
+                        cancelDuoSnapInvite();
+                    } else {
+                        hideDuelModal();
+                    }
                     overlay.classList.add('hidden');
                     // Safety net: if the saved-captures gallery was left
                     // open, reset it here too so reopening the photobooth
@@ -26893,13 +27401,17 @@
                 // no-op gracefully in that case.
                 initDuelIncomingListener();
                 checkForPendingIncomingDuel();
+                cleanupStaleDuelTempFiles();
 
                 // stop the camera if the tab is hidden mid-capture, and if
                 // the person navigates away without an explicit close
                 document.addEventListener('visibilitychange', () => {
                     if (document.hidden) stopCamera();
                 });
-                window.addEventListener('beforeunload', stopCamera);
+                window.addEventListener('beforeunload', () => {
+                    stopCamera();
+                    if (duelPeer || duelLocalStream) leaveDuelSession(false);
+                });
               } catch (err) {
                   console.error('Photobooth failed to initialize (core site unaffected):', err);
               }
@@ -34035,6 +34547,33 @@
                 <button type="button" class="pb-primary-btn pb-pin-btn" id="pbPinBtn">📌 Save to Gallery</button>
                 <button type="button" class="pb-pill-btn" id="pbShareBtn">Share</button>
                 <button type="button" class="pb-pill-btn" id="pbStartOverBtn">Start over</button>
+            </div>
+        </div>
+
+        <!-- ───────── VIEW 5: Duo Snap live split-screen ───────── -->
+        <div class="pb-view pb-view-duel-live hidden" id="pbViewDuelLive">
+            <div class="pb-capture-topbar">
+                <button type="button" class="pb-icon-btn" id="pbDuelLeaveBtn" aria-label="Leave Duo Snap">‹</button>
+                <div class="pb-capture-title">Duo Snap</div>
+                <span style="width:38px"></span>
+            </div>
+            <div class="pb-duel-live-stage" id="pbDuelLiveStage">
+                <div class="pb-duel-half pb-duel-half-remote" id="pbDuelRemoteHalf">
+                    <video id="pbDuelRemoteVideo" autoplay playsinline></video>
+                    <div class="pb-duel-frost" id="pbDuelRemoteFrost"></div>
+                    <div class="pb-duel-fallback-icon">🤍</div>
+                    <div class="pb-duel-half-label" id="pbDuelRemoteLabel">connecting…</div>
+                </div>
+                <div class="pb-duel-half pb-duel-half-local" id="pbDuelLocalHalf">
+                    <video id="pbDuelLocalVideo" autoplay playsinline muted></video>
+                </div>
+                <div class="pb-duel-countdown hidden" id="pbDuelCountdown"></div>
+            </div>
+            <div class="pb-duel-live-controls">
+                <p class="pb-duel-live-hint" id="pbDuelLiveHint">Waiting to connect…</p>
+                <button type="button" class="pb-shutter-btn" id="pbDuelShutterBtn" aria-label="Start countdown">
+                    <span></span>
+                </button>
             </div>
         </div>
 
