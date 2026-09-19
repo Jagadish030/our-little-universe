@@ -12900,6 +12900,12 @@
             box-shadow: 0 8px 22px rgba(217,138,147,.35);
         }
         .pb-duo-snap-btn:active { transform: scale(.97); }
+        .pb-duo-snap-row { display: flex; gap: .5rem; margin-top: .6rem; }
+        .pb-duo-snap-row .pb-duo-snap-btn {
+            flex: 1; margin-top: 0; flex-direction: column; line-height: 1.25; padding: .65rem .5rem; font-size: .82rem;
+        }
+        .pb-duo-snap-row .pb-duo-snap-btn span { font-weight: 500; font-size: .7rem; opacity: .9; }
+        .pb-duo-snap-hint { margin: .45rem 0 0; font-size: .72rem; text-align: center; opacity: .65; }
         .pb-duel-modal {
             position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
             background: rgba(10,6,10,.78); padding: 1.4rem;
@@ -12981,6 +12987,23 @@
             padding: .9rem 1rem max(.9rem, env(safe-area-inset-bottom));
         }
         .pb-duel-live-hint { margin: 0; font-size: .8rem; opacity: .75; text-align: center; }
+        .pb-duel-live-stage.side-by-side { flex-direction: row; }
+        .pb-duel-live-stage.side-by-side .pb-duel-half-local video { transform: scaleX(-1); }
+        .pb-duel-capture-status {
+            display: flex; align-items: center; gap: .6rem; width: 100%;
+            background: rgba(0,0,0,.06); border-radius: 16px; padding: .5rem .7rem; margin-bottom: .2rem;
+        }
+        .pb-duel-capture-status.hidden { display: none; }
+        .pb-duel-capture-status img { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: #000; }
+        .pb-duel-capture-status-text { flex: 1; min-width: 0; }
+        .pb-duel-capture-status-text strong { display: block; font-size: .84rem; }
+        .pb-duel-capture-status-text span { display: block; font-size: .72rem; opacity: .7; }
+        .pb-duel-retry-btn {
+            border: none; border-radius: 999px; padding: .45rem .9rem; font-size: .78rem; font-weight: 700;
+            background: linear-gradient(135deg, var(--rose-deep), var(--rose)); color: #fff; cursor: pointer;
+            flex-shrink: 0;
+        }
+        .pb-duel-retry-btn.hidden { display: none; }
 
         /* ════════════════════════════════════════════════════════
            PER-PAGE CUSTOMIZE — a small floating icon that appears
@@ -25561,8 +25584,11 @@
                 dialEl.addEventListener('pointerleave', stopRoll);
                 dialEl.addEventListener('click', () => { if (!rollTimer) { tplIndex = Math.floor(Math.random() * PB_TEMPLATES.length); renderGallery(); } });
 
-                $pb('pbDuoSnapBtn')?.addEventListener('click', () => {
-                    if (typeof startDuoSnapFlow === 'function') startDuoSnapFlow();
+                $pb('pbDuoSnapStackBtn')?.addEventListener('click', () => {
+                    if (typeof startDuoSnapFlow === 'function') startDuoSnapFlow('stack');
+                });
+                $pb('pbDuoSnapSideBtn')?.addEventListener('click', () => {
+                    if (typeof startDuoSnapFlow === 'function') startDuoSnapFlow('side');
                 });
 
                 $pb('pbUseTemplateBtn').addEventListener('click', () => {
@@ -25992,6 +26018,22 @@
                             ctx0.fillStyle = '#fff'; ctx0.font = 'italic bold 34px Georgia, serif'; ctx0.textAlign = 'center';
                             ctx0.fillText(caption.toUpperCase(), W / 2, pad + h - 26);
                         }
+                    } else if (template.layout === 'duoSide') {
+                        // Duo Snap's side-by-side option — same two shots as
+                        // 'duo' above, laid out left/right with a thin gap
+                        // acting as the dividing line instead of stacked.
+                        const h = cellH * .78, w = Math.round(h * .74);
+                        const capH = caption ? 46 : 0;
+                        W = pad * 2 + w * 2 + gap; H = pad * 2 + h + capH;
+                        compositeCanvas.width = W; compositeCanvas.height = H;
+                        ctx0.fillStyle = frameColor; ctx0.fillRect(0, 0, W, H);
+                        if (shots[0]) drawPhotoWithFilter(ctx0, shots[0], pad, pad, w, h);
+                        if (shots[1]) drawPhotoWithFilter(ctx0, shots[1], pad + w + gap, pad, w, h);
+                        if (caption) {
+                            ctx0.fillStyle = (frameColor === '#161616' || frameColor === '#050805' || frameColor === '#000000') ? '#fff' : '#4a3a2a';
+                            ctx0.font = '28px Caveat, cursive'; ctx0.textAlign = 'center';
+                            ctx0.fillText(caption, W / 2, H - 16);
+                        }
                     } else if (template.layout === 'eyecuts') {
                         const w = cellW * .75, bandH = Math.round(cellH * .16);
                         W = pad * 2 + w; H = pad * 2 + bandH * template.count;
@@ -26379,6 +26421,17 @@
                 let duelBannerTimeout = null; // guest-side banner auto-hide timer
                 let duelBannerRow = null;    // the invite row the incoming banner is currently showing
 
+                // Snapshotted from the gallery carousel at the moment the
+                // host taps one of the Duo Snap buttons — NOT re-read from
+                // the live `template`/`selectedFilter`/`frameColor` vars
+                // later at accept time, since those could have changed (or
+                // just never been consciously chosen) by then. This is
+                // what actually gets used for the final composite.
+                let duelSelectedFilter = 'none';
+                let duelFrameColor = '#fbf3ea';
+                let duelLayoutStyle = 'stack'; // 'stack' | 'side'
+
+
                 function genDuelRoundId() {
                     return `duo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
                 }
@@ -26412,11 +26465,19 @@
                 }
 
                 // ── Host side: sending the invite ──
-                async function startDuoSnapFlow() {
+                async function startDuoSnapFlow(layoutStyle) {
                     if (!supabase) { toast('Connect Supabase first.');
                         return; }
                     if (!getIdentity()) { toast('Sign in first.');
                         return; }
+                    // Snapshot whatever look is currently showing in the
+                    // gallery carousel — this is the one and only place
+                    // the filter/frame/layout for this Duo Snap get
+                    // decided, regardless of how long the invite sits
+                    // pending before it's accepted.
+                    duelSelectedFilter = template.filter;
+                    duelFrameColor = template.frame;
+                    duelLayoutStyle = layoutStyle === 'side' ? 'side' : 'stack';
                     try {
                         // Reuse a still-live invite of mine instead of
                         // stacking a duplicate one if I tap the button twice.
@@ -26675,6 +26736,37 @@
                 let duelHostStillCanvas = null;
                 let duelGuestStillPath = null;
                 let duelFallbackWaitTimer = null;
+                let duelRetryAction = null; // whatever the capture-status "Try again"/"Leave" button should do right now
+
+                function showDuelCaptureStatus(canvas, title, sub, retryLabel, retryFn) {
+                    const wrap = $pb('pbDuelCaptureStatus');
+                    if (!wrap) return;
+                    wrap.classList.remove('hidden');
+                    const thumb = $pb('pbDuelCaptureThumb');
+                    if (thumb && canvas) {
+                        try { thumb.src = canvas.toDataURL('image/jpeg', 0.7); } catch (e) {}
+                    }
+                    if ($pb('pbDuelCaptureStatusTitle')) $pb('pbDuelCaptureStatusTitle').textContent = title || '';
+                    if ($pb('pbDuelCaptureStatusSub')) $pb('pbDuelCaptureStatusSub').textContent = sub || '';
+                    const retryBtn = $pb('pbDuelRetryBtn');
+                    if (retryBtn) {
+                        if (retryLabel && retryFn) {
+                            retryBtn.textContent = retryLabel;
+                            retryBtn.classList.remove('hidden');
+                            duelRetryAction = retryFn;
+                        } else {
+                            retryBtn.classList.add('hidden');
+                            duelRetryAction = null;
+                        }
+                    }
+                }
+
+                function hideDuelCaptureStatus() {
+                    $pb('pbDuelCaptureStatus')?.classList.add('hidden');
+                    duelRetryAction = null;
+                }
+
+                $pb('pbDuelRetryBtn')?.addEventListener('click', () => { if (duelRetryAction) duelRetryAction(); });
 
                 async function enterDuelLiveSession(roundId, role) {
                     duelRoundId = roundId;
@@ -26683,16 +26775,15 @@
                     duelConnected = false;
                     duelFallbackMode = false;
                     hideDuelModal();
-                    // Same as tapping "Use this look" — carries whatever
-                    // look was showing in the carousel through, since Duo
-                    // Snap can be tapped without ever tapping that button.
-                    selectedFilter = template.filter;
-                    frameColor = template.frame;
                     window.openPhotobooth?.();
                     showView('duellive');
                     setupDuelLiveUI(role);
                     startDuelSignaling(roundId);
                     await startDuelMedia();
+                }
+
+                function applyDuelLayoutStyleUI() {
+                    $pb('pbDuelLiveStage')?.classList.toggle('side-by-side', duelLayoutStyle === 'side');
                 }
 
                 function setupDuelLiveUI(role) {
@@ -26705,6 +26796,8 @@
                     const cd = $pb('pbDuelCountdown');
                     if (cd) { cd.classList.add('hidden');
                         cd.textContent = ''; }
+                    hideDuelCaptureStatus();
+                    if (role === 'host') applyDuelLayoutStyleUI(); // guest learns it once the peers exchange 'ready'
                 }
 
                 function startDuelSignaling(roundId) {
@@ -26713,7 +26806,7 @@
                         .on('broadcast', { event: 'rtc-offer' }, ({ payload }) => handleDuelOffer(payload))
                         .on('broadcast', { event: 'rtc-answer' }, ({ payload }) => handleDuelAnswer(payload))
                         .on('broadcast', { event: 'rtc-ice' }, ({ payload }) => handleDuelIce(payload))
-                        .on('broadcast', { event: 'ready' }, () => onDuelPeerReady())
+                        .on('broadcast', { event: 'ready' }, ({ payload }) => onDuelPeerReady(payload))
                         .on('broadcast', { event: 'countdown' }, ({ payload }) => onDuelCountdown(payload))
                         .on('broadcast', { event: 'fallback-still' }, ({ payload }) => onDuelFallbackStill(
                             payload))
@@ -26721,7 +26814,8 @@
                         .subscribe((status) => {
                             if (status === 'SUBSCRIBED') {
                                 duelReadySent = true;
-                                duelSignalChannel.send({ type: 'broadcast', event: 'ready', payload: {} });
+                                duelSignalChannel.send({ type: 'broadcast', event: 'ready', payload: {
+                                    layoutStyle: duelLayoutStyle } });
                                 maybeSendDuelOffer();
                             }
                         });
@@ -26778,11 +26872,20 @@
                     maybeSendDuelOffer();
                 }
 
-                function onDuelPeerReady() {
+                function onDuelPeerReady(payload) {
                     duelPartnerReady = true;
+                    // Only the guest adopts the incoming layout choice —
+                    // the host already knows it (they picked it) and must
+                    // not let the guest's own (default) 'ready' echo
+                    // clobber it.
+                    if (!duelIsCaller && payload?.layoutStyle) {
+                        duelLayoutStyle = payload.layoutStyle === 'side' ? 'side' : 'stack';
+                        applyDuelLayoutStyleUI();
+                    }
                     if (!duelReadySent) {
                         duelReadySent = true;
-                        duelSignalChannel?.send({ type: 'broadcast', event: 'ready', payload: {} });
+                        duelSignalChannel?.send({ type: 'broadcast', event: 'ready', payload: { layoutStyle:
+                            duelLayoutStyle } });
                     }
                     maybeSendDuelOffer();
                 }
@@ -26916,23 +27019,28 @@
                     }, 150);
                 }
 
+                function duelLayoutName() { return duelLayoutStyle === 'side' ? 'duoSide' : 'duo'; }
+
                 function onDuelCountdownZero() {
                     if (duelFallbackMode) {
                         const myCanvas = grabDuelVideoFrame($pb('pbDuelLocalVideo'), true);
                         if (duelRole === 'host') {
                             duelHostStillCanvas = myCanvas;
-                            if ($pb('pbDuelLiveHint')) $pb('pbDuelLiveHint').textContent =
-                                `Got your half — waiting for ${otherLetter()}…`;
+                            showDuelCaptureStatus(myCanvas, 'Got your half! 📸', `Waiting for ${otherLetter()}…`,
+                                null, null);
                             clearTimeout(duelFallbackWaitTimer);
                             duelFallbackWaitTimer = setTimeout(() => {
                                 if (!duelGuestStillPath) {
-                                    toast(`${otherLetter()} hasn't sent their half yet — try again?`);
-                                    leaveDuelSession(true, 'left');
-                                    showView('gallery');
+                                    showDuelCaptureStatus(duelHostStillCanvas, 'Still waiting…',
+                                        `${otherLetter()} hasn't sent their half yet.`, 'Leave', () => {
+                                            leaveDuelSession(true, 'left');
+                                            showView('gallery');
+                                        });
                                 }
                             }, DUEL_FALLBACK_WAIT_MS);
                             tryFinishFallback();
                         } else {
+                            showDuelCaptureStatus(myCanvas, 'Got it! 📸', 'Sending your half…', null, null);
                             uploadDuelFallbackStill(myCanvas);
                         }
                     } else if (duelRole === 'host') {
@@ -26954,8 +27062,11 @@
                 function finishDuelCapture() {
                     const localCanvas = grabDuelVideoFrame($pb('pbDuelLocalVideo'), true);
                     const remoteCanvas = grabDuelVideoFrame($pb('pbDuelRemoteVideo'), false);
-                    shots = [remoteCanvas, localCanvas]; // top = partner, bottom = me
-                    template = { ...template, id: 'liveduel', name: 'Duo Snap', layout: 'duo', count: 2 };
+                    shots = [remoteCanvas, localCanvas]; // top/left = partner, bottom/right = me
+                    selectedFilter = duelSelectedFilter;
+                    frameColor = duelFrameColor;
+                    template = { ...template, id: 'liveduel', name: 'Duo Snap', layout: duelLayoutName(),
+                        count: 2 };
                     leaveDuelSession(true, 'captured');
                     enterEditView();
                 }
@@ -26964,6 +27075,7 @@
                     if (!supabase) return;
                     try {
                         const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.88));
+                        if (!blob) throw new Error('could not read camera frame');
                         const { blob: uploadBlob, contentType } = await window.vaultEncryptBlobForUpload(blob,
                             'image/jpeg');
                         const path = `duel-temp/${duelRoundId}-guest-${Date.now()}.bin`;
@@ -26972,11 +27084,13 @@
                         if (error) throw error;
                         duelSignalChannel?.send({ type: 'broadcast', event: 'fallback-still', payload: {
                             path } });
-                        if ($pb('pbDuelLiveHint')) $pb('pbDuelLiveHint').textContent =
-                            `Sent! Waiting for ${otherLetter()} to finish styling it…`;
+                        showDuelCaptureStatus(canvas, 'Sent! 💌', `Waiting for ${otherLetter()} to finish styling it…`,
+                            null, null);
                     } catch (err) {
                         console.error('Duo Snap: fallback upload failed', err);
-                        toast('Could not send your photo — try again.');
+                        const detail = err?.message ? ` (${err.message})` : '';
+                        showDuelCaptureStatus(canvas, "Couldn't send 😕", `Something went wrong${detail}.`,
+                            'Try again', () => uploadDuelFallbackStill(canvas));
                     }
                 }
 
@@ -27008,14 +27122,19 @@
                         guestCanvas.height = img.naturalHeight || 960;
                         guestCanvas.getContext('2d').drawImage(img, 0, 0);
                         clearTimeout(duelFallbackWaitTimer);
-                        shots = [guestCanvas, duelHostStillCanvas]; // top = partner, bottom = me
-                        template = { ...template, id: 'liveduel', name: 'Duo Snap', layout: 'duo', count: 2 };
+                        shots = [guestCanvas, duelHostStillCanvas]; // top/left = partner, bottom/right = me
+                        selectedFilter = duelSelectedFilter;
+                        frameColor = duelFrameColor;
+                        template = { ...template, id: 'liveduel', name: 'Duo Snap', layout: duelLayoutName(),
+                            count: 2 };
                         cleanupDuelTempStill(duelGuestStillPath);
                         leaveDuelSession(true, 'captured');
                         enterEditView();
                     } catch (err) {
                         console.error('Duo Snap: could not combine fallback captures', err);
-                        toast(`Could not load ${otherLetter()}'s photo — try again.`);
+                        const detail = err?.message ? ` (${err.message})` : '';
+                        showDuelCaptureStatus(duelHostStillCanvas, 'Could not combine photos',
+                            `Something went wrong${detail}.`, 'Try again', () => tryFinishFallback());
                     }
                 }
 
@@ -27103,6 +27222,7 @@
                     duelGuestStillPath = null;
                     duelRoundId = null;
                     duelRole = null;
+                    hideDuelCaptureStatus();
                     if ($pb('pbDuelLocalVideo')) $pb('pbDuelLocalVideo').srcObject = null;
                     if ($pb('pbDuelRemoteVideo')) $pb('pbDuelRemoteVideo').srcObject = null;
                 }
@@ -34407,7 +34527,11 @@
                     <span class="pb-dial-face">🎲<br>roll it</span>
                 </button>
                 <button type="button" class="pb-primary-btn" id="pbUseTemplateBtn">Use this look ✨</button>
-                <button type="button" class="pb-duo-snap-btn" id="pbDuoSnapBtn">💞 Duo Snap — take one together, live</button>
+                <div class="pb-duo-snap-row">
+                    <button type="button" class="pb-duo-snap-btn" id="pbDuoSnapStackBtn">💞 Duo Snap ↕<br><span>stacked</span></button>
+                    <button type="button" class="pb-duo-snap-btn" id="pbDuoSnapSideBtn">💞 Duo Snap ↔<br><span>side by side</span></button>
+                </div>
+                <p class="pb-duo-snap-hint">Swipe to pick a look above first — that filter &amp; frame carry into your Duo Snap.</p>
             </div>
         </div>
 
@@ -34570,6 +34694,14 @@
                 <div class="pb-duel-countdown hidden" id="pbDuelCountdown"></div>
             </div>
             <div class="pb-duel-live-controls">
+                <div class="pb-duel-capture-status hidden" id="pbDuelCaptureStatus">
+                    <img id="pbDuelCaptureThumb" alt="">
+                    <div class="pb-duel-capture-status-text">
+                        <strong id="pbDuelCaptureStatusTitle"></strong>
+                        <span id="pbDuelCaptureStatusSub"></span>
+                    </div>
+                    <button type="button" class="pb-duel-retry-btn hidden" id="pbDuelRetryBtn">Try again</button>
+                </div>
                 <p class="pb-duel-live-hint" id="pbDuelLiveHint">Waiting to connect…</p>
                 <button type="button" class="pb-shutter-btn" id="pbDuelShutterBtn" aria-label="Start countdown">
                     <span></span>
