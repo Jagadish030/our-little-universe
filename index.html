@@ -12893,44 +12893,81 @@
            the photobooth and flips correctly under dark mode without
            any separate dark-mode rules of its own. ─── */
         .pb-duo-snap-btn {
-            display: flex; align-items: center; justify-content: center; gap: .4rem;
+            position: relative; display: flex; align-items: center; justify-content: center; gap: .4rem;
             width: 100%; margin-top: .6rem; padding: .75rem 1rem; border: none; border-radius: 999px;
             background: linear-gradient(135deg, var(--rose-deep), var(--rose)); color: #fff;
             font-weight: 700; font-size: .92rem; cursor: pointer;
             box-shadow: 0 8px 22px rgba(217,138,147,.35);
+            transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
         }
-        .pb-duo-snap-btn:active { transform: scale(.97); }
+        .pb-duo-snap-btn:active { transform: scale(.96); }
         .pb-duo-snap-row { display: flex; gap: .5rem; margin-top: .6rem; }
         .pb-duo-snap-row .pb-duo-snap-btn {
-            flex: 1; margin-top: 0; flex-direction: column; line-height: 1.25; padding: .65rem .5rem; font-size: .82rem;
+            flex: 1; margin-top: 0; flex-direction: column; line-height: 1.3; padding: .8rem .5rem .65rem;
+            font-size: .82rem; gap: .3rem;
         }
-        .pb-duo-snap-row .pb-duo-snap-btn span { font-weight: 500; font-size: .7rem; opacity: .9; }
+        .pb-duo-snap-row .pb-duo-snap-btn .pb-duo-snap-icon {
+            display: flex; gap: 3px; height: 16px; align-items: stretch;
+        }
+        .pb-duo-snap-row .pb-duo-snap-btn .pb-duo-snap-icon span {
+            width: 10px; border-radius: 2px; background: rgba(255,255,255,.9);
+        }
+        #pbDuoSnapMergedBtn .pb-duo-snap-icon span { margin: 0; border-radius: 0; }
+        #pbDuoSnapMergedBtn .pb-duo-snap-icon span:first-child { border-radius: 3px 0 0 3px; }
+        #pbDuoSnapMergedBtn .pb-duo-snap-icon span:last-child { border-radius: 0 3px 3px 0; margin-left: 1px; }
+        #pbDuoSnapIndividualBtn { background: linear-gradient(135deg, #C9A6E0, #E6B8CF); }
+        #pbDuoSnapIndividualBtn .pb-duo-snap-icon span { border-radius: 2px; }
+        .pb-duo-snap-row .pb-duo-snap-btn span.label { font-weight: 600; font-size: .82rem; }
+        .pb-duo-snap-row .pb-duo-snap-btn span.sub { font-weight: 500; font-size: .68rem; opacity: .85; }
         .pb-duo-snap-hint { margin: .45rem 0 0; font-size: .72rem; text-align: center; opacity: .65; }
+        @media (hover: hover) {
+            .pb-duo-snap-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(217,138,147,.45); filter: brightness(1.05); }
+        }
         .pb-duel-modal {
             position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
-            background: rgba(10,6,10,.78); padding: 1.4rem;
+            background: rgba(10,6,10,.8); backdrop-filter: blur(2px); padding: 1.4rem;
         }
         .pb-duel-modal.hidden { display: none; }
         .pb-duel-card {
-            width: 100%; max-width: 340px; background: var(--paper); color: var(--ink); border-radius: 22px;
-            padding: 1.6rem 1.4rem; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,.4);
-            animation: pbDuelCardPop .32s cubic-bezier(.34,1.56,.64,1);
+            width: 100%; max-width: 340px; background: var(--paper); color: var(--ink); border-radius: 24px;
+            padding: 1.8rem 1.5rem; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,.4);
+            animation: pbDuelCardPop .35s cubic-bezier(.34,1.56,.64,1);
         }
         @keyframes pbDuelCardPop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .pb-duel-emoji { font-size: 2.4rem; line-height: 1; margin-bottom: .5rem; }
-        .pb-duel-card h3 { margin: 0 0 .35rem; font-size: 1.15rem; }
-        .pb-duel-card p { margin: 0 0 1rem; font-size: .88rem; opacity: .8; }
-        .pb-duel-dots { display: flex; gap: .3rem; justify-content: center; margin: .8rem 0 1.1rem; }
-        .pb-duel-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--rose-deep); animation: pbDuelDotBounce 1.1s ease-in-out infinite; }
+        .pb-duel-emoji {
+            position: relative; display: inline-flex; align-items: center; justify-content: center;
+            font-size: 2.2rem; line-height: 1; width: 64px; height: 64px; margin: 0 auto .7rem;
+            border-radius: 50%; background: linear-gradient(135deg, rgba(217,138,147,.18), rgba(232,180,184,.1));
+        }
+        .pb-duel-emoji::before {
+            content: ''; position: absolute; inset: -6px; border-radius: 50%;
+            border: 2px solid rgba(217,138,147,.35); animation: pbDuelRingPulse 2.2s ease-out infinite;
+        }
+        @keyframes pbDuelRingPulse { 0% { transform: scale(.9); opacity: .8; } 100% { transform: scale(1.25); opacity: 0; } }
+        .pb-duel-card h3 { margin: 0 0 .35rem; font-size: 1.18rem; }
+        .pb-duel-card p { margin: 0 0 1.1rem; font-size: .88rem; opacity: .78; line-height: 1.4; }
+        .pb-duel-dots { display: flex; gap: .35rem; justify-content: center; margin: .8rem 0 1.2rem; }
+        .pb-duel-dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--rose-deep); animation: pbDuelDotBounce 1.1s ease-in-out infinite; }
         .pb-duel-dots span:nth-child(2) { animation-delay: .15s; }
         .pb-duel-dots span:nth-child(3) { animation-delay: .3s; }
         @keyframes pbDuelDotBounce { 0%, 60%, 100% { transform: translateY(0); opacity: .5; } 30% { transform: translateY(-6px); opacity: 1; } }
         .pb-duel-card .pb-duel-actions { display: flex; gap: .6rem; }
-        .pb-duel-card .pb-duel-actions button { flex: 1; border: none; border-radius: 999px; padding: .7rem 1rem; font-weight: 700; font-size: .88rem; cursor: pointer; }
+        .pb-duel-card .pb-duel-actions button, .pb-duel-cancel-btn {
+            flex: 1; border: none; border-radius: 999px; padding: .7rem 1rem; font-weight: 700; font-size: .88rem;
+            cursor: pointer; transition: transform .15s ease, filter .2s ease;
+        }
         .pb-duel-accept-btn { background: linear-gradient(135deg, var(--rose-deep), var(--rose)); color: #fff; }
         .pb-duel-decline-btn { background: rgba(0,0,0,.08); color: var(--ink); }
         .pb-duel-cancel-btn { background: rgba(0,0,0,.08); color: var(--ink); width: 100%; }
-        @media (prefers-reduced-motion: reduce) { .pb-duel-card { animation: none; } .pb-duel-dots span { animation: none; opacity: .8; } }
+        .pb-duel-card button:active { transform: scale(.95); }
+        @media (hover: hover) {
+            .pb-duel-card button:hover { filter: brightness(1.08); }
+            .pb-duel-decline-btn:hover, .pb-duel-cancel-btn:hover { background: rgba(0,0,0,.14); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .pb-duel-card { animation: none; }
+            .pb-duel-dots span, .pb-duel-emoji::before { animation: none; opacity: .8; }
+        }
 
         /* Site-wide floating banner — this can appear even when the
            photobooth isn't open, since a Duo Snap invite can arrive
@@ -12965,9 +13002,11 @@
         }
         .pb-duel-live-frame {
             position: relative; display: flex; flex-direction: row; background: #111; overflow: hidden;
-            border-radius: 6px; flex-shrink: 0;
+            border-radius: 6px; flex-shrink: 0; gap: var(--duel-gap, 0px);
+            transition: gap .15s ease;
         }
-        .pb-duel-live-frame.individual-style { background: #fff; gap: 6px; padding: 6px; }
+        .pb-duel-live-frame.swapped { flex-direction: row-reverse; }
+        .pb-duel-live-frame.individual-style { background: #fff; gap: 6px !important; padding: 6px; }
         .pb-duel-half { position: relative; flex: 1; min-width: 0; overflow: hidden; background: #111; }
         .pb-duel-live-frame.individual-style .pb-duel-half { border-radius: 2px; }
         .pb-duel-half video, .pb-duel-half img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -12986,6 +13025,29 @@
             padding: .9rem 1rem max(.9rem, env(safe-area-inset-bottom));
         }
         #pbDuelSlotIndicator { font-size: .75rem; opacity: .7; margin-left: .3rem; }
+        .pb-duel-host-controls {
+            display: flex; align-items: center; justify-content: center; gap: .6rem; flex-wrap: wrap;
+            margin-bottom: .1rem;
+        }
+        .pb-duel-host-controls.hidden { display: none; }
+        .pb-duel-gap-control {
+            display: flex; align-items: center; gap: .4rem; background: rgba(0,0,0,.06); border-radius: 999px;
+            padding: .3rem .6rem; font-size: .78rem;
+        }
+        .pb-duel-gap-control.hidden { display: none; }
+        .pb-duel-gap-control span:first-child { opacity: .7; }
+        .pb-duel-gap-control button, #pbDuelSwapBtn {
+            border: none; border-radius: 999px; background: rgba(0,0,0,.08); color: var(--ink);
+            width: 26px; height: 26px; font-size: .9rem; cursor: pointer; line-height: 1;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: background .15s ease, transform .15s ease;
+        }
+        #pbDuelSwapBtn { width: auto; height: auto; padding: .3rem .7rem; font-size: .78rem; gap: .3rem; }
+        .pb-duel-gap-control button:active, #pbDuelSwapBtn:active { transform: scale(.92); }
+        #pbDuelGapValue { min-width: 32px; text-align: center; font-variant-numeric: tabular-nums; }
+        @media (hover: hover) {
+            .pb-duel-gap-control button:hover, #pbDuelSwapBtn:hover { background: rgba(0,0,0,.14); }
+        }
         .pb-duel-capture-status {
             display: flex; align-items: center; gap: .6rem; width: 100%;
             background: rgba(0,0,0,.06); border-radius: 16px; padding: .5rem .7rem; margin-bottom: .2rem;
@@ -26707,6 +26769,8 @@
                 let duelMySlotCanvas = null;
                 let duelPartnerSlotCanvas = null;
                 let duelFinalShots = [];
+                let duelGapPx = 0;       // merged-style divider width, host-controlled, 0-40
+                let duelSwapped = false; // host-controlled — flips which side each person lands on
                 let duelCountdownActive = false;
                 let duelCountdownTimer = null;
                 let duelRetryAction = null; // whatever the capture-status "Try again" button should do right now
@@ -26792,11 +26856,36 @@
                     $pb('pbDuelNextSlotBtn')?.classList.add('hidden');
                     hideDuelCaptureStatus();
                     resetDuelSlotState();
+                    // Only the host can fine-tune gap/side-swap — the
+                    // guest just poses and captures.
+                    $pb('pbDuelHostControls')?.classList.toggle('hidden', duelRole !== 'host');
+                    $pb('pbDuelGapControl')?.classList.toggle('hidden', duelStyle !== 'merged');
+                    applyDuelGapPreview();
+                    $pb('pbDuelLiveFrame')?.classList.toggle('swapped', duelSwapped);
                     if (duelTemplateSnap) {
                         sizeDuelFrame();
                         updateDuelSlotIndicator();
                     }
                 }
+
+                function applyDuelGapPreview() {
+                    if ($pb('pbDuelGapValue')) $pb('pbDuelGapValue').textContent = duelGapPx + 'px';
+                    $pb('pbDuelLiveFrame')?.style.setProperty('--duel-gap', duelGapPx + 'px');
+                }
+
+                $pb('pbDuelGapMinus')?.addEventListener('click', () => {
+                    duelGapPx = Math.max(0, duelGapPx - 4);
+                    applyDuelGapPreview();
+                });
+                $pb('pbDuelGapPlus')?.addEventListener('click', () => {
+                    duelGapPx = Math.min(40, duelGapPx + 4);
+                    applyDuelGapPreview();
+                });
+                $pb('pbDuelSwapBtn')?.addEventListener('click', () => {
+                    duelSwapped = !duelSwapped;
+                    haptic(10);
+                    $pb('pbDuelLiveFrame')?.classList.toggle('swapped', duelSwapped);
+                });
 
                 function updateDuelSlotIndicator() {
                     const el = $pb('pbDuelSlotIndicator');
@@ -26917,10 +27006,14 @@
 
                 function grabDuelSlotFrame() {
                     const videoEl = $pb('pbDuelLocalVideo');
+                    if (!videoEl || !videoEl.videoWidth || !videoEl.videoHeight) {
+                        console.error('Duo Snap: camera frame not ready yet (0-size video)');
+                        toast("Camera wasn't ready — try again in a second.");
+                        return null;
+                    }
                     const aspect = getSlotAspectRatio(duelTemplateSnap);
                     const targetRatio = aspect.w / aspect.h;
-                    const vw = (videoEl && videoEl.videoWidth) || 720, vh = (videoEl && videoEl.videoHeight) ||
-                        960;
+                    const vw = videoEl.videoWidth, vh = videoEl.videoHeight;
                     let sx = 0, sy = 0, sw = vw, sh = vh;
                     const srcRatio = vw / vh;
                     if (srcRatio > targetRatio) { sw = vh * targetRatio;
@@ -26931,12 +27024,15 @@
                     c.width = outW; c.height = outH;
                     const cx = c.getContext('2d');
                     cx.translate(outW, 0); cx.scale(-1, 1); // mirror, like a selfie camera
-                    if (videoEl) cx.drawImage(videoEl, sx, sy, sw, sh, 0, 0, outW, outH);
+                    cx.drawImage(videoEl, sx, sy, sw, sh, 0, 0, outW, outH);
                     return c;
                 }
 
                 function captureDuelSlot() {
-                    duelMySlotCanvas = grabDuelSlotFrame();
+                    const canvas = grabDuelSlotFrame();
+                    if (!canvas) { setDuelShutterEnabled(true);
+                        return; } // camera wasn't ready — let them try again rather than sending a blank frame
+                    duelMySlotCanvas = canvas;
                     if ($pb('pbDuelLocalStillImg')) {
                         $pb('pbDuelLocalStillImg').src = duelMySlotCanvas.toDataURL('image/jpeg', .82);
                         $pb('pbDuelLocalStillImg').classList.remove('hidden');
@@ -26962,6 +27058,11 @@
                         duelSignalChannel?.send({ type: 'broadcast', event: 'slot-still', payload: { slotIndex:
                             duelSlotIndex, dataB64, encrypted } });
                         if (!duelPartnerSlotCanvas) {
+                            // The thumbnail shown here is ALWAYS just this
+                            // device's own captured half — never the
+                            // combined/merged preview. That only appears
+                            // later, once both halves exist (see
+                            // checkDuelSlotComplete below).
                             showDuelCaptureStatus(canvas, 'Sent! 💌', `Waiting for ${otherLetter()}…`, null,
                                 null);
                         }
@@ -26989,9 +27090,10 @@
                         await new Promise((resolve, reject) => { img.onload = resolve;
                             img.onerror = reject;
                             img.src = src; });
+                        if (!img.naturalWidth || !img.naturalHeight) throw new Error("partner's photo came through blank");
                         const canvas = document.createElement('canvas');
-                        canvas.width = img.naturalWidth || 480;
-                        canvas.height = img.naturalHeight || 480;
+                        canvas.width = img.naturalWidth;
+                        canvas.height = img.naturalHeight;
                         canvas.getContext('2d').drawImage(img, 0, 0);
                         URL.revokeObjectURL(src);
                         duelPartnerSlotCanvas = canvas;
@@ -27003,8 +27105,13 @@
                         haptic(10);
                         checkDuelSlotComplete();
                     } catch (err) {
+                        // Deliberately NOT setting duelPartnerSlotCanvas here
+                        // — checkDuelSlotComplete() requires both halves to
+                        // be genuinely present, so a bad/blank photo just
+                        // stays "not captured yet" rather than silently
+                        // becoming a black rectangle in the final image.
                         console.error("Duo Snap: could not load partner's still", err);
-                        toast("Couldn't load partner's photo for this shot.");
+                        toast("Couldn't load partner's photo for this shot — ask them to try again.");
                     }
                 }
 
@@ -27013,7 +27120,7 @@
                     const hostCanvas = duelRole === 'host' ? duelMySlotCanvas : duelPartnerSlotCanvas;
                     const guestCanvas = duelRole === 'host' ? duelPartnerSlotCanvas : duelMySlotCanvas;
                     const merged = buildDuelSlotCanvas(hostCanvas, guestCanvas, duelStyle, getSlotAspectRatio(
-                        duelTemplateSnap));
+                        duelTemplateSnap), duelGapPx, duelSwapped);
                     const isLast = duelSlotIndex >= duelTemplateSnap.count - 1;
                     if (duelRole === 'host') {
                         duelFinalShots[duelSlotIndex] = merged;
@@ -27036,27 +27143,40 @@
                 // Builds ONE slot's combined image at exactly the target
                 // aspect ratio, so the vanilla, unmodified template
                 // renderer downstream treats it like any normal photo.
-                function buildDuelSlotCanvas(hostSrc, guestSrc, style, aspect) {
+                // Always fills a background FIRST (frame-colored for
+                // merged, white for individual) — a source image that
+                // fails to draw for any reason now shows as that neutral
+                // color instead of silently going solid black.
+                function buildDuelSlotCanvas(hostSrc, guestSrc, style, aspect, gapPx, swapped) {
                     const W = 480, H = Math.round(W / (aspect.w / aspect.h));
                     const out = document.createElement('canvas');
                     out.width = W; out.height = H;
                     const ctx = out.getContext('2d');
+                    const leftSrc = swapped ? guestSrc : hostSrc;
+                    const rightSrc = swapped ? hostSrc : guestSrc;
                     if (style === 'individual') {
                         const gap = 10, border = 6;
                         const cellW = (W - gap) / 2;
                         ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
-                        drawDuelCover(ctx, hostSrc, border, border, cellW - border * 2, H - border * 2);
-                        drawDuelCover(ctx, guestSrc, cellW + gap + border, border, cellW - border * 2, H -
+                        drawDuelCover(ctx, leftSrc, border, border, cellW - border * 2, H - border * 2);
+                        drawDuelCover(ctx, rightSrc, cellW + gap + border, border, cellW - border * 2, H -
                             border * 2);
                     } else {
-                        const halfW = W / 2;
-                        drawDuelCover(ctx, hostSrc, 0, 0, halfW, H);
-                        drawDuelCover(ctx, guestSrc, halfW, 0, halfW, H);
+                        const g = Math.max(0, Math.min(40, gapPx || 0));
+                        ctx.fillStyle = (duelTemplateSnap && duelTemplateSnap.frame) || '#fbf3ea';
+                        ctx.fillRect(0, 0, W, H);
+                        const halfW = (W - g) / 2;
+                        drawDuelCover(ctx, leftSrc, 0, 0, halfW, H);
+                        drawDuelCover(ctx, rightSrc, halfW + g, 0, halfW, H);
                     }
                     return out;
                 }
 
                 function drawDuelCover(ctx, src, x, y, w, h) {
+                    if (!src || !src.width || !src.height) {
+                        console.error('Duo Snap: a slot half had no usable image — leaving the background showing through instead of drawing nothing');
+                        return;
+                    }
                     const sw = src.width, sh = src.height;
                     const srcRatio = sw / sh, dstRatio = w / h;
                     let sx = 0, sy = 0, cw = sw, ch = sh;
@@ -27129,9 +27249,12 @@
                     duelMySlotCanvas = null;
                     duelPartnerSlotCanvas = null;
                     duelFinalShots = [];
+                    duelGapPx = 0;
+                    duelSwapped = false;
                     duelRoundId = null;
                     duelRole = null;
                     hideDuelCaptureStatus();
+                    $pb('pbDuelLiveFrame')?.classList.remove('swapped');
                     if ($pb('pbDuelLocalVideo')) $pb('pbDuelLocalVideo').srcObject = null;
                 }
 
@@ -34435,8 +34558,16 @@
                 </button>
                 <button type="button" class="pb-primary-btn" id="pbUseTemplateBtn">Use this look ✨</button>
                 <div class="pb-duo-snap-row">
-                    <button type="button" class="pb-duo-snap-btn" id="pbDuoSnapMergedBtn">💞 Duo Snap<br><span>merged strip</span></button>
-                    <button type="button" class="pb-duo-snap-btn" id="pbDuoSnapIndividualBtn">💞 Duo Snap<br><span>two photos</span></button>
+                    <button type="button" class="pb-duo-snap-btn" id="pbDuoSnapMergedBtn">
+                        <span class="pb-duo-snap-icon"><span></span><span></span></span>
+                        <span class="label">💞 Duo Snap</span>
+                        <span class="sub">merged strip</span>
+                    </button>
+                    <button type="button" class="pb-duo-snap-btn" id="pbDuoSnapIndividualBtn">
+                        <span class="pb-duo-snap-icon"><span></span><span></span></span>
+                        <span class="label">💞 Duo Snap</span>
+                        <span class="sub">two photos</span>
+                    </button>
                 </div>
                 <p class="pb-duo-snap-hint">Swipe to pick a look above first — that filter &amp; frame carry into your Duo Snap.</p>
             </div>
@@ -34602,6 +34733,17 @@
                 <div class="pb-duel-countdown hidden" id="pbDuelCountdown"></div>
             </div>
             <div class="pb-duel-live-controls">
+                <!-- Host-only fine-tuning — hidden entirely for the guest,
+                     who doesn't control layout, only their own capture. -->
+                <div class="pb-duel-host-controls hidden" id="pbDuelHostControls">
+                    <div class="pb-duel-gap-control hidden" id="pbDuelGapControl">
+                        <span>Gap</span>
+                        <button type="button" id="pbDuelGapMinus" aria-label="Less gap">–</button>
+                        <span id="pbDuelGapValue">0px</span>
+                        <button type="button" id="pbDuelGapPlus" aria-label="More gap">+</button>
+                    </div>
+                    <button type="button" id="pbDuelSwapBtn">⇄ Swap sides</button>
+                </div>
                 <div class="pb-duel-capture-status hidden" id="pbDuelCaptureStatus">
                     <img id="pbDuelCaptureThumb" alt="">
                     <div class="pb-duel-capture-status-text">
