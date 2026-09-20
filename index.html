@@ -26008,21 +26008,29 @@
                         if (shots[0]) drawPhotoWithFilter(ctx0, shots[0], pad, pad, w, h);
                         if (caption) { ctx0.fillStyle = '#333'; ctx0.font = '28px Caveat, cursive'; ctx0.textAlign = 'center'; ctx0.fillText(caption, W / 2, H - 24); }
                     } else if (template.layout === 'duo') {
-                        const w = cellW * .8, h = Math.round(w * .7);
-                        W = pad * 2 + w; H = pad * 2 + h * 2 + gap;
+                        // Matches the portrait aspect solo 'single' shots
+                        // use (w = cellW*.85, h = cellH*.85) rather than
+                        // the wide/landscape ratio 'Cinema Duo' used —
+                        // that one was designed for a different kind of
+                        // shot and squished selfie-style captures badly.
+                        const w = cellW * .72, h = Math.round(w * 1.25);
+                        const capH = caption ? 46 : 0;
+                        W = pad * 2 + w; H = pad * 2 + h * 2 + gap + capH;
                         compositeCanvas.width = W; compositeCanvas.height = H;
                         ctx0.fillStyle = frameColor; ctx0.fillRect(0, 0, W, H);
                         if (shots[0]) drawPhotoWithFilter(ctx0, shots[0], pad, pad, w, h);
                         if (shots[1]) drawPhotoWithFilter(ctx0, shots[1], pad, pad + h + gap, w, h);
                         if (caption) {
-                            ctx0.fillStyle = '#fff'; ctx0.font = 'italic bold 34px Georgia, serif'; ctx0.textAlign = 'center';
-                            ctx0.fillText(caption.toUpperCase(), W / 2, pad + h - 26);
+                            ctx0.fillStyle = (frameColor === '#161616' || frameColor === '#050805' || frameColor === '#000000') ? '#fff' : '#4a3a2a';
+                            ctx0.font = '28px Caveat, cursive'; ctx0.textAlign = 'center';
+                            ctx0.fillText(caption, W / 2, H - 16);
                         }
                     } else if (template.layout === 'duoSide') {
-                        // Duo Snap's side-by-side option — same two shots as
-                        // 'duo' above, laid out left/right with a thin gap
-                        // acting as the dividing line instead of stacked.
-                        const h = cellH * .78, w = Math.round(h * .74);
+                        // Duo Snap's side-by-side option — same portrait
+                        // per-photo ratio as 'duo' above, laid out
+                        // left/right with a thin gap as the divider
+                        // instead of stacked (much less elongated overall).
+                        const h = Math.round(cellW * .95), w = Math.round(h * .78);
                         const capH = caption ? 46 : 0;
                         W = pad * 2 + w * 2 + gap; H = pad * 2 + h + capH;
                         compositeCanvas.width = W; compositeCanvas.height = H;
@@ -26734,7 +26742,7 @@
                 let duelCountdownActive = false;
                 let duelCountdownTimer = null;
                 let duelHostStillCanvas = null;
-                let duelGuestStillPath = null;
+                let duelGuestStillPayload = null;
                 let duelFallbackWaitTimer = null;
                 let duelRetryAction = null; // whatever the capture-status "Try again"/"Leave" button should do right now
 
@@ -26789,10 +26797,12 @@
                 function setupDuelLiveUI(role) {
                     $pb('pbDuelRemoteHalf')?.classList.remove('pb-duel-fallback');
                     $pb('pbDuelRemoteFrost')?.classList.remove('connected');
-                    if ($pb('pbDuelShutterBtn')) $pb('pbDuelShutterBtn').style.display = role === 'host' ? '' : 'none';
+                    // Either person can trigger the countdown now — only
+                    // who does the filter/edit/save afterward stays
+                    // host-only (that happens later, in enterEditView).
+                    setDuelShutterEnabled(true);
                     if ($pb('pbDuelRemoteLabel')) $pb('pbDuelRemoteLabel').textContent = `connecting to ${otherLetter()}…`;
-                    if ($pb('pbDuelLiveHint')) $pb('pbDuelLiveHint').textContent = role === 'host' ?
-                        'Waiting to connect…' : `${otherLetter()} will start the countdown once you're both ready.`;
+                    if ($pb('pbDuelLiveHint')) $pb('pbDuelLiveHint').textContent = 'Waiting to connect…';
                     const cd = $pb('pbDuelCountdown');
                     if (cd) { cd.classList.add('hidden');
                         cd.textContent = ''; }
@@ -26948,9 +26958,8 @@
                     haptic([10, 30, 10]);
                     $pb('pbDuelRemoteFrost')?.classList.add('connected');
                     if ($pb('pbDuelRemoteLabel')) $pb('pbDuelRemoteLabel').textContent = otherLetter();
-                    if ($pb('pbDuelLiveHint')) $pb('pbDuelLiveHint').textContent = duelRole === 'host' ?
-                        "Tap the shutter when you're both ready!" :
-                        `${otherLetter()} will start the countdown when ready.`;
+                    if ($pb('pbDuelLiveHint')) $pb('pbDuelLiveHint').textContent =
+                        "Either of you can tap the shutter when you're ready!";
                 }
 
                 // Automatic, silent fallback — live video couldn't connect
@@ -26968,13 +26977,24 @@
                     if ($pb('pbDuelRemoteVideo')) $pb('pbDuelRemoteVideo').srcObject = null;
                     if ($pb('pbDuelRemoteLabel')) $pb('pbDuelRemoteLabel').textContent =
                         `${otherLetter()} — ready when you are`;
-                    if ($pb('pbDuelLiveHint')) $pb('pbDuelLiveHint').textContent = duelRole === 'host' ?
-                        "Live video didn't connect, but you can still snap a synced photo together — tap the shutter!" :
-                        `${otherLetter()} will start the countdown — get ready to pose!`;
+                    if ($pb('pbDuelLiveHint')) $pb('pbDuelLiveHint').textContent =
+                        "Live video didn't connect, but you can still snap a synced photo — either of you can tap the shutter!";
+                }
+
+                // Toggling this (rather than just relying on the
+                // duelCountdownActive check inside the click handler) means
+                // a second tap during/after a countdown visibly does
+                // nothing instead of silently being ignored — that silent
+                // ignoring is exactly what read as "unresponsive" before.
+                function setDuelShutterEnabled(enabled) {
+                    const btn = $pb('pbDuelShutterBtn');
+                    if (!btn) return;
+                    btn.disabled = !enabled;
+                    btn.style.opacity = enabled ? '' : '.4';
                 }
 
                 $pb('pbDuelShutterBtn')?.addEventListener('click', () => {
-                    if (duelRole !== 'host' || duelCountdownActive) return;
+                    if (duelCountdownActive) return;
                     if (!duelConnected && !duelFallbackMode) { toast('Still connecting…');
                         return; }
                     beginDuelCountdown();
@@ -26987,6 +27007,7 @@
 
                 function beginDuelCountdown() {
                     duelCountdownActive = true;
+                    setDuelShutterEnabled(false);
                     const zeroAt = Date.now() + 3200;
                     duelSignalChannel?.send({ type: 'broadcast', event: 'countdown', payload: { zeroAt } });
                     runDuelCountdown(zeroAt);
@@ -26995,6 +27016,7 @@
                 function onDuelCountdown(payload) {
                     if (!payload?.zeroAt || duelCountdownActive) return;
                     duelCountdownActive = true;
+                    setDuelShutterEnabled(false);
                     runDuelCountdown(payload.zeroAt);
                 }
 
@@ -27030,7 +27052,7 @@
                                 null, null);
                             clearTimeout(duelFallbackWaitTimer);
                             duelFallbackWaitTimer = setTimeout(() => {
-                                if (!duelGuestStillPath) {
+                                if (!duelGuestStillPayload) {
                                     showDuelCaptureStatus(duelHostStillCanvas, 'Still waiting…',
                                         `${otherLetter()} hasn't sent their half yet.`, 'Leave', () => {
                                             leaveDuelSession(true, 'left');
@@ -27041,7 +27063,7 @@
                             tryFinishFallback();
                         } else {
                             showDuelCaptureStatus(myCanvas, 'Got it! 📸', 'Sending your half…', null, null);
-                            uploadDuelFallbackStill(myCanvas);
+                            sendDuelFallbackStill(myCanvas);
                         }
                     } else if (duelRole === 'host') {
                         finishDuelCapture();
@@ -27071,48 +27093,72 @@
                     enterEditView();
                 }
 
-                async function uploadDuelFallbackStill(canvas) {
+                // Sends the guest's captured frame straight over the
+                // signaling broadcast channel as encrypted base64 —
+                // deliberately NOT via Storage upload. A real device test
+                // turned up "new row violates row-level security policy"
+                // on that upload for the guest specifically; rather than
+                // chase an intermittent RLS/session edge case, this avoids
+                // the dependency entirely. Realtime broadcast caps out at
+                // 256 KB/message on the free plan, so the frame is kept
+                // small (capped resolution + moderate JPEG quality) to
+                // stay comfortably under that after base64's ~33% overhead.
+                async function sendDuelFallbackStill(canvas) {
                     if (!supabase) return;
                     try {
-                        const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.88));
+                        const small = downscaleCanvasForTransfer(canvas, 640);
+                        const blob = await new Promise(res => small.toBlob(res, 'image/jpeg', 0.72));
                         if (!blob) throw new Error('could not read camera frame');
-                        const { blob: uploadBlob, contentType } = await window.vaultEncryptBlobForUpload(blob,
-                            'image/jpeg');
-                        const path = `duel-temp/${duelRoundId}-guest-${Date.now()}.bin`;
-                        const { error } = await supabase.storage.from(PB_BUCKET).upload(path, uploadBlob, {
-                            upsert: true, contentType });
-                        if (error) throw error;
+                        const rawBytes = new Uint8Array(await blob.arrayBuffer());
+                        const vaultReady = typeof window.getSiteVaultKey === 'function' && window
+                            .getSiteVaultKey();
+                        let payloadBytes = rawBytes, encrypted = false;
+                        if (vaultReady) {
+                            payloadBytes = await window.vaultEncryptBytes(rawBytes);
+                            encrypted = true;
+                        }
+                        const dataB64 = window.bytesToBase64(payloadBytes);
+                        if (dataB64.length > 240 * 1024) throw new Error('photo too large to send — try again');
                         duelSignalChannel?.send({ type: 'broadcast', event: 'fallback-still', payload: {
-                            path } });
+                            dataB64, encrypted } });
                         showDuelCaptureStatus(canvas, 'Sent! 💌', `Waiting for ${otherLetter()} to finish styling it…`,
                             null, null);
                     } catch (err) {
-                        console.error('Duo Snap: fallback upload failed', err);
+                        console.error('Duo Snap: fallback send failed', err);
                         const detail = err?.message ? ` (${err.message})` : '';
                         showDuelCaptureStatus(canvas, "Couldn't send 😕", `Something went wrong${detail}.`,
-                            'Try again', () => uploadDuelFallbackStill(canvas));
+                            'Try again', () => sendDuelFallbackStill(canvas));
                     }
                 }
 
+                function downscaleCanvasForTransfer(canvas, maxWidth) {
+                    if (!canvas.width || canvas.width <= maxWidth) return canvas;
+                    const scale = maxWidth / canvas.width;
+                    const out = document.createElement('canvas');
+                    out.width = maxWidth;
+                    out.height = Math.round(canvas.height * scale);
+                    out.getContext('2d').drawImage(canvas, 0, 0, out.width, out.height);
+                    return out;
+                }
+
                 function onDuelFallbackStill(payload) {
-                    if (duelRole !== 'host' || !payload?.path) return;
-                    duelGuestStillPath = payload.path;
+                    if (duelRole !== 'host' || !payload?.dataB64) return;
+                    duelGuestStillPayload = payload;
                     tryFinishFallback();
                 }
 
                 async function tryFinishFallback() {
-                    if (duelRole !== 'host' || !duelHostStillCanvas || !duelGuestStillPath || !supabase) return;
+                    if (duelRole !== 'host' || !duelHostStillCanvas || !duelGuestStillPayload) return;
                     try {
-                        const { data: signed, error: signErr } = await supabase.storage.from(PB_BUCKET)
-                            .createSignedUrl(duelGuestStillPath, SIGNED_URL_TTL);
-                        if (signErr || !signed?.signedUrl) throw signErr || new Error('no signed url');
-                        let src = signed.signedUrl;
-                        const vaultReady = typeof window.getSiteVaultKey === 'function' && window
-                            .getSiteVaultKey();
-                        if (vaultReady) {
-                            try { src = await window.decryptToObjectUrl(src, 'image/jpeg'); } catch (imgErr) {
-                                console.error("Duo Snap: could not decrypt partner's still", imgErr); }
+                        let bytes = window.base64ToBytes(duelGuestStillPayload.dataB64);
+                        if (duelGuestStillPayload.encrypted) {
+                            const vaultReady = typeof window.getSiteVaultKey === 'function' && window
+                                .getSiteVaultKey();
+                            if (!vaultReady) throw new Error("can't decrypt — vault not unlocked on this device");
+                            bytes = await window.vaultDecryptBytes(bytes);
                         }
+                        const blob = new Blob([bytes], { type: 'image/jpeg' });
+                        const src = URL.createObjectURL(blob);
                         const img = new Image();
                         await new Promise((resolve, reject) => { img.onload = resolve;
                             img.onerror = reject;
@@ -27121,13 +27167,13 @@
                         guestCanvas.width = img.naturalWidth || 720;
                         guestCanvas.height = img.naturalHeight || 960;
                         guestCanvas.getContext('2d').drawImage(img, 0, 0);
+                        URL.revokeObjectURL(src);
                         clearTimeout(duelFallbackWaitTimer);
                         shots = [guestCanvas, duelHostStillCanvas]; // top/left = partner, bottom/right = me
                         selectedFilter = duelSelectedFilter;
                         frameColor = duelFrameColor;
                         template = { ...template, id: 'liveduel', name: 'Duo Snap', layout: duelLayoutName(),
                             count: 2 };
-                        cleanupDuelTempStill(duelGuestStillPath);
                         leaveDuelSession(true, 'captured');
                         enterEditView();
                     } catch (err) {
@@ -27136,33 +27182,6 @@
                         showDuelCaptureStatus(duelHostStillCanvas, 'Could not combine photos',
                             `Something went wrong${detail}.`, 'Try again', () => tryFinishFallback());
                     }
-                }
-
-                function cleanupDuelTempStill(path) {
-                    if (!supabase || !path) return;
-                    supabase.storage.from(PB_BUCKET).remove([path]).catch(() => {});
-                }
-
-                // Safety net for the fallback path's temp uploads: normally
-                // cleanupDuelTempStill() above deletes each one right after
-                // the host combines it, but an abandoned session (app
-                // killed mid-fallback, not just closed) can leave one
-                // behind. Sweeps anything older than an hour — cheap,
-                // best-effort, runs once per photobooth init rather than
-                // needing a scheduled/cron job on the backend.
-                async function cleanupStaleDuelTempFiles() {
-                    if (!supabase) return;
-                    try {
-                        const { data: files, error } = await supabase.storage.from(PB_BUCKET).list('duel-temp', {
-                            limit: 100 });
-                        if (error || !files || !files.length) return;
-                        const cutoff = Date.now() - 60 * 60 * 1000; // 1 hour
-                        const stale = files.filter(f => {
-                            const t = f.created_at ? new Date(f.created_at).getTime() : 0;
-                            return t && t < cutoff;
-                        }).map(f => `duel-temp/${f.name}`);
-                        if (stale.length) await supabase.storage.from(PB_BUCKET).remove(stale);
-                    } catch (err) { console.error('Duo Snap: stale temp cleanup failed', err); }
                 }
 
                 function onDuelPeerLeft(payload) {
@@ -27219,7 +27238,7 @@
                     duelPendingOffer = null;
                     duelPendingIce = [];
                     duelHostStillCanvas = null;
-                    duelGuestStillPath = null;
+                    duelGuestStillPayload = null;
                     duelRoundId = null;
                     duelRole = null;
                     hideDuelCaptureStatus();
@@ -27521,7 +27540,6 @@
                 // no-op gracefully in that case.
                 initDuelIncomingListener();
                 checkForPendingIncomingDuel();
-                cleanupStaleDuelTempFiles();
 
                 // stop the camera if the tab is hidden mid-capture, and if
                 // the person navigates away without an explicit close
