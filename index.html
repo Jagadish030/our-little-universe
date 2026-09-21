@@ -2885,48 +2885,6 @@
             opacity: .55;
         }
 
-        /* ═══════════════════════════════════════════════════════
-           INTRO VIDEO OVERLAY — plays once on load (over whatever
-           the site would normally show first, gate included), then
-           slides up like a curtain lifting to reveal it. Hardcoded
-           colors rather than theme variables, same reasoning as
-           .pass-gate below: dark/light mode may not be applied to
-           <body> yet this early in the page's life.
-           ═══════════════════════════════════════════════════════ */
-        #introOverlay {
-            position: fixed; inset: 0; z-index: 2147483000; /* above literally everything, incl. the gate */
-            background: #0b0b0d; overflow: hidden;
-            transform: translateY(0);
-            transition: transform .9s cubic-bezier(.65, 0, .35, 1);
-            will-change: transform;
-        }
-        #introOverlay.pb-intro-hidden { display: none; }
-        #introOverlay.pb-intro-revealing { transform: translateY(-100%); }
-        #introOverlay::after {
-            /* a soft shadow riding the bottom edge as it lifts, so it
-               reads as a curtain rather than a flat panel sliding up */
-            content: ''; position: absolute; left: 0; right: 0; bottom: -40px; height: 40px;
-            background: linear-gradient(to bottom, rgba(0,0,0,.35), transparent);
-            pointer-events: none;
-        }
-        #introVideoEl {
-            width: 100%; height: 100%; object-fit: cover; display: block; background: #0b0b0d;
-        }
-        #introSkipBtn {
-            position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px; z-index: 2;
-            display: flex; align-items: center; gap: .35rem;
-            border: 1px solid rgba(255,255,255,.5); border-radius: 999px;
-            background: rgba(0,0,0,.35); backdrop-filter: blur(6px);
-            color: #fff; font-family: inherit; font-size: .8rem; font-weight: 600;
-            padding: .5rem .9rem .5rem 1rem; cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
-        #introSkipBtn:active { background: rgba(0,0,0,.55); }
-        #introSkipBtn svg { width: 14px; height: 14px; flex-shrink: 0; }
-        @media (hover: hover) {
-            #introSkipBtn:hover { background: rgba(0,0,0,.5); border-color: #fff; }
-        }
-
         .pass-gate {
             position: fixed;
             top: 0;
@@ -14240,84 +14198,6 @@
 
 <body>
 
-    <!-- ═══════════════════ INTRO VIDEO ═══════════════════
-         Sits on top of everything else on the page (including the
-         password gate) while it plays, covering the site's real
-         load time, then slides up like a curtain to reveal whatever
-         the site would normally show. Plain, dependency-free script
-         right here so it starts as early as possible — it doesn't
-         wait for the rest of the page's (much larger) script to
-         parse and run. -->
-    <div id="introOverlay">
-        <video id="introVideoEl" src="Assets/Intro/intro-web2.mp4" poster="Assets/Intro/intro-poster.jpg"
-            muted autoplay playsinline preload="auto"></video>
-        <button type="button" id="introSkipBtn" aria-label="Skip intro">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="5 4 15 12 5 20 5 4"></polygon>
-                <line x1="19" y1="5" x2="19" y2="19"></line>
-            </svg>
-            Skip
-        </button>
-    </div>
-    <script>
-        (function () {
-            var overlay = document.getElementById('introOverlay');
-            var video = document.getElementById('introVideoEl');
-            var skipBtn = document.getElementById('introSkipBtn');
-            if (!overlay || !video || !skipBtn) return;
-
-            // How often to show this — change this one line to adjust:
-            //   'always'  — plays on every single page load
-            //   'session' — plays once per browser tab session (default)
-            //   'once'    — plays only the very first time, ever, per device
-            var REPLAY_MODE = 'session';
-            var STORE_KEY = 'mw-intro-seen';
-            try {
-                var seen = REPLAY_MODE === 'once' ? localStorage.getItem(STORE_KEY) :
-                    REPLAY_MODE === 'session' ? sessionStorage.getItem(STORE_KEY) : null;
-                if (seen) { overlay.classList.add('pb-intro-hidden'); return; }
-            } catch (e) {} // storage blocked (private mode etc.) — just play it, no harm done
-
-            var revealed = false;
-            function reveal() {
-                if (revealed) return;
-                revealed = true;
-                try {
-                    if (REPLAY_MODE === 'once') localStorage.setItem(STORE_KEY, '1');
-                    else if (REPLAY_MODE === 'session') sessionStorage.setItem(STORE_KEY, '1');
-                } catch (e) {}
-                overlay.classList.add('pb-intro-revealing');
-                var done = false;
-                var finish = function () {
-                    if (done) return;
-                    done = true;
-                    overlay.classList.add('pb-intro-hidden');
-                    try { video.pause(); video.removeAttribute('src'); video.load(); } catch (e) {}
-                };
-                overlay.addEventListener('transitionend', finish, { once: true });
-                setTimeout(finish, 1200); // safety net if transitionend never fires
-            }
-
-            // Reduced-motion preference — skip straight to the site,
-            // no video, no curtain animation.
-            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-                overlay.classList.add('pb-intro-hidden');
-                return;
-            }
-
-            video.addEventListener('ended', reveal);
-            video.addEventListener('error', reveal); // couldn't load the video — don't get stuck
-            skipBtn.addEventListener('click', reveal);
-            var playPromise = video.play();
-            if (playPromise && playPromise.catch) {
-                playPromise.catch(reveal); // autoplay blocked for some reason — don't get stuck
-            }
-            // Absolute failsafe — video is ~25.6s; if something hangs,
-            // never leave the person staring at a frozen intro.
-            setTimeout(reveal, 32000);
-        })();
-    </script>
-
     <!-- Fixed background layer for custom wallpapers — a real
          position:fixed element rather than background-attachment:fixed
          on <body>, which mobile browsers repaint/jitter/"zoom" during
@@ -16178,8 +16058,8 @@
             const NOTE_AUTHOR_2_LETTER = 'M';
 
             /* ═══ SUPABASE ─── */
-            const SUPABASE_URL = 'https://cctlzqlchijwrxrxnmmm.supabase.co';
-            const SUPABASE_ANON_KEY =
+            //const SUPABASE_URL = 'https://cctlzqlchijwrxrxnmmm.supabase.co';
+            //const SUPABASE_ANON_KEY =
                 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjdGx6cWxjaGlqd3J4cnhubW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MDg1NTksImV4cCI6MjA5OTQ4NDU1OX0.5cEM69NsRjiN2d1XqzFcqVmSp8Db0AqxRr6wLJmm5Yc';
             const BUCKET = 'photos';
             const TABLE = 'memories';
