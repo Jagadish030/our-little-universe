@@ -2885,6 +2885,81 @@
             opacity: .55;
         }
 
+        /* ═══════════════════════════════════════════════════════
+           INTRO VIDEO OVERLAY — DISABLED (commented out, not
+           deleted) at the user's request on 2026-09-22: quality/
+           smoothness wasn't good enough yet on laptop or mobile.
+           To bring it back later: uncomment this whole CSS block,
+           AND the matching HTML/JS block in <body> (search that
+           file for "INTRO VIDEO OVERLAY — DISABLED" to find it).
+           ───────────────────────────────────────────────────────
+           INTRO VIDEO OVERLAY — plays once on load (over whatever
+           the site would normally show first, gate included), then
+           slides up like a curtain lifting to reveal it. Hardcoded
+           colors rather than theme variables, same reasoning as
+           .pass-gate below: dark/light mode may not be applied to
+           <body> yet this early in the page's life.
+        #introOverlay {
+            position: fixed; inset: 0; z-index: 2147483000; /* above literally everything, incl. the gate
+            background: #0b0b0d; overflow: hidden; touch-action: none; /* we handle swipe ourselves
+            transform: translateY(0);
+            transition: transform .9s cubic-bezier(.65, 0, .35, 1);
+            will-change: transform;
+        }
+        #introOverlay.pb-intro-hidden { display: none; }
+        Used before the passcode succeeds — kept in normal rendering
+           (not display:none) so the browser keeps buffering the video
+           in the background instead of a blank/stalled first frame
+           the moment it's actually needed.
+        #introOverlay.pb-intro-pending { visibility: hidden; pointer-events: none; }
+        #introOverlay.pb-intro-revealing { transform: translateY(-100%); }
+        #introOverlay::after {
+            a soft shadow riding the bottom edge as it lifts, so it
+               reads as a curtain rather than a flat panel sliding up
+            content: ''; position: absolute; left: 0; right: 0; bottom: -40px; height: 40px;
+            background: linear-gradient(to bottom, rgba(0,0,0,.35), transparent);
+            pointer-events: none;
+        }
+        #introVideoEl {
+            width: 100%; height: 100%; object-fit: cover; display: block; background: #0b0b0d;
+        }
+        #introSkipBtn {
+            position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px; z-index: 2;
+            display: flex; align-items: center; gap: .35rem;
+            border: 1px solid rgba(255,255,255,.5); border-radius: 999px;
+            background: rgba(0,0,0,.35); backdrop-filter: blur(6px);
+            color: #fff; font-family: inherit; font-size: .8rem; font-weight: 600;
+            padding: .5rem .9rem .5rem 1rem; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #introSkipBtn:active { background: rgba(0,0,0,.55); }
+        #introSkipBtn svg { width: 14px; height: 14px; flex-shrink: 0; }
+        @media (hover: hover) {
+            #introSkipBtn:hover { background: rgba(0,0,0,.5); border-color: #fff; }
+        }
+        #introProgress {
+            position: absolute; left: 0; right: 0; bottom: 0; height: 4px; z-index: 2;
+            background: rgba(255,255,255,.15);
+        }
+        #introProgressFill {
+            height: 100%; width: 0%; background: linear-gradient(90deg, var(--rose-deep), var(--rose));
+        }
+        #introHint {
+            position: absolute; left: 50%; bottom: max(28px, calc(env(safe-area-inset-bottom) + 20px));
+            transform: translateX(-50%); z-index: 2;
+            color: #fff; font-size: .8rem; font-weight: 600; letter-spacing: .02em; text-align: center;
+            display: flex; flex-direction: column; align-items: center; gap: .25rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,.55);
+            opacity: 1; transition: opacity .4s ease; pointer-events: none;
+        }
+        #introHint.pb-intro-hint-fade { opacity: 0; }
+        #introHint .pb-intro-hint-arrow { font-size: 1.1rem; animation: pbIntroHintBounce 1.6s ease-in-out infinite; }
+        @keyframes pbIntroHintBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @media (prefers-reduced-motion: reduce) {
+            #introHint .pb-intro-hint-arrow { animation: none; }
+        }
+        ═══ END DISABLED INTRO VIDEO OVERLAY CSS ═══ */
+
         .pass-gate {
             position: fixed;
             top: 0;
@@ -14198,6 +14273,204 @@
 
 <body>
 
+    <!-- ═══════════════════════════════════════════════════════
+         INTRO VIDEO OVERLAY — DISABLED (commented out, not
+         deleted) at the user's request on 2026-09-22: quality/
+         smoothness wasn't good enough yet on laptop or mobile.
+         To bring it back later: uncomment this whole block, AND
+         the matching CSS block in <head> (search that file for
+         "INTRO VIDEO OVERLAY — DISABLED" to find it).
+         ───────────────────────────────────────────────────────
+    ═══════════════════ INTRO VIDEO ═══════════════════
+         Doesn't play on page load, and doesn't autoplay-through
+         either — it's fully scroll/swipe-scrubbed (works with mouse
+         wheel + trackpad on laptop, touch swipe on mobile). It's
+         triggered by unlockSite() the moment the passcode (or
+         device registration) succeeds, covering the site's real
+         load time while you scrub through it, then slides up like a
+         curtain once you reach the end (or tap Skip) to reveal the
+         site underneath. Plain, dependency-free script right here so
+         it's ready as early as possible — it doesn't wait for the
+         rest of the page's (much larger) script to parse and run.
+    <div id="introOverlay" class="pb-intro-pending">
+        <video id="introVideoEl" muted playsinline preload="auto">
+            <source media="(max-width: 820px)" src="Assets/Intro/intro-scrub-mobile.mp4">
+            <source src="Assets/Intro/intro-scrub-desktop.mp4">
+        </video>
+        <div id="introProgress"><div id="introProgressFill"></div></div>
+        <div id="introHint" aria-hidden="true">
+            <span class="pb-intro-hint-arrow">↑</span>
+            <span>scroll or swipe to continue</span>
+        </div>
+        <button type="button" id="introSkipBtn" aria-label="Skip intro">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                <line x1="19" y1="5" x2="19" y2="19"></line>
+            </svg>
+            Skip
+        </button>
+    </div>
+    <script>
+        (function () {
+            var overlay = document.getElementById('introOverlay');
+            var video = document.getElementById('introVideoEl');
+            var skipBtn = document.getElementById('introSkipBtn');
+            var progressFill = document.getElementById('introProgressFill');
+            var hint = document.getElementById('introHint');
+            if (!overlay || !video || !skipBtn) return;
+
+            // <video poster> can't vary by media query in markup, so set
+            // it here to match whichever <source> the browser is about
+            // to pick (same 820px breakpoint as the <source> tags above).
+            var isMobileShape = window.matchMedia && window.matchMedia('(max-width: 820px)').matches;
+            video.poster = isMobileShape ? 'Assets/Intro/intro-mobile-poster.jpg' : 'Assets/Intro/intro-poster.jpg';
+
+            // How often to show this — change this one line to adjust:
+            //   'always'  — plays every time the passcode is entered
+            //   'session' — plays once per browser tab session (default)
+            //   'once'    — plays only the very first time, ever, per device
+            var REPLAY_MODE = 'session';
+            var STORE_KEY = 'mw-intro-seen';
+
+            function alreadySeen() {
+                if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
+                try {
+                    if (REPLAY_MODE === 'once') return !!localStorage.getItem(STORE_KEY);
+                    if (REPLAY_MODE === 'session') return !!sessionStorage.getItem(STORE_KEY);
+                } catch (e) {} // storage blocked (private mode etc.) — treat as not-seen, just play it
+                return false;
+            }
+
+            // The video comes from <source> children (so the browser can
+            // pick mobile vs desktop), not a src= attribute — clearing
+            // just the <video> element's own src wouldn't actually stop
+            // it from loading, since load() would just re-pick from the
+            // <source> tags again. Clear those too.
+            function unloadVideo() {
+                try {
+                    video.pause();
+                    video.removeAttribute('src');
+                    var sources = video.querySelectorAll('source');
+                    for (var i = 0; i < sources.length; i++) sources[i].removeAttribute('src');
+                    video.load();
+                } catch (e) {}
+            }
+
+            // If it's not going to play this time, don't even hang onto
+            // the multi-MB video in the background — drop it.
+            if (alreadySeen()) {
+                overlay.classList.add('pb-intro-hidden');
+                unloadVideo();
+            }
+
+            var revealed = false;
+            function reveal() {
+                if (revealed) return;
+                revealed = true;
+                scrubActive = false;
+                overlay.classList.add('pb-intro-revealing');
+                var done = false;
+                var finish = function () {
+                    if (done) return;
+                    done = true;
+                    overlay.classList.add('pb-intro-hidden');
+                    unloadVideo();
+                };
+                overlay.addEventListener('transitionend', finish, { once: true });
+                setTimeout(finish, 1200); // safety net if transitionend never fires
+            }
+            video.addEventListener('error', reveal); // couldn't load the video — don't get stuck
+            skipBtn.addEventListener('click', reveal);
+
+            /* ── Scroll/swipe scrubbing — works the same way for a
+               laptop's wheel/trackpad and a phone's touch swipe. Input
+               accumulates into a 0..1 progress value; reaching 1 (fully
+               scrubbed to the end) is what actually triggers reveal(),
+               same as finishing a normal video would. ── */
+            var SCRUB_TOTAL_PX = 4200; // total scroll/swipe distance, start to end — raise to require more scrolling, lower for less
+            var targetProgress = 0;
+            var scrubActive = false; // only true once startIntroOverlay() has run
+            var rafPending = false;
+            var duration = 0;
+            var hintFaded = false;
+
+            function fadeHint() {
+                if (hintFaded || !hint) return;
+                hintFaded = true;
+                hint.classList.add('pb-intro-hint-fade');
+            }
+
+            function applyProgress() {
+                rafPending = false;
+                if (progressFill) progressFill.style.width = (targetProgress * 100) + '%';
+                if (duration > 0 && video.readyState >= 1) {
+                    try { video.currentTime = targetProgress * duration; } catch (e) {}
+                }
+                if (targetProgress >= 1) reveal();
+            }
+
+            function queueProgress(delta) {
+                if (!scrubActive || revealed) return;
+                fadeHint();
+                targetProgress = Math.max(0, Math.min(1, targetProgress + delta / SCRUB_TOTAL_PX));
+                if (!rafPending) {
+                    rafPending = true;
+                    requestAnimationFrame(applyProgress);
+                }
+            }
+
+            // Laptop: mouse wheel and trackpad both fire 'wheel'.
+            overlay.addEventListener('wheel', function (e) {
+                if (!scrubActive || revealed) return;
+                e.preventDefault();
+                queueProgress(e.deltaY);
+            }, { passive: false });
+
+            // Mobile: touch swipe. Finger moving UP the screen = swipe
+            // up = forward progress, matching "scroll down to continue".
+            var touchLastY = null;
+            overlay.addEventListener('touchstart', function (e) {
+                if (!scrubActive || revealed) return;
+                touchLastY = e.touches[0].clientY;
+            }, { passive: true });
+            overlay.addEventListener('touchmove', function (e) {
+                if (!scrubActive || revealed || touchLastY === null) return;
+                e.preventDefault();
+                var y = e.touches[0].clientY;
+                queueProgress(touchLastY - y);
+                touchLastY = y;
+            }, { passive: false });
+            overlay.addEventListener('touchend', function () { touchLastY = null; }, { passive: true });
+
+            // Called from unlockSite() (elsewhere in this file) the
+            // instant the passcode/registration succeeds — this is the
+            // ONLY thing that arms scrubbing. Returns true if it's
+            // actually going to show, so unlockSite() knows whether to
+            // skip its own gate-closing animation (which would just be
+            // hidden behind this anyway) or run it normally.
+            window.startIntroOverlay = function () {
+                if (alreadySeen()) return false;
+                try {
+                    if (REPLAY_MODE === 'once') localStorage.setItem(STORE_KEY, '1');
+                    else if (REPLAY_MODE === 'session') sessionStorage.setItem(STORE_KEY, '1');
+                } catch (e) {}
+                overlay.classList.remove('pb-intro-pending', 'pb-intro-hidden');
+                video.pause(); // never auto-plays — it's fully scrub-driven from here
+                var arm = function () {
+                    duration = video.duration || 0;
+                    scrubActive = true;
+                };
+                if (video.readyState >= 1) arm();
+                else video.addEventListener('loadedmetadata', arm, { once: true });
+                // Absolute failsafe — never leave someone stuck if they
+                // never scroll, or the video fails to load at all.
+                setTimeout(reveal, 60000);
+                return true;
+            };
+        })();
+    </script>
+    ═══ END DISABLED INTRO VIDEO OVERLAY HTML/JS ═══ -->
+
     <!-- Fixed background layer for custom wallpapers — a real
          position:fixed element rather than background-attachment:fixed
          on <body>, which mobile browsers repaint/jitter/"zoom" during
@@ -16671,6 +16944,17 @@
                 sessionStorage.setItem(UNLOCK_SESSION_KEY, '1');
                 siteContent.classList.remove('hidden');
                 init();
+                // If the intro video is about to play, it's going to cover
+                // the whole screen and handle its own reveal — snap the
+                // gate away instantly underneath it rather than running
+                // the normal fade/celebration, which would just be
+                // hidden behind the video anyway.
+                var introPlaying = typeof window.startIntroOverlay === 'function' && window.startIntroOverlay();
+                if (introPlaying) {
+                    passGate.classList.add('hidden', 'unlocking');
+                    passForm.classList.add('unlocked');
+                    return;
+                }
                 if (instant) {
                     passGate.classList.add('hidden', 'unlocking');
                     passForm.classList.add('unlocked');
@@ -31317,6 +31601,7 @@
                 let btsActiveSpawn = null; // {tier, item, img, x, y, size, spawnedAt, expiresAt, missedAt}
                 let btsLastSummonAt = 0;
                 let btsGestureHoldSince = 0; // when the current 2/3-finger pose started, for the debounce above
+                let btsWasFist = false; // edge-detects the open→fist transition, so a catch only counts at the moment the hand actually closes — see onHandsResults
                 let btsPalmPos = null;
                 let btsPalmSize = 120;
                 let btsPalmReady = false;
@@ -31915,6 +32200,7 @@
                         fistLitIndex = 0;
                         btsPalmReady = false;
                         btsGestureHoldSince = 0;
+                        btsWasFist = false;
                         return;
                     }
 
@@ -31963,15 +32249,24 @@
                             btsGestureHoldSince = 0;
                         }
 
-                        if (pose === 'fist' && btsActiveSpawn && !btsActiveSpawn.missedAt) {
-                            // Only counts as a catch if the fist is
-                            // actually near where the photo currently
-                            // is — it's moving on its own now, so
-                            // closing your hand somewhere else shouldn't
-                            // catch it.
+                        if (pose === 'fist' && !btsWasFist && btsActiveSpawn && !btsActiveSpawn.missedAt) {
+                            // Only counts as a catch at the MOMENT the
+                            // hand closes into a fist (the open→fist
+                            // transition) while that fist is near the
+                            // photo — not just "hand currently happens
+                            // to be closed and near it". Without the
+                            // !btsWasFist check here, closing your fist
+                            // as a miss and then simply dragging that
+                            // still-closed hand over to the photo
+                            // afterward would also register as a catch,
+                            // which isn't a real catch. This way, a miss
+                            // requires opening your hand and closing it
+                            // again, right over the photo, for another
+                            // real attempt.
                             const dist = Math.hypot(btsPalmPos.x - btsActiveSpawn.x, btsPalmPos.y - btsActiveSpawn.y);
                             if (dist < btsActiveSpawn.size * BTS_CATCH_RADIUS_FACTOR) catchBtsSpawn();
                         }
+                        btsWasFist = pose === 'fist';
                         return;
                     }
 
@@ -32163,6 +32458,7 @@
                         btsActiveSpawn = null;
                         btsCelebration = null;
                         btsGestureHoldSince = 0;
+                        btsWasFist = false;
                         if (mode === 'bts') {
                             hint.textContent = 'Hold up 2 or 3 fingers to summon a photo · Open your palm to get ready · Close your fist to catch!';
                             loadBtsCollection();
