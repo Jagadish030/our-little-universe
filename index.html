@@ -15272,6 +15272,7 @@
                         <button type="button" class="game-choice-btn" id="chooseTugOfWar">🪢<span>Tug of War</span><small>mash to pull the rope</small></button>
                         <button type="button" class="game-choice-btn" id="chooseReactionRace">⚡<span>Reaction Race</span><small>fastest tap wins, best of 5</small></button>
                         <button type="button" class="game-choice-btn" id="chooseAirHockey">🏒<span>Air Hockey</span><small>live paddle &amp; puck</small></button>
+                        <button type="button" class="game-choice-btn" id="choosePictionary">✏️<span>Pictionary</span><small>draw &amp; guess, invite friends</small></button>
                     </div>
                 </div>
                 <div class="game-view hidden" id="memoryMatchView">
@@ -20547,6 +20548,7 @@
             chooseTugOfWar.addEventListener('click', openTugOfWar);
             chooseReactionRace.addEventListener('click', openReactionRace);
             chooseAirHockey.addEventListener('click', openAirHockey);
+            document.getElementById('choosePictionary').addEventListener('click', () => { window.location.href = 'pictionary.html'; });
             document.querySelectorAll('.game-back-btn').forEach(b => b.addEventListener('click', () => {
                 clearInterval(memoryTimerInterval);
                 clearTimeout(ocTimeout);
