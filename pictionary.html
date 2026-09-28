@@ -203,6 +203,20 @@ label.fld>input,label.fld>select,label.fld>textarea{margin-top:.35rem;color:var(
 .wtag{display:inline-flex;align-items:center;gap:.4rem;background:var(--night);border:1px solid var(--line);border-radius:999px;padding:.25rem .3rem .25rem .7rem;font-size:.85rem;font-weight:600}
 .wtag button{width:26px;height:26px;border-radius:50%;border:0;background:var(--night3);padding:0}
 .sheet .actions{display:flex;gap:.6rem;justify-content:flex-end;margin-top:1rem}
+.sheet.wide{width:min(720px,100%)}
+.wm-top{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.7rem}
+.wm-top h2{margin:0}
+.wm-count{color:var(--muted);font-weight:700;font-size:.85rem;margin:.6rem 0 .2rem}
+.wlist.tall{max-height:min(38dvh,340px);max-height:min(38vh,340px);max-height:min(38dvh,340px);overflow:auto;align-content:flex-start}
+button.wtag{cursor:pointer;color:var(--text);padding:.4rem .8rem;min-height:36px}
+button.wtag:hover{border-color:var(--rose-deep)}
+.wtag small{color:var(--muted);font-weight:700;font-size:.7rem}
+.wtag.mine{border-color:rgba(212,165,116,.6)}
+.wtag.mine small{color:var(--gold)}
+.wtag.gone{opacity:.8}
+.wm-edit{margin-top:.6rem;padding:.8rem;border:1px solid var(--rose-deep);border-radius:16px;background:var(--night)}
+.wm-edit .lbl{font-weight:700;color:var(--muted);font-size:.85rem;margin-bottom:.4rem}
+.wm-edit .actions{margin-top:.7rem;flex-wrap:wrap}
 #toast{position:fixed;left:50%;bottom:calc(20px + var(--sab));transform:translate(-50%,20px);background:#fff;color:var(--ink);padding:.6rem 1rem;border-radius:12px;font-weight:700;opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:min(92vw,420px);text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:50}
@@ -230,6 +244,7 @@ label.fld>input,label.fld>select,label.fld>textarea{margin-top:.35rem;color:var(
           <button id="joinBtn" class="btn primary" type="button">Join</button>
         </div>
         <p class="msg" id="landingMsg" role="alert"></p>
+        <button id="wordsBtnLanding" class="btn hidden" type="button" style="width:100%;margin-top:.6rem">Manage word lists</button>
       </div>
       <a class="home-link" id="homeLink" href="index.html">Back to our universe</a>
     </div>
@@ -351,29 +366,51 @@ label.fld>input,label.fld>select,label.fld>textarea{margin-top:.35rem;color:var(
 <canvas id="confetti" class="hidden"></canvas>
 
 <!-- Word manager -->
-<div class="modal hidden" id="wordsModal" role="dialog" aria-modal="true" aria-label="Manage words">
-  <div class="sheet">
-    <h2>Your words</h2>
+<div class="modal hidden" id="wordsModal" role="dialog" aria-modal="true" aria-label="Word lists">
+  <div class="sheet wide">
+    <div class="wm-top"><h2>Word lists</h2><button class="btn" id="wmClose" type="button">Close</button></div>
+    <div class="seg" id="wmCats">
+      <button type="button" data-c="general">General</button>
+      <button type="button" data-c="spicy">Spicy</button>
+      <button type="button" data-c="movies">Movies</button>
+    </div>
+    <div class="seg hidden" id="wmLangs" style="margin-top:.5rem">
+      <button type="button" data-l="hindi">Hindi</button>
+      <button type="button" data-l="english">English</button>
+      <button type="button" data-l="telugu">Telugu</button>
+    </div>
+    <div class="seg" id="wmDiffs" style="margin-top:.5rem">
+      <button type="button" data-d="all">All</button>
+      <button type="button" data-d="easy">Easy</button>
+      <button type="button" data-d="medium">Medium</button>
+      <button type="button" data-d="hard">Hard</button>
+    </div>
+    <input id="wmSearch" type="text" placeholder="Search words" autocomplete="off" style="margin-top:.6rem">
+    <div class="wm-count" id="wmCount"></div>
+    <div class="wm-edit hidden" id="wmEdit">
+      <div class="lbl" id="wmEditTitle">Edit word</div>
+      <input id="wmEditText" type="text" maxlength="40" autocomplete="off" aria-label="Word">
+      <select id="wmEditDiff" aria-label="Difficulty" style="margin-top:.5rem"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select>
+      <div class="actions">
+        <button class="btn" id="wmEditDelete" type="button">Delete</button>
+        <button class="btn" id="wmEditCancel" type="button">Cancel</button>
+        <button class="btn primary" id="wmEditSave" type="button">Save</button>
+      </div>
+    </div>
+    <div class="wlist tall" id="wmList"></div>
+    <button class="btn hidden" id="wmMore" type="button" style="width:100%;margin-top:.5rem">Show more</button>
+    <button class="btn hidden" id="wmHiddenToggle" type="button" style="width:100%;margin-top:.5rem"></button>
+    <h2 style="margin:1.1rem 0 .5rem;font-size:1.1rem">Add new words</h2>
+    <label class="fld">One word or phrase per line
+      <textarea id="wmText" placeholder="Type or paste your words" maxlength="4000"></textarea>
+    </label>
     <div class="two">
-      <label class="fld">Category
-        <select id="wmCat"><option value="general">General</option><option value="spicy">Spicy</option><option value="movies">Movies</option></select>
-      </label>
       <label class="fld">Difficulty
-        <select id="wmDiff"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select>
+        <select id="wmAddDiff"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select>
       </label>
+      <div style="display:flex;align-items:flex-end;margin-bottom:.9rem"><button class="btn primary" id="wmAdd" type="button" style="width:100%">Add words</button></div>
     </div>
-    <label class="fld hidden" id="wmLangWrap">Movie language
-      <select id="wmLang"><option value="hindi">Hindi</option><option value="english">English</option><option value="telugu">Telugu</option></select>
-    </label>
-    <label class="fld">New words, one per line
-      <textarea id="wmText" placeholder="One word or phrase per line" maxlength="4000"></textarea>
-    </label>
-    <div class="actions">
-      <button class="btn" id="wmClose" type="button">Close</button>
-      <button class="btn primary" id="wmAdd" type="button">Add words</button>
-    </div>
-    <h2 style="margin-top:1.2rem;font-size:1.1rem">Added so far</h2>
-    <div class="wlist" id="wmList"></div>
+    <p class="note" id="wmAddNote" style="color:var(--muted)"></p>
   </div>
 </div>
 <script>
@@ -712,29 +749,37 @@ async function loadStatic() {
   WORDS_CACHE = out;
   return out;
 }
-async function fetchCustom(cat) {
+async function fetchRows(cat) {
+  const out = [];
   try {
-    const { data, error } = await sb.from('pictionary_words').select('difficulty,language,word').eq('category', cat).range(0, 4999);
-    if (error) throw error;
-    return data || [];
-  } catch (e) { console.warn('custom words unavailable', e); return []; }
+    for (let from = 0; from < 20000; from += 1000) {
+      const { data, error } = await sb.from('pictionary_words').select('id,category,difficulty,language,word,kind')
+        .eq('category', cat).order('id', { ascending: true }).range(from, from + 999);
+      if (error) throw error;
+      out.push(...(data || []));
+      if (!data || data.length < 1000) break;
+    }
+  } catch (e) { console.warn('word rows unavailable', e); return null; }
+  return out;
 }
 async function buildPool(settings) {
   const st = await loadStatic();
   const cat = settings.category;
   const tiers = { easy: [], medium: [], hard: [] };
   const seen = new Set();
+  const rows = (await fetchRows(cat)) || [];
+  const hidden = new Set(rows.filter((r) => r.kind === 'hide').map((r) => (r.language || '') + '|' + normalize(r.word)));
   const add = (d, w) => {
     w = cleanWord(w); if (!w) return;
     const k = normalize(w); if (!k || seen.has(k)) return;
     seen.add(k); tiers[d].push(w);
   };
-  const custom = await fetchCustom(cat);
+  const custom = rows.filter((r) => r.kind !== 'hide');
   if (cat === 'movies') {
-    for (const l of settings.languages) for (const d of DIFFS) st.movies[l][d].forEach((w) => add(d, w));
+    for (const l of settings.languages) for (const d of DIFFS) st.movies[l][d].filter((w) => !hidden.has(l + '|' + normalize(w))).forEach((w) => add(d, w));
     custom.filter((r) => settings.languages.includes(r.language)).forEach((r) => add(DIFFS.includes(r.difficulty) ? r.difficulty : 'medium', r.word));
   } else {
-    for (const d of DIFFS) st[cat][d].forEach((w) => add(d, w));
+    for (const d of DIFFS) st[cat][d].filter((w) => !hidden.has('|' + normalize(w))).forEach((w) => add(d, w));
     custom.forEach((r) => add(DIFFS.includes(r.difficulty) ? r.difficulty : 'medium', r.word));
   }
   if (!tiers.easy.length && !tiers.medium.length && !tiers.hard.length) FALLBACK_WORDS.forEach((w) => add('easy', w));
@@ -1473,53 +1518,151 @@ function bindLobby() {
 }
 
 /* ═════════ word manager (only for the two of you) ═════════ */
+const WM = { cat: 'general', lang: 'english', diff: 'all', q: '', limit: 150, items: [], hidden: [], showHidden: false, editing: null, busy: false, loaded: false };
+const DIFF_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
+function openWords() { show($('wordsModal'), true); WM.editing = null; wmLoad(); }
 function bindWords() {
   if (!family) return;
-  const cat = $('wmCat');
-  cat.addEventListener('change', () => { show($('wmLangWrap'), cat.value === 'movies'); wmRefresh(); });
-  $('wordsBtn').addEventListener('click', () => { show($('wordsModal'), true); show($('wmLangWrap'), cat.value === 'movies'); wmRefresh(); });
+  $('wordsBtn').addEventListener('click', openWords);
+  $('wordsBtnLanding').addEventListener('click', openWords);
   $('wmClose').addEventListener('click', () => show($('wordsModal'), false));
   $('wordsModal').addEventListener('click', (e) => { if (e.target === $('wordsModal')) show($('wordsModal'), false); });
+  $('wmCats').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; WM.cat = b.dataset.c; WM.limit = 150; WM.editing = null; wmLoad(); });
+  $('wmLangs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; WM.lang = b.dataset.l; WM.limit = 150; WM.editing = null; wmLoad(); });
+  $('wmDiffs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; WM.diff = b.dataset.d; WM.limit = 150; wmRender(); });
+  $('wmSearch').addEventListener('input', (e) => { WM.q = normalize(e.target.value); WM.limit = 150; wmRender(); });
+  $('wmMore').addEventListener('click', () => { WM.limit += 200; wmRender(); });
+  $('wmHiddenToggle').addEventListener('click', () => { WM.showHidden = !WM.showHidden; WM.limit = 150; wmRender(); });
   $('wmAdd').addEventListener('click', wmAdd);
+  $('wmEditCancel').addEventListener('click', () => { WM.editing = null; wmRender(); });
+  $('wmEditSave').addEventListener('click', wmSaveEdit);
+  $('wmEditDelete').addEventListener('click', wmDelete);
 }
-async function wmRefresh() {
+async function wmLoad() {
+  if (WM.busy) return;
+  WM.busy = true;
+  $('wmCount').textContent = 'Loading…';
+  try {
+    const st = await loadStatic();
+    const rows = await fetchRows(WM.cat);
+    if (rows === null) { $('wmCount').textContent = 'Could not load your saved words. Showing built-in words only.'; }
+    const all = rows || [];
+    const lang = WM.cat === 'movies' ? WM.lang : null;
+    const inScope = all.filter((r) => (r.language || null) === lang);
+    const hiddenRows = inScope.filter((r) => r.kind === 'hide');
+    const hiddenKeys = new Set(hiddenRows.map((r) => normalize(r.word)));
+    const customRows = inScope.filter((r) => r.kind !== 'hide');
+    const items = [], seen = new Set();
+    const push = (it) => { const k = normalize(it.word); if (!k || seen.has(k)) return; seen.add(k); items.push(it); };
+    customRows.forEach((r) => push({ word: r.word, difficulty: DIFFS.includes(r.difficulty) ? r.difficulty : 'medium', source: 'custom', id: r.id }));
+    for (const d of DIFFS) {
+      const list = WM.cat === 'movies' ? st.movies[lang][d] : st[WM.cat][d];
+      list.forEach((w) => { if (!hiddenKeys.has(normalize(w))) push({ word: w, difficulty: d, source: 'builtin' }); });
+    }
+    const rank = { easy: 0, medium: 1, hard: 2 };
+    items.sort((a, b) => rank[a.difficulty] - rank[b.difficulty] || a.word.localeCompare(b.word));
+    WM.items = items;
+    WM.hidden = hiddenRows.map((r) => ({ word: r.word, difficulty: r.difficulty, id: r.id }));
+    WM.loaded = true;
+  } finally { WM.busy = false; }
+  wmRender();
+}
+function wmRender() {
+  $('wmCats').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.c === WM.cat));
+  show($('wmLangs'), WM.cat === 'movies');
+  $('wmLangs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.l === WM.lang));
+  $('wmDiffs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.d === WM.diff));
   const list = $('wmList'); list.textContent = '';
-  const { data, error } = await sb.from('pictionary_words').select('id,difficulty,language,word')
-    .eq('category', $('wmCat').value).order('created_at', { ascending: false }).range(0, 499);
-  if (error) { list.append(h('span', { class: 'note', text: 'Could not load your words.' })); return; }
-  if (!data.length) { list.append(h('span', { class: 'note', style: 'color:var(--muted)', text: 'Nothing added here yet.' })); return; }
-  data.forEach((r) => {
-    const meta = r.difficulty[0].toUpperCase() + (r.language ? ' · ' + r.language : '');
-    list.append(h('span', { class: 'wtag' }, r.word, h('small', { style: 'color:var(--muted)', text: meta }),
-      h('button', { type: 'button', 'aria-label': 'Delete ' + r.word, text: '✕', onclick: async () => {
-        const { error: err } = await sb.from('pictionary_words').delete().eq('id', r.id);
-        if (err) toast('Could not delete'); else wmRefresh();
-      } })));
-  });
+  const ed = WM.editing;
+  show($('wmEdit'), !!ed);
+  if (ed) {
+    $('wmEditTitle').textContent = ed.source === 'custom' ? 'Edit your word' : 'Edit built-in word';
+    if (document.activeElement !== $('wmEditText')) $('wmEditText').value = ed.word;
+    $('wmEditDiff').value = ed.difficulty;
+    $('wmEditDelete').textContent = ed.source === 'custom' ? 'Delete' : 'Remove';
+  }
+  if (WM.showHidden) {
+    const shown = WM.hidden.filter((r) => !WM.q || normalize(r.word).includes(WM.q));
+    $('wmCount').textContent = shown.length + ' removed built-in word' + (shown.length === 1 ? '' : 's');
+    shown.forEach((r) => list.append(h('button', { type: 'button', class: 'wtag gone', title: 'Tap to bring it back', onclick: () => wmRestore(r) }, r.word, h('small', { text: 'restore' }))));
+    if (!shown.length) list.append(h('span', { class: 'note', style: 'color:var(--muted)', text: 'Nothing removed.' }));
+    show($('wmMore'), false);
+  } else {
+    const f = WM.items.filter((it) => (WM.diff === 'all' || it.difficulty === WM.diff) && (!WM.q || normalize(it.word).includes(WM.q)));
+    $('wmCount').textContent = f.length + ' word' + (f.length === 1 ? '' : 's') + ' (tap one to edit)';
+    f.slice(0, WM.limit).forEach((it) => list.append(h('button', { type: 'button', class: 'wtag' + (it.source === 'custom' ? ' mine' : ''), onclick: () => { WM.editing = it; $('wmEditText').value = it.word; wmRender(); $('wmEditText').focus(); } },
+      it.word, h('small', { text: it.difficulty[0].toUpperCase() + (it.source === 'custom' ? ' · yours' : '') }))));
+    if (!f.length) list.append(h('span', { class: 'note', style: 'color:var(--muted)', text: 'No words match.' }));
+    show($('wmMore'), f.length > WM.limit);
+    $('wmMore').textContent = 'Show more (' + (f.length - WM.limit) + ' left)';
+  }
+  const hb = $('wmHiddenToggle');
+  show(hb, WM.hidden.length > 0 || WM.showHidden);
+  hb.textContent = WM.showHidden ? 'Back to the word list' : 'Removed built-in words (' + WM.hidden.length + ')';
+  $('wmAddNote').textContent = 'Adding to: ' + WM.cat + (WM.cat === 'movies' ? ' · ' + WM.lang : '');
+}
+const wmLang = () => (WM.cat === 'movies' ? WM.lang : null);
+function wmExists(word, exceptNorm) {
+  const k = normalize(word);
+  return k !== exceptNorm && WM.items.some((it) => normalize(it.word) === k);
+}
+async function wmSaveEdit() {
+  const ed = WM.editing; if (!ed || WM.busy) return;
+  const word = cleanWord($('wmEditText').value), diff = $('wmEditDiff').value;
+  if (!word) { toast('Type a word (at least 2 characters)'); return; }
+  if (word === ed.word && diff === ed.difficulty) { WM.editing = null; wmRender(); return; }
+  if (wmExists(word, normalize(ed.word))) { toast('That word is already in this list'); return; }
+  $('wmEditSave').disabled = true;
+  try {
+    let err;
+    if (ed.source === 'custom') {
+      ({ error: err } = await sb.from('pictionary_words').update({ word, difficulty: diff }).eq('id', ed.id));
+    } else {
+      ({ error: err } = await sb.from('pictionary_words').insert([
+        { category: WM.cat, difficulty: ed.difficulty, language: wmLang(), word: ed.word, kind: 'hide', created_by: myId },
+        { category: WM.cat, difficulty: diff, language: wmLang(), word, kind: 'custom', created_by: myId },
+      ]));
+    }
+    if (err) { toast('Could not save. Try again.'); return; }
+    WM.editing = null; toast('Saved');
+  } finally { $('wmEditSave').disabled = false; }
+  await wmLoad();
+}
+async function wmDelete() {
+  const ed = WM.editing; if (!ed || WM.busy) return;
+  $('wmEditDelete').disabled = true;
+  try {
+    let err;
+    if (ed.source === 'custom') ({ error: err } = await sb.from('pictionary_words').delete().eq('id', ed.id));
+    else ({ error: err } = await sb.from('pictionary_words').insert({ category: WM.cat, difficulty: ed.difficulty, language: wmLang(), word: ed.word, kind: 'hide', created_by: myId }));
+    if (err) { toast('Could not delete. Try again.'); return; }
+    WM.editing = null; toast(ed.source === 'custom' ? 'Deleted' : 'Removed from the game');
+  } finally { $('wmEditDelete').disabled = false; }
+  await wmLoad();
+}
+async function wmRestore(r) {
+  const { error } = await sb.from('pictionary_words').delete().eq('id', r.id);
+  if (error) { toast('Could not restore'); return; }
+  toast('Restored');
+  await wmLoad();
 }
 async function wmAdd() {
-  const category = $('wmCat').value, difficulty = $('wmDiff').value;
-  const language = category === 'movies' ? $('wmLang').value : null;
+  if (WM.busy) return;
+  const diff = $('wmAddDiff').value;
   const raw = $('wmText').value.split('\n').map(cleanWord).filter(Boolean);
   if (!raw.length) { toast('Type at least one word'); return; }
   $('wmAdd').disabled = true;
   try {
-    const ex = await sb.from('pictionary_words').select('word,language').eq('category', category).range(0, 4999);
-    if (ex.error) { toast('Could not save. Try again.'); return; }
-    const seen = new Set((ex.data || []).map((r) => (r.language || '') + '|' + normalize(r.word)));
+    const seen = new Set(WM.items.map((it) => normalize(it.word)));
     const rows = [];
-    raw.forEach((w) => {
-      const k = (language || '') + '|' + normalize(w);
-      if (seen.has(k)) return;
-      seen.add(k); rows.push({ category, difficulty, language, word: w, created_by: myId });
-    });
-    if (!rows.length) { toast('Those words are already there'); return; }
+    raw.forEach((w) => { const k = normalize(w); if (!k || seen.has(k)) return; seen.add(k); rows.push({ category: WM.cat, difficulty: diff, language: wmLang(), word: w, kind: 'custom', created_by: myId }); });
+    if (!rows.length) { toast('Those words are already in this list'); return; }
     const { error } = await sb.from('pictionary_words').insert(rows);
     if (error) { toast('Could not save. Try again.'); return; }
     $('wmText').value = '';
     toast('Added ' + rows.length + ' word' + (rows.length === 1 ? '' : 's'));
-    wmRefresh();
   } finally { $('wmAdd').disabled = false; }
+  await wmLoad();
 }
 
 /* ═════════ start-up ═════════ */
@@ -1527,6 +1670,7 @@ function init() {
   bindLobby(); bindWords(); buildTools();
   $('nameInput').value = loadName();
   show($('homeLink'), !!family);
+  show($('wordsBtnLanding'), !!family);
   const params = new URLSearchParams(location.search);
   const roomParam = String(params.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
   $('createBtn').addEventListener('click', createRoom);
