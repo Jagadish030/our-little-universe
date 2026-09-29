@@ -28,11 +28,9 @@ button{cursor:pointer}
 .hidden{display:none!important}
 :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .btn{border:1px solid var(--line);background:var(--night3);color:var(--text);padding:.7rem 1.1rem;border-radius:14px;font-weight:700;min-height:44px;transition:transform .12s,background .15s,opacity .15s}
-.btn:hover:not(:disabled){background:#3e2c49}
 .btn:active:not(:disabled){transform:scale(.97)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn.primary{background:linear-gradient(135deg,#E8B4B8,#D98A93);color:#3a1f27;border-color:transparent}
-.btn.primary:hover:not(:disabled){background:linear-gradient(135deg,#f0c1c5,#e19aa2)}
 .btn.ready-on{background:linear-gradient(135deg,#a8d8b5,#7BCB93);color:#17301e;border-color:transparent}
 .icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--night3);display:grid;place-items:center;font-size:1rem}
 input[type=text],input:not([type]),select,textarea{background:var(--night2);border:1px solid var(--line);border-radius:12px;padding:.7rem .9rem;width:100%;font-size:16px;min-height:44px}
@@ -209,7 +207,6 @@ label.fld>input,label.fld>select,label.fld>textarea{margin-top:.35rem;color:var(
 .wm-count{color:var(--muted);font-weight:700;font-size:.85rem;margin:.6rem 0 .2rem}
 .wlist.tall{max-height:min(38dvh,340px);max-height:min(38vh,340px);max-height:min(38dvh,340px);overflow:auto;align-content:flex-start}
 button.wtag{cursor:pointer;color:var(--text);padding:.4rem .8rem;min-height:36px}
-button.wtag:hover{border-color:var(--rose-deep)}
 .wtag small{color:var(--muted);font-weight:700;font-size:.7rem}
 .wtag.mine{border-color:rgba(212,165,116,.6)}
 .wtag.mine small{color:var(--gold)}
@@ -217,6 +214,45 @@ button.wtag:hover{border-color:var(--rose-deep)}
 .wm-edit{margin-top:.6rem;padding:.8rem;border:1px solid var(--rose-deep);border-radius:16px;background:var(--night)}
 .wm-edit .lbl{font-weight:700;color:var(--muted);font-size:.85rem;margin-bottom:.4rem}
 .wm-edit .actions{margin-top:.7rem;flex-wrap:wrap}
+.btn.toggle{position:relative}
+.btn.toggle.on{background:linear-gradient(135deg,#a8d8b5,#7BCB93);color:#17301e;border-color:transparent}
+.g-right{display:flex;align-items:center;gap:.4rem;justify-self:end}
+.g-right .icon-btn{width:36px;height:36px;font-size:1rem}
+.trow{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;width:100%}
+.trow.scroll{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;padding-bottom:2px;scrollbar-width:none}
+.trow.scroll::-webkit-scrollbar{display:none}
+.tt{flex:none;padding:.4rem .8rem;border-radius:10px;border:1px solid var(--line);background:var(--night);font-weight:700;font-size:.82rem;min-height:36px}
+.tt.on{background:var(--night3);border-color:var(--rose-deep);color:var(--rose)}
+.react-bar{display:flex;gap:.4rem;justify-content:center;width:min(100%,calc(40dvh*4/3 + 60px))}
+.react-bar button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--night2);font-size:1.25rem;display:grid;place-items:center}
+.react-float{position:absolute;bottom:6%;z-index:5;display:flex;flex-direction:column;align-items:center;pointer-events:none;animation:floatUp 2.4s ease-out forwards}
+.react-float span{font-size:1.8rem;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+.react-float small{color:#fff;background:rgba(0,0,0,.45);border-radius:8px;padding:0 .3rem;font-size:.65rem;font-weight:700;margin-top:2px}
+@keyframes floatUp{0%{transform:translateY(0);opacity:0}10%{opacity:1}100%{transform:translateY(-160px);opacity:0}}
+.overlay .ov-in{display:flex;flex-direction:column;align-items:center;gap:.7rem;width:100%;max-width:420px}
+.overlay.bottom{align-items:flex-end;padding-bottom:calc(1rem + var(--sab))}
+.overlay.bottom .ov-in{background:linear-gradient(180deg,rgba(27,18,32,0),rgba(27,18,32,.96) 22%);padding:1.4rem 1rem .3rem;border-radius:20px 20px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center}
+.chip2{display:inline-flex;gap:.4rem;align-items:center;padding:.3rem .7rem;background:var(--night2);border-radius:999px;font-weight:700;font-size:.85rem}
+.chip2 b{color:var(--ok)}
+.vote-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;justify-content:center}
+.stars{font-size:1.8rem;letter-spacing:.15em;color:var(--gold)}
+.dare{background:linear-gradient(135deg,rgba(233,61,130,.18),rgba(139,94,60,.18));border:1px solid rgba(233,61,130,.4);border-radius:16px;padding:.8rem 1rem;text-align:center;max-width:360px}
+.dare .who{font-weight:700;color:var(--rose);margin-bottom:.3rem}
+.dare .txt{font-family:var(--marker);font-size:1.2rem;line-height:1.3}
+.gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.6rem;max-height:min(50dvh,420px);overflow:auto}
+.gcard{background:var(--night);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.gcard img{width:100%;display:block;aspect-ratio:4/3.3;object-fit:cover;background:var(--paper)}
+.gcard .cap{padding:.4rem .5rem;display:flex;flex-direction:column;gap:.35rem;font-size:.78rem;color:var(--muted);font-weight:700}
+.gcard .cap span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gcard .cap .btn{min-height:32px;padding:.25rem .6rem;font-size:.78rem}
+.wtag.wide{max-width:100%}
+@media(hover:hover) and (pointer:fine){
+  .btn:hover:not(:disabled){background:#3e2c49}
+  .btn.primary:hover:not(:disabled){background:linear-gradient(135deg,#f0c1c5,#e19aa2)}
+  button.wtag:hover{border-color:var(--rose-deep)}
+}
+button,.cat,.chip,.seg button,.icon-btn,.tt,.sw,.sz{touch-action:manipulation}
 #toast{position:fixed;left:50%;bottom:calc(20px + var(--sab));transform:translate(-50%,20px);background:#fff;color:var(--ink);padding:.6rem 1rem;border-radius:12px;font-weight:700;opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:min(92vw,420px);text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:50}
@@ -299,6 +335,19 @@ button.wtag:hover{border-color:var(--rose-deep)}
             <p class="note hidden" id="spicyNote">Spicy words are suggestive. Only pick it when everyone in the room is fine with that.</p>
           </div>
           <div class="set-row">
+            <div class="lbl">How you play</div>
+            <div class="seg" id="modeRow">
+              <button type="button" data-mode="versus">Versus</button>
+              <button type="button" data-mode="coop">Co-op</button>
+            </div>
+            <p class="note" id="modeNote" style="color:var(--muted)"></p>
+          </div>
+          <div class="set-row">
+            <div class="lbl">Extras</div>
+            <button type="button" class="btn toggle" id="bonusBtn" style="width:100%">Bonus points</button>
+            <p class="note" id="bonusNote" style="color:var(--muted)"></p>
+          </div>
+          <div class="set-row">
             <div class="lbl">Difficulty</div>
             <div class="seg" id="diffRow">
               <button type="button" data-diff="easy">Easy</button>
@@ -335,7 +384,11 @@ button.wtag:hover{border-color:var(--rose-deep)}
           <span id="roundLabel"></span>
         </div>
         <div class="g-word" id="wordDisplay"></div>
-        <div class="g-time" id="timeText"></div>
+        <div class="g-right">
+          <button class="icon-btn" id="galBtn" type="button" aria-label="Drawing gallery">🖼️</button>
+          <button class="icon-btn" id="muteBtn" type="button" aria-label="Sound">🔊</button>
+          <div class="g-time" id="timeText"></div>
+        </div>
       </div>
       <div class="pencil" id="pencil"><div class="pencil-track"><div class="pencil-body" id="pencilBody"></div></div></div>
       <div class="g-main">
@@ -348,6 +401,7 @@ button.wtag:hover{border-color:var(--rose-deep)}
             </div>
           </div>
           <div class="tools hidden" id="tools"></div>
+          <div class="react-bar" id="reactBar"></div>
         </div>
         <aside class="g-chat">
           <div class="chat-log" id="chatLog" aria-live="polite"></div>
@@ -373,6 +427,7 @@ button.wtag:hover{border-color:var(--rose-deep)}
       <button type="button" data-c="general">General</button>
       <button type="button" data-c="spicy">Spicy</button>
       <button type="button" data-c="movies">Movies</button>
+      <button type="button" data-c="dares">Dares</button>
     </div>
     <div class="seg hidden" id="wmLangs" style="margin-top:.5rem">
       <button type="button" data-l="hindi">Hindi</button>
@@ -390,7 +445,7 @@ button.wtag:hover{border-color:var(--rose-deep)}
     <div class="wm-edit hidden" id="wmEdit">
       <div class="lbl" id="wmEditTitle">Edit word</div>
       <input id="wmEditText" type="text" maxlength="40" autocomplete="off" aria-label="Word">
-      <select id="wmEditDiff" aria-label="Difficulty" style="margin-top:.5rem"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select>
+      <div id="wmEditDiffWrap"><select id="wmEditDiff" aria-label="Difficulty" style="margin-top:.5rem"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></div>
       <div class="actions">
         <button class="btn" id="wmEditDelete" type="button">Delete</button>
         <button class="btn" id="wmEditCancel" type="button">Cancel</button>
@@ -405,12 +460,22 @@ button.wtag:hover{border-color:var(--rose-deep)}
       <textarea id="wmText" placeholder="Type or paste your words" maxlength="4000"></textarea>
     </label>
     <div class="two">
-      <label class="fld">Difficulty
+      <label class="fld" id="wmAddDiffWrap">Difficulty
         <select id="wmAddDiff"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select>
       </label>
       <div style="display:flex;align-items:flex-end;margin-bottom:.9rem"><button class="btn primary" id="wmAdd" type="button" style="width:100%">Add words</button></div>
     </div>
     <p class="note" id="wmAddNote" style="color:var(--muted)"></p>
+  </div>
+</div>
+
+<!-- Drawing gallery -->
+<div class="modal hidden" id="galleryModal" role="dialog" aria-modal="true" aria-label="Drawing gallery">
+  <div class="sheet wide">
+    <div class="wm-top"><h2>This game's drawings</h2><button class="btn" id="galClose" type="button">Close</button></div>
+    <div class="gal-grid" id="galGrid"></div>
+    <button class="btn hidden" id="galCollage" type="button" style="width:100%;margin-top:.8rem">Save as one image</button>
+    <p class="note" style="color:var(--muted);margin-top:.6rem">Saved on this device only, and cleared when the game ends.</p>
   </div>
 </div>
 <script>
@@ -427,13 +492,17 @@ const TIME_OPTIONS = [30, 45, 60, 80, 100, 120, 150, 180];
 const CATS = ['general', 'spicy', 'movies'];
 const DIFFS = ['easy', 'medium', 'hard'];
 const LANGS = ['hindi', 'english', 'telugu'];
-const DEFAULTS = { category: 'general', languages: ['hindi', 'english', 'telugu'], difficulty: 'medium', drawTime: 80, rounds: 3 };
+const DEFAULTS = { category: 'general', languages: ['hindi', 'english', 'telugu'], difficulty: 'medium', drawTime: 80, rounds: 3, mode: 'versus', bonuses: true };
+const MODES = ['versus', 'coop'];
+const REACTIONS = ['😂', '🔥', '👏', '😮', '❤️'];
+const STREAK_STEP = 15, STREAK_MAX = 60, VOTE_PTS = 10;
 const MAX_PLAYERS = 8;
 const PALETTE = ['#2B2B2B', '#8A8A8A', '#FFFFFF', '#E5484D', '#F5872F', '#F5C518', '#46A758', '#12A594', '#3E63DD', '#8E4EC6', '#E93D82', '#8B5E3C'];
 const SIZES = [3, 7, 14, 26];
 const AV_COLORS = ['#E8B4B8', '#9B8AC4', '#D4A574', '#A8B89C', '#F0A6A0', '#8EC5D6', '#C9A0DC', '#E6C56E'];
 const LW = 800, LH = 600, PAPER = '#FFFDF9';
 const FALLBACK_WORDS = ['apple', 'house', 'tree', 'cat', 'sun', 'boat', 'flower', 'car'];
+const FALLBACK_DARES = ['Do your best catwalk across the room', 'Talk in a movie-trailer voice for the next minute', 'Let the winner pick your ringtone for a day'];
 
 /* ═════════ tiny helpers ═════════ */
 const $ = (id) => document.getElementById(id);
@@ -466,6 +535,10 @@ function sanitizeName(s) { return String(s || '').replace(/[\u0000-\u001f<>]/g, 
 function cleanWord(s) {
   const w = String(s || '').replace(/[\u0000-\u001f_<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
   return (w.length >= 2 && /[\p{L}\p{N}]/u.test(w)) ? w : '';
+}
+function cleanText(s, max, min) {
+  const w = String(s || '').replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max || 200);
+  return w.length >= (min || 1) ? w : '';
 }
 function colorFor(id) { let x = 0; for (const c of String(id)) x = (x * 31 + c.charCodeAt(0)) >>> 0; return AV_COLORS[x % AV_COLORS.length]; }
 function initialOf(name) { return (Array.from(String(name).trim())[0] || '?').toUpperCase(); }
@@ -503,6 +576,8 @@ function normSettings(s) {
     drawTime: TIME_OPTIONS.includes(Number(s.drawTime)) ? Number(s.drawTime) : DEFAULTS.drawTime,
     rounds: rounds >= 1 && rounds <= 20 ? rounds : DEFAULTS.rounds,
     languages: langs.length ? langs : DEFAULTS.languages.slice(),
+    mode: MODES.includes(s.mode) ? s.mode : DEFAULTS.mode,
+    bonuses: s.bonuses === false ? false : DEFAULTS.bonuses,
   };
 }
 
@@ -559,7 +634,8 @@ let hostTimer = null, uiTimer = null, helloTimer = null;
 const S = {
   snap: null, offset: 0, hostId: null, canvasSeq: -1,
   words: {}, choices: {}, askedWord: -1, pickedSeq: -1,
-  pending: [], presIds: new Set(), hostAbsentSince: 0, ovKey: '', lastGameKey: '',
+  pending: [], presIds: new Set(), hostAbsentSince: 0, ovKey: '', lastCelebrate: '',
+  gallery: [], capSeq: -1, votedSeq: -1, lastTick: 0,
 };
 const nowHost = () => Date.now() + S.offset;
 const nameOf = (id) => { const p = S.snap && S.snap.players.find((x) => x.id === id); return p ? p.name : 'Someone'; };
@@ -571,10 +647,55 @@ const ctx = cv.getContext('2d');
 cv.width = LW * 2; cv.height = LH * 2;
 ctx.setTransform(2, 0, 0, 2, 0, 0);
 let strokes = [], strokeCtr = 1;
+const KINDS = ['pen', 'rainbow', 'spark', 'line', 'rect', 'oval', 'fill'];
+const SHAPES = ['line', 'rect', 'oval'];
 function clearCanvas() { ctx.fillStyle = PAPER; ctx.fillRect(0, 0, LW, LH); }
 clearCanvas();
-function paintStroke(st) {
-  const p = st.pts; if (!p.length) return;
+
+function hash32(n) {
+  n = (n ^ 61) ^ (n >>> 16); n = n + (n << 3); n = n ^ (n >>> 4);
+  n = Math.imul(n, 0x27d4eb2d); n = n ^ (n >>> 15);
+  return n >>> 0;
+}
+function hexToRgb(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex));
+  const v = m ? parseInt(m[1], 16) : 0;
+  return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
+}
+function floodFill(x, y, hex) {
+  const W = cv.width, HT = cv.height;
+  const px = Math.round(x * 2), py = Math.round(y * 2);
+  if (px < 0 || py < 0 || px >= W || py >= HT) return;
+  const img = ctx.getImageData(0, 0, W, HT), d = img.data;
+  const i0 = (py * W + px) * 4;
+  const sr = d[i0], sg = d[i0 + 1], sb2 = d[i0 + 2];
+  const rgb = hexToRgb(hex), fr = rgb[0], fg = rgb[1], fb = rgb[2];
+  if (Math.abs(sr - fr) < 4 && Math.abs(sg - fg) < 4 && Math.abs(sb2 - fb) < 4) return;
+  const match = (i) => Math.abs(d[i] - sr) + Math.abs(d[i + 1] - sg) + Math.abs(d[i + 2] - sb2) <= 90;
+  const vis = new Uint8Array(W * HT);
+  const stack = [px, py];
+  while (stack.length) {
+    const y0 = stack.pop(); let x1 = stack.pop();
+    while (x1 >= 0 && !vis[y0 * W + x1] && match((y0 * W + x1) * 4)) x1--;
+    x1++;
+    let up = false, down = false;
+    for (let xx = x1; xx < W && !vis[y0 * W + xx] && match((y0 * W + xx) * 4); xx++) {
+      const p = y0 * W + xx; vis[p] = 1;
+      const i = p * 4; d[i] = fr; d[i + 1] = fg; d[i + 2] = fb; d[i + 3] = 255;
+      if (y0 > 0) {
+        const pu = (y0 - 1) * W + xx, m = !vis[pu] && match(pu * 4);
+        if (m && !up) { stack.push(xx, y0 - 1); up = true; } else if (!m) up = false;
+      }
+      if (y0 < HT - 1) {
+        const pd = (y0 + 1) * W + xx, m = !vis[pd] && match(pd * 4);
+        if (m && !down) { stack.push(xx, y0 + 1); down = true; } else if (!m) down = false;
+      }
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+function paintPen(st) {
+  const p = st.pts;
   ctx.strokeStyle = st.c; ctx.fillStyle = st.c; ctx.lineWidth = st.w; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   if (p.length === 1) { ctx.beginPath(); ctx.arc(p[0][0], p[0][1], st.w / 2, 0, Math.PI * 2); ctx.fill(); st.drawn = 1; return; }
   const a = st.drawn >= 4 ? st.drawn - 2 : 0;
@@ -588,11 +709,69 @@ function paintStroke(st) {
   ctx.stroke();
   st.drawn = p.length;
 }
-function redrawAll() { clearCanvas(); for (const st of strokes) { st.drawn = 0; paintStroke(st); } }
+function paintRainbow(st) {
+  const p = st.pts;
+  ctx.lineWidth = st.w; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (p.length === 1) { ctx.fillStyle = 'hsl(0,90%,55%)'; ctx.beginPath(); ctx.arc(p[0][0], p[0][1], st.w / 2, 0, Math.PI * 2); ctx.fill(); st.drawn = 1; return; }
+  for (let i = Math.max(1, st.drawn); i < p.length; i++) {
+    ctx.strokeStyle = 'hsl(' + ((i * 6) % 360) + ',90%,55%)';
+    ctx.beginPath(); ctx.moveTo(p[i - 1][0], p[i - 1][1]); ctx.lineTo(p[i][0], p[i][1]); ctx.stroke();
+  }
+  st.drawn = p.length;
+}
+function paintSpark(st) {
+  const p = st.pts;
+  for (let i = st.drawn; i < p.length; i++) {
+    const x = p[i][0], y = p[i][1];
+    if (st.lx !== undefined && Math.hypot(x - st.lx, y - st.ly) < st.w * 0.8) continue;
+    st.lx = x; st.ly = y;
+    const r = hash32((i * 73856093) ^ (Math.round(x) * 19349663) ^ (Math.round(y) * 83492791));
+    const jx = ((r & 255) / 255 - 0.5) * st.w * 0.9, jy = (((r >>> 8) & 255) / 255 - 0.5) * st.w * 0.9;
+    const rad = st.w * (0.22 + ((r >>> 16) & 3) * 0.1);
+    ctx.fillStyle = st.c; ctx.globalAlpha = 0.55 + ((r >>> 18) & 3) * 0.15;
+    ctx.beginPath(); ctx.arc(x + jx, y + jy, rad, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+    if (((r >>> 20) & 3) === 0) {
+      const gx = x - jx, gy = y - jy, gl = Math.max(2, st.w * 0.55);
+      ctx.strokeStyle = '#F5C518'; ctx.lineWidth = Math.max(1, st.w * 0.12); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(gx - gl, gy); ctx.lineTo(gx + gl, gy); ctx.moveTo(gx, gy - gl); ctx.lineTo(gx, gy + gl); ctx.stroke();
+    }
+  }
+  st.drawn = p.length;
+}
+function paintShape(st) {
+  const p = st.pts;
+  if (p.length < 2) { paintPen({ pts: p, c: st.c, w: st.w, drawn: 0 }); st.drawn = p.length; return; }
+  const a = p[0], b = p[p.length - 1];
+  ctx.strokeStyle = st.c; ctx.lineWidth = st.w; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  if (st.n === 'line') { ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); }
+  else if (st.n === 'rect') ctx.rect(Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]));
+  else ctx.ellipse((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, Math.max(0.5, Math.abs(b[0] - a[0]) / 2), Math.max(0.5, Math.abs(b[1] - a[1]) / 2), 0, 0, Math.PI * 2);
+  ctx.stroke();
+  st.drawn = p.length;
+}
+function paintStroke(st) {
+  if (!st.pts.length) return;
+  switch (st.n) {
+    case 'fill': if (!st.drawn) { st.drawn = 1; try { floodFill(st.pts[0][0], st.pts[0][1], st.c); } catch (e) {} } break;
+    case 'rainbow': paintRainbow(st); break;
+    case 'spark': paintSpark(st); break;
+    case 'line': case 'rect': case 'oval': paintShape(st); break;
+    default: paintPen(st);
+  }
+}
+function redrawAll() { clearCanvas(); for (const st of strokes) { st.drawn = 0; st.lx = undefined; paintStroke(st); } }
+function cleanItem(o) {
+  return { id: o.id, n: KINDS.includes(o.n) ? o.n : 'pen', c: /^#[0-9a-fA-F]{6}$/.test(String(o.c)) ? String(o.c) : '#2B2B2B', w: Math.max(1, Math.min(60, Number(o.w) || 7)), pts: [], drawn: 0 };
+}
+function addPoints(st, list) {
+  for (const q of list) if (Array.isArray(q)) st.pts.push([Math.max(0, Math.min(LW, Number(q[0]) || 0)), Math.max(0, Math.min(LH, Number(q[1]) || 0))]);
+}
 
 /* local drawing (the drawer) */
-const tool = { color: PALETTE[0], size: SIZES[1], eraser: false };
-let cur = null, outBuf = [], flushT = null;
+const tool = { kind: 'pen', color: PALETTE[0], size: SIZES[1] };
+let cur = null, outBuf = [], flushT = null, previewRaf = 0;
 const canDraw = () => amDrawer() && S.snap.phase === 'drawing' && S.snap.seq === S.canvasSeq;
 function toLogical(e) {
   const r = cv.getBoundingClientRect();
@@ -601,28 +780,48 @@ function toLogical(e) {
   return [Math.round(x * 10) / 10, Math.round(y * 10) / 10];
 }
 function sendDraw(payload) { if (ch && joined) ch.send({ type: 'broadcast', event: 'd', payload }); }
+function toolSpec() {
+  if (tool.kind === 'erase') return { n: 'pen', c: PAPER, w: Math.round(tool.size * 2.2) };
+  if (tool.kind === 'fill') return { n: 'fill', c: tool.color, w: 1 };
+  return { n: tool.kind, c: tool.color, w: tool.size };
+}
 function flushOut() {
   clearTimeout(flushT); flushT = null;
-  if (!cur || !outBuf.length) return;
-  sendDraw({ k: 's', t: S.canvasSeq, id: cur.id, c: cur.c, w: cur.w, p: outBuf });
+  if (!cur || !outBuf.length || SHAPES.includes(cur.n)) return;
+  sendDraw({ k: 's', t: S.canvasSeq, id: cur.id, n: cur.n, c: cur.c, w: cur.w, p: outBuf });
   outBuf = [];
 }
 function scheduleFlush() { if (!flushT) flushT = setTimeout(flushOut, 70); }
+function preview() {
+  previewRaf = 0;
+  if (!cur || !SHAPES.includes(cur.n)) return;
+  redrawAll();
+  paintStroke({ n: cur.n, c: cur.c, w: cur.w, pts: cur.pts, drawn: 0 });
+}
 cv.addEventListener('pointerdown', (e) => {
   if (!canDraw() || cur) return;
   if (e.pointerType === 'mouse' && e.button !== 0) return;
   e.preventDefault();
-  try { cv.setPointerCapture(e.pointerId); } catch (err) {}
   const pt = toLogical(e);
-  cur = { id: strokeCtr++, c: tool.eraser ? PAPER : tool.color, w: tool.eraser ? Math.round(tool.size * 2.2) : tool.size, pts: [pt], drawn: 0, pid: e.pointerId };
-  strokes.push(cur);
-  paintStroke(cur);
-  outBuf = [pt];
-  scheduleFlush();
+  const spec = toolSpec();
+  if (spec.n === 'fill') {
+    const item = { id: strokeCtr++, n: 'fill', c: spec.c, w: 1, pts: [pt], drawn: 0 };
+    strokes.push(item); paintStroke(item);
+    sendDraw({ k: 's', t: S.canvasSeq, id: item.id, n: 'fill', c: item.c, w: 1, p: [pt] });
+    return;
+  }
+  try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+  cur = { id: strokeCtr++, n: spec.n, c: spec.c, w: spec.w, pts: SHAPES.includes(spec.n) ? [pt, pt] : [pt], drawn: 0, pid: e.pointerId };
+  if (!SHAPES.includes(cur.n)) { strokes.push(cur); paintStroke(cur); outBuf = [pt]; scheduleFlush(); }
 });
 cv.addEventListener('pointermove', (e) => {
   if (!cur || e.pointerId !== cur.pid) return;
   e.preventDefault();
+  if (SHAPES.includes(cur.n)) {
+    cur.pts[1] = toLogical(e);
+    if (!previewRaf) previewRaf = requestAnimationFrame(preview);
+    return;
+  }
   const co = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
   const list = co.length ? co : [e];
   let added = false;
@@ -636,7 +835,11 @@ cv.addEventListener('pointermove', (e) => {
 });
 function endStroke(e) {
   if (!cur || (e && e.pointerId !== cur.pid)) return;
-  flushOut();
+  if (SHAPES.includes(cur.n)) {
+    if (e && e.clientX !== undefined) cur.pts[1] = toLogical(e);
+    strokes.push(cur); redrawAll();
+    sendDraw({ k: 's', t: S.canvasSeq, id: cur.id, n: cur.n, c: cur.c, w: cur.w, p: [cur.pts[0], cur.pts[1]] });
+  } else flushOut();
   cur = null; outBuf = [];
 }
 cv.addEventListener('pointerup', endStroke);
@@ -658,8 +861,8 @@ function applyDrawOp(p) {
   if (p.k === 's') {
     if (!Array.isArray(p.p)) return;
     let st = strokes.length && strokes[strokes.length - 1].id === p.id ? strokes[strokes.length - 1] : strokes.find((s) => s.id === p.id);
-    if (!st) { st = { id: p.id, c: String(p.c), w: Number(p.w) || 7, pts: [], drawn: 0 }; strokes.push(st); }
-    for (const q of p.p) if (Array.isArray(q)) st.pts.push([Number(q[0]) || 0, Number(q[1]) || 0]);
+    if (!st) { st = cleanItem(p); strokes.push(st); }
+    addPoints(st, p.p);
     paintStroke(st);
   } else if (p.k === 'u') { strokes.pop(); redrawAll(); }
   else if (p.k === 'x') { strokes = []; clearCanvas(); }
@@ -682,7 +885,7 @@ function requestSync() { sendDraw({ k: 'need', t: S.canvasSeq, from: myId }); }
 function sendSync(to) {
   const chunks = []; let curChunk = [], size = 0;
   for (const st of strokes) {
-    const item = { id: st.id, c: st.c, w: st.w, p: st.pts };
+    const item = { id: st.id, n: st.n, c: st.c, w: st.w, p: st.pts };
     const sz = JSON.stringify(item).length;
     if (size + sz > 30000 && curChunk.length) { chunks.push(curChunk); curChunk = []; size = 0; }
     curChunk.push(item); size += sz;
@@ -693,47 +896,79 @@ function sendSync(to) {
 function applySync(p) {
   if (p.part === 0) { strokes = []; clearCanvas(); }
   for (const s of (p.strokes || [])) {
-    const st = { id: s.id, c: String(s.c), w: Number(s.w) || 7, pts: (s.p || []).map((q) => [Number(q[0]) || 0, Number(q[1]) || 0]), drawn: 0 };
+    const st = cleanItem(s); addPoints(st, s.p || []);
     strokes.push(st); paintStroke(st);
   }
 }
 
 /* drawing tools UI */
+const TOOL_LIST = [['pen', 'Pen'], ['rainbow', 'Rainbow'], ['spark', 'Sparkle'], ['line', 'Line'], ['rect', 'Box'], ['oval', 'Circle'], ['fill', 'Fill'], ['erase', 'Erase']];
 function buildTools() {
   const box = $('tools'); box.textContent = '';
-  PALETTE.forEach((c, i) => {
-    const b = h('button', { type: 'button', class: 'sw' + (i === 0 ? ' on' : ''), style: 'background:' + c, 'aria-label': 'Colour ' + (i + 1), 'data-c': c });
-    b.addEventListener('click', () => { tool.color = c; tool.eraser = false; syncTools(); });
-    box.append(b);
+  const r1 = h('div', { class: 'trow scroll' });
+  TOOL_LIST.forEach(([k, label]) => {
+    const b = h('button', { type: 'button', class: 'tt', 'data-k': k, text: label });
+    b.addEventListener('click', () => { tool.kind = k; syncTools(); });
+    r1.append(b);
   });
-  box.append(h('span', { class: 'tsep' }));
+  const r2 = h('div', { class: 'trow' });
+  PALETTE.forEach((c, i) => {
+    const b = h('button', { type: 'button', class: 'sw', style: 'background:' + c, 'aria-label': 'Colour ' + (i + 1), 'data-c': c });
+    b.addEventListener('click', () => { tool.color = c; if (tool.kind === 'erase' || tool.kind === 'rainbow') tool.kind = 'pen'; syncTools(); });
+    r2.append(b);
+  });
+  const r3 = h('div', { class: 'trow' });
   SIZES.forEach((s) => {
     const b = h('button', { type: 'button', class: 'sz', 'aria-label': 'Brush size ' + s, 'data-s': s }, h('i', { style: `width:${Math.min(s, 22) * 0.9 + 3}px;height:${Math.min(s, 22) * 0.9 + 3}px` }));
     b.addEventListener('click', () => { tool.size = s; syncTools(); });
-    box.append(b);
+    r3.append(b);
   });
-  box.append(h('span', { class: 'tsep' }));
-  box.append(h('button', { type: 'button', class: 'tb', id: 'tbErase', text: 'Erase', onclick: () => { tool.eraser = !tool.eraser; syncTools(); } }));
-  box.append(h('button', { type: 'button', class: 'tb', text: 'Undo', onclick: undoStroke }));
-  box.append(h('button', { type: 'button', class: 'tb', text: 'Clear', onclick: clearBoard }));
+  r3.append(h('span', { class: 'tsep' }));
+  r3.append(h('button', { type: 'button', class: 'tb', text: 'Undo', onclick: undoStroke }));
+  r3.append(h('button', { type: 'button', class: 'tb', text: 'Clear', onclick: clearBoard }));
+  box.append(r1, r2, r3);
   syncTools();
 }
 function syncTools() {
-  $('tools').querySelectorAll('.sw').forEach((b) => b.classList.toggle('on', !tool.eraser && b.dataset.c === tool.color));
-  $('tools').querySelectorAll('.sz').forEach((b) => b.classList.toggle('on', Number(b.dataset.s) === tool.size));
-  const e = $('tbErase'); if (e) e.classList.toggle('on', tool.eraser);
+  const box = $('tools');
+  box.querySelectorAll('.tt').forEach((b) => b.classList.toggle('on', b.dataset.k === tool.kind));
+  box.querySelectorAll('.sw').forEach((b) => b.classList.toggle('on', tool.kind !== 'erase' && tool.kind !== 'rainbow' && b.dataset.c === tool.color));
+  box.querySelectorAll('.sz').forEach((b) => b.classList.toggle('on', Number(b.dataset.s) === tool.size));
 }
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && canDraw()) { e.preventDefault(); undoStroke(); }
-  if (e.key === 'Escape') show($('wordsModal'), false);
+  if (e.key === 'Escape') { show($('wordsModal'), false); show($('galleryModal'), false); }
 });
+
+/* reactions floating over the drawing */
+let lastReact = 0;
+function buildReact() {
+  const bar = $('reactBar'); bar.textContent = '';
+  REACTIONS.forEach((em) => bar.append(h('button', { type: 'button', 'aria-label': 'React ' + em, text: em, onclick: () => sendReact(em) })));
+}
+function sendReact(em) {
+  const now = Date.now();
+  if (now - lastReact < 350 || !ch || !joined) return;
+  lastReact = now;
+  ch.send({ type: 'broadcast', event: 'r', payload: { e: em, from: myId } });
+  showReact(em, myId);
+}
+function showReact(em, from) {
+  if (!REACTIONS.includes(em)) return;
+  const stage = $('stage');
+  const f = h('div', { class: 'react-float', style: 'left:' + (6 + Math.random() * 74).toFixed(1) + '%' }, h('span', { text: em }), h('small', { text: nameOf(from) }));
+  stage.append(f);
+  const all = stage.querySelectorAll('.react-float');
+  if (all.length > 24) all[0].remove();
+  setTimeout(() => f.remove(), 2500);
+}
 
 /* ═════════ word pool ═════════ */
 let WORDS_CACHE = null;
 async function loadStatic() {
   if (WORDS_CACHE) return WORDS_CACHE;
   const split = (s) => String(s || '').split('|').map((x) => x.trim()).filter(Boolean);
-  const out = { general: {}, spicy: {}, movies: { hindi: {}, english: {}, telugu: {} } };
+  const out = { general: {}, spicy: {}, movies: { hindi: {}, english: {}, telugu: {} }, dares: [] };
   let base = null, mv = null;
   try { const r = await fetch('pictionary-words.json', { cache: 'no-cache' }); if (r.ok) base = await r.json(); } catch (e) {}
   try { const r = await fetch('movies.json', { cache: 'no-cache' }); if (r.ok) mv = await r.json(); } catch (e) {}
@@ -746,6 +981,7 @@ async function loadStatic() {
       out.movies[l][d] = own.concat(extra);
     }
   }
+  out.dares = (base && base.dares) ? String(base.dares).split('|').map((x) => x.trim()).filter(Boolean) : FALLBACK_DARES.slice();
   WORDS_CACHE = out;
   return out;
 }
@@ -786,6 +1022,40 @@ async function buildPool(settings) {
   return tiers;
 }
 
+/* ═════════ sound effects (tiny WebAudio synth, no files to host) ═════════ */
+const sfx = (() => {
+  let ctxA = null, muted = false;
+  try { muted = localStorage.getItem('pictMuted') === '1'; } catch (e) {}
+  function ac() {
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return null;
+    if (!ctxA) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; ctxA = new AC(); }
+    if (ctxA.state === 'suspended') ctxA.resume().catch(() => {});
+    return ctxA;
+  }
+  function tone(freq, t0, dur, type, gain) {
+    const c = ac(); if (!c || muted) return;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type || 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, c.currentTime + t0);
+    g.gain.exponentialRampToValueAtTime(gain || 0.16, c.currentTime + t0 + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + t0 + dur);
+    o.connect(g); g.connect(c.destination);
+    o.start(c.currentTime + t0); o.stop(c.currentTime + t0 + dur + 0.05);
+  }
+  return {
+    unlock() { ac(); },
+    isMuted() { return muted; },
+    setMuted(v) { muted = v; try { localStorage.setItem('pictMuted', v ? '1' : '0'); } catch (e) {} },
+    tick() { tone(880, 0, 0.07, 'square', 0.06); },
+    correct() { tone(523, 0, 0.11, 'sine', 0.15); tone(784, 0.08, 0.16, 'sine', 0.15); },
+    close() { tone(300, 0, 0.14, 'sine', 0.08); },
+    buzz() { tone(140, 0, 0.28, 'sawtooth', 0.12); },
+    join() { tone(660, 0, 0.09, 'sine', 0.1); },
+    roll() { for (let i = 0; i < 6; i++) tone(200 + i * 40, i * 0.09, 0.1, 'square', 0.05); },
+    fanfare() { [523, 659, 784, 1046].forEach((f, i) => tone(f, i * 0.11, 0.24, 'triangle', 0.14)); },
+  };
+})();
+
 /* ═════════ networking ═════════ */
 function emitEv(ev) { if (ch && joined) ch.send({ type: 'broadcast', event: 'ev', payload: ev }); handleEv(ev); }
 function intent(t, payload) {
@@ -802,6 +1072,7 @@ function connect() {
   ch.on('broadcast', { event: 'st' }, ({ payload }) => { if (!isHost) applyState(payload); });
   ch.on('broadcast', { event: 'ev' }, ({ payload }) => { if (!isHost) handleEv(payload); });
   ch.on('broadcast', { event: 'd' }, ({ payload }) => handleDraw(payload));
+  ch.on('broadcast', { event: 'r' }, ({ payload }) => { if (payload && payload.from !== myId) showReact(payload.e, payload.from); });
   ch.on('broadcast', { event: 'i' }, ({ payload }) => { if (isHost) hostHandle(payload); });
   ch.on('presence', { event: 'sync' }, onPresence);
   ch.subscribe(async (status) => {
@@ -856,10 +1127,11 @@ function handleEv(p) {
       addChat({ name: nameOf(p.from), text: p.text, cls: p.priv ? 'priv' : '' });
       break;
     case 'correct':
-      addChat({ text: nameOf(p.id) + ' guessed the word! +' + p.pts, cls: 'ok' });
+      addChat({ text: nameOf(p.id) + ' guessed the word! +' + p.pts + (p.note ? ' (' + p.note + ')' : ''), cls: 'ok' });
+      sfx.correct();
       if (p.id === myId && navigator.vibrate) { try { navigator.vibrate(60); } catch (e) {} }
       break;
-    case 'close': addChat({ text: 'So close! Check your spelling.', cls: 'close' }); break;
+    case 'close': addChat({ text: 'So close! Check your spelling.', cls: 'close' }); sfx.close(); break;
     case 'word': S.words[p.seq] = p.word; if (S.snap) renderGame(); break;
     case 'choices': S.choices[p.seq] = p.words; if (S.snap) renderOverlay(); break;
     case 'full': setStatus('Room is full', 'This room already has ' + MAX_PLAYERS + ' players.', { back: true }); teardown(); break;
@@ -877,13 +1149,16 @@ function addChat(m) {
 }
 
 /* ═════════ client: apply snapshots + render ═════════ */
+const teamScore = (s) => s.players.reduce((a, p) => a + (p.score || 0), 0);
 function applyState(snap) {
   if (!snap || snap.room !== room) return;
+  const prev = S.snap;
   S.snap = snap;
   S.offset = isHost ? 0 : (snap.hostNow - Date.now());
   S.hostId = snap.hostId;
   if (!isHost && !snap.players.some((p) => p.id === myId)) { sendHello(); return; }
   if (snap.phase === 'lobby') { S.words = {}; S.choices = {}; }
+  if (snap.phase === 'starting' && (!prev || prev.phase !== 'starting')) { S.gallery = []; S.capSeq = -1; }
   if (snap.seq !== S.canvasSeq) {
     S.canvasSeq = snap.seq;
     resetCanvas();
@@ -893,13 +1168,73 @@ function applyState(snap) {
   if (snap.phase === 'drawing' && snap.drawerId === myId && !S.words[snap.seq] && S.askedWord !== snap.seq) {
     S.askedWord = snap.seq; intent('need_word', { id: myId });
   }
+  if (snap.phase === 'turnend' && S.capSeq !== snap.seq) { S.capSeq = snap.seq; captureDrawing(snap); }
+  const pp = prev ? prev.phase : null;
+  if (snap.phase === 'turnend' && pp !== 'turnend' && snap.reason === 'time') sfx.buzz();
+  if (snap.phase === 'gameover' && pp !== 'gameover') sfx.roll();
   clearInterval(helloTimer);
-  renderAll();
+    renderAll();
 }
 function renderAll() {
   const s = S.snap; if (!s) return;
   if (s.phase === 'lobby') { setScreen('lobby'); renderLobby(); }
   else { setScreen('game'); renderGame(); }
+}
+
+/* gallery of finished drawings (kept on this device only) */
+function captureDrawing(snap) {
+  if (!strokes.length) return;
+  try {
+    const c = document.createElement('canvas'); c.width = 800; c.height = 660;
+    const x = c.getContext('2d');
+    x.fillStyle = PAPER; x.fillRect(0, 0, 800, 660);
+    x.drawImage(cv, 0, 0, 800, 600);
+    x.fillStyle = '#F4E9DC'; x.fillRect(0, 600, 800, 60);
+    x.fillStyle = '#3B2A33'; x.textBaseline = 'middle'; x.textAlign = 'left';
+    x.font = "28px 'Permanent Marker','Comic Sans MS',cursive";
+    x.fillText(String(snap.word || '').slice(0, 26), 20, 631);
+    x.textAlign = 'right'; x.font = "700 20px Quicksand,system-ui,sans-serif";
+    x.fillText('drawn by ' + nameOf(snap.drawerId), 780, 631);
+    const url = c.toDataURL('image/jpeg', 0.85);
+    if (!url || url.length < 30) return;
+    S.gallery.push({ url, word: snap.word || '', by: nameOf(snap.drawerId) });
+    if (S.gallery.length > 60) S.gallery.shift();
+   
+  } catch (e) { /* the gallery is a bonus, never block the game */ }
+}
+function saveUrl(url, name) {
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.rel = 'noopener';
+  document.body.append(a); a.click(); a.remove();
+}
+function openGallery() {
+  const box = $('galGrid'); box.textContent = '';
+  S.gallery.forEach((g, i) => {
+    box.append(h('div', { class: 'gcard' },
+      h('img', { src: g.url, alt: 'Drawing of ' + g.word }),
+      h('div', { class: 'cap' }, h('span', { text: g.word + ' · ' + g.by }),
+        h('button', { type: 'button', class: 'btn', text: 'Save', onclick: () => saveUrl(g.url, 'pictionary-' + room + '-' + (i + 1) + '.jpg') }))));
+  });
+  if (!S.gallery.length) box.append(h('p', { class: 'note', style: 'color:var(--muted)', text: 'No drawings yet.' }));
+  show($('galCollage'), S.gallery.length > 0);
+  show($('galleryModal'), true);
+}
+async function saveCollage() {
+  const items = S.gallery.slice(-12); if (!items.length) return;
+  const cols = 2, cw = 600, chh = 495, gap = 16, pad = 24, head = 76;
+  const rows = Math.ceil(items.length / cols);
+  const c = document.createElement('canvas');
+  c.width = pad * 2 + cols * cw + (cols - 1) * gap; c.height = head + pad + rows * chh + (rows - 1) * gap;
+  const x = c.getContext('2d');
+  x.fillStyle = '#1B1220'; x.fillRect(0, 0, c.width, c.height);
+  x.fillStyle = '#E8B4B8'; x.textBaseline = 'middle'; x.font = "44px 'Permanent Marker','Comic Sans MS',cursive";
+  x.fillText('Pictionary', pad, head / 2 + 4);
+  const imgs = await Promise.all(items.map((g) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = g.url; })));
+  imgs.forEach((im, i) => {
+    if (!im) return;
+    x.drawImage(im, pad + (i % cols) * (cw + gap), head + Math.floor(i / cols) * (chh + gap), cw, chh);
+  });
+  saveUrl(c.toDataURL('image/jpeg', 0.9), 'pictionary-' + room + '-collage.jpg');
 }
 
 /* lobby */
@@ -926,16 +1261,22 @@ function renderLobby() {
   show($('langRow'), st.category === 'movies');
   $('langRow').querySelectorAll('.chip').forEach((b) => b.classList.toggle('on', st.languages.includes(b.dataset.lang)));
   show($('spicyNote'), st.category === 'spicy');
+  $('spicyNote').textContent = 'Spicy words are suggestive. Only pick it when everyone in the room is fine with that.' + (st.mode === 'versus' ? ' The player in last place gets a dare card at the end.' : '');
+  $('modeRow').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.mode === st.mode));
+  $('modeNote').textContent = st.mode === 'coop' ? 'Everyone plays as one team. Solve as many drawings as you can together.' : 'Everyone competes. The highest score wins.';
   $('diffRow').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.diff === st.difficulty));
   $('timeRow').querySelectorAll('button').forEach((b) => b.classList.toggle('on', Number(b.dataset.t) === st.drawTime));
   $('timeVal').textContent = st.drawTime + ' seconds';
   $('roundsVal').textContent = st.rounds;
   $('roundsRange').value = st.rounds;
+  $('bonusBtn').classList.toggle('on', st.bonuses);
+  $('bonusBtn').textContent = st.bonuses ? 'Bonus points on' : 'Bonus points off';
+  $('bonusNote').textContent = st.mode === 'coop' ? 'Guessing several drawings in a row earns the team a streak bonus.' : 'First correct guess scores double, streaks add extra, and likes reward the drawer.';
   const me = s.players.find((p) => p.id === myId);
   const conn = s.players.filter((p) => p.connected);
   const allReady = conn.length >= 2 && conn.every((p) => p.ready);
   const rb = $('readyBtn');
-  rb.textContent = me && me.ready ? "Ready. Tap to undo" : "I'm ready";
+  rb.textContent = me && me.ready ? 'Ready. Tap to undo' : "I'm ready";
   rb.classList.toggle('ready-on', !!(me && me.ready));
   show($('startBtn'), isHost);
   $('startBtn').disabled = !allReady || !!(H && H.startBusy);
@@ -949,21 +1290,25 @@ function renderLobby() {
 /* in-game */
 function renderGame() {
   const s = S.snap; if (!s || s.phase === 'lobby') return;
-  $('roundLabel').textContent = s.phase === 'starting' ? 'Get ready'
+  let label = s.phase === 'starting' ? 'Get ready'
     : s.phase === 'gameover' ? 'Game over'
     : 'Round ' + Math.min(s.round, s.rounds) + ' of ' + s.rounds;
+  if (s.settings.mode === 'coop' && s.phase !== 'starting') label += ' · Team ' + teamScore(s);
+  $('roundLabel').textContent = label;
   renderWord();
   renderPlayers();
   renderOverlay();
   const drawing = amDrawer() && s.phase === 'drawing';
   show($('tools'), drawing);
   cv.classList.toggle('nodraw', !drawing);
+  show($('reactBar'), !drawing && (s.phase === 'drawing' || s.phase === 'turnend'));
   const form = $('guessForm'), inp = $('guessInput'), btn = $('guessBtn');
   show(form, !drawing);
-  let dis = false, ph = 'Type your guess';
+  let ph = 'Type your guess';
   if (s.phase === 'drawing') { if (s.guessed.includes(myId)) ph = 'Chat with the others who got it'; }
   else ph = 'Say something';
-  inp.disabled = dis; btn.disabled = dis; inp.placeholder = ph;
+  inp.placeholder = ph; inp.disabled = false; btn.disabled = false;
+  syncMute();
 }
 function renderWordBox(str, solid, sub) {
   const box = $('wordDisplay'); box.textContent = '';
@@ -992,7 +1337,7 @@ function renderWord() {
   if (s.phase === 'turnend' && s.word) return renderWordBox(s.word, true, 'The word was');
   box.textContent = '';
   const t = s.phase === 'picking' ? (amDrawer() ? 'Choose a word' : nameOf(s.drawerId) + ' is choosing')
-    : s.phase === 'starting' ? 'Get ready' : s.phase === 'gameover' ? 'Final scores' : '';
+    : s.phase === 'starting' ? 'Get ready' : s.phase === 'gameover' ? (s.settings.mode === 'coop' ? 'Team result' : 'Final scores') : '';
   box.append(h('div', { class: 'wd' }, t));
 }
 function renderPlayers() {
@@ -1006,13 +1351,17 @@ function renderPlayers() {
       h('span', { class: 'av', style: 'background:' + colorFor(p.id), text: initialOf(p.name) }),
       h('span', { class: 'nm', text: p.name + (p.id === myId ? ' (you)' : '') }),
       h('span', { class: 'sc', text: String(p.score) }),
+      p.streak >= 2 ? h('span', { class: 'st', title: 'Streak', text: '🔥' + p.streak }) : null,
       drawingNow ? h('span', { class: 'st', text: '✏️' }) : (got ? h('span', { class: 'st', text: '✓' }) : null)));
   });
 }
+function scoreKey(s) { return s.players.slice().sort((a, b) => b.score - a.score || (a.id < b.id ? -1 : 1)).map((p) => p.id + ':' + p.score).join(','); }
 function renderOverlay() {
   const s = S.snap, ov = $('overlay'); if (!s) return;
   const sorted = s.players.slice().sort((a, b) => b.score - a.score);
-  let key = '', kids = null;
+  const sk = scoreKey(s);
+  const coop = s.settings.mode === 'coop';
+  let key = '', kids = null, bottom = false;
   switch (s.phase) {
     case 'starting':
       key = 'start'; if (S.ovKey === key) return;
@@ -1020,38 +1369,69 @@ function renderOverlay() {
       break;
     case 'picking': {
       const me = amDrawer(), words = S.choices[s.seq];
-      key = 'pick|' + s.seq + '|' + me + '|' + (words ? 1 : 0) + '|' + (S.pickedSeq === s.seq ? 1 : 0); if (S.ovKey === key) return;
+      key = 'pick|' + s.seq + '|' + me + '|' + (words ? words.join('~') : '') + '|' + (S.pickedSeq === s.seq ? 1 : 0) + '|' + (s.rerolled ? 1 : 0); if (S.ovKey === key) return;
       if (me) {
         kids = [h('h3', { text: 'Pick a word to draw' }),
           words ? h('div', { class: 'choices' }, words.map((w, i) => h('button', { class: 'btn primary', type: 'button', disabled: S.pickedSeq === s.seq, onclick: () => pickWord(i) }, w)))
             : h('div', { class: 'sub', text: 'Getting your words…' }),
+          words ? h('button', { class: 'btn', type: 'button', disabled: s.rerolled || S.pickedSeq === s.seq, onclick: rerollWords, text: s.rerolled ? 'No shuffles left' : 'Shuffle words (1 left)' }) : null,
           h('div', { class: 'sub', id: 'ovCd' })];
       } else kids = [h('h3', { text: nameOf(s.drawerId) + ' is picking a word' }), h('div', { class: 'cd', id: 'ovCd' })];
       break;
     }
     case 'turnend': {
-      key = 'end|' + s.seq + '|' + sorted.map((p) => p.id + ':' + p.score).join(','); if (S.ovKey === key) return;
+      const canVote = s.settings.bonuses && !coop && myId !== s.drawerId && s.reason !== 'left';
+      key = 'end|' + s.seq + '|' + sk + '|' + s.votes + '|' + (S.votedSeq === s.seq ? 1 : 0); if (S.ovKey === key) return;
+      bottom = true;
       const gains = Object.entries(s.gains || {}).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
       const title = s.reason === 'all' ? 'Everyone got it' : s.reason === 'left' ? nameOf(s.drawerId) + ' left the round' : "Time's up";
-      kids = [h('h3', { text: title }), h('div', { class: 'sub', text: 'The word was' }), h('div', { class: 'big', text: s.word || '' }),
-        gains.length ? h('ul', { class: 'gains' }, gains.map(([id, v]) => h('li', null, h('span', { text: nameOf(id) }), h('b', { text: '+' + v }))))
+      const voted = S.votedSeq === s.seq || (s.voted || []).includes(myId);
+      kids = [h('div', { class: 'sub', text: title + ' · the word was' }), h('div', { class: 'big', text: s.word || '' }),
+        gains.length ? h('div', { class: 'chips' }, gains.map(([id, v]) => h('span', { class: 'chip2' }, nameOf(id), h('b', { text: '+' + v }))))
           : h('div', { class: 'sub', text: 'Nobody guessed it' }),
+        (canVote || s.votes > 0) ? h('div', { class: 'vote-row' },
+          canVote ? h('button', { class: 'btn', type: 'button', disabled: voted, onclick: voteDrawing, text: voted ? 'Liked' : '👏 Great drawing!' }) : null,
+          s.votes > 0 ? h('span', { class: 'sub', text: s.votes + (s.votes === 1 ? ' like' : ' likes') }) : null) : null,
         h('div', { class: 'sub', id: 'ovCd' })];
       break;
     }
     case 'gameover': {
-      key = 'over|' + sorted.map((p) => p.id + ':' + p.score).join(','); if (S.ovKey === key) return;
-      const top = sorted.slice(0, 3);
-      const order = top.length >= 3 ? [top[1], top[0], top[2]] : top.length === 2 ? [top[1], top[0]] : top;
-      const rankOf = (p) => sorted.indexOf(p) + 1;
-      kids = [h('h3', { text: s.reason === 'alone' ? 'Not enough players left' : 'Game over' }),
-        h('div', { class: 'podium' }, order.map((p) => h('div', { class: 'pod p' + rankOf(p) },
-          h('div', { class: 'n', text: p.name }), h('div', { class: 'bar', text: String(rankOf(p)) }), h('div', { class: 's', text: p.score + ' pts' })))),
-        sorted.length > 3 ? h('ul', { class: 'gains' }, sorted.slice(3).map((p, i) => h('li', null, h('span', { text: (i + 4) + '. ' + p.name }), h('b', { text: String(p.score) })))) : null,
+      key = 'over|' + sk + '|' + (s.dare ? s.dare.text + '|' + s.dare.again : '') + '|' + S.gallery.length + '|' + (s.solved || 0); if (S.ovKey === key) return;
+      let head;
+      let celebrate = true;
+      if (coop) {
+        const played = s.played || 0, solved = s.solved || 0, ratio = played ? solved / played : 0;
+        const stars = ratio >= 0.8 ? 3 : ratio >= 0.5 ? 2 : ratio >= 0.25 ? 1 : 0;
+        const verdict = stars === 3 ? 'Dream team' : stars === 2 ? 'Solid teamwork' : stars === 1 ? 'Getting there' : 'Keep practising';
+        celebrate = ratio >= 0.5;
+        head = [h('h3', { text: s.reason === 'alone' ? 'Not enough players left' : 'Team result' }),
+          h('div', { class: 'big', text: solved + ' of ' + played + ' solved' }),
+          h('div', { class: 'stars', text: '★'.repeat(stars) + '☆'.repeat(3 - stars) }),
+          h('div', { class: 'sub', text: verdict + ' · ' + teamScore(s) + ' points together' }),
+          h('ul', { class: 'gains' }, sorted.map((p) => h('li', null, h('span', { text: p.name }), h('b', { text: String(p.score) }))))];
+      } else {
+        const top = sorted.slice(0, 3);
+        const order = top.length >= 3 ? [top[1], top[0], top[2]] : top.length === 2 ? [top[1], top[0]] : top;
+        const rankOf = (p) => sorted.indexOf(p) + 1;
+        head = [h('h3', { text: s.reason === 'alone' ? 'Not enough players left' : 'Game over' }),
+          h('div', { class: 'podium' }, order.map((p) => h('div', { class: 'pod p' + rankOf(p) },
+            h('div', { class: 'n', text: p.name }), h('div', { class: 'bar', text: String(rankOf(p)) }), h('div', { class: 's', text: p.score + ' pts' })))),
+          sorted.length > 3 ? h('ul', { class: 'gains' }, sorted.slice(3).map((p, i) => h('li', null, h('span', { text: (i + 4) + '. ' + p.name }), h('b', { text: String(p.score) })))) : null];
+      }
+      const dare = s.dare ? h('div', { class: 'dare' },
+        h('div', { class: 'who', text: nameOf(s.dare.to) + ' pays the forfeit' }),
+        h('div', { class: 'txt', text: s.dare.text }),
+        s.dare.to === myId && !s.dare.again ? h('button', { class: 'btn', type: 'button', text: 'Draw another card', onclick: () => intent('dare_again', { id: myId }) }) : null) : null;
+      kids = head.concat([dare,
         h('div', { class: 'choices' },
+          S.gallery.length ? h('button', { class: 'btn', type: 'button', text: 'Gallery (' + S.gallery.length + ')', onclick: openGallery }) : null,
           isHost ? h('button', { class: 'btn primary', type: 'button', text: 'Play again', onclick: hostPlayAgain }) : h('div', { class: 'sub', text: 'Waiting for the host to start again' }),
-          h('button', { class: 'btn', type: 'button', text: 'Leave', onclick: leaveRoom }))];
-      if (S.lastGameKey !== key) { S.lastGameKey = key; confetti(); }
+          h('button', { class: 'btn', type: 'button', text: 'Leave', onclick: leaveRoom }))]);
+      const ck = 'c|' + sk;
+      if (S.lastCelebrate !== ck) {
+        S.lastCelebrate = ck;
+        if (celebrate) setTimeout(() => { if (S.snap && S.snap.phase === 'gameover') { confetti(); sfx.fanfare(); } }, 1400);
+      }
       break;
     }
     default:
@@ -1059,14 +1439,24 @@ function renderOverlay() {
   }
   S.ovKey = key;
   ov.textContent = '';
-  kids.forEach((k) => k && ov.append(k));
-  ov.classList.toggle('full', s.phase === 'gameover');
+  ov.append(h('div', { class: 'ov-in' }, kids.filter(Boolean)));
+  ov.classList.toggle('bottom', bottom);
   show(ov, true);
 }
 function pickWord(i) {
   if (!S.snap || S.pickedSeq === S.snap.seq) return;
   S.pickedSeq = S.snap.seq;
   intent('pick', { id: myId, i });
+  renderOverlay();
+}
+function rerollWords() {
+  if (!S.snap || S.snap.rerolled || S.pickedSeq === S.snap.seq) return;
+  intent('reroll', { id: myId });
+}
+function voteDrawing() {
+  if (!S.snap || S.votedSeq === S.snap.seq) return;
+  S.votedSeq = S.snap.seq;
+  intent('vote', { id: myId });
   renderOverlay();
 }
 function confetti() {
@@ -1083,6 +1473,11 @@ function confetti() {
     else { x.clearRect(0, 0, c.width, c.height); c.classList.add('hidden'); }
   })(t0);
 }
+function syncMute() {
+  const b = $('muteBtn'); if (!b) return;
+  b.textContent = sfx.isMuted() ? '🔇' : '🔊';
+  b.setAttribute('aria-label', sfx.isMuted() ? 'Turn sound on' : 'Turn sound off');
+}
 
 /* timers on screen (pencil, clock, countdowns) */
 function uiTick() {
@@ -1096,10 +1491,11 @@ function uiTick() {
   const tt = $('timeText'), pen = $('pencil'), body = $('pencilBody');
   let pct = 100, low = false, label = '';
   if (s.phase === 'drawing') {
-    const left = Math.max(0, s.endsAt - now);
-    label = String(Math.ceil(left / 1000));
+    const left = Math.max(0, s.endsAt - now), sec = Math.ceil(left / 1000);
+    label = String(sec);
     pct = Math.max(0, Math.min(100, left / s.drawMs * 100));
-    low = Math.ceil(left / 1000) <= 10;
+    low = sec <= 10;
+    if (low && sec > 0 && S.lastTick !== sec) { S.lastTick = sec; sfx.tick(); }
   } else if (s.phase === 'picking') {
     label = String(Math.max(0, Math.ceil((s.pickEndsAt - now) / 1000)));
   }
@@ -1110,7 +1506,8 @@ function uiTick() {
   const cd = $('ovCd');
   if (cd) {
     const target = s.phase === 'picking' ? s.pickEndsAt : s.nextAt;
-    cd.textContent = String(Math.max(0, Math.ceil((target - now) / 1000)));
+    const n = Math.max(0, Math.ceil((target - now) / 1000));
+    cd.textContent = s.phase === 'turnend' ? 'Next drawing in ' + n : s.phase === 'picking' ? n + ' seconds left' : String(n);
   }
 }
 
@@ -1120,17 +1517,18 @@ function newHost(row) {
   const scores = (playing && row.scores && row.scores.map) || {};
   const players = (Array.isArray(row.players) ? row.players : []).filter((p) => p && p.id).map((p) => ({
     id: String(p.id), name: sanitizeName(p.name) || 'Player', ready: false,
-    score: Number(scores[p.id]) || 0, connected: true, late: playing ? !!p.late : false, absentSince: null,
+    score: Number(scores[p.id]) || 0, streak: 0, connected: true, late: playing ? !!p.late : false, absentSince: null,
   }));
   H = {
     settings: normSettings(row.settings), players, phase: 'lobby', seq: 0, index: 0, order: [], total: 0,
     drawerId: null, word: null, chars: [], letterIdx: [], revealed: new Set(), revealTimes: [], nextReveal: 0,
-    guessed: new Set(), gains: {}, choices: [], used: new Set(), pool: null,
+    guessed: new Set(), gains: {}, choices: [], used: new Set(), pool: null, dares: [], dare: null,
+    votes: new Set(), rerolled: false, solved: 0, played: 0,
     pickEndsAt: 0, drawStartedAt: 0, endsAt: 0, drawMs: 0, nextAt: 0, reason: '',
     lastBeat: 0, lastGuessAt: {}, persistT: null, startBusy: false,
   };
   let me = H.players.find((p) => p.id === myId);
-  if (!me) { me = { id: myId, name: myName, ready: false, score: 0, connected: true, late: false, absentSince: null }; H.players.unshift(me); }
+  if (!me) { me = { id: myId, name: myName, ready: false, score: 0, streak: 0, connected: true, late: false, absentSince: null }; H.players.unshift(me); }
   me.connected = true;
   if (playing && Array.isArray(row.turn_order) && row.turn_order.length >= 2) {
     const order = row.turn_order.map(String).filter((id) => H.players.some((p) => p.id === id));
@@ -1152,12 +1550,14 @@ function snapshot() {
   const n = H.order.length;
   return {
     hostNow: Date.now(), hostId: myId, room, phase: H.phase, settings: H.settings,
-    players: H.players.map((p) => ({ id: p.id, name: p.name, ready: p.ready, score: p.score, connected: p.connected, late: p.late })),
+    players: H.players.map((p) => ({ id: p.id, name: p.name, ready: p.ready, score: p.score, streak: p.streak || 0, connected: p.connected, late: p.late })),
     seq: H.seq, index: H.index, total: H.total, round: n ? Math.floor(H.index / n) + 1 : 0, rounds: H.settings.rounds,
     drawerId: H.drawerId, firstId: H.order[0] || null,
     pickEndsAt: H.pickEndsAt, drawStartedAt: H.drawStartedAt, endsAt: H.endsAt, drawMs: H.drawMs, nextAt: H.nextAt,
     hint: H.phase === 'drawing' ? hintString() : '', guessed: Array.from(H.guessed), gains: H.gains,
     word: H.phase === 'turnend' ? H.word : null, reason: H.reason,
+    rerolled: H.rerolled, votes: H.votes.size, voted: Array.from(H.votes),
+    solved: H.solved, played: H.played, dare: H.phase === 'gameover' ? H.dare : null,
   };
 }
 function broadcastState() {
@@ -1195,6 +1595,9 @@ function hostHandle(m) {
     case 'ready': return onReady(m);
     case 'guess': return onGuess(m);
     case 'pick': return onPick(m);
+    case 'reroll': return onReroll(m);
+    case 'vote': return onVote(m);
+    case 'dare_again': return onDareAgain(m);
     case 'need_word': return onNeedWord(m);
     case 'leave': return onLeave(m);
   }
@@ -1208,7 +1611,7 @@ function onHello(m) {
     if (H.phase === 'lobby') p.name = name;
   } else {
     if (H.players.length >= MAX_PLAYERS) { emitEv({ k: 'full', to: id }); return; }
-    p = { id, name, ready: false, score: 0, connected: true, late: H.phase !== 'lobby', absentSince: null };
+    p = { id, name, ready: false, score: 0, streak: 0, connected: true, late: H.phase !== 'lobby', absentSince: null };
     H.players.push(p);
     emitEv({ k: 'sys', text: p.name + ' joined' });
   }
@@ -1232,20 +1635,41 @@ function setSetting(k, v) {
   broadcastState(); persistSoon();
 }
 
+async function buildDares() {
+  const st = await loadStatic();
+  const rows = (await fetchRows('dares')) || [];
+  const hidden = new Set(rows.filter((r) => r.kind === 'hide').map((r) => normalize(r.word)));
+  const out = [], seen = new Set();
+  st.dares.filter((w) => !hidden.has(normalize(w))).concat(rows.filter((r) => r.kind !== 'hide').map((r) => r.word)).forEach((w) => {
+    w = cleanText(w, 140, 3); if (!w) return;
+    const k = normalize(w); if (!k || seen.has(k)) return;
+    seen.add(k); out.push(w);
+  });
+  return out.length ? out : ['Do your best catwalk across the room'];
+}
+function randomDare(avoid) {
+  const list = H.dares.filter((d) => d !== avoid);
+  const from = list.length ? list : H.dares;
+  return from[Math.floor(Math.random() * from.length)];
+}
 async function hostStart() {
   if (!isHost || !H || H.phase !== 'lobby' || H.startBusy) return;
   const conn = H.players.filter((p) => p.connected);
   if (conn.length < 2) { toast('You need at least 2 players'); return; }
   if (!conn.every((p) => p.ready)) { toast('Everyone needs to be ready'); return; }
   H.startBusy = true; renderLobby();
-  try { H.pool = await buildPool(H.settings); } finally { H.startBusy = false; }
+  try {
+    H.pool = await buildPool(H.settings);
+    H.dares = (H.settings.category === 'spicy' && H.settings.mode === 'versus') ? await buildDares() : [];
+  } finally { H.startBusy = false; }
   if (H.phase !== 'lobby') return;
   const parts = H.players.filter((p) => p.connected);
   if (parts.length < 2) { toast('Someone left. You need at least 2 players'); broadcastState(); return; }
-  H.players.forEach((p) => { p.score = 0; p.late = !parts.includes(p); });
+  H.players.forEach((p) => { p.score = 0; p.streak = 0; p.late = !parts.includes(p); });
   const r = Math.floor(Math.random() * parts.length);
   H.order = parts.slice(r).concat(parts.slice(0, r)).map((p) => p.id);
   H.total = H.settings.rounds * H.order.length; H.index = 0; H.used = new Set();
+  H.solved = 0; H.played = 0; H.dare = null; H.votes = new Set(); H.rerolled = false;
   H.phase = 'starting'; H.nextAt = Date.now() + 3500;
   emitEv({ k: 'sys', text: 'Game started. ' + drawerAt(0).name + ' draws first.' });
   broadcastState(); persistNow();
@@ -1253,18 +1677,22 @@ async function hostStart() {
 function hostPlayAgain() {
   if (!isHost || !H || H.phase !== 'gameover') return;
   H.players = H.players.filter((p) => p.connected);
-  H.players.forEach((p) => { p.score = 0; p.ready = false; p.late = false; });
+  H.players.forEach((p) => { p.score = 0; p.streak = 0; p.ready = false; p.late = false; });
   H.phase = 'lobby'; H.index = 0; H.order = []; H.total = 0; H.word = null; H.drawerId = null;
   H.guessed = new Set(); H.gains = {}; H.reason = ''; H.endsAt = 0; H.drawMs = 0; S.ovKey = '';
+  H.dare = null; H.votes = new Set(); H.rerolled = false; H.solved = 0; H.played = 0;
   broadcastState(); persistNow();
 }
 
-function pickChoices(n) {
+function pickChoices(n, avoid) {
   const t = H.pool, diff = H.settings.difficulty;
+  const skip = new Set((avoid || []).map(normalize));
   const all = [].concat(t.easy, t.medium, t.hard);
-  let c = t[diff].filter((w) => !H.used.has(normalize(w)));
-  if (c.length < n) c = all.filter((w) => !H.used.has(normalize(w)));
-  if (c.length < n) { H.used.clear(); c = t[diff].length >= n ? t[diff].slice() : all.slice(); }
+  const ok = (w) => !H.used.has(normalize(w)) && !skip.has(normalize(w));
+  let c = t[diff].filter(ok);
+  if (c.length < n) c = all.filter(ok);
+  if (c.length < n) c = all.filter((w) => !skip.has(normalize(w)));
+  if (c.length < n) c = all.slice();
   shuffle(c);
   return c.slice(0, n);
 }
@@ -1274,6 +1702,7 @@ function beginTurn() {
   if (H.players.filter((p) => p.connected).length < 2) return endGame('alone');
   const drawer = drawerAt(H.index);
   H.seq++; H.drawerId = drawer.id; H.guessed = new Set(); H.gains = {}; H.word = null; H.reason = '';
+  H.votes = new Set(); H.rerolled = false;
   H.chars = []; H.letterIdx = []; H.revealed = new Set(); H.revealTimes = []; H.nextReveal = 0;
   H.choices = pickChoices(3);
   H.phase = 'picking'; H.pickEndsAt = Date.now() + 12000;
@@ -1285,6 +1714,14 @@ function onPick(m) {
   if (H.phase !== 'picking' || m.id !== H.drawerId) return;
   const w = H.choices[Number(m.i)] || H.choices[0];
   if (w) startDrawing(w);
+}
+function onReroll(m) {
+  if (H.phase !== 'picking' || m.id !== H.drawerId || H.rerolled) return;
+  H.rerolled = true;
+  H.choices = pickChoices(3, H.choices);
+  H.pickEndsAt = Math.min(Date.now() + 12000, Math.max(H.pickEndsAt, Date.now() + 8000));
+  emitEv({ k: 'choices', to: H.drawerId, seq: H.seq, words: H.choices });
+  broadcastState();
 }
 function startDrawing(word) {
   const now = Date.now();
@@ -1336,22 +1773,60 @@ function onGuess(m) {
 }
 function awardGuess(p) {
   const left = Math.max(0, H.endsAt - Date.now());
-  const pts = 100 + Math.round(400 * left / H.drawMs);
+  const base = 100 + Math.round(400 * left / H.drawMs);
+  const bonuses = H.settings.bonuses, versus = H.settings.mode === 'versus';
+  const notes = [];
+  let pts = base;
+  if (bonuses && versus && H.guessed.size === 0) { pts = base * 2; notes.push('first guess x2'); }
+  if (bonuses && (p.streak || 0) >= 1) {
+    pts += Math.min(STREAK_MAX, STREAK_STEP * p.streak);
+    notes.push('streak of ' + (p.streak + 1));
+  }
   const drawer = findP(H.drawerId);
   H.guessed.add(p.id);
   p.score += pts; H.gains[p.id] = (H.gains[p.id] || 0) + pts;
-  if (drawer) { const g = Math.round(pts / 2); drawer.score += g; H.gains[drawer.id] = (H.gains[drawer.id] || 0) + g; }
-  emitEv({ k: 'correct', id: p.id, pts });
+  if (drawer) { const g = Math.round(base / 2); drawer.score += g; H.gains[drawer.id] = (H.gains[drawer.id] || 0) + g; }
+  emitEv({ k: 'correct', id: p.id, pts, note: notes.join(', ') });
   emitEv({ k: 'word', to: p.id, seq: H.seq, word: H.word });
+  broadcastState();
+}
+function onVote(m) {
+  const p = findP(m.id);
+  if (!p || H.phase !== 'turnend' || !H.settings.bonuses || H.settings.mode !== 'versus') return;
+  if (m.id === H.drawerId || H.votes.has(m.id) || H.reason === 'left') return;
+  const drawer = findP(H.drawerId); if (!drawer) return;
+  H.votes.add(m.id);
+  drawer.score += VOTE_PTS; H.gains[drawer.id] = (H.gains[drawer.id] || 0) + VOTE_PTS;
+  broadcastState(); persistSoon();
+}
+function onDareAgain(m) {
+  if (H.phase !== 'gameover' || !H.dare || m.id !== H.dare.to || H.dare.again) return;
+  H.dare = { to: H.dare.to, text: randomDare(H.dare.text), again: true };
   broadcastState();
 }
 function endTurn(reason) {
   if (H.phase !== 'drawing') return;
-  H.phase = 'turnend'; H.reason = reason; H.nextAt = Date.now() + (reason === 'left' ? 3500 : 6500);
+  if (reason === 'time' || reason === 'all') {
+    H.players.filter((p) => p.connected && p.id !== H.drawerId).forEach((p) => { p.streak = H.guessed.has(p.id) ? (p.streak || 0) + 1 : 0; });
+    H.played++;
+    if (reason === 'all') H.solved++;
+  }
+  H.phase = 'turnend'; H.reason = reason; H.nextAt = Date.now() + (reason === 'left' ? 3500 : 7500);
   broadcastState(); persistSoon();
 }
 function endGame(reason) {
-  H.phase = 'gameover'; H.reason = reason;
+  H.phase = 'gameover'; H.reason = reason; H.dare = null;
+  if (reason === 'done' && H.settings.category === 'spicy' && H.settings.mode === 'versus' && H.dares.length) {
+    const parts = H.players.filter((p) => H.order.includes(p.id));
+    if (parts.length >= 2) {
+      const min = Math.min(...parts.map((p) => p.score)), max = Math.max(...parts.map((p) => p.score));
+      if (max > min) {
+        const losers = parts.filter((p) => p.score === min);
+        const l = losers[Math.floor(Math.random() * losers.length)];
+        H.dare = { to: l.id, text: randomDare(''), again: false };
+      }
+    }
+  }
   broadcastState(); persistNow();
 }
 function updateConnections(now) {
@@ -1457,7 +1932,7 @@ function teardown() {
   clearInterval(hostTimer); clearInterval(uiTimer); clearInterval(helloTimer);
   hostTimer = uiTimer = helloTimer = null;
   if (ch) { try { sb.removeChannel(ch); } catch (e) {} }
-  ch = null; joined = false; H = null; room = null; S.snap = null; S.ovKey = '';
+  ch = null; joined = false; H = null; room = null; S.snap = null; S.ovKey = ''; S.gallery = []; S.capSeq = -1; S.lastCelebrate = '';
   show($('banner'), false);
 }
 function leaveRoom() {
@@ -1480,6 +1955,8 @@ function bindLobby() {
     if (!next.length) { toast('Keep at least one language'); return; }
     setSetting('languages', next);
   });
+  $('modeRow').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setSetting('mode', b.dataset.mode); });
+  $('bonusBtn').addEventListener('click', () => { if (S.snap) setSetting('bonuses', !S.snap.settings.bonuses); });
   $('diffRow').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setSetting('difficulty', b.dataset.diff); });
   $('timeRow').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setSetting('drawTime', Number(b.dataset.t)); });
   const rounds = () => (S.snap ? S.snap.settings.rounds : DEFAULTS.rounds);
@@ -1511,15 +1988,32 @@ function bindLobby() {
     intent('guess', { id: myId, text: t });
     inp.focus();
   });
+  $('muteBtn').addEventListener('click', () => { sfx.setMuted(!sfx.isMuted()); syncMute(); });
+  $('galBtn').addEventListener('click', openGallery);
+  $('galClose').addEventListener('click', () => show($('galleryModal'), false));
+  $('galleryModal').addEventListener('click', (e) => { if (e.target === $('galleryModal')) show($('galleryModal'), false); });
+  $('galCollage').addEventListener('click', saveCollage);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden || !room || !joined) return;
     if (isHost) broadcastState(); else sendHello();
   });
+  // let the very first tap unlock audio on iOS/Android autoplay rules
+  const unlock = () => { sfx.unlock(); document.removeEventListener('pointerdown', unlock); };
+  document.addEventListener('pointerdown', unlock, { once: true, passive: true });
+  // mobile browsers sometimes leave a button visually "stuck" in its pressed/hover
+  // state after a tap (especially once a dialog like confirm() interrupts the touch
+  // sequence); explicitly clearing focus after release fixes it everywhere.
+  document.addEventListener('pointerup', (e) => {
+    const el = e.target.closest('button');
+    if (el) setTimeout(() => { if (document.activeElement === el) el.blur(); }, 0);
+  }, { passive: true });
+  document.addEventListener('pointercancel', (e) => {
+    const el = e.target.closest('button'); if (el) el.blur();
+  }, { passive: true });
 }
 
 /* ═════════ word manager (only for the two of you) ═════════ */
 const WM = { cat: 'general', lang: 'english', diff: 'all', q: '', limit: 150, items: [], hidden: [], showHidden: false, editing: null, busy: false, loaded: false };
-const DIFF_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
 function openWords() { show($('wordsModal'), true); WM.editing = null; wmLoad(); }
 function bindWords() {
   if (!family) return;
@@ -1538,6 +2032,8 @@ function bindWords() {
   $('wmEditSave').addEventListener('click', wmSaveEdit);
   $('wmEditDelete').addEventListener('click', wmDelete);
 }
+const isDare = () => WM.cat === 'dares';
+const wmClean = (s) => (isDare() ? cleanText(s, 140, 3) : cleanWord(s));
 async function wmLoad() {
   if (WM.busy) return;
   WM.busy = true;
@@ -1555,9 +2051,13 @@ async function wmLoad() {
     const items = [], seen = new Set();
     const push = (it) => { const k = normalize(it.word); if (!k || seen.has(k)) return; seen.add(k); items.push(it); };
     customRows.forEach((r) => push({ word: r.word, difficulty: DIFFS.includes(r.difficulty) ? r.difficulty : 'medium', source: 'custom', id: r.id }));
-    for (const d of DIFFS) {
-      const list = WM.cat === 'movies' ? st.movies[lang][d] : st[WM.cat][d];
-      list.forEach((w) => { if (!hiddenKeys.has(normalize(w))) push({ word: w, difficulty: d, source: 'builtin' }); });
+    if (isDare()) {
+      st.dares.filter((w) => !hiddenKeys.has(normalize(w))).forEach((w) => push({ word: w, difficulty: 'medium', source: 'builtin' }));
+    } else {
+      for (const d of DIFFS) {
+        const list = WM.cat === 'movies' ? st.movies[lang][d] : st[WM.cat][d];
+        list.forEach((w) => { if (!hiddenKeys.has(normalize(w))) push({ word: w, difficulty: d, source: 'builtin' }); });
+      }
     }
     const rank = { easy: 0, medium: 1, hard: 2 };
     items.sort((a, b) => rank[a.difficulty] - rank[b.difficulty] || a.word.localeCompare(b.word));
@@ -1571,35 +2071,39 @@ function wmRender() {
   $('wmCats').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.c === WM.cat));
   show($('wmLangs'), WM.cat === 'movies');
   $('wmLangs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.l === WM.lang));
+  show($('wmDiffs'), !isDare());
+  show($('wmAddDiffWrap'), !isDare());
   $('wmDiffs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.d === WM.diff));
   const list = $('wmList'); list.textContent = '';
   const ed = WM.editing;
   show($('wmEdit'), !!ed);
   if (ed) {
-    $('wmEditTitle').textContent = ed.source === 'custom' ? 'Edit your word' : 'Edit built-in word';
+    $('wmEditTitle').textContent = ed.source === 'custom' ? 'Edit your entry' : 'Edit built-in entry';
     if (document.activeElement !== $('wmEditText')) $('wmEditText').value = ed.word;
+    show($('wmEditDiffWrap'), !isDare());
     $('wmEditDiff').value = ed.difficulty;
     $('wmEditDelete').textContent = ed.source === 'custom' ? 'Delete' : 'Remove';
   }
   if (WM.showHidden) {
     const shown = WM.hidden.filter((r) => !WM.q || normalize(r.word).includes(WM.q));
-    $('wmCount').textContent = shown.length + ' removed built-in word' + (shown.length === 1 ? '' : 's');
+    $('wmCount').textContent = shown.length + ' removed built-in ' + (isDare() ? 'dare' : 'word') + (shown.length === 1 ? '' : 's');
     shown.forEach((r) => list.append(h('button', { type: 'button', class: 'wtag gone', title: 'Tap to bring it back', onclick: () => wmRestore(r) }, r.word, h('small', { text: 'restore' }))));
     if (!shown.length) list.append(h('span', { class: 'note', style: 'color:var(--muted)', text: 'Nothing removed.' }));
     show($('wmMore'), false);
   } else {
-    const f = WM.items.filter((it) => (WM.diff === 'all' || it.difficulty === WM.diff) && (!WM.q || normalize(it.word).includes(WM.q)));
-    $('wmCount').textContent = f.length + ' word' + (f.length === 1 ? '' : 's') + ' (tap one to edit)';
-    f.slice(0, WM.limit).forEach((it) => list.append(h('button', { type: 'button', class: 'wtag' + (it.source === 'custom' ? ' mine' : ''), onclick: () => { WM.editing = it; $('wmEditText').value = it.word; wmRender(); $('wmEditText').focus(); } },
-      it.word, h('small', { text: it.difficulty[0].toUpperCase() + (it.source === 'custom' ? ' · yours' : '') }))));
-    if (!f.length) list.append(h('span', { class: 'note', style: 'color:var(--muted)', text: 'No words match.' }));
+    const f = WM.items.filter((it) => (isDare() || WM.diff === 'all' || it.difficulty === WM.diff) && (!WM.q || normalize(it.word).includes(WM.q)));
+    $('wmCount').textContent = f.length + ' ' + (isDare() ? 'dare' : 'word') + (f.length === 1 ? '' : 's') + ' (tap one to edit)';
+    f.slice(0, WM.limit).forEach((it) => list.append(h('button', { type: 'button', class: 'wtag' + (it.source === 'custom' ? ' mine' : '') + (isDare() ? ' wide' : ''), onclick: () => { WM.editing = it; $('wmEditText').value = it.word; wmRender(); $('wmEditText').focus(); } },
+      it.word, h('small', { text: (isDare() ? '' : it.difficulty[0].toUpperCase() + ' ') + (it.source === 'custom' ? '· yours' : '') }))));
+    if (!f.length) list.append(h('span', { class: 'note', style: 'color:var(--muted)', text: 'Nothing matches.' }));
     show($('wmMore'), f.length > WM.limit);
     $('wmMore').textContent = 'Show more (' + (f.length - WM.limit) + ' left)';
   }
   const hb = $('wmHiddenToggle');
   show(hb, WM.hidden.length > 0 || WM.showHidden);
-  hb.textContent = WM.showHidden ? 'Back to the word list' : 'Removed built-in words (' + WM.hidden.length + ')';
-  $('wmAddNote').textContent = 'Adding to: ' + WM.cat + (WM.cat === 'movies' ? ' · ' + WM.lang : '');
+  hb.textContent = WM.showHidden ? 'Back to the list' : 'Removed built-in ' + (isDare() ? 'dares' : 'words') + ' (' + WM.hidden.length + ')';
+  $('wmText').placeholder = isDare() ? 'One dare per line, e.g. Sing the chorus of your favourite song' : 'Type or paste your words';
+  $('wmAddNote').textContent = 'Adding to: ' + (isDare() ? 'Dares (used when Spicy + Versus finishes)' : WM.cat + (WM.cat === 'movies' ? ' · ' + WM.lang : ''));
 }
 const wmLang = () => (WM.cat === 'movies' ? WM.lang : null);
 function wmExists(word, exceptNorm) {
@@ -1608,10 +2112,10 @@ function wmExists(word, exceptNorm) {
 }
 async function wmSaveEdit() {
   const ed = WM.editing; if (!ed || WM.busy) return;
-  const word = cleanWord($('wmEditText').value), diff = $('wmEditDiff').value;
-  if (!word) { toast('Type a word (at least 2 characters)'); return; }
+  const word = wmClean($('wmEditText').value), diff = isDare() ? 'medium' : $('wmEditDiff').value;
+  if (!word) { toast(isDare() ? 'Type a dare (at least 3 characters)' : 'Type a word (at least 2 characters)'); return; }
   if (word === ed.word && diff === ed.difficulty) { WM.editing = null; wmRender(); return; }
-  if (wmExists(word, normalize(ed.word))) { toast('That word is already in this list'); return; }
+  if (wmExists(word, normalize(ed.word))) { toast('That is already in the list'); return; }
   $('wmEditSave').disabled = true;
   try {
     let err;
@@ -1648,29 +2152,30 @@ async function wmRestore(r) {
 }
 async function wmAdd() {
   if (WM.busy) return;
-  const diff = $('wmAddDiff').value;
-  const raw = $('wmText').value.split('\n').map(cleanWord).filter(Boolean);
-  if (!raw.length) { toast('Type at least one word'); return; }
+  const diff = isDare() ? 'medium' : $('wmAddDiff').value;
+  const raw = $('wmText').value.split('\n').map(wmClean).filter(Boolean);
+  if (!raw.length) { toast(isDare() ? 'Type at least one dare' : 'Type at least one word'); return; }
   $('wmAdd').disabled = true;
   try {
     const seen = new Set(WM.items.map((it) => normalize(it.word)));
     const rows = [];
     raw.forEach((w) => { const k = normalize(w); if (!k || seen.has(k)) return; seen.add(k); rows.push({ category: WM.cat, difficulty: diff, language: wmLang(), word: w, kind: 'custom', created_by: myId }); });
-    if (!rows.length) { toast('Those words are already in this list'); return; }
+    if (!rows.length) { toast('Those are already in the list'); return; }
     const { error } = await sb.from('pictionary_words').insert(rows);
     if (error) { toast('Could not save. Try again.'); return; }
     $('wmText').value = '';
-    toast('Added ' + rows.length + ' word' + (rows.length === 1 ? '' : 's'));
+    toast('Added ' + rows.length + (isDare() ? (rows.length === 1 ? ' dare' : ' dares') : (rows.length === 1 ? ' word' : ' words')));
   } finally { $('wmAdd').disabled = false; }
   await wmLoad();
 }
 
 /* ═════════ start-up ═════════ */
 function init() {
-  bindLobby(); bindWords(); buildTools();
+  bindLobby(); bindWords(); buildTools(); buildReact();
   $('nameInput').value = loadName();
   show($('homeLink'), !!family);
   show($('wordsBtnLanding'), !!family);
+  syncMute();
   const params = new URLSearchParams(location.search);
   const roomParam = String(params.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
   $('createBtn').addEventListener('click', createRoom);
@@ -1691,6 +2196,7 @@ function init() {
 }
 init();
 })();
+</script>
 </script>
 </body>
 </html>
