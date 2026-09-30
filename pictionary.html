@@ -257,6 +257,36 @@ button,.cat,.chip,.seg button,.icon-btn,.tt,.sw,.sz{touch-action:manipulation}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:50}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* v3: options, themes, mix, replay */
+.cats{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(min-width:520px){.cats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.dim{opacity:.4}
+.opt-open{width:100%;display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+.opt-open small{color:var(--muted);font-weight:600}
+.sheet.opt{width:min(480px,100%)}
+.opt-h{font-weight:700;color:var(--muted);font-size:.85rem;margin:.9rem 0 .4rem}
+.opt-row{display:flex;align-items:center;gap:.8rem;padding:.7rem 0;border-top:1px solid var(--line)}
+.opt-ic{font-size:1.4rem;width:1.8rem;text-align:center}
+.opt-tx{flex:1;min-width:0;display:grid;gap:.1rem}
+.opt-tx small{color:var(--muted);font-weight:600;font-size:.78rem}
+.sw2{position:relative;flex:none;width:52px;height:30px;border-radius:999px;border:1px solid var(--line);background:var(--night);padding:0;transition:background .2s}
+.sw2::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--muted);transition:transform .2s,background .2s}
+.sw2.on{background:var(--ok);border-color:transparent}
+.sw2.on::after{transform:translateX(22px);background:#fff}
+.locked .sw2{pointer-events:none}
+.bn{display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem}
+.bn span{font-size:1.3rem}
+.bn input{flex:1;min-width:0}
+.bn small{color:var(--muted);font-weight:600;font-size:.72rem;width:11ch}
+.replay{display:flex;align-items:center;gap:.6rem;width:100%}
+.replay input{flex:1;accent-color:#D98A93;min-height:32px;padding:0;background:none;border:0}
+#cv.gray{filter:grayscale(1) contrast(1.05)}
+html[data-theme=date]{--night:#1F0F17;--night2:#2E1622;--night3:#40202F;--rose:#FF9EB5;--gold:#F2C078;--lav:#C58BB0;--grad:linear-gradient(135deg,#FFB3C6,#F0708F);--line:rgba(255,220,230,.1)}
+html[data-theme=date] body{background:radial-gradient(1100px 700px at 15% -10%,#5a1f38 0%,transparent 60%),radial-gradient(900px 600px at 100% 110%,#3d1428 0%,transparent 55%),var(--night)}
+html[data-theme=festive]{--night:#0E1F19;--night2:#153028;--night3:#1E4136;--rose:#FF8A7A;--gold:#F6D365;--lav:#7FD1B9;--grad:linear-gradient(135deg,#F6D365,#FF8A7A);--line:rgba(220,255,240,.1)}
+html[data-theme=festive] body{background:radial-gradient(1100px 700px at 15% -10%,#1f5a45 0%,transparent 60%),radial-gradient(900px 600px at 100% 110%,#5a1f2a 0%,transparent 55%),var(--night)}
+html:is([data-theme=date],[data-theme=festive]) :is(.panel,.card){background:var(--night2)}
+html:is([data-theme=date],[data-theme=festive]) :is(.btn.primary,.seg button.on,.cat.on){background:var(--grad)}
 </style>
 </head>
 <body>
@@ -326,6 +356,7 @@ button,.cat,.chip,.seg button,.icon-btn,.tt,.sw,.sz{touch-action:manipulation}
               <button type="button" class="cat" data-cat="general"><span class="ic">🎈</span>General<small>everyday things</small></button>
               <button type="button" class="cat" data-cat="spicy"><span class="ic">🌶️</span>Spicy<small>cheeky words</small></button>
               <button type="button" class="cat" data-cat="movies"><span class="ic">🎬</span>Movies<small>pick languages</small></button>
+              <button type="button" class="cat" data-cat="mix"><span class="ic">🎲</span>Mix<small>one of each</small></button>
             </div>
             <div id="langRow" class="seg hidden" style="margin-top:.6rem">
               <button type="button" class="chip" data-lang="hindi">Hindi</button>
@@ -343,16 +374,15 @@ button,.cat,.chip,.seg button,.icon-btn,.tt,.sw,.sz{touch-action:manipulation}
             <p class="note" id="modeNote" style="color:var(--muted)"></p>
           </div>
           <div class="set-row">
-            <div class="lbl">Extras</div>
-            <button type="button" class="btn toggle" id="bonusBtn" style="width:100%">Bonus points</button>
-            <p class="note" id="bonusNote" style="color:var(--muted)"></p>
+            <button type="button" class="btn opt-open" id="optBtn"><span>⚙️ Room options</span><small id="optSummary"></small></button>
           </div>
-          <div class="set-row">
+          <div class="set-row" id="diffSet">
             <div class="lbl">Difficulty</div>
             <div class="seg" id="diffRow">
               <button type="button" data-diff="easy">Easy</button>
               <button type="button" data-diff="medium">Medium</button>
               <button type="button" data-diff="hard">Hard</button>
+              <button type="button" data-diff="mixed">Mixed</button>
             </div>
           </div>
           <div class="set-row">
@@ -469,6 +499,14 @@ button,.cat,.chip,.seg button,.icon-btn,.tt,.sw,.sz{touch-action:manipulation}
   </div>
 </div>
 
+<!-- Room options -->
+<div class="modal hidden" id="optModal" role="dialog" aria-modal="true" aria-label="Room options">
+  <div class="sheet opt">
+    <div class="wm-top"><h2>Room options</h2><button class="btn primary" id="optClose" type="button">Done</button></div>
+    <div id="optBody"></div>
+  </div>
+</div>
+
 <!-- Drawing gallery -->
 <div class="modal hidden" id="galleryModal" role="dialog" aria-modal="true" aria-label="Drawing gallery">
   <div class="sheet wide">
@@ -489,10 +527,13 @@ const IDENTITY_KEY = 'ourLittleUniverseIdentity';
 const GUEST_ID_KEY = 'pictGuestId';
 const NAME_KEY = 'pictNickname';
 const TIME_OPTIONS = [30, 45, 60, 80, 100, 120, 150, 180];
-const CATS = ['general', 'spicy', 'movies'];
+const CATS = ['general', 'spicy', 'movies', 'mix'];
 const DIFFS = ['easy', 'medium', 'hard'];
 const LANGS = ['hindi', 'english', 'telugu'];
-const DEFAULTS = { category: 'general', languages: ['hindi', 'english', 'telugu'], difficulty: 'medium', drawTime: 80, rounds: 3, mode: 'versus', bonuses: true };
+const DEFAULTS = { category: 'general', languages: ['hindi', 'english', 'telugu'], difficulty: 'medium', drawTime: 80, rounds: 3, mode: 'versus', bonuses: true, replay: true, badges: true, gray: false, theme: 'night', badgeNames: { speed: 'Speed Demon', picasso: 'Picasso', comeback: 'Comeback Kid' } };
+const THEMES = [['night', '🌙', 'Night'], ['date', '🕯️', 'Date night'], ['festive', '🎄', 'Festive']];
+const TOGGLES = [['bonuses', '⭐', 'Bonus points', 'First guess x2, streaks and likes'], ['replay', '⏪', 'Replay', 'Scrub through each drawing after the round'], ['badges', '🏅', 'Badges', 'Earn badges as you play'], ['gray', '🌫️', 'Grayscale', 'Guessers see the drawing without colour']];
+const BADGES = [['speed', '⚡', 'Guess in under 5 seconds'], ['picasso', '🎨', '5 likes on your drawings'], ['comeback', '🚀', 'Win after being in last place']];
 const MODES = ['versus', 'coop'];
 const REACTIONS = ['😂', '🔥', '👏', '😮', '❤️'];
 const STREAK_STEP = 15, STREAK_MAX = 60, VOTE_PTS = 10;
@@ -572,12 +613,17 @@ function normSettings(s) {
   langs = LANGS.filter((l) => langs.includes(l));
   return {
     category: CATS.includes(s.category) ? s.category : DEFAULTS.category,
-    difficulty: DIFFS.includes(s.difficulty) ? s.difficulty : DEFAULTS.difficulty,
+    difficulty: DIFFS.concat(['mixed']).includes(s.difficulty) ? s.difficulty : DEFAULTS.difficulty,
     drawTime: TIME_OPTIONS.includes(Number(s.drawTime)) ? Number(s.drawTime) : DEFAULTS.drawTime,
     rounds: rounds >= 1 && rounds <= 20 ? rounds : DEFAULTS.rounds,
     languages: langs.length ? langs : DEFAULTS.languages.slice(),
     mode: MODES.includes(s.mode) ? s.mode : DEFAULTS.mode,
     bonuses: s.bonuses === false ? false : DEFAULTS.bonuses,
+    replay: s.replay === false ? false : true,
+    badges: s.badges === false ? false : true,
+    gray: s.gray === true,
+    theme: THEMES.some((t) => t[0] === s.theme) ? s.theme : 'night',
+    badgeNames: (() => { const b = s.badgeNames || {}, d = DEFAULTS.badgeNames; return { speed: cleanText(b.speed, 16, 1) || d.speed, picasso: cleanText(b.picasso, 16, 1) || d.picasso, comeback: cleanText(b.comeback, 16, 1) || d.comeback }; })(),
   };
 }
 
@@ -854,7 +900,22 @@ function clearBoard() {
   if (!canDraw() || cur || !strokes.length) return;
   strokes = []; clearCanvas(); sendDraw({ k: 'x', t: S.canvasSeq });
 }
-function resetCanvas() { cur = null; outBuf = []; clearTimeout(flushT); flushT = null; strokes = []; clearCanvas(); }
+function resetCanvas() { cur = null; outBuf = []; clearTimeout(flushT); flushT = null; strokes = []; clearCanvas(); clearInterval(rpT); S.rp = null; }
+let rpT = null;
+function replayTo(n) {
+  S.rp = { seq: S.snap ? S.snap.seq : 0, n };
+  clearCanvas();
+  for (let i = 0; i < Math.min(n, strokes.length); i++) { const st = strokes[i]; st.drawn = 0; st.lx = undefined; paintStroke(st); }
+}
+function playReplay() {
+  clearInterval(rpT);
+  const total = strokes.length; let i = 0;
+  rpT = setInterval(() => {
+    i++; replayTo(i);
+    const r = $('rpRange'); if (r) r.value = i;
+    if (i >= total) clearInterval(rpT);
+  }, Math.max(60, Math.min(400, 6000 / total)));
+}
 
 /* remote drawing (everyone else) */
 function applyDrawOp(p) {
@@ -937,7 +998,7 @@ function syncTools() {
 }
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && canDraw()) { e.preventDefault(); undoStroke(); }
-  if (e.key === 'Escape') { show($('wordsModal'), false); show($('galleryModal'), false); }
+  if (e.key === 'Escape') { show($('wordsModal'), false); show($('galleryModal'), false); show($('optModal'), false); }
 });
 
 /* reactions floating over the drawing */
@@ -999,8 +1060,15 @@ async function fetchRows(cat) {
   return out;
 }
 async function buildPool(settings) {
+  if (settings.category === 'mix') {
+    const cats = {};
+    for (const c of ['general', 'spicy', 'movies']) cats[c] = await poolFor(c, settings);
+    return { mix: true, cats };
+  }
+  return poolFor(settings.category, settings);
+}
+async function poolFor(cat, settings) {
   const st = await loadStatic();
-  const cat = settings.category;
   const tiers = { easy: [], medium: [], hard: [] };
   const seen = new Set();
   const rows = (await fetchRows(cat)) || [];
@@ -1157,6 +1225,7 @@ function applyState(snap) {
   S.offset = isHost ? 0 : (snap.hostNow - Date.now());
   S.hostId = snap.hostId;
   if (!isHost && !snap.players.some((p) => p.id === myId)) { sendHello(); return; }
+  document.documentElement.dataset.theme = snap.settings.theme || 'night';
   if (snap.phase === 'lobby') { S.words = {}; S.choices = {}; }
   if (snap.phase === 'starting' && (!prev || prev.phase !== 'starting')) { S.gallery = []; S.capSeq = -1; }
   if (snap.seq !== S.canvasSeq) {
@@ -1170,6 +1239,7 @@ function applyState(snap) {
   }
   if (snap.phase === 'turnend' && S.capSeq !== snap.seq) { S.capSeq = snap.seq; captureDrawing(snap); }
   const pp = prev ? prev.phase : null;
+  if (pp === 'turnend' && snap.phase !== 'turnend') { clearInterval(rpT); if (snap.seq === S.canvasSeq) replayTo(strokes.length); }
   if (snap.phase === 'turnend' && pp !== 'turnend' && snap.reason === 'time') sfx.buzz();
   if (snap.phase === 'gameover' && pp !== 'gameover') sfx.roll();
   clearInterval(helloTimer);
@@ -1178,7 +1248,7 @@ function applyState(snap) {
 function renderAll() {
   const s = S.snap; if (!s) return;
   if (s.phase === 'lobby') { setScreen('lobby'); renderLobby(); }
-  else { setScreen('game'); renderGame(); }
+  else { show($('optModal'), false); setScreen('game'); renderGame(); }
 }
 
 /* gallery of finished drawings (kept on this device only) */
@@ -1258,20 +1328,19 @@ function renderLobby() {
   });
   $('settingsPanel').classList.toggle('locked', !isHost);
   $('catRow').querySelectorAll('.cat').forEach((b) => b.classList.toggle('on', b.dataset.cat === st.category));
-  show($('langRow'), st.category === 'movies');
+  show($('langRow'), st.category === 'movies' || st.category === 'mix');
   $('langRow').querySelectorAll('.chip').forEach((b) => b.classList.toggle('on', st.languages.includes(b.dataset.lang)));
-  show($('spicyNote'), st.category === 'spicy');
-  $('spicyNote').textContent = 'Spicy words are suggestive. Only pick it when everyone in the room is fine with that.' + (st.mode === 'versus' ? ' The player in last place gets a dare card at the end.' : '');
+  show($('spicyNote'), st.category === 'spicy' || st.category === 'mix');
+  $('spicyNote').textContent = 'Spicy words are suggestive. Only pick it when everyone in the room is fine with that.' + (st.mode === 'versus' && st.category === 'spicy' ? ' The player in last place gets a dare card at the end.' : '');
   $('modeRow').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.mode === st.mode));
   $('modeNote').textContent = st.mode === 'coop' ? 'Everyone plays as one team. Solve as many drawings as you can together.' : 'Everyone competes. The highest score wins.';
   $('diffRow').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.diff === st.difficulty));
   $('timeRow').querySelectorAll('button').forEach((b) => b.classList.toggle('on', Number(b.dataset.t) === st.drawTime));
+  $('diffSet').classList.toggle('dim', st.category === 'mix');
   $('timeVal').textContent = st.drawTime + ' seconds';
   $('roundsVal').textContent = st.rounds;
   $('roundsRange').value = st.rounds;
-  $('bonusBtn').classList.toggle('on', st.bonuses);
-  $('bonusBtn').textContent = st.bonuses ? 'Bonus points on' : 'Bonus points off';
-  $('bonusNote').textContent = st.mode === 'coop' ? 'Guessing several drawings in a row earns the team a streak bonus.' : 'First correct guess scores double, streaks add extra, and likes reward the drawer.';
+  syncOptions();
   const me = s.players.find((p) => p.id === myId);
   const conn = s.players.filter((p) => p.connected);
   const allReady = conn.length >= 2 && conn.every((p) => p.ready);
@@ -1301,6 +1370,7 @@ function renderGame() {
   const drawing = amDrawer() && s.phase === 'drawing';
   show($('tools'), drawing);
   cv.classList.toggle('nodraw', !drawing);
+  cv.classList.toggle('gray', !!s.settings.gray && !drawing && s.phase === 'drawing');
   show($('reactBar'), !drawing && (s.phase === 'drawing' || s.phase === 'turnend'));
   const form = $('guessForm'), inp = $('guessInput'), btn = $('guessBtn');
   show(form, !drawing);
@@ -1381,7 +1451,7 @@ function renderOverlay() {
     }
     case 'turnend': {
       const canVote = s.settings.bonuses && !coop && myId !== s.drawerId && s.reason !== 'left';
-      key = 'end|' + s.seq + '|' + sk + '|' + s.votes + '|' + (S.votedSeq === s.seq ? 1 : 0); if (S.ovKey === key) return;
+      key = 'end|' + s.seq + '|' + sk + '|' + s.votes + '|' + (S.votedSeq === s.seq ? 1 : 0) + '|' + strokes.length; if (S.ovKey === key) return;
       bottom = true;
       const gains = Object.entries(s.gains || {}).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
       const title = s.reason === 'all' ? 'Everyone got it' : s.reason === 'left' ? nameOf(s.drawerId) + ' left the round' : "Time's up";
@@ -1392,11 +1462,14 @@ function renderOverlay() {
         (canVote || s.votes > 0) ? h('div', { class: 'vote-row' },
           canVote ? h('button', { class: 'btn', type: 'button', disabled: voted, onclick: voteDrawing, text: voted ? 'Liked' : '👏 Great drawing!' }) : null,
           s.votes > 0 ? h('span', { class: 'sub', text: s.votes + (s.votes === 1 ? ' like' : ' likes') }) : null) : null,
+        (s.settings.replay && strokes.length > 1) ? h('div', { class: 'replay' },
+          h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Play replay', text: '▶', onclick: playReplay }),
+          h('input', { type: 'range', id: 'rpRange', min: 1, max: strokes.length, value: (S.rp && S.rp.seq === s.seq) ? S.rp.n : strokes.length, 'aria-label': 'Replay drawing', oninput: (e) => { clearInterval(rpT); replayTo(Number(e.target.value)); } })) : null,
         h('div', { class: 'sub', id: 'ovCd' })];
       break;
     }
     case 'gameover': {
-      key = 'over|' + sk + '|' + (s.dare ? s.dare.text + '|' + s.dare.again : '') + '|' + S.gallery.length + '|' + (s.solved || 0); if (S.ovKey === key) return;
+      key = 'over|' + sk + '|' + (s.dare ? s.dare.text + '|' + s.dare.again : '') + '|' + S.gallery.length + '|' + (s.solved || 0) + '|' + s.players.map((p) => (p.ach || []).length).join(''); if (S.ovKey === key) return;
       let head;
       let celebrate = true;
       if (coop) {
@@ -1422,7 +1495,7 @@ function renderOverlay() {
         h('div', { class: 'who', text: nameOf(s.dare.to) + ' pays the forfeit' }),
         h('div', { class: 'txt', text: s.dare.text }),
         s.dare.to === myId && !s.dare.again ? h('button', { class: 'btn', type: 'button', text: 'Draw another card', onclick: () => intent('dare_again', { id: myId }) }) : null) : null;
-      kids = head.concat([dare,
+      kids = head.concat([badgeRow(s), dare,
         h('div', { class: 'choices' },
           S.gallery.length ? h('button', { class: 'btn', type: 'button', text: 'Gallery (' + S.gallery.length + ')', onclick: openGallery }) : null,
           isHost ? h('button', { class: 'btn primary', type: 'button', text: 'Play again', onclick: hostPlayAgain }) : h('div', { class: 'sub', text: 'Waiting for the host to start again' }),
@@ -1550,7 +1623,7 @@ function snapshot() {
   const n = H.order.length;
   return {
     hostNow: Date.now(), hostId: myId, room, phase: H.phase, settings: H.settings,
-    players: H.players.map((p) => ({ id: p.id, name: p.name, ready: p.ready, score: p.score, streak: p.streak || 0, connected: p.connected, late: p.late })),
+    players: H.players.map((p) => ({ id: p.id, name: p.name, ready: p.ready, score: p.score, streak: p.streak || 0, ach: p.ach || [], connected: p.connected, late: p.late })),
     seq: H.seq, index: H.index, total: H.total, round: n ? Math.floor(H.index / n) + 1 : 0, rounds: H.settings.rounds,
     drawerId: H.drawerId, firstId: H.order[0] || null,
     pickEndsAt: H.pickEndsAt, drawStartedAt: H.drawStartedAt, endsAt: H.endsAt, drawMs: H.drawMs, nextAt: H.nextAt,
@@ -1665,7 +1738,7 @@ async function hostStart() {
   if (H.phase !== 'lobby') return;
   const parts = H.players.filter((p) => p.connected);
   if (parts.length < 2) { toast('Someone left. You need at least 2 players'); broadcastState(); return; }
-  H.players.forEach((p) => { p.score = 0; p.streak = 0; p.late = !parts.includes(p); });
+  H.players.forEach((p) => { p.score = 0; p.streak = 0; p.late = !parts.includes(p); p.ach = []; p.votesWon = 0; p.wasLast = false; });
   const r = Math.floor(Math.random() * parts.length);
   H.order = parts.slice(r).concat(parts.slice(0, r)).map((p) => p.id);
   H.total = H.settings.rounds * H.order.length; H.index = 0; H.used = new Set();
@@ -1677,7 +1750,7 @@ async function hostStart() {
 function hostPlayAgain() {
   if (!isHost || !H || H.phase !== 'gameover') return;
   H.players = H.players.filter((p) => p.connected);
-  H.players.forEach((p) => { p.score = 0; p.streak = 0; p.ready = false; p.late = false; });
+  H.players.forEach((p) => { p.score = 0; p.streak = 0; p.ready = false; p.late = false; p.ach = []; p.votesWon = 0; p.wasLast = false; });
   H.phase = 'lobby'; H.index = 0; H.order = []; H.total = 0; H.word = null; H.drawerId = null;
   H.guessed = new Set(); H.gains = {}; H.reason = ''; H.endsAt = 0; H.drawMs = 0; S.ovKey = '';
   H.dare = null; H.votes = new Set(); H.rerolled = false; H.solved = 0; H.played = 0;
@@ -1689,7 +1762,16 @@ function pickChoices(n, avoid) {
   const skip = new Set((avoid || []).map(normalize));
   const all = [].concat(t.easy, t.medium, t.hard);
   const ok = (w) => !H.used.has(normalize(w)) && !skip.has(normalize(w));
-  let c = t[diff].filter(ok);
+  if (t.mix) {
+    const out = [];
+    for (const k of shuffle(Object.keys(t.cats))) {
+      const cp = t.cats[k], all2 = [].concat(cp.easy, cp.medium, cp.hard);
+      let list = all2.filter(ok); if (!list.length) list = all2.filter((w) => !skip.has(normalize(w)));
+      if (list.length) out.push(list[Math.floor(Math.random() * list.length)]);
+    }
+    return out.slice(0, n);
+  }
+  let c = (diff === 'mixed' ? all : t[diff]).filter(ok);
   if (c.length < n) c = all.filter(ok);
   if (c.length < n) c = all.filter((w) => !skip.has(normalize(w)));
   if (c.length < n) c = all.slice();
@@ -1787,8 +1869,16 @@ function awardGuess(p) {
   p.score += pts; H.gains[p.id] = (H.gains[p.id] || 0) + pts;
   if (drawer) { const g = Math.round(base / 2); drawer.score += g; H.gains[drawer.id] = (H.gains[drawer.id] || 0) + g; }
   emitEv({ k: 'correct', id: p.id, pts, note: notes.join(', ') });
+  if (Date.now() - H.drawStartedAt < 5000) grant(p, 'speed');
   emitEv({ k: 'word', to: p.id, seq: H.seq, word: H.word });
   broadcastState();
+}
+function grant(p, k) {
+  if (!H.settings.badges) return;
+  p.ach = p.ach || [];
+  if (p.ach.includes(k)) return;
+  p.ach.push(k);
+  emitEv({ k: 'sys', text: '🏅 ' + p.name + ' earned ' + H.settings.badgeNames[k] });
 }
 function onVote(m) {
   const p = findP(m.id);
@@ -1797,6 +1887,7 @@ function onVote(m) {
   const drawer = findP(H.drawerId); if (!drawer) return;
   H.votes.add(m.id);
   drawer.score += VOTE_PTS; H.gains[drawer.id] = (H.gains[drawer.id] || 0) + VOTE_PTS;
+  drawer.votesWon = (drawer.votesWon || 0) + 1; if (drawer.votesWon >= 5) grant(drawer, 'picasso');
   broadcastState(); persistSoon();
 }
 function onDareAgain(m) {
@@ -1811,11 +1902,21 @@ function endTurn(reason) {
     H.played++;
     if (reason === 'all') H.solved++;
   }
+  if (H.settings.badges && H.index + 1 >= H.order.length) {
+    const ps = H.players.filter((p) => H.order.includes(p.id));
+    const lo = Math.min(...ps.map((p) => p.score)), hi = Math.max(...ps.map((p) => p.score));
+    if (hi > lo) ps.forEach((p) => { if (p.score === lo) p.wasLast = true; });
+  }
   H.phase = 'turnend'; H.reason = reason; H.nextAt = Date.now() + (reason === 'left' ? 3500 : 7500);
   broadcastState(); persistSoon();
 }
 function endGame(reason) {
   H.phase = 'gameover'; H.reason = reason; H.dare = null;
+  if (reason === 'done' && H.settings.badges && H.settings.mode === 'versus') {
+    const ps = H.players.filter((p) => H.order.includes(p.id));
+    const hi = Math.max(...ps.map((p) => p.score)), tops = ps.filter((p) => p.score === hi);
+    if (tops.length === 1 && tops[0].wasLast) grant(tops[0], 'comeback');
+  }
   if (reason === 'done' && H.settings.category === 'spicy' && H.settings.mode === 'versus' && H.dares.length) {
     const parts = H.players.filter((p) => H.order.includes(p.id));
     if (parts.length >= 2) {
@@ -1932,6 +2033,7 @@ function teardown() {
   clearInterval(hostTimer); clearInterval(uiTimer); clearInterval(helloTimer);
   hostTimer = uiTimer = helloTimer = null;
   if (ch) { try { sb.removeChannel(ch); } catch (e) {} }
+  document.documentElement.dataset.theme = 'night';
   ch = null; joined = false; H = null; room = null; S.snap = null; S.ovKey = ''; S.gallery = []; S.capSeq = -1; S.lastCelebrate = '';
   show($('banner'), false);
 }
@@ -1945,6 +2047,41 @@ function leaveRoom() {
 }
 
 /* ═════════ lobby controls ═════════ */
+function badgeRow(s) {
+  if (!s.settings.badges) return null;
+  const items = [];
+  s.players.forEach((p) => (p.ach || []).forEach((k) => {
+    const b = BADGES.find((x) => x[0] === k);
+    if (b) items.push(h('span', { class: 'chip2' }, b[1] + ' ' + p.name, h('b', { text: s.settings.badgeNames[k] })));
+  }));
+  return items.length ? h('div', { class: 'chips' }, items) : null;
+}
+function buildOptions() {
+  const box = $('optBody'); box.textContent = '';
+  box.append(h('div', { class: 'opt-h', text: 'Look' }));
+  const look = h('div', { class: 'seg' });
+  THEMES.forEach(([k, ic, n]) => look.append(h('button', { type: 'button', 'data-th': k, text: ic + ' ' + n })));
+  box.append(look, h('div', { class: 'opt-h', text: 'Features' }));
+  TOGGLES.forEach(([k, ic, t, d]) => box.append(h('div', { class: 'opt-row' },
+    h('span', { class: 'opt-ic', text: ic }),
+    h('div', { class: 'opt-tx' }, h('b', { text: t }), h('small', { text: d })),
+    h('button', { type: 'button', class: 'sw2', role: 'switch', 'data-k': k, 'aria-label': t }))));
+  const bd = h('div', { id: 'optBadges' }, h('div', { class: 'opt-h', text: 'Badge names' }));
+  BADGES.forEach(([k, ic, hint]) => bd.append(h('div', { class: 'bn' }, h('span', { text: ic }),
+    h('input', { type: 'text', maxlength: 16, 'data-b': k, autocomplete: 'off', 'aria-label': hint }), h('small', { text: hint }))));
+  box.append(bd);
+}
+function syncOptions() {
+  const s = S.snap; if (!s) return;
+  const st = s.settings, box = $('optBody');
+  box.classList.toggle('locked', !isHost);
+  box.querySelectorAll('.sw2').forEach((b) => { const on = !!st[b.dataset.k]; b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); });
+  box.querySelectorAll('[data-th]').forEach((b) => b.classList.toggle('on', b.dataset.th === st.theme));
+  box.querySelectorAll('input[data-b]').forEach((i) => { i.readOnly = !isHost; if (document.activeElement !== i) i.value = st.badgeNames[i.dataset.b]; });
+  show($('optBadges'), st.badges);
+  const th = THEMES.find((t) => t[0] === st.theme);
+  $('optSummary').textContent = TOGGLES.filter((t) => st[t[0]]).length + ' on · ' + (th ? th[2] : '');
+}
 function bindLobby() {
   buildTimeRow();
   $('catRow').addEventListener('click', (e) => { const b = e.target.closest('.cat'); if (b) setSetting('category', b.dataset.cat); });
@@ -1956,7 +2093,19 @@ function bindLobby() {
     setSetting('languages', next);
   });
   $('modeRow').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setSetting('mode', b.dataset.mode); });
-  $('bonusBtn').addEventListener('click', () => { if (S.snap) setSetting('bonuses', !S.snap.settings.bonuses); });
+  buildOptions();
+  $('optBtn').addEventListener('click', () => { syncOptions(); show($('optModal'), true); });
+  $('optClose').addEventListener('click', () => show($('optModal'), false));
+  $('optModal').addEventListener('click', (e) => { if (e.target === $('optModal')) show($('optModal'), false); });
+  $('optBody').addEventListener('click', (e) => {
+    if (!S.snap) return;
+    const sw = e.target.closest('.sw2'); if (sw) { setSetting(sw.dataset.k, !S.snap.settings[sw.dataset.k]); return; }
+    const th = e.target.closest('[data-th]'); if (th) setSetting('theme', th.dataset.th);
+  });
+  $('optBody').addEventListener('change', (e) => {
+    const i = e.target.closest('input[data-b]'); if (!i || !S.snap) return;
+    setSetting('badgeNames', Object.assign({}, S.snap.settings.badgeNames, { [i.dataset.b]: i.value }));
+  });
   $('diffRow').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setSetting('difficulty', b.dataset.diff); });
   $('timeRow').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setSetting('drawTime', Number(b.dataset.t)); });
   const rounds = () => (S.snap ? S.snap.settings.rounds : DEFAULTS.rounds);
@@ -2196,7 +2345,6 @@ function init() {
 }
 init();
 })();
-</script>
 </script>
 </body>
 </html>
