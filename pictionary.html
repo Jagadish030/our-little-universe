@@ -317,6 +317,13 @@ html[data-theme] .overlay.over{background:color-mix(in srgb,var(--night) 97%,#00
 .game.solo .g-center{justify-content:flex-start}
 @media(min-width:900px){.game.solo .g-center{justify-content:center}.solo-bar{width:min(100%,calc((100dvh - 270px)*4/3 + 60px))}}
 .solo-hint{color:var(--muted);font-size:.8rem;font-weight:600;margin:.2rem 0 0}
+.below{width:min(100%,calc(40dvh*4/3 + 60px));background:var(--night2);border:1px solid var(--line);border-radius:16px;padding:.6rem .8rem;text-align:center}
+.below .ov-in{display:flex;flex-direction:column;align-items:center;gap:.4rem;width:100%}
+.below .big{font-family:var(--marker);font-size:clamp(1.3rem,6vw,2rem);line-height:1.1;color:var(--gold);text-transform:uppercase;word-break:break-word}
+.below .sub{color:var(--muted);font-weight:600;font-size:.85rem}
+.below .chips{gap:.3rem}.below .chip2{font-size:.75rem;padding:.2rem .55rem}
+.below .replay{background:var(--night);border:1px solid var(--line);border-radius:14px;padding:.3rem .5rem}
+@media(min-width:900px){.below{width:min(100%,calc((100dvh - 270px)*4/3 + 60px))}}
 </style>
 </head>
 <body>
@@ -461,6 +468,7 @@ html[data-theme] .overlay.over{background:color-mix(in srgb,var(--night) 97%,#00
               <div class="overlay hidden" id="overlay"></div>
             </div>
           </div>
+          <div class="below hidden" id="below"></div>
           <div class="tools hidden" id="tools"></div>
           <div class="solo-bar hidden" id="soloBar"><button class="btn" id="soloSkip" type="button">Skip word</button><button class="btn primary" id="soloDone" type="button">Done ✓</button></div>
           <div class="react-bar" id="reactBar"></div>
@@ -1006,7 +1014,7 @@ function applySync(p) {
 }
 
 /* drawing tools UI */
-const TOOL_LIST = [['pen', 'Pen'], ['rainbow', 'Rainbow'], ['spark', 'Sparkle'], ['line', 'Line'], ['rect', 'Box'], ['oval', 'Circle'], ['fill', 'Fill'], ['erase', 'Erase']];
+const TOOL_LIST = [['pen', 'Pen'], ['erase', 'Erase'], ['fill', 'Fill'], ['line', 'Line'], ['rect', 'Box'], ['oval', 'Circle'], ['spark', 'Sparkle'], ['rainbow', 'Rainbow']];
 function buildTools() {
   const box = $('tools'); box.textContent = '';
   const r1 = h('div', { class: 'trow scroll' });
@@ -1500,14 +1508,12 @@ function renderOverlay() {
       const title = s.reason === 'all' ? 'Everyone got it' : s.reason === 'left' ? nameOf(s.drawerId) + ' left the round' : "Time's up";
       const voted = S.votedSeq === s.seq || (s.voted || []).includes(myId);
       const canReplay = s.settings.replay && strokes.length > 1;
-      if (canReplay && S.peekSeq === s.seq) inCls = 'peek';
-      kids = [h('div', { class: 'sub', text: title + ' · the word was' }), h('div', { class: 'big', text: s.word || '' }),
+      kids = [canReplay ? replayBlock(s.seq, strokes.length) : null, h('div', { class: 'sub', text: title + ' · the word was' }), h('div', { class: 'big', text: s.word || '' }),
         gains.length ? h('div', { class: 'chips' }, gains.map(([id, v]) => h('span', { class: 'chip2' }, nameOf(id), h('b', { text: '+' + v }))))
           : h('div', { class: 'sub', text: 'Nobody guessed it' }),
         (canVote || s.votes > 0) ? h('div', { class: 'vote-row' },
           canVote ? h('button', { class: 'btn mini', type: 'button', disabled: voted, onclick: voteDrawing, text: voted ? 'Liked' : '👏 Great drawing!' }) : null,
           s.votes > 0 ? h('span', { class: 'sub', text: s.votes + (s.votes === 1 ? ' like' : ' likes') }) : null) : null,
-        canReplay ? replayBlock(s.seq, strokes.length) : null,
         h('div', { class: 'nx' }, h('span', { class: 'sub', id: 'ovCd' }), isHost ? h('button', { class: 'btn mini', type: 'button', text: 'Next ▸', onclick: hostSkip }) : null)];
       break;
     }
@@ -1551,14 +1557,11 @@ function renderOverlay() {
       break;
     }
     default:
-      S.ovKey = ''; ov.classList.remove('over'); show(ov, false); return;
+      S.ovKey = ''; hidePanels(); return;
   }
   S.ovKey = key;
   ov.textContent = '';
-  ov.append(h('div', { class: 'ov-in' + (inCls ? ' ' + inCls : '') }, kids.filter(Boolean)));
-  ov.classList.toggle('bottom', bottom);
-  ov.classList.toggle('over', s.phase === 'gameover');
-  show(ov, true);
+  mountPanel(kids, bottom, s.phase === 'gameover');
 }
 function pickWord(i) {
   if (!S.snap || S.pickedSeq === S.snap.seq) return;
@@ -2368,18 +2371,22 @@ async function wmAdd() {
   await wmLoad();
 }
 
-/* ═════════ replay block (shared by rounds and solo) ═════════ */
-function setPeek(seq, on) {
-  S.peekSeq = on ? seq : -1;
-  const i = document.querySelector('#overlay .ov-in'); if (i) i.classList.toggle('peek', on);
-  const b = document.querySelector('#overlay .peekbtn'); if (b) b.textContent = on ? '▴' : '▾';
-}
+/* ═════════ shared panels: replay bar + results shown below the canvas ═════════ */
 function replayBlock(seq, total) {
   return h('div', { class: 'replay' },
-    h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Play replay', text: '▶', onclick: () => { setPeek(seq, true); playReplay(); } }),
-    h('input', { type: 'range', id: 'rpRange', min: 1, max: total, value: (S.rp && S.rp.seq === seq) ? S.rp.n : total, 'aria-label': 'Replay drawing', oninput: (e) => { setPeek(seq, true); clearInterval(rpT); replayTo(Number(e.target.value)); } }),
-    h('button', { class: 'icon-btn peekbtn', type: 'button', 'aria-label': 'Show or hide results', text: S.peekSeq === seq ? '▴' : '▾', onclick: () => setPeek(seq, S.peekSeq !== seq) }));
+    h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Play replay', text: '▶', onclick: () => playReplay() }),
+    h('input', { type: 'range', id: 'rpRange', min: 1, max: total, value: (S.rp && S.rp.seq === seq) ? S.rp.n : total, 'aria-label': 'Replay drawing', oninput: (e) => { clearInterval(rpT); replayTo(Number(e.target.value)); } }));
 }
+function mountPanel(kids, bottom, over) {
+  const ov = $('overlay'), bl = $('below');
+  const tgt = bottom ? bl : ov;
+  tgt.textContent = '';
+  tgt.append(h('div', { class: 'ov-in' }, kids.filter(Boolean)));
+  ov.classList.remove('bottom'); ov.classList.toggle('over', !!over);
+  if (bottom) ov.textContent = '';
+  show(bl, !!bottom); show(ov, !bottom);
+}
+function hidePanels() { const ov = $('overlay'); ov.classList.remove('over', 'bottom'); show(ov, false); show($('below'), false); }
 
 /* ═════════ solo practice ═════════ */
 const SOLO_KEY = 'pictSoloCfg';
@@ -2506,10 +2513,9 @@ function renderSolo() {
     const last = so.results[so.results.length - 1];
     const final = so.cfg.count > 0 && so.finished >= so.cfg.count;
     const canReplay = strokes.length > 1;
-    bottom = true; if (canReplay && S.peekSeq === so.idx) inCls = 'peek';
-    kids = [h('div', { class: 'sub', text: (last.reason === 'time' ? "Time's up" : 'Finished in ' + Math.round(last.secs) + 's') + ' · the word was' }),
+    bottom = true;
+    kids = [canReplay ? replayBlock(so.idx, strokes.length) : null, h('div', { class: 'sub', text: (last.reason === 'time' ? "Time's up" : 'Finished in ' + Math.round(last.secs) + 's') + ' · the word was' }),
       h('div', { class: 'big', text: so.word }),
-      canReplay ? replayBlock(so.idx, strokes.length) : null,
       h('div', { class: 'nx' }, final ? null : h('button', { class: 'btn', type: 'button', text: 'Finish', onclick: soloFinish }),
         h('button', { class: 'btn primary', type: 'button', text: final ? 'See results' : 'Next word ▸', onclick: soloAdvance }))];
   } else if (so.phase === 'done') {
@@ -2527,11 +2533,8 @@ function renderSolo() {
         h('button', { class: 'btn primary', type: 'button', text: 'Practice again', onclick: () => beginSolo(so.pool) }),
         h('button', { class: 'btn', type: 'button', text: 'Leave', onclick: leaveRoom }))];
   }
-  if (!kids) { ov.classList.remove('over'); show(ov, false); return; }
-  ov.textContent = '';
-  ov.append(h('div', { class: 'ov-in' + (inCls ? ' ' + inCls : '') }, kids.filter(Boolean)));
-  ov.classList.toggle('bottom', bottom); ov.classList.toggle('over', over);
-  show(ov, true);
+  if (!kids) { hidePanels(); return; }
+  mountPanel(kids, bottom, over);
 }
 function bindSolo() {
   $('soloBtn').addEventListener('click', () => { renderSoloSetup(); show($('soloModal'), true); });
