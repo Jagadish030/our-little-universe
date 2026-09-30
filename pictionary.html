@@ -287,6 +287,36 @@ html[data-theme=festive]{--night:#0E1F19;--night2:#153028;--night3:#1E4136;--ros
 html[data-theme=festive] body{background:radial-gradient(1100px 700px at 15% -10%,#1f5a45 0%,transparent 60%),radial-gradient(900px 600px at 100% 110%,#5a1f2a 0%,transparent 55%),var(--night)}
 html:is([data-theme=date],[data-theme=festive]) :is(.panel,.card){background:var(--night2)}
 html:is([data-theme=date],[data-theme=festive]) :is(.btn.primary,.seg button.on,.cat.on){background:var(--grad)}
+
+/* v4: polish, compact round-end, solo */
+.btn.primary{box-shadow:0 6px 16px rgba(217,138,147,.25)}
+.cat.on{box-shadow:0 6px 16px rgba(217,138,147,.22)}
+.modal .sheet{animation:sheetIn .22s ease-out}
+@keyframes sheetIn{from{opacity:0;transform:translateY(14px) scale(.98)}}
+.bn{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.15rem .6rem;align-items:center;margin-bottom:.7rem}
+.bn span{grid-row:1/3;font-size:1.3rem}
+.bn small{width:auto;grid-column:2}
+.btn.mini{min-height:34px;padding:.3rem .8rem;font-size:.85rem}
+.nx{display:flex;gap:.5rem;align-items:center;justify-content:center;width:100%;flex-wrap:wrap}
+.nx .btn{flex:1 1 120px}
+.overlay.bottom{background:transparent;pointer-events:none;padding:0 .6rem calc(.6rem + var(--sab))}
+.overlay.bottom .ov-in{pointer-events:auto;max-width:none;width:100%;gap:.4rem;padding:.6rem .8rem;border:1px solid var(--line);border-radius:16px;background:rgba(27,18,32,.95)}
+html[data-theme] .overlay.bottom .ov-in{background:color-mix(in srgb,var(--night) 95%,transparent)}
+.overlay.bottom .big{font-size:clamp(1.2rem,5vw,1.8rem);line-height:1.1}
+.overlay.bottom .chip2{font-size:.75rem;padding:.2rem .55rem}
+.overlay.bottom .sub{font-size:.85rem}
+.ov-in.peek>*:not(.replay){display:none}
+.replay .icon-btn{flex:none}
+.overlay.over{position:fixed;inset:0;z-index:35;justify-content:flex-start;background:rgba(18,11,22,.97);padding:calc(1rem + var(--sat)) 1rem calc(1rem + var(--sab))}
+html[data-theme] .overlay.over{background:color-mix(in srgb,var(--night) 97%,#000)}
+.overlay.over .ov-in{margin:auto;max-width:460px;animation:sheetIn .3s ease-out}
+.solo-bar{display:flex;gap:.6rem;justify-content:center;width:min(100%,calc(40dvh*4/3 + 60px))}
+.solo-bar .btn{flex:1}
+.game.solo .g-players,.game.solo .g-chat{display:none}
+.game.solo .g-main{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);grid-template-areas:"center"}
+.game.solo .g-center{justify-content:flex-start}
+@media(min-width:900px){.game.solo .g-center{justify-content:center}.solo-bar{width:min(100%,calc((100dvh - 270px)*4/3 + 60px))}}
+.solo-hint{color:var(--muted);font-size:.8rem;font-weight:600;margin:.2rem 0 0}
 </style>
 </head>
 <body>
@@ -310,6 +340,7 @@ html:is([data-theme=date],[data-theme=festive]) :is(.btn.primary,.seg button.on,
           <button id="joinBtn" class="btn primary" type="button">Join</button>
         </div>
         <p class="msg" id="landingMsg" role="alert"></p>
+        <button id="soloBtn" class="btn" type="button" style="width:100%;margin-top:.6rem">🎯 Solo practice</button>
         <button id="wordsBtnLanding" class="btn hidden" type="button" style="width:100%;margin-top:.6rem">Manage word lists</button>
       </div>
       <a class="home-link" id="homeLink" href="index.html">Back to our universe</a>
@@ -431,6 +462,7 @@ html:is([data-theme=date],[data-theme=festive]) :is(.btn.primary,.seg button.on,
             </div>
           </div>
           <div class="tools hidden" id="tools"></div>
+          <div class="solo-bar hidden" id="soloBar"><button class="btn" id="soloSkip" type="button">Skip word</button><button class="btn primary" id="soloDone" type="button">Done ✓</button></div>
           <div class="react-bar" id="reactBar"></div>
         </div>
         <aside class="g-chat">
@@ -504,6 +536,17 @@ html:is([data-theme=date],[data-theme=festive]) :is(.btn.primary,.seg button.on,
   <div class="sheet opt">
     <div class="wm-top"><h2>Room options</h2><button class="btn primary" id="optClose" type="button">Done</button></div>
     <div id="optBody"></div>
+    <p class="note hidden" id="optNote" style="color:var(--muted)">Only the host can change these.</p>
+  </div>
+</div>
+
+<!-- Solo practice -->
+<div class="modal hidden" id="soloModal" role="dialog" aria-modal="true" aria-label="Solo practice">
+  <div class="sheet opt">
+    <div class="wm-top"><h2>Solo practice</h2><button class="btn" id="soloClose" type="button">Close</button></div>
+    <p class="note" style="color:var(--muted);margin:0">Draw each word against the clock. No one else needed.</p>
+    <div id="soloBody"></div>
+    <button class="btn primary" id="soloStart" type="button" style="width:100%;margin-top:1rem">Start practice</button>
   </div>
 </div>
 
@@ -532,7 +575,7 @@ const DIFFS = ['easy', 'medium', 'hard'];
 const LANGS = ['hindi', 'english', 'telugu'];
 const DEFAULTS = { category: 'general', languages: ['hindi', 'english', 'telugu'], difficulty: 'medium', drawTime: 80, rounds: 3, mode: 'versus', bonuses: true, replay: true, badges: true, gray: false, theme: 'night', badgeNames: { speed: 'Speed Demon', picasso: 'Picasso', comeback: 'Comeback Kid' } };
 const THEMES = [['night', '🌙', 'Night'], ['date', '🕯️', 'Date night'], ['festive', '🎄', 'Festive']];
-const TOGGLES = [['bonuses', '⭐', 'Bonus points', 'First guess x2, streaks and likes'], ['replay', '⏪', 'Replay', 'Scrub through each drawing after the round'], ['badges', '🏅', 'Badges', 'Earn badges as you play'], ['gray', '🌫️', 'Grayscale', 'Guessers see the drawing without colour']];
+const TOGGLES = [['bonuses', '⭐', 'Bonus points', 'First guess x2, streaks and likes'], ['replay', '⏪', 'Replay', 'Scrub through each drawing after the round'], ['badges', '🏅', 'Badges', 'Earn badges as you play'], ['gray', '🌫️', 'Harder mode', 'Guessers see the drawing in black and white']];
 const BADGES = [['speed', '⚡', 'Guess in under 5 seconds'], ['picasso', '🎨', '5 likes on your drawings'], ['comeback', '🚀', 'Win after being in last place']];
 const MODES = ['versus', 'coop'];
 const REACTIONS = ['😂', '🔥', '👏', '😮', '❤️'];
@@ -675,13 +718,13 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
 });
 
 /* ═════════ state ═════════ */
-let room = null, isHost = false, ch = null, joined = false, H = null, ROW = null;
+let room = null, isHost = false, ch = null, joined = false, H = null, ROW = null, SOLO = null;
 let hostTimer = null, uiTimer = null, helloTimer = null;
 const S = {
   snap: null, offset: 0, hostId: null, canvasSeq: -1,
   words: {}, choices: {}, askedWord: -1, pickedSeq: -1,
   pending: [], presIds: new Set(), hostAbsentSince: 0, ovKey: '', lastCelebrate: '',
-  gallery: [], capSeq: -1, votedSeq: -1, lastTick: 0,
+  gallery: [], capSeq: -1, votedSeq: -1, lastTick: 0, peekSeq: -1,
 };
 const nowHost = () => Date.now() + S.offset;
 const nameOf = (id) => { const p = S.snap && S.snap.players.find((x) => x.id === id); return p ? p.name : 'Someone'; };
@@ -818,7 +861,7 @@ function addPoints(st, list) {
 /* local drawing (the drawer) */
 const tool = { kind: 'pen', color: PALETTE[0], size: SIZES[1] };
 let cur = null, outBuf = [], flushT = null, previewRaf = 0;
-const canDraw = () => amDrawer() && S.snap.phase === 'drawing' && S.snap.seq === S.canvasSeq;
+const canDraw = () => (SOLO ? SOLO.phase === 'drawing' : (amDrawer() && S.snap.phase === 'drawing' && S.snap.seq === S.canvasSeq));
 function toLogical(e) {
   const r = cv.getBoundingClientRect();
   const x = Math.max(0, Math.min(LW, (e.clientX - r.left) / r.width * LW));
@@ -903,7 +946,7 @@ function clearBoard() {
 function resetCanvas() { cur = null; outBuf = []; clearTimeout(flushT); flushT = null; strokes = []; clearCanvas(); clearInterval(rpT); S.rp = null; }
 let rpT = null;
 function replayTo(n) {
-  S.rp = { seq: S.snap ? S.snap.seq : 0, n };
+  S.rp = { seq: S.snap ? S.snap.seq : (SOLO ? SOLO.idx : 0), n };
   clearCanvas();
   for (let i = 0; i < Math.min(n, strokes.length); i++) { const st = strokes[i]; st.drawn = 0; st.lx = undefined; paintStroke(st); }
 }
@@ -998,7 +1041,7 @@ function syncTools() {
 }
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && canDraw()) { e.preventDefault(); undoStroke(); }
-  if (e.key === 'Escape') { show($('wordsModal'), false); show($('galleryModal'), false); show($('optModal'), false); }
+  if (e.key === 'Escape') { show($('wordsModal'), false); show($('galleryModal'), false); show($('optModal'), false); show($('soloModal'), false); }
 });
 
 /* reactions floating over the drawing */
@@ -1080,13 +1123,13 @@ async function poolFor(cat, settings) {
   };
   const custom = rows.filter((r) => r.kind !== 'hide');
   if (cat === 'movies') {
-    for (const l of settings.languages) for (const d of DIFFS) st.movies[l][d].filter((w) => !hidden.has(l + '|' + normalize(w))).forEach((w) => add(d, w));
+    if (!settings.onlyCustom) for (const l of settings.languages) for (const d of DIFFS) st.movies[l][d].filter((w) => !hidden.has(l + '|' + normalize(w))).forEach((w) => add(d, w));
     custom.filter((r) => settings.languages.includes(r.language)).forEach((r) => add(DIFFS.includes(r.difficulty) ? r.difficulty : 'medium', r.word));
   } else {
-    for (const d of DIFFS) st[cat][d].filter((w) => !hidden.has('|' + normalize(w))).forEach((w) => add(d, w));
+    if (!settings.onlyCustom) for (const d of DIFFS) st[cat][d].filter((w) => !hidden.has('|' + normalize(w))).forEach((w) => add(d, w));
     custom.forEach((r) => add(DIFFS.includes(r.difficulty) ? r.difficulty : 'medium', r.word));
   }
-  if (!tiers.easy.length && !tiers.medium.length && !tiers.hard.length) FALLBACK_WORDS.forEach((w) => add('easy', w));
+  if (!settings.onlyCustom && !tiers.easy.length && !tiers.medium.length && !tiers.hard.length) FALLBACK_WORDS.forEach((w) => add('easy', w));
   return tiers;
 }
 
@@ -1264,10 +1307,10 @@ function captureDrawing(snap) {
     x.font = "28px 'Permanent Marker','Comic Sans MS',cursive";
     x.fillText(String(snap.word || '').slice(0, 26), 20, 631);
     x.textAlign = 'right'; x.font = "700 20px Quicksand,system-ui,sans-serif";
-    x.fillText('drawn by ' + nameOf(snap.drawerId), 780, 631);
+    x.fillText('drawn by ' + (snap.by || nameOf(snap.drawerId)), 780, 631);
     const url = c.toDataURL('image/jpeg', 0.85);
     if (!url || url.length < 30) return;
-    S.gallery.push({ url, word: snap.word || '', by: nameOf(snap.drawerId) });
+    S.gallery.push({ url, word: snap.word || '', by: snap.by || nameOf(snap.drawerId) });
     if (S.gallery.length > 60) S.gallery.shift();
    
   } catch (e) { /* the gallery is a bonus, never block the game */ }
@@ -1431,7 +1474,7 @@ function renderOverlay() {
   const sorted = s.players.slice().sort((a, b) => b.score - a.score);
   const sk = scoreKey(s);
   const coop = s.settings.mode === 'coop';
-  let key = '', kids = null, bottom = false;
+  let key = '', kids = null, bottom = false, inCls = '';
   switch (s.phase) {
     case 'starting':
       key = 'start'; if (S.ovKey === key) return;
@@ -1456,16 +1499,16 @@ function renderOverlay() {
       const gains = Object.entries(s.gains || {}).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
       const title = s.reason === 'all' ? 'Everyone got it' : s.reason === 'left' ? nameOf(s.drawerId) + ' left the round' : "Time's up";
       const voted = S.votedSeq === s.seq || (s.voted || []).includes(myId);
+      const canReplay = s.settings.replay && strokes.length > 1;
+      if (canReplay && S.peekSeq === s.seq) inCls = 'peek';
       kids = [h('div', { class: 'sub', text: title + ' · the word was' }), h('div', { class: 'big', text: s.word || '' }),
         gains.length ? h('div', { class: 'chips' }, gains.map(([id, v]) => h('span', { class: 'chip2' }, nameOf(id), h('b', { text: '+' + v }))))
           : h('div', { class: 'sub', text: 'Nobody guessed it' }),
         (canVote || s.votes > 0) ? h('div', { class: 'vote-row' },
-          canVote ? h('button', { class: 'btn', type: 'button', disabled: voted, onclick: voteDrawing, text: voted ? 'Liked' : '👏 Great drawing!' }) : null,
+          canVote ? h('button', { class: 'btn mini', type: 'button', disabled: voted, onclick: voteDrawing, text: voted ? 'Liked' : '👏 Great drawing!' }) : null,
           s.votes > 0 ? h('span', { class: 'sub', text: s.votes + (s.votes === 1 ? ' like' : ' likes') }) : null) : null,
-        (s.settings.replay && strokes.length > 1) ? h('div', { class: 'replay' },
-          h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Play replay', text: '▶', onclick: playReplay }),
-          h('input', { type: 'range', id: 'rpRange', min: 1, max: strokes.length, value: (S.rp && S.rp.seq === s.seq) ? S.rp.n : strokes.length, 'aria-label': 'Replay drawing', oninput: (e) => { clearInterval(rpT); replayTo(Number(e.target.value)); } })) : null,
-        h('div', { class: 'sub', id: 'ovCd' })];
+        canReplay ? replayBlock(s.seq, strokes.length) : null,
+        h('div', { class: 'nx' }, h('span', { class: 'sub', id: 'ovCd' }), isHost ? h('button', { class: 'btn mini', type: 'button', text: 'Next ▸', onclick: hostSkip }) : null)];
       break;
     }
     case 'gameover': {
@@ -1508,12 +1551,13 @@ function renderOverlay() {
       break;
     }
     default:
-      S.ovKey = ''; show(ov, false); return;
+      S.ovKey = ''; ov.classList.remove('over'); show(ov, false); return;
   }
   S.ovKey = key;
   ov.textContent = '';
-  ov.append(h('div', { class: 'ov-in' }, kids.filter(Boolean)));
+  ov.append(h('div', { class: 'ov-in' + (inCls ? ' ' + inCls : '') }, kids.filter(Boolean)));
   ov.classList.toggle('bottom', bottom);
+  ov.classList.toggle('over', s.phase === 'gameover');
   show(ov, true);
 }
 function pickWord(i) {
@@ -1747,6 +1791,7 @@ async function hostStart() {
   emitEv({ k: 'sys', text: 'Game started. ' + drawerAt(0).name + ' draws first.' });
   broadcastState(); persistNow();
 }
+function hostSkip() { if (isHost && H && H.phase === 'turnend') H.nextAt = Date.now(); }
 function hostPlayAgain() {
   if (!isHost || !H || H.phase !== 'gameover') return;
   H.players = H.players.filter((p) => p.connected);
@@ -1757,11 +1802,9 @@ function hostPlayAgain() {
   broadcastState(); persistNow();
 }
 
-function pickChoices(n, avoid) {
-  const t = H.pool, diff = H.settings.difficulty;
+function pickFrom(t, diff, used, n, avoid) {
   const skip = new Set((avoid || []).map(normalize));
-  const all = [].concat(t.easy, t.medium, t.hard);
-  const ok = (w) => !H.used.has(normalize(w)) && !skip.has(normalize(w));
+  const ok = (w) => !used.has(normalize(w)) && !skip.has(normalize(w));
   if (t.mix) {
     const out = [];
     for (const k of shuffle(Object.keys(t.cats))) {
@@ -1771,6 +1814,7 @@ function pickChoices(n, avoid) {
     }
     return out.slice(0, n);
   }
+  const all = [].concat(t.easy, t.medium, t.hard);
   let c = (diff === 'mixed' ? all : t[diff]).filter(ok);
   if (c.length < n) c = all.filter(ok);
   if (c.length < n) c = all.filter((w) => !skip.has(normalize(w)));
@@ -1778,6 +1822,7 @@ function pickChoices(n, avoid) {
   shuffle(c);
   return c.slice(0, n);
 }
+function pickChoices(n, avoid) { return pickFrom(H.pool, H.settings.difficulty, H.used, n, avoid); }
 function beginTurn() {
   while (H.index < H.total) { const p = drawerAt(H.index); if (p && p.connected) break; H.index++; }
   if (H.index >= H.total) return endGame('done');
@@ -1907,7 +1952,7 @@ function endTurn(reason) {
     const lo = Math.min(...ps.map((p) => p.score)), hi = Math.max(...ps.map((p) => p.score));
     if (hi > lo) ps.forEach((p) => { if (p.score === lo) p.wasLast = true; });
   }
-  H.phase = 'turnend'; H.reason = reason; H.nextAt = Date.now() + (reason === 'left' ? 3500 : 7500);
+  H.phase = 'turnend'; H.reason = reason; H.nextAt = Date.now() + (reason === 'left' ? 3500 : (H.settings.replay && strokes.length > 1 ? 13000 : 7500));
   broadcastState(); persistSoon();
 }
 function endGame(reason) {
@@ -2038,6 +2083,10 @@ function teardown() {
   show($('banner'), false);
 }
 function leaveRoom() {
+  if (SOLO) {
+    if (SOLO.phase === 'done' || confirm('Leave solo practice?')) { clearInterval(SOLO.timer); SOLO = null; location.href = location.pathname; }
+    return;
+  }
   if (!room) { location.href = location.pathname; return; }
   const msg = isHost ? 'You are the host. Leaving stops the game for everyone. Leave anyway?' : 'Leave this room?';
   if (!confirm(msg)) return;
@@ -2079,6 +2128,7 @@ function syncOptions() {
   box.querySelectorAll('[data-th]').forEach((b) => b.classList.toggle('on', b.dataset.th === st.theme));
   box.querySelectorAll('input[data-b]').forEach((i) => { i.readOnly = !isHost; if (document.activeElement !== i) i.value = st.badgeNames[i.dataset.b]; });
   show($('optBadges'), st.badges);
+  show($('optNote'), !isHost);
   const th = THEMES.find((t) => t[0] === st.theme);
   $('optSummary').textContent = TOGGLES.filter((t) => st[t[0]]).length + ' on · ' + (th ? th[2] : '');
 }
@@ -2318,9 +2368,183 @@ async function wmAdd() {
   await wmLoad();
 }
 
+/* ═════════ replay block (shared by rounds and solo) ═════════ */
+function setPeek(seq, on) {
+  S.peekSeq = on ? seq : -1;
+  const i = document.querySelector('#overlay .ov-in'); if (i) i.classList.toggle('peek', on);
+  const b = document.querySelector('#overlay .peekbtn'); if (b) b.textContent = on ? '▴' : '▾';
+}
+function replayBlock(seq, total) {
+  return h('div', { class: 'replay' },
+    h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Play replay', text: '▶', onclick: () => { setPeek(seq, true); playReplay(); } }),
+    h('input', { type: 'range', id: 'rpRange', min: 1, max: total, value: (S.rp && S.rp.seq === seq) ? S.rp.n : total, 'aria-label': 'Replay drawing', oninput: (e) => { setPeek(seq, true); clearInterval(rpT); replayTo(Number(e.target.value)); } }),
+    h('button', { class: 'icon-btn peekbtn', type: 'button', 'aria-label': 'Show or hide results', text: S.peekSeq === seq ? '▴' : '▾', onclick: () => setPeek(seq, S.peekSeq !== seq) }));
+}
+
+/* ═════════ solo practice ═════════ */
+const SOLO_KEY = 'pictSoloCfg';
+const SOLO_COUNTS = [5, 10, 20, 0];
+function loadSoloCfg() {
+  const d = { category: 'general', languages: LANGS.slice(), difficulty: 'medium', drawTime: 60, count: 10, onlyMine: false };
+  try {
+    const x = JSON.parse(localStorage.getItem(SOLO_KEY) || 'null');
+    if (x && typeof x === 'object') {
+      if (CATS.includes(x.category)) d.category = x.category;
+      if (Array.isArray(x.languages)) { const l = LANGS.filter((k) => x.languages.includes(k)); if (l.length) d.languages = l; }
+      if (DIFFS.concat(['mixed']).includes(x.difficulty)) d.difficulty = x.difficulty;
+      if (TIME_OPTIONS.includes(Number(x.drawTime))) d.drawTime = Number(x.drawTime);
+      if (SOLO_COUNTS.includes(Number(x.count))) d.count = Number(x.count);
+      d.onlyMine = !!x.onlyMine && !!family;
+    }
+  } catch (e) {}
+  return d;
+}
+let soloCfg = loadSoloCfg();
+function saveSolo() { try { localStorage.setItem(SOLO_KEY, JSON.stringify(soloCfg)); } catch (e) {} }
+function poolCount(p) { const c = (t) => t.easy.length + t.medium.length + t.hard.length; return p.mix ? Object.values(p.cats).reduce((a, t) => a + c(t), 0) : c(p); }
+const cap1 = (w) => w.charAt(0).toUpperCase() + w.slice(1);
+function renderSoloSetup() {
+  const c = soloCfg, box = $('soloBody'); box.textContent = '';
+  const upd = (k, v) => { soloCfg[k] = v; saveSolo(); renderSoloSetup(); };
+  const seg = (items, isOn, pick) => h('div', { class: 'seg' }, items.map(([v, label]) => h('button', { type: 'button', class: isOn(v) ? 'on' : '', text: label, onclick: () => pick(v) })));
+  box.append(h('div', { class: 'opt-h', text: 'Words' }),
+    h('div', { class: 'cats' }, [['general', '🎈', 'General'], ['spicy', '🌶️', 'Spicy'], ['movies', '🎬', 'Movies'], ['mix', '🎲', 'Mix']].map(([k, ic, n]) =>
+      h('button', { type: 'button', class: 'cat' + (c.category === k ? ' on' : ''), onclick: () => upd('category', k) }, h('span', { class: 'ic', text: ic }), n))));
+  if (c.category === 'movies' || c.category === 'mix') {
+    box.append(h('div', { class: 'seg', style: 'margin-top:.6rem' }, LANGS.map((l) => h('button', { type: 'button', class: 'chip' + (c.languages.includes(l) ? ' on' : ''), text: cap1(l), onclick: () => {
+      const next = c.languages.includes(l) ? c.languages.filter((x) => x !== l) : c.languages.concat([l]);
+      if (!next.length) { toast('Keep at least one language'); return; }
+      upd('languages', LANGS.filter((x) => next.includes(x)));
+    } }))));
+  }
+  const dwrap = h('div', { class: c.category === 'mix' ? 'dim' : '' }, h('div', { class: 'opt-h', text: 'Difficulty' }),
+    seg([['easy', 'Easy'], ['medium', 'Medium'], ['hard', 'Hard'], ['mixed', 'Mixed']], (v) => c.difficulty === v, (v) => upd('difficulty', v)));
+  box.append(dwrap,
+    h('div', { class: 'opt-h', text: 'Time per word' }), seg(TIME_OPTIONS.map((t) => [t, t + 's']), (v) => c.drawTime === v, (v) => upd('drawTime', v)),
+    h('div', { class: 'opt-h', text: 'How many words' }), seg(SOLO_COUNTS.map((n) => [n, n ? String(n) : 'Endless']), (v) => c.count === v, (v) => upd('count', v)));
+  if (family) {
+    box.append(h('div', { class: 'opt-row', style: 'margin-top:.8rem' }, h('span', { class: 'opt-ic', text: '✍️' }),
+      h('div', { class: 'opt-tx' }, h('b', { text: 'Only my words' }), h('small', { text: 'Test the words you added in Word lists' })),
+      h('button', { type: 'button', class: 'sw2' + (c.onlyMine ? ' on' : ''), role: 'switch', 'aria-checked': c.onlyMine ? 'true' : 'false', 'aria-label': 'Only my words', onclick: () => upd('onlyMine', !c.onlyMine) })));
+  }
+  if (c.category === 'spicy' || c.category === 'mix') box.append(h('p', { class: 'note', text: 'Spicy words are suggestive.' }));
+}
+async function soloStart() {
+  const c = soloCfg, btn = $('soloStart');
+  btn.disabled = true; btn.textContent = 'Loading words…';
+  try {
+    const pool = await buildPool({ category: c.category, languages: c.languages, difficulty: c.difficulty, onlyCustom: c.onlyMine });
+    if (poolCount(pool) === 0) { toast(c.onlyMine ? 'No words of yours here yet. Add some in Word lists.' : 'No words found'); return; }
+    show($('soloModal'), false);
+    beginSolo(pool);
+  } finally { btn.disabled = false; btn.textContent = 'Start practice'; }
+}
+function beginSolo(pool) {
+  if (SOLO) clearInterval(SOLO.timer);
+  SOLO = { cfg: Object.assign({}, soloCfg), pool, used: new Set(), idx: 0, finished: 0, phase: '', word: '', startedAt: 0, endsAt: 0, drawMs: 0, results: [], timer: null };
+  S.gallery = []; S.lastTick = 0; S.peekSeq = -1; S.rp = null; S.snap = null;
+  document.documentElement.dataset.theme = 'night';
+  $('game').classList.add('solo');
+  setScreen('game');
+  SOLO.timer = setInterval(soloTick, 100);
+  soloNext();
+}
+function soloNext() {
+  const so = SOLO; if (!so) return;
+  const w = pickFrom(so.pool, so.cfg.difficulty, so.used, 1, [])[0] || FALLBACK_WORDS[0];
+  so.idx++; so.word = w; so.used.add(normalize(w));
+  so.drawMs = so.cfg.drawTime * 1000; so.startedAt = Date.now(); so.endsAt = so.startedAt + so.drawMs; so.phase = 'drawing';
+  resetCanvas(); S.peekSeq = -1; S.lastTick = 0;
+  renderSolo();
+}
+function soloEnd(reason) {
+  const so = SOLO; if (!so || so.phase !== 'drawing') return;
+  endStroke();
+  if (reason === 'skip') { so.results.push({ word: so.word, skipped: true }); soloNext(); return; }
+  const secs = reason === 'done' ? (Date.now() - so.startedAt) / 1000 : so.cfg.drawTime;
+  so.results.push({ word: so.word, secs, reason });
+  so.finished++; so.phase = 'review';
+  captureDrawing({ word: so.word, by: 'you' });
+  if (reason === 'time') sfx.buzz(); else sfx.correct();
+  renderSolo();
+}
+function soloAdvance() {
+  const so = SOLO; if (!so || so.phase !== 'review') return;
+  if (so.cfg.count > 0 && so.finished >= so.cfg.count) soloFinish(); else soloNext();
+}
+function soloFinish() {
+  const so = SOLO; if (!so || so.phase === 'done') return;
+  endStroke(); clearInterval(rpT);
+  so.phase = 'done'; renderSolo();
+  if (so.finished > 0) setTimeout(() => { if (SOLO && SOLO.phase === 'done') { confetti(); sfx.fanfare(); } }, 500);
+}
+function soloTick() {
+  const so = SOLO; if (!so) return;
+  const tt = $('timeText'), pen = $('pencil'), body = $('pencilBody');
+  if (so.phase === 'drawing') {
+    const left = Math.max(0, so.endsAt - Date.now()), sec = Math.ceil(left / 1000), pct = left / so.drawMs * 100;
+    tt.textContent = String(sec); tt.classList.toggle('low', sec <= 10);
+    pen.classList.toggle('low', pct <= 20); body.style.width = pct + '%';
+    if (sec <= 10 && sec > 0 && S.lastTick !== sec) { S.lastTick = sec; sfx.tick(); }
+    if (left <= 0) soloEnd('time');
+  } else { tt.textContent = ''; tt.classList.remove('low'); pen.classList.remove('low'); body.style.width = '100%'; }
+}
+function renderSolo() {
+  const so = SOLO; if (!so) return;
+  const drawing = so.phase === 'drawing';
+  const n = drawing ? so.finished + 1 : so.finished;
+  $('roundLabel').textContent = so.phase === 'done' ? 'Solo · Results' : 'Solo · ' + (so.cfg.count ? Math.min(n, so.cfg.count) + ' of ' + so.cfg.count : 'Word ' + n);
+  const wbox = $('wordDisplay');
+  if (so.phase === 'done') { wbox.textContent = ''; wbox.append(h('div', { class: 'wd' }, 'Practice complete')); }
+  else renderWordBox(so.word, true, drawing ? 'Draw this' : 'The word was');
+  show($('tools'), drawing); show($('soloBar'), drawing); show($('reactBar'), false);
+  cv.classList.toggle('nodraw', !drawing); cv.classList.remove('gray');
+  syncMute();
+  const ov = $('overlay');
+  let kids = null, bottom = false, over = false, inCls = '';
+  if (so.phase === 'review') {
+    const last = so.results[so.results.length - 1];
+    const final = so.cfg.count > 0 && so.finished >= so.cfg.count;
+    const canReplay = strokes.length > 1;
+    bottom = true; if (canReplay && S.peekSeq === so.idx) inCls = 'peek';
+    kids = [h('div', { class: 'sub', text: (last.reason === 'time' ? "Time's up" : 'Finished in ' + Math.round(last.secs) + 's') + ' · the word was' }),
+      h('div', { class: 'big', text: so.word }),
+      canReplay ? replayBlock(so.idx, strokes.length) : null,
+      h('div', { class: 'nx' }, final ? null : h('button', { class: 'btn', type: 'button', text: 'Finish', onclick: soloFinish }),
+        h('button', { class: 'btn primary', type: 'button', text: final ? 'See results' : 'Next word ▸', onclick: soloAdvance }))];
+  } else if (so.phase === 'done') {
+    over = true;
+    const done = so.results.filter((r) => !r.skipped), skipped = so.results.length - done.length;
+    const timed = done.filter((r) => r.reason === 'done');
+    const avg = done.length ? Math.round(done.reduce((a, r) => a + r.secs, 0) / done.length) : 0;
+    const fast = timed.length ? Math.round(Math.min(...timed.map((r) => r.secs))) : 0;
+    const stat = done.length ? ['Average ' + avg + 's', fast ? 'fastest ' + fast + 's' : '', skipped ? skipped + ' skipped' : ''].filter(Boolean).join(' · ') : 'Nothing drawn this time';
+    kids = [h('h3', { text: 'Practice complete' }), h('div', { class: 'big', text: done.length + (done.length === 1 ? ' drawing' : ' drawings') }),
+      h('div', { class: 'sub', text: stat }),
+      done.length ? h('div', { class: 'chips' }, done.map((r) => h('span', { class: 'chip2' }, r.word, h('b', { text: r.reason === 'time' ? 'time up' : Math.round(r.secs) + 's' })))) : null,
+      h('div', { class: 'choices' },
+        S.gallery.length ? h('button', { class: 'btn', type: 'button', text: 'Gallery (' + S.gallery.length + ')', onclick: openGallery }) : null,
+        h('button', { class: 'btn primary', type: 'button', text: 'Practice again', onclick: () => beginSolo(so.pool) }),
+        h('button', { class: 'btn', type: 'button', text: 'Leave', onclick: leaveRoom }))];
+  }
+  if (!kids) { ov.classList.remove('over'); show(ov, false); return; }
+  ov.textContent = '';
+  ov.append(h('div', { class: 'ov-in' + (inCls ? ' ' + inCls : '') }, kids.filter(Boolean)));
+  ov.classList.toggle('bottom', bottom); ov.classList.toggle('over', over);
+  show(ov, true);
+}
+function bindSolo() {
+  $('soloBtn').addEventListener('click', () => { renderSoloSetup(); show($('soloModal'), true); });
+  $('soloClose').addEventListener('click', () => show($('soloModal'), false));
+  $('soloModal').addEventListener('click', (e) => { if (e.target === $('soloModal')) show($('soloModal'), false); });
+  $('soloStart').addEventListener('click', soloStart);
+  $('soloSkip').addEventListener('click', () => soloEnd('skip'));
+  $('soloDone').addEventListener('click', () => soloEnd('done'));
+}
+
 /* ═════════ start-up ═════════ */
 function init() {
-  bindLobby(); bindWords(); buildTools(); buildReact();
+  bindLobby(); bindWords(); buildTools(); buildReact(); bindSolo();
   $('nameInput').value = loadName();
   show($('homeLink'), !!family);
   show($('wordsBtnLanding'), !!family);
@@ -2333,7 +2557,7 @@ function init() {
   $('nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { if ($('codeInput').value) joinByCode($('codeInput').value); else if (family) createRoom(); } });
   if (roomParam.length === 5) {
     if (family) { joinByCode(roomParam); return; }
-    show($('createBox'), false);
+    show($('createBox'), false); show($('soloBtn'), false);
     $('codeInput').value = roomParam;
     $('tagline').textContent = "You're invited. Pick a name and jump in.";
     $('joinBtn').textContent = 'Join room';
