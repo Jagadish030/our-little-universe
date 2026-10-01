@@ -345,6 +345,13 @@ html[data-theme] .overlay.over{background:color-mix(in srgb,var(--night) 97%,#00
 .btnrow{display:flex;gap:.35rem}.btnrow .btn{flex:1}
 .av-img{width:100%;max-height:60dvh;object-fit:contain;border-radius:12px;background:var(--paper);display:block}
 #avCap{margin:.6rem 0 0;font-weight:700;color:var(--muted);text-align:center}
+.lv-sheet{max-width:380px;text-align:center}
+.lv-sheet h2{margin:.2rem 0 .4rem}
+.lv-sheet p{margin:0 0 1rem;color:var(--muted);font-weight:600}
+.lv-sheet .actions .btn{flex:1}
+.pk-lv{display:flex;justify-content:space-between;align-items:center;margin:.8rem 0 .3rem;font-weight:800;font-size:.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.pk-lv i{font-style:normal;font-weight:700}
+#pkDiff{margin:.5rem 0 .8rem}
 </style>
 </head>
 <body>
@@ -594,6 +601,15 @@ html[data-theme] .overlay.over{background:color-mix(in srgb,var(--night) 97%,#00
     <p class="note" style="color:var(--muted);margin-top:.6rem">Saved on this device only, and cleared when the game ends.</p>
   </div>
 </div>
+<!-- Leave confirmation -->
+<div class="modal hidden" id="leaveModal" role="alertdialog" aria-modal="true" aria-labelledby="lvTitle" style="z-index:70">
+  <div class="sheet lv-sheet">
+    <h2 id="lvTitle">Leave the game?</h2>
+    <p id="lvText"></p>
+    <div class="actions"><button class="btn primary" id="lvStay" type="button">Stay</button><button class="btn" id="lvLeave" type="button">Leave</button></div>
+  </div>
+</div>
+
 <!-- Word packs -->
 <div class="modal hidden" id="packsModal" role="dialog" aria-modal="true" aria-label="Word packs">
   <div class="sheet wide">
@@ -632,9 +648,9 @@ const TIME_OPTIONS = [30, 45, 60, 80, 100, 120, 150, 180];
 const CATS = ['general', 'spicy', 'movies', 'mix', 'pack'];
 const DIFFS = ['easy', 'medium', 'hard'];
 const LANGS = ['hindi', 'english', 'telugu'];
-const DEFAULTS = { category: 'general', languages: ['hindi', 'english', 'telugu'], difficulty: 'medium', drawTime: 80, rounds: 3, mode: 'versus', bonuses: true, replay: true, badges: true, gray: false, theme: 'night', badgeNames: { speed: 'Speed Demon', picasso: 'Picasso', comeback: 'Comeback Kid' } };
+const DEFAULTS = { category: 'general', languages: ['hindi', 'english', 'telugu'], difficulty: 'medium', drawTime: 80, rounds: 3, mode: 'versus', bonuses: true, replay: true, badges: true, gray: false, onlyMine: false, theme: 'night', badgeNames: { speed: 'Speed Demon', picasso: 'Picasso', comeback: 'Comeback Kid' } };
 const THEMES = [['night', '🌙', 'Night'], ['date', '🕯️', 'Date night'], ['festive', '🎄', 'Festive']];
-const TOGGLES = [['bonuses', '⭐', 'Bonus points', 'First guess x2, streaks and likes'], ['replay', '⏪', 'Replay', 'Scrub through each drawing after the round'], ['badges', '🏅', 'Badges', 'Earn badges as you play'], ['gray', '🌫️', 'Harder mode', 'Guessers see the drawing in black and white']];
+const TOGGLES = [['bonuses', '⭐', 'Bonus points', 'First guess x2, streaks and likes'], ['replay', '⏪', 'Replay', 'Scrub through each drawing after the round'], ['badges', '🏅', 'Badges', 'Earn badges as you play'], ['gray', '🌫️', 'Harder mode', 'Guessers see the drawing in black and white'], ['onlyMine', '✍️', 'Only my words', 'Use just the words you added (Packs ignore this)']];
 const BADGES = [['speed', '⚡', 'Guess in under 5 seconds'], ['picasso', '🎨', '5 likes on your drawings'], ['comeback', '🚀', 'Win after being in last place']];
 const MODES = ['versus', 'coop'];
 const REACTIONS = ['😂', '🔥', '👏', '😮', '❤️'];
@@ -728,6 +744,7 @@ function normSettings(s) {
     replay: s.replay === false ? false : true,
     badges: s.badges === false ? false : true,
     gray: s.gray === true,
+    onlyMine: s.onlyMine === true,
     theme: THEMES.some((t) => t[0] === s.theme) ? s.theme : 'night',
     badgeNames: (() => { const b = s.badgeNames || {}, d = DEFAULTS.badgeNames; return { speed: cleanText(b.speed, 16, 1) || d.speed, picasso: cleanText(b.picasso, 16, 1) || d.picasso, comeback: cleanText(b.comeback, 16, 1) || d.comeback }; })(),
   };
@@ -787,7 +804,7 @@ const S = {
   snap: null, offset: 0, hostId: null, canvasSeq: -1,
   words: {}, choices: {}, askedWord: -1, pickedSeq: -1,
   pending: [], presIds: new Set(), hostAbsentSince: 0, ovKey: '', lastCelebrate: '',
-  gallery: [], capSeq: -1, votedSeq: -1, lastTick: 0, peekSeq: -1,
+  gallery: [], capSeq: -1, votedSeq: -1, lastTick: 0, peekSeq: -1, leaving: false, soloGuard: false,
 };
 const nowHost = () => Date.now() + S.offset;
 const nameOf = (id) => { const p = S.snap && S.snap.players.find((x) => x.id === id); return p ? p.name : 'Someone'; };
@@ -1104,7 +1121,7 @@ function syncTools() {
 }
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && canDraw()) { e.preventDefault(); undoStroke(); }
-  if (e.key === 'Escape') { show($('wordsModal'), false); show($('galleryModal'), false); show($('optModal'), false); show($('soloModal'), false); show($('packsModal'), false); show($('albumModal'), false); show($('albumView'), false); }
+  if (e.key === 'Escape') { show($('wordsModal'), false); show($('galleryModal'), false); show($('optModal'), false); show($('soloModal'), false); show($('packsModal'), false); show($('albumModal'), false); show($('albumView'), false); show($('leaveModal'), false); }
 });
 
 /* reactions floating over the drawing */
@@ -1180,12 +1197,17 @@ async function packPool(settings) {
     const { data, error } = await sb.from('pictionary_packs').select('words').eq('id', id).maybeSingle();
     if (error) throw error;
     const seen = new Set();
-    (data && Array.isArray(data.words) ? data.words : []).forEach((w) => { w = cleanWord(w); const k = normalize(w); if (!w || !k || seen.has(k)) return; seen.add(k); tiers.medium.push(w); });
+    (data && Array.isArray(data.words) ? data.words : []).forEach((x) => {
+      const o = (x && typeof x === 'object') ? x : { w: x }; const w = cleanWord(o.w), k = normalize(w);
+      if (!w || !k || seen.has(k)) return; seen.add(k);
+      tiers[DIFFS.includes(o.d) ? o.d : 'medium'].push(w);
+    });
   } catch (e) { console.warn('pack unavailable', e); }
   return tiers;
 }
 async function poolFor(cat, settings) {
   if (cat === 'pack') return packPool(settings);
+  const only = !!(settings.onlyCustom || settings.onlyMine);
   const st = await loadStatic();
   const tiers = { easy: [], medium: [], hard: [] };
   const seen = new Set();
@@ -1198,13 +1220,13 @@ async function poolFor(cat, settings) {
   };
   const custom = rows.filter((r) => r.kind !== 'hide');
   if (cat === 'movies') {
-    if (!settings.onlyCustom) for (const l of settings.languages) for (const d of DIFFS) st.movies[l][d].filter((w) => !hidden.has(l + '|' + normalize(w))).forEach((w) => add(d, w));
+    if (!only) for (const l of settings.languages) for (const d of DIFFS) st.movies[l][d].filter((w) => !hidden.has(l + '|' + normalize(w))).forEach((w) => add(d, w));
     custom.filter((r) => settings.languages.includes(r.language)).forEach((r) => add(DIFFS.includes(r.difficulty) ? r.difficulty : 'medium', r.word));
   } else {
-    if (!settings.onlyCustom) for (const d of DIFFS) st[cat][d].filter((w) => !hidden.has('|' + normalize(w))).forEach((w) => add(d, w));
+    if (!only) for (const d of DIFFS) st[cat][d].filter((w) => !hidden.has('|' + normalize(w))).forEach((w) => add(d, w));
     custom.forEach((r) => add(DIFFS.includes(r.difficulty) ? r.difficulty : 'medium', r.word));
   }
-  if (!settings.onlyCustom && !tiers.easy.length && !tiers.medium.length && !tiers.hard.length) FALLBACK_WORDS.forEach((w) => add('easy', w));
+  if (!only && !tiers.easy.length && !tiers.medium.length && !tiers.hard.length) FALLBACK_WORDS.forEach((w) => add('easy', w));
   return tiers;
 }
 
@@ -1459,7 +1481,7 @@ function renderLobby() {
     const list = isHost ? PK.list : (st.pack ? [st.pack] : []);
     list.forEach((p) => row.append(h('button', { type: 'button', class: 'chip' + (st.pack && st.pack.id === p.id ? ' on' : ''), 'data-pack': p.id, text: p.emoji + ' ' + p.name })));
     if (isHost) row.append(h('button', { type: 'button', class: 'chip', 'data-pack': '_manage', text: '✎ Manage packs' }));
-    $('packNote').textContent = isHost ? (PK.loaded && !PK.list.length ? 'No packs yet. Tap Manage packs to make your first one.' : 'Tap a pack to play with its words.') : (st.pack ? 'Playing with the pack the host picked.' : 'Waiting for the host to pick a pack.');
+    $('packNote').textContent = isHost ? (PK.loaded && !PK.list.length ? 'No packs yet. Tap Manage packs to make your first one.' : 'Tap a pack to play with its words. Easy, Medium and Hard follow the levels you gave each word.') : (st.pack ? 'Playing with the pack the host picked.' : 'Waiting for the host to pick a pack.');
     if (isHost && !PK.loaded && !PK.loading) loadPacks().then(() => { if (S.snap && S.snap.phase === 'lobby') renderLobby(); });
   }
   show($('spicyNote'), st.category === 'spicy' || st.category === 'mix');
@@ -1468,7 +1490,7 @@ function renderLobby() {
   $('modeNote').textContent = st.mode === 'coop' ? 'Everyone plays as one team. Solve as many drawings as you can together.' : 'Everyone competes. The highest score wins.';
   $('diffRow').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.diff === st.difficulty));
   $('timeRow').querySelectorAll('button').forEach((b) => b.classList.toggle('on', Number(b.dataset.t) === st.drawTime));
-  $('diffSet').classList.toggle('dim', st.category === 'mix' || st.category === 'pack');
+  $('diffSet').classList.toggle('dim', st.category === 'mix');
   $('timeVal').textContent = st.drawTime + ' seconds';
   $('roundsVal').textContent = st.rounds;
   $('roundsRange').value = st.rounds;
@@ -1509,7 +1531,9 @@ function renderGame() {
   let ph = 'Type your guess';
   if (s.phase === 'drawing') { if (s.guessed.includes(myId)) ph = 'Chat with the others who got it'; }
   else ph = 'Say something';
-  inp.placeholder = ph; inp.disabled = false; btn.disabled = false;
+  if (inp.placeholder !== ph) inp.placeholder = ph;
+  if (inp.disabled) inp.disabled = false;
+  if (btn.disabled) btn.disabled = false;
   syncMute();
 }
 function renderWordBox(str, solid, sub) {
@@ -1863,6 +1887,7 @@ async function hostStart() {
     H.pool = await buildPool(H.settings);
     H.dares = (H.settings.category === 'spicy' && H.settings.mode === 'versus') ? await buildDares() : [];
   } finally { H.startBusy = false; }
+  if (H.settings.onlyMine && H.settings.category !== 'pack' && poolCount(H.pool) < 3) { renderLobby(); toast('Add at least 3 words of your own first (Word lists), or turn off Only my words'); return; }
   if (H.settings.category === 'pack') {
     if (!H.settings.pack) { renderLobby(); toast('Pick a pack first'); return; }
     if (poolCount(H.pool) < 3) { renderLobby(); toast('That pack needs at least 3 words'); return; }
@@ -1894,11 +1919,18 @@ function pickFrom(t, diff, used, n, avoid) {
   const skip = new Set((avoid || []).map(normalize));
   const ok = (w) => !used.has(normalize(w)) && !skip.has(normalize(w));
   if (t.mix) {
-    const out = [];
+    const out = [], every = [];
     for (const k of shuffle(Object.keys(t.cats))) {
       const cp = t.cats[k], all2 = [].concat(cp.easy, cp.medium, cp.hard);
+      all2.forEach((w) => every.push(w));
       let list = all2.filter(ok); if (!list.length) list = all2.filter((w) => !skip.has(normalize(w)));
       if (list.length) out.push(list[Math.floor(Math.random() * list.length)]);
+    }
+    if (out.length < n) {
+      const have = new Set(out.map(normalize));
+      let more = every.filter((w) => !have.has(normalize(w)) && ok(w));
+      if (more.length < n - out.length) more = every.filter((w) => !have.has(normalize(w)) && !skip.has(normalize(w)));
+      shuffle(more); more.slice(0, n - out.length).forEach((w) => { out.push(w); have.add(normalize(w)); });
     }
     return out.slice(0, n);
   }
@@ -2157,6 +2189,7 @@ async function joinByCode(code) {
 function enterRoom(code, row) {
   room = code; ROW = row; isHost = row.host_id === myId;
   try { history.replaceState(null, '', '?room=' + code); } catch (e) {}
+  pushGuard();
   if (isHost) newHost(row);
   setStatus(isHost ? 'Opening your room' : 'Joining room ' + code, isHost ? '' : 'Waiting for the host…', { spinner: true });
   connect();
@@ -2170,17 +2203,40 @@ function teardown() {
   ch = null; joined = false; H = null; room = null; S.snap = null; S.ovKey = ''; S.gallery = []; S.capSeq = -1; S.lastCelebrate = '';
   show($('banner'), false);
 }
-function leaveRoom() {
-  if (SOLO) {
-    if (SOLO.phase === 'done' || confirm('Leave solo practice?')) { clearInterval(SOLO.timer); SOLO = null; location.href = location.pathname; }
-    return;
-  }
+function leaveNow() {
+  S.leaving = true;
+  if (SOLO) { clearInterval(SOLO.timer); SOLO = null; location.href = location.pathname; return; }
   if (!room) { location.href = location.pathname; return; }
-  const msg = isHost ? 'You are the host. Leaving stops the game for everyone. Leave anyway?' : 'Leave this room?';
-  if (!confirm(msg)) return;
   if (!isHost && ch && joined) ch.send({ type: 'broadcast', event: 'i', payload: { t: 'leave', id: myId } });
   if (isHost && H) persistNow();
   setTimeout(() => { teardown(); location.href = location.pathname; }, 250);
+}
+function askLeave() {
+  if (!room && !SOLO) { location.href = location.pathname; return; }
+  if (SOLO && SOLO.phase === 'done') { leaveNow(); return; }
+  $('lvTitle').textContent = SOLO ? 'Leave solo practice?' : 'Leave the game?';
+  $('lvText').textContent = SOLO ? 'Your progress in this session will be lost.' : (isHost ? 'You are the host. Leaving stops the game for everyone.' : 'You will leave this room.');
+  show($('leaveModal'), true);
+  try { $('lvStay').focus({ preventScroll: true }); } catch (e) {}
+}
+const leaveRoom = askLeave;
+function pushGuard() { try { history.pushState({ pictGuard: 1 }, '', location.href); } catch (e) {} }
+function bindLeaveGuard() {
+  $('lvStay').addEventListener('click', () => show($('leaveModal'), false));
+  $('lvLeave').addEventListener('click', () => { show($('leaveModal'), false); leaveNow(); });
+  $('leaveModal').addEventListener('click', (e) => { if (e.target === $('leaveModal')) show($('leaveModal'), false); });
+  // phone back button / swipe back: close a dialog if one is open, otherwise ask before leaving
+  window.addEventListener('popstate', () => {
+    if (!room && !SOLO) return;
+    pushGuard();
+    for (const id of ['leaveModal', 'albumView', 'albumModal', 'packsModal', 'galleryModal', 'optModal', 'wordsModal']) {
+      const m = $(id); if (m && !m.classList.contains('hidden')) { show(m, false); return; }
+    }
+    askLeave();
+  });
+  window.addEventListener('beforeunload', (e) => {
+    if ((room || SOLO) && !S.leaving) { e.preventDefault(); e.returnValue = ''; }
+  });
 }
 
 /* ═════════ lobby controls ═════════ */
@@ -2285,6 +2341,24 @@ function bindLobby() {
     else $('copyLink').click();
   });
   $('inviteLink').addEventListener('focus', (e) => e.target.select());
+  // keep the keyboard open: tapping Send or a reaction must not steal focus from the guess box
+  const keepKb = (e) => { if (document.activeElement === $('guessInput') && e.target.closest('button')) e.preventDefault(); };
+  $('guessForm').addEventListener('mousedown', keepKb);
+  $('reactBar').addEventListener('mousedown', keepKb);
+  // if the guess box loses focus on its own while someone is mid-typing (no tap elsewhere), take focus back
+  (() => {
+    const gi = $('guessInput'); let lastTap = 0, lastKey = 0, tries = 0;
+    document.addEventListener('pointerdown', () => { lastTap = Date.now(); }, { capture: true, passive: true });
+    gi.addEventListener('input', () => { lastKey = Date.now(); tries = 0; });
+    gi.addEventListener('blur', () => {
+      setTimeout(() => {
+        if (document.activeElement === gi || !document.hasFocus() || document.hidden) return;
+        if (Date.now() - lastKey > 2500 || Date.now() - lastTap < 700 || tries >= 3) return;
+        if (gi.closest('.hidden') || document.querySelector('.modal:not(.hidden)')) return;
+        tries++; try { gi.focus({ preventScroll: true }); } catch (err) {}
+      }, 60);
+    });
+  })();
   $('guessForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const inp = $('guessInput'); const t = inp.value.trim().slice(0, 60);
@@ -2541,7 +2615,7 @@ function renderSoloSetup() {
       upd('languages', LANGS.filter((x) => next.includes(x)));
     } }))));
   }
-  const dwrap = h('div', { class: (c.category === 'mix' || c.category === 'pack') ? 'dim' : '' }, h('div', { class: 'opt-h', text: 'Difficulty' }),
+  const dwrap = h('div', { class: c.category === 'mix' ? 'dim' : '' }, h('div', { class: 'opt-h', text: 'Difficulty' }),
     seg([['easy', 'Easy'], ['medium', 'Medium'], ['hard', 'Hard'], ['mixed', 'Mixed']], (v) => c.difficulty === v, (v) => upd('difficulty', v)));
   box.append(dwrap,
     h('div', { class: 'opt-h', text: 'Time per word' }), seg(TIME_OPTIONS.map((t) => [t, t + 's']), (v) => c.drawTime === v, (v) => upd('drawTime', v)),
@@ -2568,6 +2642,7 @@ function beginSolo(pool) {
   if (SOLO) clearInterval(SOLO.timer);
   SOLO = { cfg: Object.assign({}, soloCfg), pool, used: new Set(), idx: 0, finished: 0, phase: '', word: '', startedAt: 0, endsAt: 0, drawMs: 0, results: [], timer: null };
   S.gallery = []; S.lastTick = 0; S.peekSeq = -1; S.rp = null; S.snap = null;
+  if (!S.soloGuard) { S.soloGuard = true; pushGuard(); }
   document.documentElement.dataset.theme = 'night';
   $('game').classList.add('solo');
   setScreen('game');
@@ -2664,9 +2739,10 @@ function bindSolo() {
 }
 
 /* ═════════ custom word packs ═════════ */
-const PK = { list: [], loaded: false, loading: false, view: 'list', editing: null, draft: '', busy: false };
+const PK = { list: [], loaded: false, loading: false, view: 'list', editing: null, draft: '', busy: false, addDiff: 'medium' };
 const PACK_EMOJI = ['📦', '💞', '🏖️', '✈️', '🎁', '🎬', '🍕', '😂', '🏠', '🎂', '🌸', '⭐'];
-const normPack = (r) => ({ id: r.id, name: cleanText(r.name, 30, 1) || 'Pack', emoji: cleanEmoji(r.emoji), words: (Array.isArray(r.words) ? r.words : []).map(String) });
+const normPW = (x) => { const o = (x && typeof x === 'object') ? x : { w: x }; const w = cleanWord(o.w); return w ? { w, d: DIFFS.includes(o.d) ? o.d : 'medium' } : null; };
+const normPack = (r) => ({ id: r.id, name: cleanText(r.name, 30, 1) || 'Pack', emoji: cleanEmoji(r.emoji), words: (Array.isArray(r.words) ? r.words : []).map(normPW).filter(Boolean) });
 const packRef = (p) => ({ id: p.id, name: p.name, emoji: p.emoji });
 async function loadPacks(force) {
   if (PK.loading || (PK.loaded && !force)) return;
@@ -2715,6 +2791,7 @@ async function createPack() {
     const n = document.querySelector('#pkBody input[aria-label="Pack name"]'); if (n) { n.focus(); n.select(); }
   } finally { PK.busy = false; }
 }
+const DIFF_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
 function renderPackEdit(box) {
   const p = PK.list.find((x) => x.id === PK.editing);
   if (!p) { PK.view = 'list'; return renderPacks(); }
@@ -2724,15 +2801,22 @@ function renderPackEdit(box) {
   const emo = h('div', { class: 'emo' }, PACK_EMOJI.map((e) => h('button', { type: 'button', class: e === p.emoji ? 'on' : '', 'aria-label': 'Icon ' + e, text: e, onclick: () => { if (e !== p.emoji) savePackMeta(p, { emoji: e }); } })));
   const ta = h('textarea', { id: 'pkText', placeholder: 'One word or phrase per line', maxlength: 4000, 'aria-label': 'New words' });
   ta.value = PK.draft; ta.addEventListener('input', () => { PK.draft = ta.value; });
+  const diffSeg = h('div', { class: 'seg', id: 'pkDiff' }, DIFFS.map((d) => h('button', { type: 'button', class: PK.addDiff === d ? 'on' : '', text: DIFF_LABEL[d], onclick: () => { PK.addDiff = d; diffSeg.querySelectorAll('button').forEach((b, i) => b.classList.toggle('on', DIFFS[i] === d)); } })));
+  const groups = DIFFS.map((d) => {
+    const list = p.words.filter((x) => x.d === d); if (!list.length) return null;
+    return h('div', {}, h('div', { class: 'pk-lv' }, h('span', { text: DIFF_LABEL[d] }), h('i', { text: String(list.length) })),
+      h('div', { class: 'wlist' }, list.map((x) => h('button', { type: 'button', class: 'wtag', title: 'Tap to remove', onclick: () => removePackWord(p, x) }, x.w, h('small', { text: '✕' })))));
+  }).filter(Boolean);
   box.append(
     h('div', { class: 'pk-top' }, h('button', { type: 'button', class: 'btn', text: '← All packs', onclick: () => { PK.view = 'list'; PK.editing = null; PK.draft = ''; renderPacks(); } }),
       h('button', { type: 'button', class: 'btn', text: 'Delete pack', onclick: () => deletePack(p) })),
     h('label', { class: 'fld' }, 'Pack name', name),
     h('div', { class: 'lbl', style: 'font-weight:700;color:var(--muted);font-size:.85rem' }, 'Icon'), emo,
     h('label', { class: 'fld' }, 'Add words', ta),
+    h('div', { class: 'lbl', style: 'font-weight:700;color:var(--muted);font-size:.85rem;margin-top:.5rem' }, 'Level for these words'), diffSeg,
     h('button', { type: 'button', class: 'btn primary', id: 'pkAdd', text: 'Add words', style: 'width:100%', onclick: () => addPackWords(p) }),
-    h('div', { class: 'wm-count', text: p.words.length ? p.words.length + (p.words.length === 1 ? ' word' : ' words') + ' (tap one to remove it)' : 'No words yet. A pack needs at least 3 to play.' }),
-    h('div', { class: 'wlist tall' }, p.words.map((w) => h('button', { type: 'button', class: 'wtag', title: 'Tap to remove', onclick: () => removePackWord(p, w) }, w, h('small', { text: '✕' })))));
+    h('div', { class: 'wm-count', text: p.words.length ? p.words.length + (p.words.length === 1 ? ' word' : ' words') + ' (tap one to remove it, or add it again at another level to move it)' : 'No words yet. A pack needs at least 3 to play.' }),
+    h('div', { class: 'pk-words' }, groups));
 }
 async function savePackMeta(p, patch) {
   const { error } = await sb.from('pictionary_packs').update(Object.assign({}, patch, { updated_at: new Date().toISOString() })).eq('id', p.id);
@@ -2743,27 +2827,33 @@ async function addPackWords(p) {
   if (PK.busy) return;
   const raw = $('pkText').value.split('\n').map(cleanWord).filter(Boolean);
   if (!raw.length) { toast('Type at least one word'); return; }
-  const seen = new Set(p.words.map(normalize)), add = [];
-  raw.forEach((w) => { const k = normalize(w); if (!k || seen.has(k)) return; seen.add(k); add.push(w); });
-  if (!add.length) { toast('Those are already in the pack'); return; }
-  if (p.words.length + add.length > 500) { toast('A pack can hold up to 500 words'); return; }
+  const d = PK.addDiff;
+  const next = p.words.map((x) => ({ w: x.w, d: x.d })), idx = new Map(next.map((x) => [normalize(x.w), x]));
+  let added = 0, moved = 0;
+  raw.forEach((w) => {
+    const k = normalize(w); if (!k) return;
+    const ex = idx.get(k);
+    if (ex) { if (ex.d !== d) { ex.d = d; moved++; } return; }
+    const o = { w, d }; next.push(o); idx.set(k, o); added++;
+  });
+  if (!added && !moved) { toast('Those are already in the pack at this level'); return; }
+  if (next.length > 500) { toast('A pack can hold up to 500 words'); return; }
   PK.busy = true; $('pkAdd').disabled = true;
   try {
-    const next = p.words.concat(add);
     const { error } = await sb.from('pictionary_packs').update({ words: next, updated_at: new Date().toISOString() }).eq('id', p.id);
     if (error) { toast('Could not save. Try again.'); return; }
     p.words = next; PK.draft = '';
-    toast('Added ' + add.length + (add.length === 1 ? ' word' : ' words'));
+    toast([added ? 'Added ' + added : '', moved ? 'moved ' + moved : ''].filter(Boolean).join(', ').replace(/^./, (c) => c.toUpperCase()) + ' · ' + DIFF_LABEL[d]);
   } finally { PK.busy = false; }
   renderPacks();
 }
-async function removePackWord(p, w) {
+async function removePackWord(p, item) {
   if (PK.busy) return; PK.busy = true;
   try {
-    const next = p.words.filter((x) => x !== w);
+    const next = p.words.filter((x) => x !== item).map((x) => ({ w: x.w, d: x.d }));
     const { error } = await sb.from('pictionary_packs').update({ words: next, updated_at: new Date().toISOString() }).eq('id', p.id);
     if (error) { toast('Could not remove. Try again.'); return; }
-    p.words = next;
+    p.words = p.words.filter((x) => x !== item);
   } finally { PK.busy = false; }
   renderPacks();
 }
@@ -2905,7 +2995,7 @@ function bindExtras() {
 
 /* ═════════ start-up ═════════ */
 function init() {
-  bindLobby(); bindWords(); buildTools(); buildReact(); bindSolo(); bindExtras();
+  bindLobby(); bindWords(); buildTools(); buildReact(); bindSolo(); bindExtras(); bindLeaveGuard();
   $('nameInput').value = loadName();
   show($('homeLink'), !!family);
   show($('wordsBtnLanding'), !!family);
