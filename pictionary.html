@@ -324,6 +324,27 @@ html[data-theme] .overlay.over{background:color-mix(in srgb,var(--night) 97%,#00
 .below .chips{gap:.3rem}.below .chip2{font-size:.75rem;padding:.2rem .55rem}
 .below .replay{background:var(--night);border:1px solid var(--line);border-radius:14px;padding:.3rem .5rem}
 @media(min-width:900px){.below{width:min(100%,calc((100dvh - 270px)*4/3 + 60px))}}
+/* v5: packs + album */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:.6rem}
+.cat:last-child:nth-child(odd){grid-column:1/-1}
+@media(max-width:519px){.cats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:520px){.cats{grid-template-columns:repeat(5,minmax(0,1fr))}.cat:last-child:nth-child(odd){grid-column:auto}}
+#soloBody .cats{grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}#soloBody .cat:last-child:nth-child(odd){grid-column:auto}
+.pk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.6rem}
+.pk-card{background:var(--night);border:1px solid var(--line);border-radius:16px;padding:.8rem;text-align:left;display:grid;gap:.15rem;min-height:92px;align-content:start}
+.pk-card .e{font-size:1.7rem;line-height:1.1}
+.pk-card b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pk-card small{color:var(--muted);font-weight:700}
+.pk-new{border-style:dashed;place-content:center;text-align:center;color:var(--muted)}
+.pk-top{display:flex;justify-content:space-between;gap:.6rem;margin-bottom:.8rem}
+.emo{display:flex;flex-wrap:wrap;gap:.35rem;margin:.5rem 0 .9rem}
+.emo button{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--night);font-size:1.2rem;padding:0}
+.emo button.on{border-color:var(--rose-deep);background:var(--night3)}
+.gcard.tap{cursor:pointer}
+.gcard .dt{font-weight:600;font-size:.72rem}
+.btnrow{display:flex;gap:.35rem}.btnrow .btn{flex:1}
+.av-img{width:100%;max-height:60dvh;object-fit:contain;border-radius:12px;background:var(--paper);display:block}
+#avCap{margin:.6rem 0 0;font-weight:700;color:var(--muted);text-align:center}
 </style>
 </head>
 <body>
@@ -347,6 +368,7 @@ html[data-theme] .overlay.over{background:color-mix(in srgb,var(--night) 97%,#00
           <button id="joinBtn" class="btn primary" type="button">Join</button>
         </div>
         <p class="msg" id="landingMsg" role="alert"></p>
+        <div class="duo hidden" id="duoRow"><button id="packsBtnLanding" class="btn" type="button">📦 Word packs</button><button id="albumBtnLanding" class="btn" type="button">📖 Memory album</button></div>
         <button id="soloBtn" class="btn" type="button" style="width:100%;margin-top:.6rem">🎯 Solo practice</button>
         <button id="wordsBtnLanding" class="btn hidden" type="button" style="width:100%;margin-top:.6rem">Manage word lists</button>
       </div>
@@ -395,12 +417,15 @@ html[data-theme] .overlay.over{background:color-mix(in srgb,var(--night) 97%,#00
               <button type="button" class="cat" data-cat="spicy"><span class="ic">🌶️</span>Spicy<small>cheeky words</small></button>
               <button type="button" class="cat" data-cat="movies"><span class="ic">🎬</span>Movies<small>pick languages</small></button>
               <button type="button" class="cat" data-cat="mix"><span class="ic">🎲</span>Mix<small>one of each</small></button>
+              <button type="button" class="cat" data-cat="pack"><span class="ic">📦</span>Packs<small>your own lists</small></button>
             </div>
             <div id="langRow" class="seg hidden" style="margin-top:.6rem">
               <button type="button" class="chip" data-lang="hindi">Hindi</button>
               <button type="button" class="chip" data-lang="english">English</button>
               <button type="button" class="chip" data-lang="telugu">Telugu</button>
             </div>
+            <div id="packRow" class="seg hidden" style="margin-top:.6rem"></div>
+            <p class="note hidden" id="packNote" style="color:var(--muted)"></p>
             <p class="note hidden" id="spicyNote">Spicy words are suggestive. Only pick it when everyone in the room is fine with that.</p>
           </div>
           <div class="set-row">
@@ -563,8 +588,34 @@ html[data-theme] .overlay.over{background:color-mix(in srgb,var(--night) 97%,#00
   <div class="sheet wide">
     <div class="wm-top"><h2>This game's drawings</h2><button class="btn" id="galClose" type="button">Close</button></div>
     <div class="gal-grid" id="galGrid"></div>
-    <button class="btn hidden" id="galCollage" type="button" style="width:100%;margin-top:.8rem">Save as one image</button>
+    <button class="btn hidden" id="galSaveAll" type="button" style="width:100%;margin-top:.8rem">♥ Save all to memory album</button>
+    <button class="btn hidden" id="galCollage" type="button" style="width:100%;margin-top:.6rem">Save as one image</button>
+    <button class="btn hidden" id="galAlbumOpen" type="button" style="width:100%;margin-top:.6rem">📖 Open memory album</button>
     <p class="note" style="color:var(--muted);margin-top:.6rem">Saved on this device only, and cleared when the game ends.</p>
+  </div>
+</div>
+<!-- Word packs -->
+<div class="modal hidden" id="packsModal" role="dialog" aria-modal="true" aria-label="Word packs">
+  <div class="sheet wide">
+    <div class="wm-top"><h2 id="pkTitle">Word packs</h2><button class="btn" id="pkClose" type="button">Done</button></div>
+    <div id="pkBody"></div>
+  </div>
+</div>
+
+<!-- Memory album -->
+<div class="modal hidden" id="albumModal" role="dialog" aria-modal="true" aria-label="Memory album">
+  <div class="sheet wide">
+    <div class="wm-top"><h2 id="alTitle">Memory album</h2><button class="btn" id="alClose" type="button">Close</button></div>
+    <p class="note" id="alNote" style="color:var(--muted);margin:0 0 .6rem"></p>
+    <div class="gal-grid" id="alGrid"></div>
+    <button class="btn hidden" id="alMore" type="button" style="width:100%;margin-top:.8rem">Show more</button>
+  </div>
+</div>
+<div class="modal hidden" id="albumView" role="dialog" aria-modal="true" aria-label="Saved drawing">
+  <div class="sheet">
+    <img class="av-img" id="avImg" alt="">
+    <p id="avCap"></p>
+    <div class="actions"><button class="btn" id="avDelete" type="button">Delete</button><button class="btn" id="avDownload" type="button">Download</button><button class="btn primary" id="avClose" type="button">Close</button></div>
   </div>
 </div>
 <script>
@@ -578,7 +629,7 @@ const IDENTITY_KEY = 'ourLittleUniverseIdentity';
 const GUEST_ID_KEY = 'pictGuestId';
 const NAME_KEY = 'pictNickname';
 const TIME_OPTIONS = [30, 45, 60, 80, 100, 120, 150, 180];
-const CATS = ['general', 'spicy', 'movies', 'mix'];
+const CATS = ['general', 'spicy', 'movies', 'mix', 'pack'];
 const DIFFS = ['easy', 'medium', 'hard'];
 const LANGS = ['hindi', 'english', 'telugu'];
 const DEFAULTS = { category: 'general', languages: ['hindi', 'english', 'telugu'], difficulty: 'medium', drawTime: 80, rounds: 3, mode: 'versus', bonuses: true, replay: true, badges: true, gray: false, theme: 'night', badgeNames: { speed: 'Speed Demon', picasso: 'Picasso', comeback: 'Comeback Kid' } };
@@ -632,6 +683,9 @@ function cleanText(s, max, min) {
   const w = String(s || '').replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max || 200);
   return w.length >= (min || 1) ? w : '';
 }
+const cleanEmoji = (s) => Array.from(String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim()).slice(0, 2).join('') || '📦';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function cleanPackRef(p) { return (p && UUID_RE.test(String(p.id))) ? { id: String(p.id), name: cleanText(p.name, 30, 1) || 'Pack', emoji: cleanEmoji(p.emoji) } : null; }
 function colorFor(id) { let x = 0; for (const c of String(id)) x = (x * 31 + c.charCodeAt(0)) >>> 0; return AV_COLORS[x % AV_COLORS.length]; }
 function initialOf(name) { return (Array.from(String(name).trim())[0] || '?').toUpperCase(); }
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
@@ -669,6 +723,7 @@ function normSettings(s) {
     rounds: rounds >= 1 && rounds <= 20 ? rounds : DEFAULTS.rounds,
     languages: langs.length ? langs : DEFAULTS.languages.slice(),
     mode: MODES.includes(s.mode) ? s.mode : DEFAULTS.mode,
+    pack: cleanPackRef(s.pack),
     bonuses: s.bonuses === false ? false : DEFAULTS.bonuses,
     replay: s.replay === false ? false : true,
     badges: s.badges === false ? false : true,
@@ -1049,7 +1104,7 @@ function syncTools() {
 }
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && canDraw()) { e.preventDefault(); undoStroke(); }
-  if (e.key === 'Escape') { show($('wordsModal'), false); show($('galleryModal'), false); show($('optModal'), false); show($('soloModal'), false); }
+  if (e.key === 'Escape') { show($('wordsModal'), false); show($('galleryModal'), false); show($('optModal'), false); show($('soloModal'), false); show($('packsModal'), false); show($('albumModal'), false); show($('albumView'), false); }
 });
 
 /* reactions floating over the drawing */
@@ -1118,7 +1173,19 @@ async function buildPool(settings) {
   }
   return poolFor(settings.category, settings);
 }
+async function packPool(settings) {
+  const tiers = { easy: [], medium: [], hard: [] };
+  const id = settings.pack && settings.pack.id; if (!id) return tiers;
+  try {
+    const { data, error } = await sb.from('pictionary_packs').select('words').eq('id', id).maybeSingle();
+    if (error) throw error;
+    const seen = new Set();
+    (data && Array.isArray(data.words) ? data.words : []).forEach((w) => { w = cleanWord(w); const k = normalize(w); if (!w || !k || seen.has(k)) return; seen.add(k); tiers.medium.push(w); });
+  } catch (e) { console.warn('pack unavailable', e); }
+  return tiers;
+}
 async function poolFor(cat, settings) {
+  if (cat === 'pack') return packPool(settings);
   const st = await loadStatic();
   const tiers = { easy: [], medium: [], hard: [] };
   const seen = new Set();
@@ -1334,10 +1401,14 @@ function openGallery() {
     box.append(h('div', { class: 'gcard' },
       h('img', { src: g.url, alt: 'Drawing of ' + g.word }),
       h('div', { class: 'cap' }, h('span', { text: g.word + ' · ' + g.by }),
-        h('button', { type: 'button', class: 'btn', text: 'Save', onclick: () => saveUrl(g.url, 'pictionary-' + room + '-' + (i + 1) + '.jpg') }))));
+        h('div', { class: 'btnrow' },
+          h('button', { type: 'button', class: 'btn', text: 'Save', onclick: () => saveUrl(g.url, 'pictionary-' + (room || 'solo') + '-' + (i + 1) + '.jpg') }),
+          family ? h('button', { type: 'button', class: 'btn', text: g.saved ? 'Saved ✓' : '♥ Album', disabled: !!g.saved, onclick: () => albumSave([g]) }) : null))));
   });
   if (!S.gallery.length) box.append(h('p', { class: 'note', style: 'color:var(--muted)', text: 'No drawings yet.' }));
   show($('galCollage'), S.gallery.length > 0);
+  show($('galSaveAll'), !!family && S.gallery.some((g) => !g.saved));
+  show($('galAlbumOpen'), !!family);
   show($('galleryModal'), true);
 }
 async function saveCollage() {
@@ -1381,13 +1452,23 @@ function renderLobby() {
   $('catRow').querySelectorAll('.cat').forEach((b) => b.classList.toggle('on', b.dataset.cat === st.category));
   show($('langRow'), st.category === 'movies' || st.category === 'mix');
   $('langRow').querySelectorAll('.chip').forEach((b) => b.classList.toggle('on', st.languages.includes(b.dataset.lang)));
+  const isPack = st.category === 'pack';
+  show($('packRow'), isPack); show($('packNote'), isPack);
+  if (isPack) {
+    const row = $('packRow'); row.textContent = '';
+    const list = isHost ? PK.list : (st.pack ? [st.pack] : []);
+    list.forEach((p) => row.append(h('button', { type: 'button', class: 'chip' + (st.pack && st.pack.id === p.id ? ' on' : ''), 'data-pack': p.id, text: p.emoji + ' ' + p.name })));
+    if (isHost) row.append(h('button', { type: 'button', class: 'chip', 'data-pack': '_manage', text: '✎ Manage packs' }));
+    $('packNote').textContent = isHost ? (PK.loaded && !PK.list.length ? 'No packs yet. Tap Manage packs to make your first one.' : 'Tap a pack to play with its words.') : (st.pack ? 'Playing with the pack the host picked.' : 'Waiting for the host to pick a pack.');
+    if (isHost && !PK.loaded && !PK.loading) loadPacks().then(() => { if (S.snap && S.snap.phase === 'lobby') renderLobby(); });
+  }
   show($('spicyNote'), st.category === 'spicy' || st.category === 'mix');
   $('spicyNote').textContent = 'Spicy words are suggestive. Only pick it when everyone in the room is fine with that.' + (st.mode === 'versus' && st.category === 'spicy' ? ' The player in last place gets a dare card at the end.' : '');
   $('modeRow').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.mode === st.mode));
   $('modeNote').textContent = st.mode === 'coop' ? 'Everyone plays as one team. Solve as many drawings as you can together.' : 'Everyone competes. The highest score wins.';
   $('diffRow').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.diff === st.difficulty));
   $('timeRow').querySelectorAll('button').forEach((b) => b.classList.toggle('on', Number(b.dataset.t) === st.drawTime));
-  $('diffSet').classList.toggle('dim', st.category === 'mix');
+  $('diffSet').classList.toggle('dim', st.category === 'mix' || st.category === 'pack');
   $('timeVal').textContent = st.drawTime + ' seconds';
   $('roundsVal').textContent = st.rounds;
   $('roundsRange').value = st.rounds;
@@ -1782,6 +1863,10 @@ async function hostStart() {
     H.pool = await buildPool(H.settings);
     H.dares = (H.settings.category === 'spicy' && H.settings.mode === 'versus') ? await buildDares() : [];
   } finally { H.startBusy = false; }
+  if (H.settings.category === 'pack') {
+    if (!H.settings.pack) { renderLobby(); toast('Pick a pack first'); return; }
+    if (poolCount(H.pool) < 3) { renderLobby(); toast('That pack needs at least 3 words'); return; }
+  }
   if (H.phase !== 'lobby') return;
   const parts = H.players.filter((p) => p.connected);
   if (parts.length < 2) { toast('Someone left. You need at least 2 players'); broadcastState(); return; }
@@ -2137,7 +2222,25 @@ function syncOptions() {
 }
 function bindLobby() {
   buildTimeRow();
-  $('catRow').addEventListener('click', (e) => { const b = e.target.closest('.cat'); if (b) setSetting('category', b.dataset.cat); });
+  $('catRow').addEventListener('click', async (e) => {
+    const b = e.target.closest('.cat'); if (!b) return;
+    if (b.dataset.cat === 'pack' && isHost) {
+      await loadPacks();
+      if (!S.snap || S.snap.phase !== 'lobby') return;
+      setSetting('category', 'pack');
+      const cur = S.snap.settings.pack;
+      if (!cur || !PK.list.some((p) => p.id === cur.id)) {
+        if (PK.list.length) setSetting('pack', packRef(PK.list[0])); else toast('Make your first pack, then pick it here');
+      }
+      return;
+    }
+    setSetting('category', b.dataset.cat);
+  });
+  $('packRow').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pack]'); if (!b) return;
+    if (b.dataset.pack === '_manage') { openPacks(); return; }
+    const p = PK.list.find((x) => x.id === b.dataset.pack); if (p) setSetting('pack', packRef(p));
+  });
   $('langRow').addEventListener('click', (e) => {
     const b = e.target.closest('.chip'); if (!b || !S.snap) return;
     const cur = S.snap.settings.languages.slice(); const l = b.dataset.lang;
@@ -2392,16 +2495,17 @@ function hidePanels() { const ov = $('overlay'); ov.classList.remove('over', 'bo
 const SOLO_KEY = 'pictSoloCfg';
 const SOLO_COUNTS = [5, 10, 20, 0];
 function loadSoloCfg() {
-  const d = { category: 'general', languages: LANGS.slice(), difficulty: 'medium', drawTime: 60, count: 10, onlyMine: false };
+  const d = { category: 'general', languages: LANGS.slice(), difficulty: 'medium', drawTime: 60, count: 10, onlyMine: false, pack: null };
   try {
     const x = JSON.parse(localStorage.getItem(SOLO_KEY) || 'null');
     if (x && typeof x === 'object') {
-      if (CATS.includes(x.category)) d.category = x.category;
+      if (CATS.includes(x.category) && (x.category !== 'pack' || family)) d.category = x.category;
       if (Array.isArray(x.languages)) { const l = LANGS.filter((k) => x.languages.includes(k)); if (l.length) d.languages = l; }
       if (DIFFS.concat(['mixed']).includes(x.difficulty)) d.difficulty = x.difficulty;
       if (TIME_OPTIONS.includes(Number(x.drawTime))) d.drawTime = Number(x.drawTime);
       if (SOLO_COUNTS.includes(Number(x.count))) d.count = Number(x.count);
       d.onlyMine = !!x.onlyMine && !!family;
+      d.pack = family ? cleanPackRef(x.pack) : null;
     }
   } catch (e) {}
   return d;
@@ -2415,8 +2519,21 @@ function renderSoloSetup() {
   const upd = (k, v) => { soloCfg[k] = v; saveSolo(); renderSoloSetup(); };
   const seg = (items, isOn, pick) => h('div', { class: 'seg' }, items.map(([v, label]) => h('button', { type: 'button', class: isOn(v) ? 'on' : '', text: label, onclick: () => pick(v) })));
   box.append(h('div', { class: 'opt-h', text: 'Words' }),
-    h('div', { class: 'cats' }, [['general', '🎈', 'General'], ['spicy', '🌶️', 'Spicy'], ['movies', '🎬', 'Movies'], ['mix', '🎲', 'Mix']].map(([k, ic, n]) =>
-      h('button', { type: 'button', class: 'cat' + (c.category === k ? ' on' : ''), onclick: () => upd('category', k) }, h('span', { class: 'ic', text: ic }), n))));
+    h('div', { class: 'cats' }, [['general', '🎈', 'General'], ['spicy', '🌶️', 'Spicy'], ['movies', '🎬', 'Movies'], ['mix', '🎲', 'Mix']].concat(family ? [['pack', '📦', 'Packs']] : []).map(([k, ic, n]) =>
+      h('button', { type: 'button', class: 'cat' + (c.category === k ? ' on' : ''), onclick: async () => {
+        if (k !== 'pack') { upd('category', k); return; }
+        await loadPacks();
+        soloCfg.category = 'pack';
+        if (!soloCfg.pack || !PK.list.some((p) => p.id === soloCfg.pack.id)) soloCfg.pack = PK.list.length ? packRef(PK.list[0]) : null;
+        saveSolo(); renderSoloSetup();
+      } }, h('span', { class: 'ic', text: ic }), n))));
+  if (c.category === 'pack') {
+    const prow = h('div', { class: 'seg', style: 'margin-top:.6rem' });
+    PK.list.forEach((p) => prow.append(h('button', { type: 'button', class: 'chip' + (c.pack && c.pack.id === p.id ? ' on' : ''), text: p.emoji + ' ' + p.name, onclick: () => upd('pack', packRef(p)) })));
+    prow.append(h('button', { type: 'button', class: 'chip', text: '✎ Manage packs', onclick: () => openPacks() }));
+    box.append(prow);
+    if (PK.loaded && !PK.list.length) box.append(h('p', { class: 'note', text: 'No packs yet. Tap Manage packs to make one.' }));
+  }
   if (c.category === 'movies' || c.category === 'mix') {
     box.append(h('div', { class: 'seg', style: 'margin-top:.6rem' }, LANGS.map((l) => h('button', { type: 'button', class: 'chip' + (c.languages.includes(l) ? ' on' : ''), text: cap1(l), onclick: () => {
       const next = c.languages.includes(l) ? c.languages.filter((x) => x !== l) : c.languages.concat([l]);
@@ -2424,12 +2541,12 @@ function renderSoloSetup() {
       upd('languages', LANGS.filter((x) => next.includes(x)));
     } }))));
   }
-  const dwrap = h('div', { class: c.category === 'mix' ? 'dim' : '' }, h('div', { class: 'opt-h', text: 'Difficulty' }),
+  const dwrap = h('div', { class: (c.category === 'mix' || c.category === 'pack') ? 'dim' : '' }, h('div', { class: 'opt-h', text: 'Difficulty' }),
     seg([['easy', 'Easy'], ['medium', 'Medium'], ['hard', 'Hard'], ['mixed', 'Mixed']], (v) => c.difficulty === v, (v) => upd('difficulty', v)));
   box.append(dwrap,
     h('div', { class: 'opt-h', text: 'Time per word' }), seg(TIME_OPTIONS.map((t) => [t, t + 's']), (v) => c.drawTime === v, (v) => upd('drawTime', v)),
     h('div', { class: 'opt-h', text: 'How many words' }), seg(SOLO_COUNTS.map((n) => [n, n ? String(n) : 'Endless']), (v) => c.count === v, (v) => upd('count', v)));
-  if (family) {
+  if (family && c.category !== 'pack') {
     box.append(h('div', { class: 'opt-row', style: 'margin-top:.8rem' }, h('span', { class: 'opt-ic', text: '✍️' }),
       h('div', { class: 'opt-tx' }, h('b', { text: 'Only my words' }), h('small', { text: 'Test the words you added in Word lists' })),
       h('button', { type: 'button', class: 'sw2' + (c.onlyMine ? ' on' : ''), role: 'switch', 'aria-checked': c.onlyMine ? 'true' : 'false', 'aria-label': 'Only my words', onclick: () => upd('onlyMine', !c.onlyMine) })));
@@ -2440,8 +2557,9 @@ async function soloStart() {
   const c = soloCfg, btn = $('soloStart');
   btn.disabled = true; btn.textContent = 'Loading words…';
   try {
-    const pool = await buildPool({ category: c.category, languages: c.languages, difficulty: c.difficulty, onlyCustom: c.onlyMine });
-    if (poolCount(pool) === 0) { toast(c.onlyMine ? 'No words of yours here yet. Add some in Word lists.' : 'No words found'); return; }
+    if (c.category === 'pack' && !c.pack) { toast('Pick a pack first'); return; }
+    const pool = await buildPool({ category: c.category, languages: c.languages, difficulty: c.difficulty, onlyCustom: c.onlyMine, pack: c.pack });
+    if (poolCount(pool) === 0) { toast(c.category === 'pack' ? 'That pack has no words yet' : c.onlyMine ? 'No words of yours here yet. Add some in Word lists.' : 'No words found'); return; }
     show($('soloModal'), false);
     beginSolo(pool);
   } finally { btn.disabled = false; btn.textContent = 'Start practice'; }
@@ -2471,7 +2589,7 @@ function soloEnd(reason) {
   const secs = reason === 'done' ? (Date.now() - so.startedAt) / 1000 : so.cfg.drawTime;
   so.results.push({ word: so.word, secs, reason });
   so.finished++; so.phase = 'review';
-  captureDrawing({ word: so.word, by: 'you' });
+  captureDrawing({ word: so.word, by: myName || 'you' });
   if (reason === 'time') sfx.buzz(); else sfx.correct();
   renderSolo();
 }
@@ -2545,12 +2663,253 @@ function bindSolo() {
   $('soloDone').addEventListener('click', () => soloEnd('done'));
 }
 
+/* ═════════ custom word packs ═════════ */
+const PK = { list: [], loaded: false, loading: false, view: 'list', editing: null, draft: '', busy: false };
+const PACK_EMOJI = ['📦', '💞', '🏖️', '✈️', '🎁', '🎬', '🍕', '😂', '🏠', '🎂', '🌸', '⭐'];
+const normPack = (r) => ({ id: r.id, name: cleanText(r.name, 30, 1) || 'Pack', emoji: cleanEmoji(r.emoji), words: (Array.isArray(r.words) ? r.words : []).map(String) });
+const packRef = (p) => ({ id: p.id, name: p.name, emoji: p.emoji });
+async function loadPacks(force) {
+  if (PK.loading || (PK.loaded && !force)) return;
+  PK.loading = true;
+  try {
+    const { data, error } = await sb.from('pictionary_packs').select('id,name,emoji,words,created_at').order('created_at', { ascending: true });
+    if (error) throw error;
+    PK.list = (data || []).map(normPack); PK.loaded = true;
+  } catch (e) { console.warn('packs unavailable', e); toast('Could not load your packs'); }
+  finally { PK.loading = false; }
+}
+function openPacks() {
+  PK.view = 'list'; PK.editing = null; PK.draft = '';
+  show($('packsModal'), true); renderPacks();
+  loadPacks(true).then(renderPacks);
+}
+function closePacks() {
+  show($('packsModal'), false);
+  if (S.snap && S.snap.phase === 'lobby') renderLobby();
+  if (!$('soloModal').classList.contains('hidden')) renderSoloSetup();
+}
+function syncPackSetting(p) {
+  if (isHost && S.snap && S.snap.phase === 'lobby' && S.snap.settings.pack && S.snap.settings.pack.id === p.id) setSetting('pack', packRef(p));
+  if (soloCfg.pack && soloCfg.pack.id === p.id) { soloCfg.pack = packRef(p); saveSolo(); }
+}
+function renderPacks() {
+  const box = $('pkBody'); if (!box) return;
+  box.textContent = '';
+  if (PK.view === 'edit') return renderPackEdit(box);
+  $('pkTitle').textContent = 'Word packs';
+  if (!PK.loaded) { box.append(h('p', { class: 'note', style: 'color:var(--muted)', text: 'Loading…' })); return; }
+  box.append(h('p', { class: 'note', style: 'color:var(--muted);margin:0 0 .8rem', text: 'Your own word lists, like inside jokes or trip memories. Pick one as the category when you start a game.' }));
+  const grid = h('div', { class: 'pk-grid' });
+  PK.list.forEach((p) => grid.append(h('button', { type: 'button', class: 'pk-card', onclick: () => { PK.editing = p.id; PK.view = 'edit'; PK.draft = ''; renderPacks(); } },
+    h('span', { class: 'e', text: p.emoji }), h('b', { text: p.name }), h('small', { text: p.words.length + (p.words.length === 1 ? ' word' : ' words') }))));
+  grid.append(h('button', { type: 'button', class: 'pk-card pk-new', onclick: createPack }, h('span', { class: 'e', text: '＋' }), h('b', { text: 'New pack' })));
+  box.append(grid);
+}
+async function createPack() {
+  if (PK.busy) return; PK.busy = true;
+  try {
+    const { data, error } = await sb.from('pictionary_packs').insert({ name: 'New pack', emoji: '📦', words: [], created_by: myId }).select('id,name,emoji,words,created_at').single();
+    if (error || !data) { toast('Could not create the pack. Try again.'); return; }
+    PK.list.push(normPack(data)); PK.editing = data.id; PK.view = 'edit'; PK.draft = '';
+    renderPacks();
+    const n = document.querySelector('#pkBody input[aria-label="Pack name"]'); if (n) { n.focus(); n.select(); }
+  } finally { PK.busy = false; }
+}
+function renderPackEdit(box) {
+  const p = PK.list.find((x) => x.id === PK.editing);
+  if (!p) { PK.view = 'list'; return renderPacks(); }
+  $('pkTitle').textContent = 'Edit pack';
+  const name = h('input', { type: 'text', maxlength: 30, value: p.name, autocomplete: 'off', 'aria-label': 'Pack name' });
+  name.addEventListener('change', () => { const v = cleanText(name.value, 30, 1); if (!v) { name.value = p.name; return; } if (v !== p.name) savePackMeta(p, { name: v }); });
+  const emo = h('div', { class: 'emo' }, PACK_EMOJI.map((e) => h('button', { type: 'button', class: e === p.emoji ? 'on' : '', 'aria-label': 'Icon ' + e, text: e, onclick: () => { if (e !== p.emoji) savePackMeta(p, { emoji: e }); } })));
+  const ta = h('textarea', { id: 'pkText', placeholder: 'One word or phrase per line', maxlength: 4000, 'aria-label': 'New words' });
+  ta.value = PK.draft; ta.addEventListener('input', () => { PK.draft = ta.value; });
+  box.append(
+    h('div', { class: 'pk-top' }, h('button', { type: 'button', class: 'btn', text: '← All packs', onclick: () => { PK.view = 'list'; PK.editing = null; PK.draft = ''; renderPacks(); } }),
+      h('button', { type: 'button', class: 'btn', text: 'Delete pack', onclick: () => deletePack(p) })),
+    h('label', { class: 'fld' }, 'Pack name', name),
+    h('div', { class: 'lbl', style: 'font-weight:700;color:var(--muted);font-size:.85rem' }, 'Icon'), emo,
+    h('label', { class: 'fld' }, 'Add words', ta),
+    h('button', { type: 'button', class: 'btn primary', id: 'pkAdd', text: 'Add words', style: 'width:100%', onclick: () => addPackWords(p) }),
+    h('div', { class: 'wm-count', text: p.words.length ? p.words.length + (p.words.length === 1 ? ' word' : ' words') + ' (tap one to remove it)' : 'No words yet. A pack needs at least 3 to play.' }),
+    h('div', { class: 'wlist tall' }, p.words.map((w) => h('button', { type: 'button', class: 'wtag', title: 'Tap to remove', onclick: () => removePackWord(p, w) }, w, h('small', { text: '✕' })))));
+}
+async function savePackMeta(p, patch) {
+  const { error } = await sb.from('pictionary_packs').update(Object.assign({}, patch, { updated_at: new Date().toISOString() })).eq('id', p.id);
+  if (error) { toast('Could not save. Try again.'); renderPacks(); return; }
+  Object.assign(p, patch); syncPackSetting(p); renderPacks();
+}
+async function addPackWords(p) {
+  if (PK.busy) return;
+  const raw = $('pkText').value.split('\n').map(cleanWord).filter(Boolean);
+  if (!raw.length) { toast('Type at least one word'); return; }
+  const seen = new Set(p.words.map(normalize)), add = [];
+  raw.forEach((w) => { const k = normalize(w); if (!k || seen.has(k)) return; seen.add(k); add.push(w); });
+  if (!add.length) { toast('Those are already in the pack'); return; }
+  if (p.words.length + add.length > 500) { toast('A pack can hold up to 500 words'); return; }
+  PK.busy = true; $('pkAdd').disabled = true;
+  try {
+    const next = p.words.concat(add);
+    const { error } = await sb.from('pictionary_packs').update({ words: next, updated_at: new Date().toISOString() }).eq('id', p.id);
+    if (error) { toast('Could not save. Try again.'); return; }
+    p.words = next; PK.draft = '';
+    toast('Added ' + add.length + (add.length === 1 ? ' word' : ' words'));
+  } finally { PK.busy = false; }
+  renderPacks();
+}
+async function removePackWord(p, w) {
+  if (PK.busy) return; PK.busy = true;
+  try {
+    const next = p.words.filter((x) => x !== w);
+    const { error } = await sb.from('pictionary_packs').update({ words: next, updated_at: new Date().toISOString() }).eq('id', p.id);
+    if (error) { toast('Could not remove. Try again.'); return; }
+    p.words = next;
+  } finally { PK.busy = false; }
+  renderPacks();
+}
+async function deletePack(p) {
+  if (!confirm('Delete the pack "' + p.name + '" and all its words?')) return;
+  const { error } = await sb.from('pictionary_packs').delete().eq('id', p.id);
+  if (error) { toast('Could not delete. Try again.'); return; }
+  PK.list = PK.list.filter((x) => x.id !== p.id); PK.view = 'list'; PK.editing = null;
+  if (isHost && S.snap && S.snap.phase === 'lobby' && S.snap.settings.pack && S.snap.settings.pack.id === p.id) setSetting('pack', null);
+  if (soloCfg.pack && soloCfg.pack.id === p.id) { soloCfg.pack = null; saveSolo(); }
+  toast('Pack deleted'); renderPacks();
+}
+
+/* ═════════ memory album (Supabase storage, only the two accounts) ═════════ */
+const ALBUM_BUCKET = 'pictionary-album';
+const NO_SESSION = 'Open the main site once and sign in, then try again.';
+const ALB = { client: null, items: [], total: 0, more: false, loaded: false, busy: false, err: '', page: 24, cur: null };
+async function albumClient() {
+  if (!family) return null;
+  try {
+    if (!ALB.client) ALB.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'sb-site-auth', storage: window.localStorage } });
+    const { data } = await ALB.client.auth.getSession();
+    if (data && data.session) return ALB.client;
+  } catch (e) { console.warn('album auth', e); }
+  return null;
+}
+function dataUrlToBlob(url) {
+  const m = /^data:([^;]+);base64,(.*)$/.exec(String(url)); if (!m) return null;
+  const bin = atob(m[2]), a = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+  return new Blob([a], { type: m[1] });
+}
+const fmtDate = (t) => { try { return new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return ''; } };
+async function albumSave(items) {
+  const todo = items.filter((g) => !g.saved);
+  if (!todo.length) { toast('Already in the album'); return; }
+  if (ALB.busy) return; ALB.busy = true;
+  let ok = 0;
+  try {
+    const c = await albumClient();
+    if (!c) { toast(NO_SESSION); return; }
+    for (const g of todo) {
+      try {
+        const blob = dataUrlToBlob(g.url); if (!blob) continue;
+        const path = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+        const up = await c.storage.from(ALBUM_BUCKET).upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+        if (up.error) throw up.error;
+        const ins = await c.from('pictionary_album').insert({ word: String(g.word || '').slice(0, 60), drawn_by: String(g.by || '').slice(0, 20), image_path: path, created_by: myId });
+        if (ins.error) { await c.storage.from(ALBUM_BUCKET).remove([path]); throw ins.error; }
+        g.saved = true; ok++;
+      } catch (e) { console.warn('album save failed', e); }
+    }
+    if (ok) toast(ok === 1 ? 'Saved to the memory album ♥' : ok + ' drawings saved to the album ♥');
+    else toast('Could not save. Try again.');
+  } finally { ALB.busy = false; ALB.loaded = false; }
+  if (!$('galleryModal').classList.contains('hidden')) openGallery();
+}
+async function openAlbum() {
+  show($('galleryModal'), false);
+  ALB.items = []; ALB.total = 0; ALB.more = false; ALB.loaded = false; ALB.err = '';
+  show($('albumModal'), true); renderAlbum();
+  await loadAlbum(true);
+}
+async function loadAlbum(reset) {
+  const c = await albumClient();
+  if (!c) { ALB.err = NO_SESSION; ALB.loaded = true; renderAlbum(); return; }
+  ALB.err = '';
+  const from = reset ? 0 : ALB.items.length;
+  try {
+    const { data, error, count } = await c.from('pictionary_album').select('id,word,drawn_by,image_path,created_at', { count: 'exact' }).order('created_at', { ascending: false }).range(from, from + ALB.page - 1);
+    if (error) throw error;
+    const rows = data || [];
+    if (rows.length) {
+      const { data: signed } = await c.storage.from(ALBUM_BUCKET).createSignedUrls(rows.map((r) => r.image_path), 3600);
+      const map = new Map((signed || []).map((x) => [x.path, x.signedUrl]));
+      rows.forEach((r) => { r.url = map.get(r.image_path) || ''; });
+    }
+    ALB.items = reset ? rows : ALB.items.concat(rows);
+    ALB.total = typeof count === 'number' ? count : ALB.items.length;
+    ALB.more = ALB.items.length < ALB.total && rows.length > 0;
+  } catch (e) { console.warn('album load', e); ALB.err = 'Could not load the album. Try again.'; }
+  ALB.loaded = true; renderAlbum();
+}
+function renderAlbum() {
+  const grid = $('alGrid'); grid.textContent = '';
+  $('alTitle').textContent = ALB.loaded && !ALB.err ? 'Memory album (' + ALB.total + ')' : 'Memory album';
+  $('alNote').textContent = ALB.err ? ALB.err : (!ALB.loaded ? 'Loading…' : (ALB.items.length ? 'Tap a drawing to see it bigger.' : 'Nothing here yet. Save your favourite drawings from the gallery after a game.'));
+  ALB.items.forEach((it, i) => {
+    const card = h('div', { class: 'gcard tap', role: 'button', tabindex: '0', 'aria-label': 'Open drawing of ' + it.word },
+      it.url ? h('img', { src: it.url, alt: 'Drawing of ' + it.word, loading: 'lazy' }) : h('div', { style: 'aspect-ratio:4/3.3' }),
+      h('div', { class: 'cap' }, h('span', { text: it.word + (it.drawn_by ? ' · ' + it.drawn_by : '') }), h('span', { class: 'dt', text: fmtDate(it.created_at) })));
+    card.addEventListener('click', () => openAlbumView(i));
+    card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAlbumView(i); } });
+    grid.append(card);
+  });
+  show($('alMore'), ALB.more);
+}
+function openAlbumView(i) {
+  const it = ALB.items[i]; if (!it) return;
+  ALB.cur = it;
+  $('avImg').src = it.url; $('avImg').alt = 'Drawing of ' + it.word;
+  $('avCap').textContent = it.word + (it.drawn_by ? ' · drawn by ' + it.drawn_by : '') + ' · ' + fmtDate(it.created_at);
+  show($('albumView'), true);
+}
+async function albumDownload() {
+  const it = ALB.cur; if (!it || !it.url) return;
+  try {
+    const r = await fetch(it.url); if (!r.ok) throw new Error('fetch');
+    const obj = URL.createObjectURL(await r.blob());
+    saveUrl(obj, 'pictionary-' + (normalize(it.word).replace(/ /g, '-') || 'drawing') + '.jpg');
+    setTimeout(() => URL.revokeObjectURL(obj), 4000);
+  } catch (e) { window.open(it.url, '_blank', 'noopener'); }
+}
+async function albumDelete() {
+  const it = ALB.cur; if (!it) return;
+  if (!confirm('Remove this drawing from the memory album for good?')) return;
+  const c = await albumClient(); if (!c) { toast(NO_SESSION); return; }
+  const { error } = await c.from('pictionary_album').delete().eq('id', it.id);
+  if (error) { toast('Could not delete. Try again.'); return; }
+  try { await c.storage.from(ALBUM_BUCKET).remove([it.image_path]); } catch (e) { console.warn(e); }
+  ALB.items = ALB.items.filter((x) => x !== it); ALB.total = Math.max(0, ALB.total - 1); ALB.cur = null;
+  show($('albumView'), false); renderAlbum(); toast('Removed from the album');
+}
+function bindExtras() {
+  $('packsBtnLanding').addEventListener('click', openPacks);
+  $('albumBtnLanding').addEventListener('click', openAlbum);
+  $('pkClose').addEventListener('click', closePacks);
+  $('packsModal').addEventListener('click', (e) => { if (e.target === $('packsModal')) closePacks(); });
+  $('alClose').addEventListener('click', () => show($('albumModal'), false));
+  $('albumModal').addEventListener('click', (e) => { if (e.target === $('albumModal')) show($('albumModal'), false); });
+  $('alMore').addEventListener('click', () => loadAlbum(false));
+  $('avClose').addEventListener('click', () => show($('albumView'), false));
+  $('albumView').addEventListener('click', (e) => { if (e.target === $('albumView')) show($('albumView'), false); });
+  $('avDownload').addEventListener('click', albumDownload);
+  $('avDelete').addEventListener('click', albumDelete);
+  $('galSaveAll').addEventListener('click', () => albumSave(S.gallery));
+  $('galAlbumOpen').addEventListener('click', openAlbum);
+}
+
 /* ═════════ start-up ═════════ */
 function init() {
-  bindLobby(); bindWords(); buildTools(); buildReact(); bindSolo();
+  bindLobby(); bindWords(); buildTools(); buildReact(); bindSolo(); bindExtras();
   $('nameInput').value = loadName();
   show($('homeLink'), !!family);
   show($('wordsBtnLanding'), !!family);
+  show($('duoRow'), !!family);
   syncMute();
   const params = new URLSearchParams(location.search);
   const roomParam = String(params.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
