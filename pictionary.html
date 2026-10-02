@@ -21,8 +21,9 @@
   --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--night);color:var(--text);font-family:var(--ui);font-size:16px;line-height:1.35;overscroll-behavior:none}
-body{background:radial-gradient(1200px 700px at 15% -10%,#3a2444 0%,transparent 60%),radial-gradient(900px 600px at 100% 110%,#2f2140 0%,transparent 55%),var(--night)}
+html,body{margin:0;height:100%;color:var(--text);font-family:var(--ui);font-size:16px;line-height:1.35;overscroll-behavior:none}
+html{background-color:var(--night);background-image:radial-gradient(1200px 700px at 15% -10%,#3a2444 0%,transparent 60%),radial-gradient(900px 600px at 100% 110%,#2f2140 0%,transparent 55%);background-repeat:no-repeat;background-attachment:fixed}
+body{background:none}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 .hidden{display:none!important}
@@ -37,7 +38,7 @@ input[type=text],input:not([type]),select,textarea{background:var(--night2);bord
 textarea{resize:vertical;min-height:110px}
 label.fld{display:block;font-weight:700;color:var(--muted);font-size:.85rem;margin-bottom:.9rem}
 label.fld>input,label.fld>select,label.fld>textarea{margin-top:.35rem;color:var(--text)}
-.screen{min-height:100dvh;min-height:100vh;display:grid;place-items:center;padding:calc(20px + var(--sat)) calc(16px + var(--sar)) calc(20px + var(--sab)) calc(16px + var(--sal))}
+.screen{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:calc(20px + var(--sat)) calc(16px + var(--sar)) calc(20px + var(--sab)) calc(16px + var(--sal))}
 
 /* landing */
 .landing{width:min(440px,100%);text-align:center}
@@ -282,9 +283,9 @@ button,.cat,.chip,.seg button,.icon-btn,.tt,.sw,.sz{touch-action:manipulation}
 .replay input{flex:1;accent-color:#D98A93;min-height:32px;padding:0;background:none;border:0}
 #cv.gray{filter:grayscale(1) contrast(1.05)}
 html[data-theme=date]{--night:#1F0F17;--night2:#2E1622;--night3:#40202F;--rose:#FF9EB5;--gold:#F2C078;--lav:#C58BB0;--grad:linear-gradient(135deg,#FFB3C6,#F0708F);--line:rgba(255,220,230,.1)}
-html[data-theme=date] body{background:radial-gradient(1100px 700px at 15% -10%,#5a1f38 0%,transparent 60%),radial-gradient(900px 600px at 100% 110%,#3d1428 0%,transparent 55%),var(--night)}
+html[data-theme=date]{background-image:radial-gradient(1100px 700px at 15% -10%,#5a1f38 0%,transparent 60%),radial-gradient(900px 600px at 100% 110%,#3d1428 0%,transparent 55%)}
 html[data-theme=festive]{--night:#0E1F19;--night2:#153028;--night3:#1E4136;--rose:#FF8A7A;--gold:#F6D365;--lav:#7FD1B9;--grad:linear-gradient(135deg,#F6D365,#FF8A7A);--line:rgba(220,255,240,.1)}
-html[data-theme=festive] body{background:radial-gradient(1100px 700px at 15% -10%,#1f5a45 0%,transparent 60%),radial-gradient(900px 600px at 100% 110%,#5a1f2a 0%,transparent 55%),var(--night)}
+html[data-theme=festive]{background-image:radial-gradient(1100px 700px at 15% -10%,#1f5a45 0%,transparent 60%),radial-gradient(900px 600px at 100% 110%,#5a1f2a 0%,transparent 55%)}
 html:is([data-theme=date],[data-theme=festive]) :is(.panel,.card){background:var(--night2)}
 html:is([data-theme=date],[data-theme=festive]) :is(.btn.primary,.seg button.on,.cat.on){background:var(--grad)}
 
@@ -352,6 +353,8 @@ html[data-theme] .overlay.over{background:color-mix(in srgb,var(--night) 97%,#00
 .pk-lv{display:flex;justify-content:space-between;align-items:center;margin:.8rem 0 .3rem;font-weight:800;font-size:.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .pk-lv i{font-style:normal;font-weight:700}
 #pkDiff{margin:.5rem 0 .8rem}
+.wtag.both{border-color:var(--gold);box-shadow:inset 0 0 0 1px rgba(212,165,116,.35)}
+.wm-legend{margin:.1rem 0 .4rem;color:var(--muted);font-size:.78rem;font-weight:600}
 </style>
 </head>
 <body>
@@ -542,12 +545,19 @@ html[data-theme] .overlay.over{background:color-mix(in srgb,var(--night) 97%,#00
       <button type="button" data-d="medium">Medium</button>
       <button type="button" data-d="hard">Hard</button>
     </div>
+    <div class="seg" id="wmShow" style="margin-top:.5rem" role="group" aria-label="Which words to show">
+      <button type="button" data-s="all">All</button>
+      <button type="button" data-s="builtin">Existing</button>
+      <button type="button" data-s="mine">Mine</button>
+    </div>
     <input id="wmSearch" type="text" placeholder="Search words" autocomplete="off" style="margin-top:.6rem">
     <div class="wm-count" id="wmCount"></div>
+    <div class="wm-legend" id="wmLegend">Gold outline = yours. ✦ = yours and also in the game's own list.</div>
     <div class="wm-edit hidden" id="wmEdit">
       <div class="lbl" id="wmEditTitle">Edit word</div>
       <input id="wmEditText" type="text" maxlength="40" autocomplete="off" aria-label="Word">
       <div id="wmEditDiffWrap"><select id="wmEditDiff" aria-label="Difficulty" style="margin-top:.5rem"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></div>
+      <button class="btn hidden" id="wmEditMine" type="button" style="width:100%;margin-top:.6rem">＋ Add to my words (stays in the game list too)</button>
       <div class="actions">
         <button class="btn" id="wmEditDelete" type="button">Delete</button>
         <button class="btn" id="wmEditCancel" type="button">Cancel</button>
@@ -1220,11 +1230,11 @@ async function poolFor(cat, settings) {
   };
   const custom = rows.filter((r) => r.kind !== 'hide');
   if (cat === 'movies') {
-    if (!only) for (const l of settings.languages) for (const d of DIFFS) st.movies[l][d].filter((w) => !hidden.has(l + '|' + normalize(w))).forEach((w) => add(d, w));
     custom.filter((r) => settings.languages.includes(r.language)).forEach((r) => add(DIFFS.includes(r.difficulty) ? r.difficulty : 'medium', r.word));
+    if (!only) for (const l of settings.languages) for (const d of DIFFS) st.movies[l][d].filter((w) => !hidden.has(l + '|' + normalize(w))).forEach((w) => add(d, w));
   } else {
-    if (!only) for (const d of DIFFS) st[cat][d].filter((w) => !hidden.has('|' + normalize(w))).forEach((w) => add(d, w));
     custom.forEach((r) => add(DIFFS.includes(r.difficulty) ? r.difficulty : 'medium', r.word));
+    if (!only) for (const d of DIFFS) st[cat][d].filter((w) => !hidden.has('|' + normalize(w))).forEach((w) => add(d, w));
   }
   if (!only && !tiers.easy.length && !tiers.medium.length && !tiers.hard.length) FALLBACK_WORDS.forEach((w) => add('easy', w));
   return tiers;
@@ -2392,7 +2402,7 @@ function bindLobby() {
 }
 
 /* ═════════ word manager (only for the two of you) ═════════ */
-const WM = { cat: 'general', lang: 'english', diff: 'all', q: '', limit: 150, items: [], hidden: [], showHidden: false, editing: null, busy: false, loaded: false };
+const WM = { cat: 'general', lang: 'english', diff: 'all', show: 'all', q: '', limit: 150, items: [], hidden: [], showHidden: false, editing: null, busy: false, loaded: false };
 function openWords() { show($('wordsModal'), true); WM.editing = null; wmLoad(); }
 function bindWords() {
   if (!family) return;
@@ -2403,6 +2413,8 @@ function bindWords() {
   $('wmCats').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; WM.cat = b.dataset.c; WM.limit = 150; WM.editing = null; wmLoad(); });
   $('wmLangs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; WM.lang = b.dataset.l; WM.limit = 150; WM.editing = null; wmLoad(); });
   $('wmDiffs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; WM.diff = b.dataset.d; WM.limit = 150; wmRender(); });
+  $('wmShow').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; WM.show = b.dataset.s; WM.limit = 150; wmRender(); });
+  $('wmEditMine').addEventListener('click', wmClaim);
   $('wmSearch').addEventListener('input', (e) => { WM.q = normalize(e.target.value); WM.limit = 150; wmRender(); });
   $('wmMore').addEventListener('click', () => { WM.limit += 200; wmRender(); });
   $('wmHiddenToggle').addEventListener('click', () => { WM.showHidden = !WM.showHidden; WM.limit = 150; wmRender(); });
@@ -2427,9 +2439,17 @@ async function wmLoad() {
     const hiddenRows = inScope.filter((r) => r.kind === 'hide');
     const hiddenKeys = new Set(hiddenRows.map((r) => normalize(r.word)));
     const customRows = inScope.filter((r) => r.kind !== 'hide');
-    const items = [], seen = new Set();
+    const builtinKeys = new Set();
+    if (isDare()) st.dares.filter((w) => !hiddenKeys.has(normalize(w))).forEach((w) => builtinKeys.add(normalize(w)));
+    else for (const d of DIFFS) (WM.cat === 'movies' ? st.movies[lang][d] : st[WM.cat][d]).forEach((w) => { if (!hiddenKeys.has(normalize(w))) builtinKeys.add(normalize(w)); });
+    const items = [], seen = new Set(), byKey = new Map();
     const push = (it) => { const k = normalize(it.word); if (!k || seen.has(k)) return; seen.add(k); items.push(it); };
-    customRows.forEach((r) => push({ word: r.word, difficulty: DIFFS.includes(r.difficulty) ? r.difficulty : 'medium', source: 'custom', id: r.id }));
+    customRows.forEach((r) => {
+      const k = normalize(r.word); if (!k) return;
+      if (byKey.has(k)) { byKey.get(k).ids.push(r.id); return; }
+      const it = { word: r.word, difficulty: DIFFS.includes(r.difficulty) ? r.difficulty : 'medium', source: 'custom', id: r.id, ids: [r.id], both: builtinKeys.has(k) };
+      byKey.set(k, it); push(it);
+    });
     if (isDare()) {
       st.dares.filter((w) => !hiddenKeys.has(normalize(w))).forEach((w) => push({ word: w, difficulty: 'medium', source: 'builtin' }));
     } else {
@@ -2452,16 +2472,19 @@ function wmRender() {
   $('wmLangs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.l === WM.lang));
   show($('wmDiffs'), !isDare());
   show($('wmAddDiffWrap'), !isDare());
+  show($('wmShow'), !WM.showHidden); show($('wmLegend'), !WM.showHidden);
+  $('wmShow').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.s === WM.show));
   $('wmDiffs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.d === WM.diff));
   const list = $('wmList'); list.textContent = '';
   const ed = WM.editing;
   show($('wmEdit'), !!ed);
   if (ed) {
-    $('wmEditTitle').textContent = ed.source === 'custom' ? 'Edit your entry' : 'Edit built-in entry';
+    $('wmEditTitle').textContent = ed.source === 'custom' ? (ed.both ? 'Edit your entry (also in the game list)' : 'Edit your entry') : 'Edit built-in entry';
+    show($('wmEditMine'), ed.source === 'builtin');
     if (document.activeElement !== $('wmEditText')) $('wmEditText').value = ed.word;
     show($('wmEditDiffWrap'), !isDare());
     $('wmEditDiff').value = ed.difficulty;
-    $('wmEditDelete').textContent = ed.source === 'custom' ? 'Delete' : 'Remove';
+    $('wmEditDelete').textContent = ed.source === 'custom' ? (ed.both ? 'Remove from mine' : 'Delete') : 'Remove';
   }
   if (WM.showHidden) {
     const shown = WM.hidden.filter((r) => !WM.q || normalize(r.word).includes(WM.q));
@@ -2470,10 +2493,14 @@ function wmRender() {
     if (!shown.length) list.append(h('span', { class: 'note', style: 'color:var(--muted)', text: 'Nothing removed.' }));
     show($('wmMore'), false);
   } else {
-    const f = WM.items.filter((it) => (isDare() || WM.diff === 'all' || it.difficulty === WM.diff) && (!WM.q || normalize(it.word).includes(WM.q)));
+    const base = WM.items.filter((it) => (isDare() || WM.diff === 'all' || it.difficulty === WM.diff) && (!WM.q || normalize(it.word).includes(WM.q)));
+    const isBuilt = (it) => it.source === 'builtin' || it.both, isMine = (it) => it.source === 'custom';
+    const cnt = { all: base.length, builtin: base.filter(isBuilt).length, mine: base.filter(isMine).length };
+    $('wmShow').querySelectorAll('button').forEach((b) => { b.textContent = ({ all: 'All', builtin: 'Existing', mine: 'Mine' })[b.dataset.s] + ' (' + cnt[b.dataset.s] + ')'; });
+    const f = WM.show === 'mine' ? base.filter(isMine) : WM.show === 'builtin' ? base.filter(isBuilt) : base;
     $('wmCount').textContent = f.length + ' ' + (isDare() ? 'dare' : 'word') + (f.length === 1 ? '' : 's') + ' (tap one to edit)';
-    f.slice(0, WM.limit).forEach((it) => list.append(h('button', { type: 'button', class: 'wtag' + (it.source === 'custom' ? ' mine' : '') + (isDare() ? ' wide' : ''), onclick: () => { WM.editing = it; $('wmEditText').value = it.word; wmRender(); $('wmEditText').focus(); } },
-      it.word, h('small', { text: (isDare() ? '' : it.difficulty[0].toUpperCase() + ' ') + (it.source === 'custom' ? '· yours' : '') }))));
+    f.slice(0, WM.limit).forEach((it) => list.append(h('button', { type: 'button', class: 'wtag' + (it.source === 'custom' ? ' mine' : '') + (it.both ? ' both' : '') + (isDare() ? ' wide' : ''), onclick: () => { WM.editing = it; $('wmEditText').value = it.word; wmRender(); $('wmEditText').focus(); } },
+      it.word, h('small', { text: (isDare() ? '' : it.difficulty[0].toUpperCase() + ' ') + (it.source === 'custom' ? (it.both ? '· yours ✦' : '· yours') : '') }))));
     if (!f.length) list.append(h('span', { class: 'note', style: 'color:var(--muted)', text: 'Nothing matches.' }));
     show($('wmMore'), f.length > WM.limit);
     $('wmMore').textContent = 'Show more (' + (f.length - WM.limit) + ' left)';
@@ -2487,24 +2514,23 @@ function wmRender() {
 const wmLang = () => (WM.cat === 'movies' ? WM.lang : null);
 function wmExists(word, exceptNorm) {
   const k = normalize(word);
-  return k !== exceptNorm && WM.items.some((it) => normalize(it.word) === k);
+  return k !== exceptNorm && WM.items.some((it) => it.source === 'custom' && normalize(it.word) === k);
 }
 async function wmSaveEdit() {
   const ed = WM.editing; if (!ed || WM.busy) return;
   const word = wmClean($('wmEditText').value), diff = isDare() ? 'medium' : $('wmEditDiff').value;
   if (!word) { toast(isDare() ? 'Type a dare (at least 3 characters)' : 'Type a word (at least 2 characters)'); return; }
   if (word === ed.word && diff === ed.difficulty) { WM.editing = null; wmRender(); return; }
-  if (wmExists(word, normalize(ed.word))) { toast('That is already in the list'); return; }
+  if (wmExists(word, normalize(ed.word))) { toast('That is already in your words'); return; }
   $('wmEditSave').disabled = true;
   try {
     let err;
     if (ed.source === 'custom') {
-      ({ error: err } = await sb.from('pictionary_words').update({ word, difficulty: diff }).eq('id', ed.id));
+      ({ error: err } = await sb.from('pictionary_words').update({ word, difficulty: diff }).in('id', ed.ids || [ed.id]));
     } else {
-      ({ error: err } = await sb.from('pictionary_words').insert([
-        { category: WM.cat, difficulty: ed.difficulty, language: wmLang(), word: ed.word, kind: 'hide', created_by: myId },
-        { category: WM.cat, difficulty: diff, language: wmLang(), word, kind: 'custom', created_by: myId },
-      ]));
+      const rows = [{ category: WM.cat, difficulty: diff, language: wmLang(), word, kind: 'custom', created_by: myId }];
+      if (normalize(word) !== normalize(ed.word)) rows.unshift({ category: WM.cat, difficulty: ed.difficulty, language: wmLang(), word: ed.word, kind: 'hide', created_by: myId });
+      ({ error: err } = await sb.from('pictionary_words').insert(rows));
     }
     if (err) { toast('Could not save. Try again.'); return; }
     WM.editing = null; toast('Saved');
@@ -2516,11 +2542,23 @@ async function wmDelete() {
   $('wmEditDelete').disabled = true;
   try {
     let err;
-    if (ed.source === 'custom') ({ error: err } = await sb.from('pictionary_words').delete().eq('id', ed.id));
+    if (ed.source === 'custom') ({ error: err } = await sb.from('pictionary_words').delete().in('id', ed.ids || [ed.id]));
     else ({ error: err } = await sb.from('pictionary_words').insert({ category: WM.cat, difficulty: ed.difficulty, language: wmLang(), word: ed.word, kind: 'hide', created_by: myId }));
     if (err) { toast('Could not delete. Try again.'); return; }
-    WM.editing = null; toast(ed.source === 'custom' ? 'Deleted' : 'Removed from the game');
+    WM.editing = null; toast(ed.source === 'custom' ? (ed.both ? 'Removed from your words' : 'Deleted') : 'Removed from the game');
   } finally { $('wmEditDelete').disabled = false; }
+  await wmLoad();
+}
+async function wmClaim() {
+  const ed = WM.editing; if (!ed || ed.source !== 'builtin' || WM.busy) return;
+  const k = normalize(ed.word), diff = isDare() ? 'medium' : $('wmEditDiff').value;
+  if (WM.items.some((it) => it.source === 'custom' && normalize(it.word) === k)) { toast('Already in your words'); return; }
+  $('wmEditMine').disabled = true;
+  try {
+    const { error } = await sb.from('pictionary_words').insert({ category: WM.cat, difficulty: DIFFS.includes(diff) ? diff : 'medium', language: wmLang(), word: ed.word, kind: 'custom', created_by: myId });
+    if (error) { toast('Could not save. Try again.'); return; }
+    WM.editing = null; toast('Added to your words');
+  } finally { $('wmEditMine').disabled = false; }
   await wmLoad();
 }
 async function wmRestore(r) {
@@ -2536,14 +2574,20 @@ async function wmAdd() {
   if (!raw.length) { toast(isDare() ? 'Type at least one dare' : 'Type at least one word'); return; }
   $('wmAdd').disabled = true;
   try {
-    const seen = new Set(WM.items.map((it) => normalize(it.word)));
-    const rows = [];
-    raw.forEach((w) => { const k = normalize(w); if (!k || seen.has(k)) return; seen.add(k); rows.push({ category: WM.cat, difficulty: diff, language: wmLang(), word: w, kind: 'custom', created_by: myId }); });
-    if (!rows.length) { toast('Those are already in the list'); return; }
+    const mine = new Set(WM.items.filter((it) => it.source === 'custom').map((it) => normalize(it.word)));
+    const inGame = new Set(WM.items.filter((it) => it.source === 'builtin').map((it) => normalize(it.word)));
+    const rows = []; let already = 0, shared = 0;
+    raw.forEach((w) => {
+      const k = normalize(w); if (!k) return;
+      if (mine.has(k)) { already++; return; }
+      mine.add(k); if (inGame.has(k)) shared++;
+      rows.push({ category: WM.cat, difficulty: diff, language: wmLang(), word: w, kind: 'custom', created_by: myId });
+    });
+    if (!rows.length) { toast(already ? 'Those are already in your words' : 'Nothing to add'); return; }
     const { error } = await sb.from('pictionary_words').insert(rows);
     if (error) { toast('Could not save. Try again.'); return; }
     $('wmText').value = '';
-    toast('Added ' + rows.length + (isDare() ? (rows.length === 1 ? ' dare' : ' dares') : (rows.length === 1 ? ' word' : ' words')));
+    toast('Added ' + rows.length + (isDare() ? (rows.length === 1 ? ' dare' : ' dares') : (rows.length === 1 ? ' word' : ' words')) + (shared ? ' · ' + shared + ' already in the game list, now yours too' : '') + (already ? ' · ' + already + ' already yours' : ''));
   } finally { $('wmAdd').disabled = false; }
   await wmLoad();
 }
