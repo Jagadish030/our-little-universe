@@ -14711,7 +14711,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20L15 9"/><path d="M17.5 6.5l1 1"/><path d="M13 3l1 1"/><path d="M19 9l1 1"/><path d="M20 3l.6 1.4L22 5l-1.4.6L20 7l-.6-1.4L18 5l1.4-.6L20 3z"/></svg>
                 </div>
                 <h2>Magic Wand</h2>
-                <p>Point your index finger at the camera and draw flowers or a constellation in the air.</p>
+                <p>Point your index finger at the camera and draw flowers or a constellation in the air, or breathe on the glass and write in the fog.</p>
                 <button type="button" class="mw-start-btn" id="mwStartBtn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20L15 9"/><path d="M17.5 6.5l1 1"/><path d="M13 3l1 1"/><path d="M19 9l1 1"/></svg>
                     Start Camera
@@ -14736,6 +14736,10 @@
                     <button type="button" class="mw-mode-btn" data-mode="bts">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.9-10-9.2C.4 8.6 2 5 5.4 5 7.6 5 9 6.2 12 9.2 15 6.2 16.4 5 18.6 5 22 5 23.6 8.6 22 11.8 19.5 16.1 12 21 12 21z"/></svg>
                         BTS
+                    </button>
+                    <button type="button" class="mw-mode-btn" data-mode="fog">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.5 19a4.5 4.5 0 01-.6-8.96A6 6 0 0117.4 9.2 4.9 4.9 0 0117.5 19z"/></svg>
+                        Fog
                     </button>
                 </div>
                 <div class="mw-topbar-actions">
@@ -20335,7 +20339,9 @@
 
             const SPECIAL_DAYS = [
                 { emoji: '🎀', title: "National Girlfriend's Day", blurb: "A little something made just for this day.",
-                    unlockDate: '2026-08-01', href: 'for-you.html' }
+                    unlockDate: '2026-08-01', href: 'for-you.html' },
+                //{ emoji: '🤍', title: 'Happy Birthday, Mummy', blurb: "A quiet little something made with love, for a very special day.",
+                   // unlockDate: '2026-11-14', href: 'with-love.html' }
             ];
 
             function renderSpecialDays() {
@@ -20354,8 +20360,12 @@
                             month: 'short',
                             day: 'numeric'
                         });
+                        const longDate = new Date(day.unlockDate + 'T00:00:00').toLocaleDateString(undefined, {
+                            month: 'long',
+                            day: 'numeric'
+                        });
                         li.innerHTML =
-                            `<span class="sd-emoji">🔒</span><span class="sd-info"><span class="sd-title">a surprise is coming</span></span><span class="sd-open">${dateLabel}</span>`;
+                            `<span class="sd-emoji">🔒</span><span class="sd-info"><span class="sd-title">a surprise is on the way</span><p class="sd-blurb">opens on ${longDate}</p></span><span class="sd-open">${dateLabel}</span>`;
                     }
                     specialDayList.appendChild(li);
                 });
@@ -32007,6 +32017,7 @@
 
                     const now = performance.now();
 
+                    if (mode === 'fog') { fogRender(now); return; }
                     if (lastLandmarks) drawHandSkeleton(lastLandmarks);
 
                     // Creations persist indefinitely while being drawn.
@@ -32192,7 +32203,667 @@
                     }
                 }
 
+
+                /* ═══════════════ FOG MODE ("breathe on the glass") ═══════════════
+                   Breathe out with your mouth open and the screen fogs up
+                   where your mouth is. Point to write in the fog, rub with
+                   a closed fist to wipe it, breathe on writing to fog it
+                   back over. Letters grow droplets that slide down and
+                   leave clear trails. After a few idle seconds everything
+                   evaporates back to the normal view.
+
+                   How it works: fog is a coarse grid of "condensation
+                   density" values (0 = clear glass, ~0.9 = thick fog).
+                   Breath adds density, fingertip/fist/droplets remove it
+                   (with a slightly denser ridge at the edges, like water
+                   pushed aside), evaporation lowers it. Each frame the
+                   grid becomes an alpha mask over a blurred, whitened copy
+                   of the camera image. Everything is drawn onto the same
+                   canvas as the other modes, so photos/videos capture it. */
+                const FOG_OPEN_ON = 0.065; // lip gap ÷ face height needed to count as "mouth open"
+                const FOG_OPEN_OFF = 0.045; // gap must fall below this to stop (hysteresis)
+                const FOG_HOLD_MS = 280; // mouth must stay open this long — talking/blinking-open doesn't fog
+                const FOG_IDLE_MS = 5500; // inactivity before the fog starts to evaporate
+                const FOG_MAX = 0.9; // thickest fog from breathing alone
+                const FOG_HINT = 'Open your mouth and breathe out to fog the glass · Point to write · Rub with a fist to wipe';
+                const FOG_HINT_FALLBACK = "Couldn't load face tracking — press and hold the screen to breathe on it instead";
+                const FOG_MAX_DROPS = 16;
+                const TAU = Math.PI * 2;
+
+                let faceLib = null,
+                    faceInstance = null,
+                    faceState = 'idle'; // idle | loading | ready | failed
+                let faceTick = 0;
+                let fogGW = 0,
+                    fogGH = 0,
+                    fogCSX = 1,
+                    fogCSY = 1;
+                let fd = null,
+                    fnoise = null,
+                    fogImg = null;
+                let fogSmall = null,
+                    fogSmallCtx = null,
+                    fogTmp = null,
+                    fogTmpCtx = null,
+                    blurSmall = null,
+                    blurSmallCtx = null;
+                const fogBlurOK = (typeof CanvasRenderingContext2D !== 'undefined') && ('filter' in CanvasRenderingContext2D.prototype);
+                let fogLast = 0,
+                    fogLastActivity = 0,
+                    fogBlowT = 0,
+                    fogSum = 0;
+                const mouth = { x: 0, y: 0, faceW: 0, ratio: 0, seen: false, at: 0, blowing: false, openSince: 0, closedSince: 0 };
+                let pen = null,
+                    penDist = 0,
+                    rubPos = null;
+                let drops = [],
+                    seeds = [];
+                let pressFog = null; // press-and-hold fallback (also handy on desktop)
+                let fogHandPose = null,
+                    fogHandAt = 0,
+                    fogTip = null,
+                    fogFist = null;
+
+                const fogScale = () => Math.min(canvas.width, canvas.height) / 400;
+
+                function fogEnsure() {
+                    const W = canvas.width,
+                        H = canvas.height;
+                    if (!W || !H) return false;
+                    const cell = Math.max(2.5, Math.sqrt(W * H / 90000)); // finer grid on phones, capped so big screens stay fast
+                    const gw = Math.max(60, Math.round(W / cell));
+                    const gh = Math.max(1, Math.round(H / cell));
+                    if (fd && gw === fogGW && gh === fogGH && fogTmp && fogTmp.width === W && fogTmp.height === H) return true;
+                    fogGW = gw;
+                    fogGH = gh;
+                    fogCSX = W / gw;
+                    fogCSY = H / gh;
+                    fd = new Float32Array(gw * gh);
+                    // smooth random field so evaporation looks patchy/natural, not speckled
+                    const cw = Math.ceil(gw / 9) + 2,
+                        chh = Math.ceil(gh / 9) + 2;
+                    const coarse = new Float32Array(cw * chh).map(() => Math.random());
+                    fnoise = new Float32Array(gw * gh);
+                    for (let y = 0; y < gh; y++) {
+                        for (let x = 0; x < gw; x++) {
+                            const fx = x / 9,
+                                fy = y / 9;
+                            const x0 = Math.floor(fx),
+                                y0 = Math.floor(fy);
+                            const tx = fx - x0,
+                                ty = fy - y0;
+                            const a = coarse[y0 * cw + x0],
+                                b = coarse[y0 * cw + x0 + 1],
+                                c = coarse[(y0 + 1) * cw + x0],
+                                d = coarse[(y0 + 1) * cw + x0 + 1];
+                            fnoise[y * gw + x] = (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty;
+                        }
+                    }
+                    fogImg = new ImageData(gw, gh);
+                    for (let i = 0; i < gw * gh; i++) {
+                        fogImg.data[i * 4] = 255;
+                        fogImg.data[i * 4 + 1] = 255;
+                        fogImg.data[i * 4 + 2] = 255;
+                    }
+                    fogSmall = document.createElement('canvas');
+                    fogSmall.width = gw;
+                    fogSmall.height = gh;
+                    fogSmallCtx = fogSmall.getContext('2d');
+                    fogTmp = document.createElement('canvas');
+                    fogTmp.width = W;
+                    fogTmp.height = H;
+                    fogTmpCtx = fogTmp.getContext('2d');
+                    blurSmall = document.createElement('canvas');
+                    blurSmall.width = Math.max(8, Math.ceil(W / 12));
+                    blurSmall.height = Math.max(8, Math.ceil(H / 12));
+                    blurSmallCtx = blurSmall.getContext('2d');
+                    drops = [];
+                    seeds = [];
+                    fogSum = 0;
+                    return true;
+                }
+
+                function fogReset() {
+                    if (fd) fd.fill(0);
+                    drops = [];
+                    seeds = [];
+                    pen = null;
+                    penDist = 0;
+                    rubPos = null;
+                    fogSum = 0;
+                    fogBlowT = 0;
+                    fogLast = 0;
+                    fogLastActivity = 0;
+                    faceTick = 0;
+                    mouth.blowing = false;
+                    mouth.openSince = 0;
+                    mouth.closedSince = 0;
+                    mouth.seen = false;
+                    fogHandPose = null;
+                    fogTip = null;
+                    fogFist = null;
+                }
+
+                // Breath: soft, thick-in-the-middle patch
+                function fogAdd(px, py, R, amt) {
+                    const cx = px / fogCSX,
+                        cy = py / fogCSY,
+                        rx = R / fogCSX,
+                        ry = R / fogCSY;
+                    const x0 = Math.max(0, Math.floor(cx - rx)),
+                        x1 = Math.min(fogGW - 1, Math.ceil(cx + rx));
+                    const y0 = Math.max(0, Math.floor(cy - ry)),
+                        y1 = Math.min(fogGH - 1, Math.ceil(cy + ry));
+                    for (let y = y0; y <= y1; y++) {
+                        const dy = (y + 0.5 - cy) / ry;
+                        for (let x = x0; x <= x1; x++) {
+                            const dx = (x + 0.5 - cx) / rx;
+                            const d2 = dx * dx + dy * dy;
+                            if (d2 >= 1) continue;
+                            const w = (1 - d2) * (1 - d2);
+                            const i = y * fogGW + x;
+                            const cur = fd[i];
+                            let nv = cur + amt * w * (0.7 + 0.6 * fnoise[i]);
+                            if (nv > FOG_MAX) nv = cur > FOG_MAX ? cur : FOG_MAX;
+                            fd[i] = nv;
+                        }
+                    }
+                    if (fogSum < 1) fogSum = 1;
+                }
+
+                // Finger / fist / droplet: clears fog, leaving a slightly denser ridge at the edge
+                function fogErase(px, py, r, rimAmt) {
+                    const soft = 0.8 * fogCSX,
+                        rim = 1.4 * fogCSX,
+                        reach = r + rim;
+                    const cx = px / fogCSX,
+                        cy = py / fogCSY;
+                    const rx = reach / fogCSX,
+                        ry = reach / fogCSY;
+                    const x0 = Math.max(0, Math.floor(cx - rx)),
+                        x1 = Math.min(fogGW - 1, Math.ceil(cx + rx));
+                    const y0 = Math.max(0, Math.floor(cy - ry)),
+                        y1 = Math.min(fogGH - 1, Math.ceil(cy + ry));
+                    for (let y = y0; y <= y1; y++) {
+                        const ddy = (y + 0.5) * fogCSY - py;
+                        for (let x = x0; x <= x1; x++) {
+                            const ddx = (x + 0.5) * fogCSX - px;
+                            const dd = Math.sqrt(ddx * ddx + ddy * ddy);
+                            const i = y * fogGW + x;
+                            if (dd < r - soft) fd[i] = 0;
+                            else if (dd < r) fd[i] *= (dd - (r - soft)) / soft;
+                            else if (dd < reach && rimAmt > 0 && fd[i] > 0.04) {
+                                const nv = fd[i] + rimAmt * (1 - (dd - r) / rim);
+                                fd[i] = nv > 1 ? 1 : nv;
+                            }
+                        }
+                    }
+                }
+
+                function fogStrokeSeg(x0, y0, x1, y1, r, rimAmt) {
+                    const len = Math.hypot(x1 - x0, y1 - y0);
+                    const steps = Math.max(1, Math.ceil(len / Math.max(1.5, r * 0.35)));
+                    for (let s = 1; s <= steps; s++) {
+                        const t = s / steps;
+                        fogErase(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, r, rimAmt);
+                    }
+                }
+
+                // highest fog density within `r` px of a point
+                function fogNear(px, py, r) {
+                    const cx = px / fogCSX,
+                        cy = py / fogCSY;
+                    const rx = Math.max(1, r / fogCSX),
+                        ry = Math.max(1, r / fogCSY);
+                    const x0 = Math.max(0, Math.floor(cx - rx)),
+                        x1 = Math.min(fogGW - 1, Math.ceil(cx + rx));
+                    const y0 = Math.max(0, Math.floor(cy - ry)),
+                        y1 = Math.min(fogGH - 1, Math.ceil(cy + ry));
+                    let m = 0;
+                    for (let y = y0; y <= y1; y++)
+                        for (let x = x0; x <= x1; x++) {
+                            const v = fd[y * fogGW + x];
+                            if (v > m) m = v;
+                        }
+                    return m;
+                }
+
+                function distToSeg(px, py, x0, y0, x1, y1) {
+                    const dx = x1 - x0,
+                        dy = y1 - y0;
+                    const l2 = dx * dx + dy * dy;
+                    let t = l2 ? ((px - x0) * dx + (py - y0) * dy) / l2 : 0;
+                    t = Math.max(0, Math.min(1, t));
+                    return Math.hypot(px - (x0 + dx * t), py - (y0 + dy * t));
+                }
+
+                /* ─── Face: is the mouth held open (a "haaa" breath)? ─── */
+                function onFaceResults(res) {
+                    if (mode !== 'fog') return;
+                    const now = performance.now();
+                    const lm = res.multiFaceLandmarks && res.multiFaceLandmarks[0];
+                    if (!lm) {
+                        mouth.seen = false;
+                        mouth.openSince = 0;
+                        mouth.closedSince = 0;
+                        mouth.blowing = false;
+                        return;
+                    }
+                    const vw = video.videoWidth || 1,
+                        vh = video.videoHeight || 1;
+                    const d2 = (a, b) => Math.hypot((a.x - b.x) * vw, (a.y - b.y) * vh);
+                    const faceH = d2(lm[10], lm[152]) || 1;
+                    const ratio = d2(lm[13], lm[14]) / faceH;
+                    const mp = mapPoint((lm[13].x + lm[14].x) / 2, (lm[13].y + lm[14].y) / 2);
+                    if (mouth.seen && now - mouth.at < 600) {
+                        mouth.x += (mp.x - mouth.x) * 0.6;
+                        mouth.y += (mp.y - mouth.y) * 0.6;
+                    } else {
+                        mouth.x = mp.x;
+                        mouth.y = mp.y;
+                    }
+                    mouth.faceW = d2(lm[234], lm[454]) * (cover ? cover.scale : 1);
+                    mouth.seen = true;
+                    mouth.at = now;
+                    mouth.ratio = ratio;
+                    if (!mouth.blowing) {
+                        if (ratio > FOG_OPEN_ON) {
+                            if (!mouth.openSince) mouth.openSince = now;
+                            if (now - mouth.openSince > FOG_HOLD_MS) {
+                                mouth.blowing = true;
+                                mouth.closedSince = 0;
+                            }
+                        } else {
+                            mouth.openSince = 0;
+                        }
+                    } else if (ratio < FOG_OPEN_OFF) {
+                        if (!mouth.closedSince) mouth.closedSince = now;
+                        if (now - mouth.closedSince > 180) {
+                            mouth.blowing = false;
+                            mouth.openSince = 0;
+                            mouth.closedSince = 0;
+                        }
+                    } else {
+                        mouth.closedSince = 0;
+                    }
+                }
+
+                async function fogEnsureFace() {
+                    if (faceState === 'ready' || faceState === 'loading') return;
+                    faceState = 'loading';
+                    hint.textContent = 'Loading breath detection… 🌫️';
+                    const src = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js';
+                    try {
+                        await loadScript(src);
+                        faceLib = window.FaceMesh;
+                        if (!faceLib) throw new Error('FaceMesh not available');
+                        faceInstance = new faceLib({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}` });
+                        faceInstance.setOptions({ maxNumFaces: 1, refineLandmarks: false, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+                        faceInstance.onResults(onFaceResults);
+                        await faceInstance.initialize();
+                        faceState = 'ready';
+                        if (mode === 'fog') hint.textContent = FOG_HINT;
+                    } catch (err) {
+                        console.error('Face tracking failed to load:', err);
+                        const bad = document.querySelector(`script[src="${src}"]`);
+                        if (bad && bad.dataset.loaded !== 'true') bad.remove();
+                        faceInstance = null;
+                        faceState = 'failed';
+                        if (mode === 'fog') hint.textContent = FOG_HINT_FALLBACK;
+                    }
+                }
+
+                // called from the shared frame loop, after the hands pass
+                async function fogFaceTick() {
+                    if (mode !== 'fog' || faceState !== 'ready' || !faceInstance) return;
+                    faceTick++;
+                    if (faceTick % 3 !== 0) return; // mouth state changes slowly; saves the phone some work
+                    try {
+                        await faceInstance.send({ image: video });
+                    } catch (err) {
+                        console.error('Face frame failed:', err);
+                    }
+                }
+
+                /* ─── Hand: point = write, fist = wipe ─── */
+                function fogOnHands(results) {
+                    const now = performance.now();
+                    const det = !!(results.multiHandLandmarks && results.multiHandLandmarks.length);
+                    if (!det) {
+                        fogHandPose = null;
+                        fogTip = null;
+                        fogFist = null;
+                        pen = null;
+                        rubPos = null;
+                        lastLandmarks = null;
+                        return;
+                    }
+                    const lm = results.multiHandLandmarks[0];
+                    lastLandmarks = lm;
+                    if (!fogEnsure()) return;
+                    const pose = classifyHandPose(lm);
+                    fogHandPose = pose;
+                    fogHandAt = now;
+                    fogTip = mapPoint(lm[8].x, lm[8].y);
+                    fogFist = null;
+                    const k = fogScale();
+                    if (pose === 'point') {
+                        rubPos = null;
+                        const prev = pen;
+                        pen = prev ? { x: prev.x + (fogTip.x - prev.x) * 0.55, y: prev.y + (fogTip.y - prev.y) * 0.55 } : { x: fogTip.x, y: fogTip.y };
+                        const from = prev || pen;
+                        const r = Math.max(5, Math.min(canvas.width, canvas.height) * 0.021);
+                        const had = fogNear(pen.x, pen.y, r) > 0.2; // only "writing" if there is fog to write in
+                        fogStrokeSeg(from.x, from.y, pen.x, pen.y, r, 0.10);
+                        if (had) {
+                            fogLastActivity = now;
+                            penDist += Math.hypot(pen.x - from.x, pen.y - from.y);
+                            if (penDist >= 18 * k) {
+                                penDist = 0;
+                                if (Math.random() < 0.24 && seeds.length < 80) seeds.push({ x: pen.x, y: pen.y + r * 0.6, at: now + 700 + Math.random() * 1500 });
+                            }
+                        }
+                    } else if (pose === 'fist') {
+                        pen = null;
+                        const ids = [0, 5, 9, 13, 17];
+                        const cxn = ids.reduce((a, i) => a + lm[i].x, 0) / ids.length;
+                        const cyn = ids.reduce((a, i) => a + lm[i].y, 0) / ids.length;
+                        const c = mapPoint(cxn, cyn);
+                        const vw = video.videoWidth || 1,
+                            vh = video.videoHeight || 1;
+                        const palmW = Math.hypot((lm[5].x - lm[17].x) * vw, (lm[5].y - lm[17].y) * vh) * (cover ? cover.scale : 1);
+                        const minSide = Math.min(canvas.width, canvas.height);
+                        const r = Math.max(18 * k, Math.min(minSide * 0.16, palmW * 0.8));
+                        fogFist = { x: c.x, y: c.y, r };
+                        if (rubPos && Math.hypot(c.x - rubPos.x, c.y - rubPos.y) >= 3) {
+                            if (fogNear(c.x, c.y, r) > 0.08) fogLastActivity = now;
+                            fogStrokeSeg(rubPos.x, rubPos.y, c.x, c.y, r, 0.03);
+                            const a = rubPos;
+                            drops = drops.filter((d) => distToSeg(d.x, d.y, a.x, a.y, c.x, c.y) > r + d.r * 0.5);
+                        }
+                        rubPos = { x: c.x, y: c.y };
+                    } else {
+                        pen = null;
+                        rubPos = null;
+                    }
+                }
+
+                /* ─── Droplets ─── */
+                function spawnDrop(x, y, now) {
+                    const k = fogScale();
+                    if (drops.length >= FOG_MAX_DROPS) return;
+                    if (drops.some((d) => Math.hypot(d.x - x, d.y - y) < 14 * k)) return;
+                    drops.push({
+                        x, y, r: 1.2 * k, rMax: (3.4 + Math.random() * 3.2) * k, born: now, growDur: 600 + Math.random() * 700,
+                        state: 'grow', v: 0, moving: false, nextSwitch: 0, dist: 0, wob: Math.random() * TAU, starve: 0, fade: 1, dying: false
+                    });
+                }
+
+                function fogUpdateDrops(now, dt) {
+                    const k = fogScale();
+                    for (let n = drops.length - 1; n >= 0; n--) {
+                        const d = drops[n];
+                        if (d.dying) {
+                            d.fade -= dt * 1.3;
+                            if (d.fade <= 0) drops.splice(n, 1);
+                            continue;
+                        }
+                        if (d.state === 'grow') {
+                            const t = Math.min(1, (now - d.born) / d.growDur);
+                            d.r = 1.2 * k + (d.rMax - 1.2 * k) * (t * t * (3 - 2 * t));
+                            if (t >= 1) {
+                                d.state = 'slide';
+                                d.moving = true;
+                                d.nextSwitch = now + 250 + Math.random() * 450;
+                            }
+                            continue;
+                        }
+                        // stick-and-slip: runs for a bit, hangs, runs again — like a real drop
+                        if (now >= d.nextSwitch) {
+                            if (d.moving && Math.random() < 0.5) {
+                                d.moving = false;
+                                d.nextSwitch = now + 150 + Math.random() * 400;
+                            } else {
+                                d.moving = true;
+                                d.nextSwitch = now + 250 + Math.random() * 600;
+                            }
+                        }
+                        const vT = d.moving ? 30 + 9 * d.r : 0;
+                        d.v += (vT - d.v) * Math.min(1, dt * 6);
+                        let step = d.v * dt;
+                        while (step > 0.01) {
+                            const s = Math.min(step, Math.max(1, d.r * 0.5));
+                            step -= s;
+                            d.y += s;
+                            d.x += Math.sin(d.wob + d.dist * 0.05) * s * 0.12;
+                            d.dist += s;
+                            fogErase(d.x, d.y, d.r * 0.62, 0.04);
+                            d.r *= 1 - 0.0022 * s; // loses water as it goes
+                        }
+                        // fog ahead? if the glass is already clear the drop just sits and dries
+                        if (fogNear(d.x, d.y + d.r * 1.4, d.r * 0.4) < 0.05) d.starve += dt;
+                        else d.starve = 0;
+                        if (d.r < 1.9 * k || d.starve > 0.4) {
+                            d.moving = false;
+                            d.dying = true;
+                        }
+                        if (d.y > canvas.height + d.r) drops.splice(n, 1);
+                    }
+                }
+
+                function fogDrawDrop(d) {
+                    const r = d.r;
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, d.fade);
+                    // soft shadow underneath
+                    ctx.fillStyle = 'rgba(0,0,0,0.16)';
+                    ctx.beginPath();
+                    ctx.ellipse(d.x + r * 0.1, d.y + r * 0.3, r * 1.05, r * 1.1, 0, 0, TAU);
+                    ctx.fill();
+                    // the drop acts like a tiny lens: shows the room upside-down and magnified
+                    if (video.readyState >= 2 && cover && r >= 2.2) {
+                        const m = 2.4,
+                            sc = cover.scale;
+                        const vx = (canvas.width - d.x - cover.offsetX) / sc,
+                            vy = (d.y - cover.offsetY) / sc;
+                        const half = r / (m * sc);
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.arc(d.x, d.y, r, 0, TAU);
+                        ctx.clip();
+                        ctx.translate(d.x, d.y);
+                        ctx.scale(1, -1);
+                        ctx.drawImage(video, vx - half, vy - half, half * 2, half * 2, -r, -r, r * 2, r * 2);
+                        ctx.restore();
+                    }
+                    const g = ctx.createRadialGradient(d.x - r * 0.35, d.y - r * 0.4, r * 0.05, d.x, d.y, r);
+                    g.addColorStop(0, 'rgba(255,255,255,0.5)');
+                    g.addColorStop(0.4, 'rgba(255,255,255,0.05)');
+                    g.addColorStop(0.82, 'rgba(14,22,36,0.16)');
+                    g.addColorStop(1, 'rgba(10,16,28,0.42)');
+                    ctx.fillStyle = g;
+                    ctx.beginPath();
+                    ctx.arc(d.x, d.y, r, 0, TAU);
+                    ctx.fill();
+                    // bright edge on the lower side where light collects
+                    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+                    ctx.lineWidth = Math.max(0.8, r * 0.16);
+                    ctx.beginPath();
+                    ctx.arc(d.x, d.y, r * 0.88, Math.PI * 0.12, Math.PI * 0.88);
+                    ctx.stroke();
+                    // specular glint
+                    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+                    ctx.beginPath();
+                    ctx.arc(d.x - r * 0.38, d.y - r * 0.42, Math.max(0.7, r * 0.2), 0, TAU);
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                /* ─── Per-frame update + draw ─── */
+                function fogUpdate(now, dt) {
+                    const W = canvas.width,
+                        H = canvas.height;
+                    // breath
+                    const faceFresh = mouth.seen && now - mouth.at < 600;
+                    const blowing = (mouth.blowing && faceFresh) || !!pressFog;
+                    if (blowing) {
+                        fogBlowT = Math.min(1, fogBlowT + dt / 1.5);
+                        const pos = pressFog || mouth;
+                        const minSide = Math.min(W, H);
+                        const base = pressFog ? minSide * 0.16 : Math.max(minSide * 0.16, mouth.faceW * 0.5);
+                        fogAdd(pos.x, pos.y, base * (1 + 1.3 * fogBlowT), 1.8 * dt);
+                        fogLastActivity = now;
+                    } else {
+                        fogBlowT = Math.max(0, fogBlowT - dt * 1.5);
+                    }
+                    // evaporation: slow while you're playing, quick once idle; thin fog and patchy spots go first
+                    if (fogSum > 0) {
+                        const idle = now - fogLastActivity;
+                        let kk = 0.012;
+                        if (idle > FOG_IDLE_MS) kk += Math.min(1, (idle - FOG_IDLE_MS) / 700) * 0.34;
+                        let sum = 0;
+                        const n = fd.length;
+                        for (let i = 0; i < n; i++) {
+                            let v = fd[i];
+                            if (v > 0) {
+                                v -= dt * kk * (0.55 + 1.1 * fnoise[i]) * (1.3 - 0.5 * Math.min(v, 1));
+                                if (v < 0.004) v = 0;
+                                fd[i] = v;
+                                sum += v;
+                            }
+                        }
+                        fogSum = sum;
+                    }
+                    if (fogSum < 0.5) {
+                        seeds.length = 0;
+                        drops.forEach((d) => { d.dying = true; });
+                    }
+                    const k = fogScale();
+                    // droplets form on fresh writing, then slide
+                    for (let i = seeds.length - 1; i >= 0; i--) {
+                        const s = seeds[i];
+                        if (now < s.at) continue;
+                        seeds.splice(i, 1);
+                        if (fogNear(s.x, s.y, 14 * k) > 0.2) spawnDrop(s.x, s.y, now);
+                    }
+                    fogUpdateDrops(now, dt);
+                }
+
+                function fogComposite() {
+                    if (fogSum < 0.5) return;
+                    const W = canvas.width,
+                        H = canvas.height;
+                    const dta = fogImg.data;
+                    const n = fd.length;
+                    for (let i = 0; i < n; i++) {
+                        const a = fd[i] * 1.08;
+                        dta[i * 4 + 3] = a >= 1 ? 255 : (a * 255 + 0.5) | 0;
+                    }
+                    fogSmallCtx.putImageData(fogImg, 0, 0);
+                    if (video.readyState >= 2 && cover) {
+                        const sw = blurSmall.width,
+                            sh = blurSmall.height;
+                        blurSmallCtx.setTransform(sw / W, 0, 0, sh / H, 0, 0);
+                        blurSmallCtx.clearRect(0, 0, W, H);
+                        blurSmallCtx.translate(W, 0);
+                        blurSmallCtx.scale(-1, 1);
+                        blurSmallCtx.drawImage(video, cover.offsetX, cover.offsetY, cover.dispW, cover.dispH);
+                        blurSmallCtx.setTransform(1, 0, 0, 1, 0, 0);
+                    }
+                    const t = fogTmpCtx;
+                    t.setTransform(1, 0, 0, 1, 0, 0);
+                    t.globalCompositeOperation = 'source-over';
+                    t.clearRect(0, 0, W, H);
+                    t.imageSmoothingEnabled = true;
+                    t.imageSmoothingQuality = 'high';
+                    const useBlur = fogBlurOK && W * H <= 1300000; // skip the costly filter on very large screens
+                    if (useBlur) t.filter = 'blur(6px)';
+                    t.drawImage(blurSmall, -24, -24, W + 48, H + 48); // drawn oversize so the blur has no transparent rim
+                    if (useBlur) t.filter = 'none';
+                    t.fillStyle = 'rgba(236,242,250,0.32)';
+                    t.fillRect(0, 0, W, H);
+                    t.globalCompositeOperation = 'destination-in';
+                    t.drawImage(fogSmall, 0, 0, W, H);
+                    t.globalCompositeOperation = 'source-over';
+                    ctx.drawImage(fogTmp, 0, 0);
+                }
+
+                function fogDrawCursors(now) {
+                    const k = fogScale();
+                    // mouth ring: fills while you hold your mouth open, then fog starts
+                    if (mouth.seen && now - mouth.at < 600 && !mouth.blowing) {
+                        const prog = mouth.openSince ? Math.min(1, (now - mouth.openSince) / FOG_HOLD_MS) : 0;
+                        ctx.save();
+                        ctx.lineWidth = 2;
+                        ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+                        ctx.beginPath();
+                        ctx.arc(mouth.x, mouth.y, 17 * k, 0, TAU);
+                        ctx.stroke();
+                        if (prog > 0) {
+                            ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+                            ctx.lineWidth = 2.5;
+                            ctx.beginPath();
+                            ctx.arc(mouth.x, mouth.y, 17 * k, -Math.PI / 2, -Math.PI / 2 + TAU * prog);
+                            ctx.stroke();
+                        }
+                        ctx.restore();
+                    }
+                    if (fogTip && now - fogHandAt < 300) {
+                        ctx.save();
+                        if (fogHandPose === 'point') {
+                            ctx.shadowColor = 'rgba(255,255,255,0.9)';
+                            ctx.shadowBlur = 12;
+                            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                            ctx.beginPath();
+                            ctx.arc(fogTip.x, fogTip.y, 6 * k, 0, TAU);
+                            ctx.fill();
+                        } else if (fogHandPose === 'fist' && fogFist) {
+                            ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                            ctx.lineWidth = 2;
+                            ctx.setLineDash([6, 6]);
+                            ctx.beginPath();
+                            ctx.arc(fogFist.x, fogFist.y, fogFist.r, 0, TAU);
+                            ctx.stroke();
+                        } else {
+                            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                            ctx.beginPath();
+                            ctx.arc(fogTip.x, fogTip.y, 4 * k, 0, TAU);
+                            ctx.fill();
+                        }
+                        ctx.restore();
+                    }
+                }
+
+                function fogRender(now) {
+                    if (!fogEnsure()) return;
+                    const dt = fogLast ? Math.min(0.05, (now - fogLast) / 1000) : 0.016;
+                    fogLast = now;
+                    fogUpdate(now, dt);
+                    fogComposite();
+                    drops.forEach(fogDrawDrop);
+                    fogDrawCursors(now);
+                    // instructions stay up until you start playing, and come back if you go quiet
+                    const handNow = fogTip && now - fogHandAt < 800;
+                    const busy = handNow || mouth.blowing || fogSum > 1 || !!pressFog;
+                    const needsMsg = faceState === 'loading' || faceState === 'failed';
+                    hint.classList.toggle('hidden', !(needsMsg || (!busy && now - fogLastActivity > 5000)));
+                }
+
+                // press-and-hold fallback: breathe on the glass with a finger/mouse
+                function fogPointerPos(e) {
+                    const rc = canvas.getBoundingClientRect();
+                    return { x: (e.clientX - rc.left) * (canvas.width / rc.width), y: (e.clientY - rc.top) * (canvas.height / rc.height) };
+                }
+                canvas.addEventListener('pointerdown', (e) => {
+                    if (mode !== 'fog' || overlay.hidden) return;
+                    pressFog = fogPointerPos(e);
+                    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+                });
+                canvas.addEventListener('pointermove', (e) => { if (pressFog) pressFog = fogPointerPos(e); });
+                ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => canvas.addEventListener(ev, () => { pressFog = null; }));
+
                 function onHandsResults(results) {
+                    if (mode === 'fog') { fogOnHands(results); return; }
                     const handDetected = !!(results.multiHandLandmarks && results.multiHandLandmarks.length);
                     hint.classList.toggle('hidden', handDetected);
                     lastLandmarks = handDetected ? results.multiHandLandmarks[0] : null;
@@ -32322,6 +32993,7 @@
                         return;
                     }
                     await handsInstance.send({ image: video });
+                    await fogFaceTick();
                     requestAnimationFrame(sendFrameLoop);
                 }
 
@@ -32370,6 +33042,7 @@
                         }
                         sendLoopActive = true;
                         sendFrameLoop();
+                        if (mode === 'fog') { hint.textContent = FOG_HINT; fogEnsureFace(); }
                     } catch (err) {
                         console.error('Hand tracking failed to load:', err);
                         hint.textContent = 'Could not load hand tracking — check your connection and try again.';
@@ -32409,6 +33082,8 @@
                     lastFlowerPos = null;
                     fistLitIndex = 0;
                     lastLandmarks = null;
+                    fogReset();
+                    pressFog = null;
                     cameraStarted = false;
                     wandScreenStack = [];
                     startScreen.classList.remove('hidden');
@@ -32441,7 +33116,8 @@
                 startBtn.addEventListener('click', startCamera);
                 closeBtn.addEventListener('click', () => backableClose('mw-overlay'));
                 startCloseBtn.addEventListener('click', () => backableClose('mw-overlay'));
-                clearBtn.addEventListener('click', () => { particles = [];
+                clearBtn.addEventListener('click', () => { fogReset();
+                    particles = [];
                     stars = [];
                     clearing = false;
                     dwellPos = null;
@@ -32461,9 +33137,15 @@
                         btsCelebration = null;
                         btsGestureHoldSince = 0;
                         btsWasFist = false;
+                        fogReset();
+                        pressFog = null;
                         if (mode === 'bts') {
                             hint.textContent = 'Hold up 2 or 3 fingers to summon a photo · Open your palm to get ready · Close your fist to catch!';
                             loadBtsCollection();
+                        } else if (mode === 'fog') {
+                            hint.textContent = faceState === 'failed' ? FOG_HINT_FALLBACK : FOG_HINT;
+                            hint.classList.remove('hidden');
+                            fogEnsureFace();
                         } else if (mode === 'flowers' || mode === 'constellation') {
                             hint.textContent = mode === 'flowers' ?
                                 'Point to draw flowers · Open your hand to clear' :
