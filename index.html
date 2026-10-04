@@ -1064,9 +1064,14 @@
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            bottom: calc(max(22px, env(safe-area-inset-bottom)) + 132px);
+            bottom: calc(max(22px, env(safe-area-inset-bottom)) + 76px);
             width: min(88vw, 360px);
             z-index: 3;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: translate(-50%, 12px);
+            transition: opacity .22s ease, transform .22s ease, visibility 0s linear .22s;
             display: grid;
             gap: 4px;
             padding: 8px 16px;
@@ -1079,6 +1084,8 @@
             font-size: .74rem;
             letter-spacing: .02em;
         }
+        .mw-fog-panel.show { opacity: 1; visibility: visible; pointer-events: auto; transform: translate(-50%, 0); transition: opacity .22s ease, transform .22s ease, visibility 0s; }
+        .mw-round-btn.active { background: rgba(255, 255, 255, .22); border-color: rgba(255, 255, 255, .6); }
         .mw-fog-row { display: grid; grid-template-columns: 112px 1fr; align-items: center; gap: 10px; min-height: 34px; }
         .mw-fog-row input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 34px; background: transparent; margin: 0; touch-action: pan-y; }
         .mw-fog-row input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: rgba(255, 255, 255, .34); }
@@ -14783,7 +14790,7 @@
                 </div>
             </div>
 
-            <div class="mw-fog-panel hidden" id="mwFogPanel" role="group" aria-label="Fog settings">
+            <div class="mw-fog-panel" id="mwFogPanel" role="group" aria-label="Fog settings">
                 <label class="mw-fog-row"><span>Fog reach</span><input type="range" id="mwFogReach" min="5" max="100" step="1" value="45" aria-label="How far the fog spreads from your mouth"></label>
                 <label class="mw-fog-row"><span>Writing thickness</span><input type="range" id="mwFogThick" min="0" max="100" step="1" value="36" aria-label="Thickness of your writing in the fog"></label>
             </div>
@@ -14821,6 +14828,9 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5a1.5 1.5 0 011.5-1.5h2l1.2-1.8a1.5 1.5 0 011.25-.7h4.1a1.5 1.5 0 011.25.7L16.5 7h2A1.5 1.5 0 0120 8.5v9A1.5 1.5 0 0118.5 19h-13A1.5 1.5 0 014 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg>
                 </button>
                 <button type="button" class="mw-round-btn" id="mwVideoBtn" aria-label="Record a video" title="Record a video"><span class="mw-record-dot"></span></button>
+                <button type="button" class="mw-round-btn mw-fog-settings-btn hidden" id="mwFogSettingsBtn" aria-label="Fog settings" title="Fog settings" aria-haspopup="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h8M18 7h2M4 17h2M12 17h8"/><circle cx="15" cy="7" r="2.4"/><circle cx="9" cy="17" r="2.4"/></svg>
+                </button>
             </div>
 
             <div class="mw-save-panel hidden" id="mwSavePanel">
@@ -20373,8 +20383,8 @@
             const SPECIAL_DAYS = [
                 { emoji: '🎀', title: "National Girlfriend's Day", blurb: "A little something made just for this day.",
                     unlockDate: '2026-08-01', href: 'for-you.html' },
-                //{ emoji: '🤍', title: 'Happy Birthday, Mummy', blurb: "A quiet little something made with love, for a very special day.",
-                  //  unlockDate: '2026-11-14', href: 'with-love.html' }
+                { emoji: '🤍', title: 'Happy Birthday, Mummy', blurb: "A quiet little something made with love, for a very special day.",
+                    unlockDate: '2026-11-14', href: 'with-love.html' }
             ];
 
             function renderSpecialDays() {
@@ -32239,29 +32249,26 @@
 
                 /* ═══════════════ FOG MODE ("breathe on the glass") ═══════════════
                    Breathe out with your mouth open and the glass fogs up where
-                   your mouth is. Point to write in the fog, rub with a closed
-                   fist to wipe it, breathe on your writing to fog it back over.
-                   Letters grow droplets that run down and leave clear trails.
-                   After a few quiet seconds it all evaporates.
+                   your mouth is. Pinch thumb + index (👌), hold a moment, and
+                   write in the fog. Rub with the BACK of a closed fist to wipe.
+                   The fog stays until you wipe it (or press the eraser button).
 
                    Built for speed: nothing here loops over pixels. The fog is a
-                   mask canvas (white = fog) that is only ever touched with
-                   native canvas strokes/gradients, which the phone's GPU
-                   handles. Each frame the live camera is shrunk to a tiny
-                   copy, blurred, scaled back up and tinted milky white, and
-                   that frosted copy is cut out with the mask and laid over the
-                   normal picture. A small coarse grid (a few hundred cells)
-                   tracks roughly where fog exists, only so droplets know when
-                   they have run out of fog. Everything draws on the shared
-                   canvas, so photos and videos capture the fog too. */
+                   mask canvas (white = fog) touched only with native canvas
+                   strokes and gradients, which the phone's GPU handles. Each
+                   frame the live camera is shrunk to a tiny copy, blurred,
+                   scaled back up and tinted milky white; that frosted copy is
+                   cut out with the mask and laid over the normal picture. It
+                   all draws on the shared canvas, so photos and videos capture
+                   the fog too. */
                 const FOG_OPEN_ON = 0.065; // lip gap ÷ face height that counts as "mouth open"
                 const FOG_OPEN_OFF = 0.045; // gap must fall below this to stop (hysteresis)
                 const FOG_HOLD_MS = 260; // mouth must stay open this long, so talking never fogs
-                const FOG_IDLE_MS = 5500; // quiet time before the fog starts to evaporate
-                const FOG_CELL = 24; // coarse grid cell size (canvas px), droplet logic only
-                const FOG_MAX_DROPS = 12;
-                const FOG_HINT = 'Open your mouth and breathe out to fog the glass · Pinch 👌 to write · Rub with a fist to wipe';
+                const FOG_ARM_MS = 320; // hold the pinch this long before the pen touches the glass
+                const FOG_HINT = 'Open your mouth and breathe out to fog the glass · Pinch 👌 and hold a moment to write · Rub with the back of a closed fist to wipe';
+                const FOG_TURN_HINT = 'To wipe, turn your hand so the back of your closed fist faces the screen';
                 const FOG_HINT_FALLBACK = "Couldn't load face tracking — press and hold the screen to breathe on it instead";
+                const FOG_LOADING = 'Loading breath detection… 🌫️';
                 const TAU = Math.PI * 2;
                 const fogBlurOK = (typeof CanvasRenderingContext2D !== 'undefined') && ('filter' in CanvasRenderingContext2D.prototype);
 
@@ -32272,18 +32279,15 @@
                     faceBusy = false;
                 let fogMask = null, fogMaskCtx = null, fogTmp = null, fogTmpCtx = null,
                     fogTiny = null, fogTinyCtx = null, fogMid = null, fogMidCtx = null;
-                let fogNoisePat = null;
                 let fogSizeKey = '', fogW = 0, fogH = 0, fogS = 1;
-                let fgrid = null, fgW = 0, fgH = 0;
-                let fogSum = 0, fogEvap = 0, fogLast = 0, fogLastActivity = 0, fogBlowT = 0;
+                let fogActive = false, fogLast = 0, fogLastActivity = 0, fogBlowT = 0;
                 const mouth = { x: 0, y: 0, faceW: 0, ratio: 0, seen: false, at: 0, blowing: false, openSince: 0, closedSince: 0 };
-                let pen = null, penLostAt = 0, pointStreak = 0, penDist = 0, rubPos = null;
-                let drops = [],
-                    seeds = [];
-                let pressFog = null; // press-and-hold fallback (also handy on desktop)
+                let pen = null, pinchSince = 0, pinchLostAt = 0, lastPinchAt = 0, rubPos = null;
+                let fogPinching = false, fogBackSmooth = 0, fogFistFrames = 0, fogFrontSince = 0, fogTurnUntil = 0, fogTurnCool = 0;
+                let pressFog = null; // press-and-hold fallback, used only if face tracking can't load
                 let fogHandPose = null, fogHandAt = 0, fogTip = null, fogFist = null;
 
-                /* ─── the two sliders: how far the fog spreads, and how thick the writing is ─── */
+                /* ─── the two sliders (hidden behind a button), and their auto-hide ─── */
                 const FOG_CFG_KEY = 'mw.fog.cfg';
                 const fogCfg = { reach: 45, thick: 36 };
                 try {
@@ -32293,9 +32297,29 @@
                 } catch (err) {}
                 const fogPanel = document.getElementById('mwFogPanel'),
                     fogReachEl = document.getElementById('mwFogReach'),
-                    fogThickEl = document.getElementById('mwFogThick');
+                    fogThickEl = document.getElementById('mwFogThick'),
+                    fogSettingsBtn = document.getElementById('mwFogSettingsBtn');
                 let fogPreview = null; // {kind, at}: a quick on-screen preview while a slider moves
-                function fogPanelSync() { if (fogPanel) fogPanel.classList.toggle('hidden', mode !== 'fog'); }
+                let fogPanelTimer = 0,
+                    fogPanelHold = false;
+                const fogPanelOpen = () => !!(fogPanel && fogPanel.classList.contains('show'));
+                function fogPanelBump() { // restart the 2-second countdown (paused while a finger is on the panel)
+                    clearTimeout(fogPanelTimer);
+                    if (fogPanelHold || !fogPanelOpen()) return;
+                    fogPanelTimer = setTimeout(() => fogPanelShow(false), 2000);
+                }
+                function fogPanelShow(on) {
+                    if (!fogPanel) return;
+                    clearTimeout(fogPanelTimer);
+                    fogPanel.classList.toggle('show', !!on);
+                    if (fogSettingsBtn) fogSettingsBtn.classList.toggle('active', !!on);
+                    if (!on) fogPanelHold = false;
+                    else fogPanelBump();
+                }
+                function fogPanelSync() { // settings button exists only in Fog mode
+                    if (fogSettingsBtn) fogSettingsBtn.classList.toggle('hidden', mode !== 'fog');
+                    fogPanelShow(false);
+                }
                 [[fogReachEl, 'reach'], [fogThickEl, 'thick']].forEach(([el, key]) => {
                     if (!el) return;
                     el.value = fogCfg[key];
@@ -32303,11 +32327,26 @@
                         fogCfg[key] = +el.value;
                         fogPreview = { kind: key, at: performance.now() };
                         try { localStorage.setItem(FOG_CFG_KEY, JSON.stringify(fogCfg)); } catch (err) {}
+                        fogPanelBump();
                     });
+                    el.addEventListener('keydown', fogPanelBump);
                 });
+                if (fogPanel) fogPanel.addEventListener('pointerdown', () => { fogPanelHold = true; clearTimeout(fogPanelTimer); });
+                ['pointerup', 'pointercancel'].forEach((ev) => window.addEventListener(ev, () => {
+                    if (!fogPanelHold) return;
+                    fogPanelHold = false;
+                    fogPanelBump();
+                }));
+                if (fogSettingsBtn) fogSettingsBtn.addEventListener('click', () => fogPanelShow(!fogPanelOpen()));
+                // touching anywhere else on the screen closes the panel straight away
+                overlay.addEventListener('pointerdown', (e) => {
+                    if (!fogPanelOpen()) return;
+                    if (fogPanel.contains(e.target) || (fogSettingsBtn && fogSettingsBtn.contains(e.target))) return;
+                    fogPanelShow(false);
+                }, true);
+
                 const fogMaxReach = () => Math.min(canvas.width, canvas.height) * (0.12 + 0.78 * fogCfg.reach / 100);
                 const fogPenWidth = () => Math.max(8, Math.min(canvas.width, canvas.height) * (0.02 + 0.1 * fogCfg.thick / 100));
-
                 const fogScale = () => Math.min(canvas.width, canvas.height) / 400;
 
                 function fogCanvas(w, h) {
@@ -32317,68 +32356,43 @@
                     return c;
                 }
 
-                function fogBuildTextures(ctx0) {
-                    // soft blobs: some patches of glass dry sooner than others
-                    const n = fogCanvas(256, 256),
-                        nc = n.getContext('2d');
-                    for (let i = 0; i < 60; i++) {
-                        const x = Math.random() * 256,
-                            y = Math.random() * 256,
-                            r = 14 + Math.random() * 34;
-                        for (const ox of [-256, 0, 256])
-                            for (const oy of [-256, 0, 256]) {
-                                const gr = nc.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, r);
-                                gr.addColorStop(0, 'rgba(0,0,0,0.55)');
-                                gr.addColorStop(1, 'rgba(0,0,0,0)');
-                                nc.fillStyle = gr;
-                                nc.fillRect(x + ox - r, y + oy - r, r * 2, r * 2);
-                            }
-                    }
-                    fogNoisePat = ctx0.createPattern(n, 'repeat');
-                }
-
                 function fogEnsure() {
                     const W = canvas.width,
                         H = canvas.height;
                     if (!W || !H) return false;
                     const key = W + 'x' + H;
                     if (fogMask && key === fogSizeKey) return true;
+                    const old = fogMask; // keep the fog if the screen is resized or rotated
                     fogSizeKey = key;
-                    fogS = Math.min(1, 900 / Math.max(W, H)); // mask never needs more than ~900px on its long side
+                    fogS = Math.min(1, 900 / Math.max(W, H)); // the mask never needs more than ~900px on its long side
                     fogW = Math.max(2, Math.round(W * fogS));
                     fogH = Math.max(2, Math.round(H * fogS));
                     fogMask = fogCanvas(fogW, fogH);
                     fogMaskCtx = fogMask.getContext('2d');
+                    if (old) fogMaskCtx.drawImage(old, 0, 0, fogW, fogH);
                     fogTmp = fogCanvas(fogW, fogH);
                     fogTmpCtx = fogTmp.getContext('2d');
                     fogTiny = fogCanvas(Math.max(8, Math.ceil(W / 11)), Math.max(8, Math.ceil(H / 11)));
                     fogTinyCtx = fogTiny.getContext('2d');
                     fogMid = fogCanvas(Math.max(16, Math.ceil(W / 3)), Math.max(16, Math.ceil(H / 3)));
                     fogMidCtx = fogMid.getContext('2d');
-                    fgW = Math.ceil(W / FOG_CELL);
-                    fgH = Math.ceil(H / FOG_CELL);
-                    fgrid = new Float32Array(fgW * fgH);
-                    if (!fogNoisePat) fogBuildTextures(fogTmpCtx);
-                    drops = [];
-                    seeds = [];
                     pen = null;
-                    fogSum = 0;
-                    fogEvap = 0;
                     return true;
                 }
 
                 function fogReset() {
                     if (fogMaskCtx) fogMaskCtx.clearRect(0, 0, fogW, fogH);
-                    if (fgrid) fgrid.fill(0);
-                    drops = [];
-                    seeds = [];
+                    fogActive = false;
                     pen = null;
-                    penLostAt = 0;
-                    pointStreak = 0;
-                    penDist = 0;
+                    pinchSince = 0;
+                    pinchLostAt = 0;
+                    lastPinchAt = 0;
                     rubPos = null;
-                    fogSum = 0;
-                    fogEvap = 0;
+                    fogPinching = false;
+                    fogBackSmooth = 0;
+                    fogFistFrames = 0;
+                    fogFrontSince = 0;
+                    fogTurnUntil = 0;
                     fogBlowT = 0;
                     fogLast = 0;
                     fogLastActivity = 0;
@@ -32390,57 +32404,6 @@
                     fogHandPose = null;
                     fogTip = null;
                     fogFist = null;
-                }
-
-                /* ─── coarse grid (droplet logic only) ─── */
-                function gridAdd(px, py, R, a) {
-                    const x0 = Math.max(0, Math.floor((px - R) / FOG_CELL)),
-                        x1 = Math.min(fgW - 1, Math.floor((px + R) / FOG_CELL));
-                    const y0 = Math.max(0, Math.floor((py - R) / FOG_CELL)),
-                        y1 = Math.min(fgH - 1, Math.floor((py + R) / FOG_CELL));
-                    for (let y = y0; y <= y1; y++)
-                        for (let x = x0; x <= x1; x++) {
-                            const d = Math.hypot((x + 0.5) * FOG_CELL - px, (y + 0.5) * FOG_CELL - py) / R;
-                            if (d >= 1) continue;
-                            const i = y * fgW + x;
-                            fgrid[i] += (1 - fgrid[i]) * a * (1 - d * d);
-                        }
-                    if (fogSum < 1) fogSum = 1;
-                }
-
-                function gridWipe(x0, y0, x1, y1, r) {
-                    const bx0 = Math.max(0, Math.floor((Math.min(x0, x1) - r) / FOG_CELL)),
-                        bx1 = Math.min(fgW - 1, Math.floor((Math.max(x0, x1) + r) / FOG_CELL));
-                    const by0 = Math.max(0, Math.floor((Math.min(y0, y1) - r) / FOG_CELL)),
-                        by1 = Math.min(fgH - 1, Math.floor((Math.max(y0, y1) + r) / FOG_CELL));
-                    for (let y = by0; y <= by1; y++)
-                        for (let x = bx0; x <= bx1; x++)
-                            if (distToSeg((x + 0.5) * FOG_CELL, (y + 0.5) * FOG_CELL, x0, y0, x1, y1) < r) fgrid[y * fgW + x] *= 0.35;
-                }
-
-                // strongest fog near a point (coarse): "is there still fog here?"
-                function fogLevel(px, py, rad) {
-                    if (!fgrid) return 0;
-                    const x0 = Math.max(0, Math.floor((px - rad) / FOG_CELL)),
-                        x1 = Math.min(fgW - 1, Math.floor((px + rad) / FOG_CELL));
-                    const y0 = Math.max(0, Math.floor((py - rad) / FOG_CELL)),
-                        y1 = Math.min(fgH - 1, Math.floor((py + rad) / FOG_CELL));
-                    let m = 0;
-                    for (let y = y0; y <= y1; y++)
-                        for (let x = x0; x <= x1; x++) {
-                            const v = fgrid[y * fgW + x];
-                            if (v > m) m = v;
-                        }
-                    return m;
-                }
-
-                function distToSeg(px, py, x0, y0, x1, y1) {
-                    const dx = x1 - x0,
-                        dy = y1 - y0;
-                    const l2 = dx * dx + dy * dy;
-                    let t = l2 ? ((px - x0) * dx + (py - y0) * dy) / l2 : 0;
-                    t = Math.max(0, Math.min(1, t));
-                    return Math.hypot(px - (x0 + dx * t), py - (y0 + dy * t));
                 }
 
                 /* ─── mask drawing (all native canvas ops) ─── */
@@ -32455,10 +32418,10 @@
                     g.addColorStop(1, 'rgba(255,255,255,0)');
                     c.fillStyle = g;
                     c.fillRect((x - R) * s, (y - R) * s, R * 2 * s, R * 2 * s);
-                    gridAdd(x, y, R, a);
+                    fogActive = true;
                 }
 
-                // clear a path through the fog: soft feathered edge, with a faint denser ridge beside it
+                // clear a path through the fog: crisp soft edge, with a faint denser ridge beside it
                 function fogCut(path, w, coreAlpha) {
                     const c = fogMaskCtx;
                     c.save();
@@ -32483,45 +32446,6 @@
                     path(c);
                     c.stroke();
                     c.restore();
-                }
-
-                // fog thins everywhere a little; patchy, and quick once you stop playing
-                function fogEvaporate(now, dt) {
-                    if (fogSum <= 0) return;
-                    const idle = now - fogLastActivity;
-                    let rate = 0.03;
-                    if (idle > FOG_IDLE_MS) rate += 1.55 * Math.min(1, (idle - FOG_IDLE_MS) / 900);
-                    fogEvap += rate * dt;
-                    if (fogEvap < 0.04) return;
-                    const a = 1 - Math.exp(-fogEvap);
-                    fogEvap = 0;
-                    const c = fogMaskCtx;
-                    c.save();
-                    c.globalCompositeOperation = 'destination-out';
-                    c.fillStyle = `rgba(0,0,0,${(a * 0.5).toFixed(3)})`;
-                    c.fillRect(0, 0, fogW, fogH);
-                    if (fogNoisePat) {
-                        c.globalAlpha = Math.min(1, a * 1.3);
-                        c.fillStyle = fogNoisePat;
-                        c.fillRect(0, 0, fogW, fogH);
-                    }
-                    c.restore();
-                    let sum = 0;
-                    for (let i = 0; i < fgrid.length; i++) {
-                        let v = fgrid[i];
-                        if (v > 0) {
-                            v *= 1 - a * 0.95;
-                            if (v < 0.015) v = 0;
-                            fgrid[i] = v;
-                            sum += v;
-                        }
-                    }
-                    fogSum = sum;
-                    if (sum < 0.35) { // a faint rounding residue can linger on 8-bit alpha, so finish the job
-                        c.clearRect(0, 0, fogW, fogH);
-                        fgrid.fill(0);
-                        fogSum = 0;
-                    }
                 }
 
                 /* ─── Face: is the mouth held open (a "haaa" breath)? ─── */
@@ -32578,7 +32502,6 @@
                 async function fogEnsureFace() {
                     if (faceState === 'ready' || faceState === 'loading') return;
                     faceState = 'loading';
-                    hint.textContent = 'Loading breath detection… 🌫️';
                     const src = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js';
                     try {
                         await loadScript(src);
@@ -32589,14 +32512,12 @@
                         faceInstance.onResults(onFaceResults);
                         await faceInstance.initialize();
                         faceState = 'ready';
-                        if (mode === 'fog') hint.textContent = FOG_HINT;
                     } catch (err) {
                         console.error('Face tracking failed to load:', err);
                         const bad = document.querySelector(`script[src="${src}"]`);
                         if (bad && bad.dataset.loaded !== 'true') bad.remove();
                         faceInstance = null;
                         faceState = 'failed';
-                        if (mode === 'fog') hint.textContent = FOG_HINT_FALLBACK;
                     }
                 }
 
@@ -32617,7 +32538,7 @@
                     faceBusy = false;
                 }
 
-                /* ─── Pen: smoothed so handwriting looks like ink, not like a shaky finger ─── */
+                /* ─── Pen: smoothed so handwriting looks like ink, not like a shaky hand ─── */
                 function fogEuro(f, x, t) { // One-Euro filter: heavy smoothing when slow, light when fast
                     if (f.t === undefined) { f.x = x; f.dx = 0; f.t = t; return x; }
                     const dt = Math.max(0.001, (t - f.t) / 1000);
@@ -32631,10 +32552,7 @@
                 }
 
                 function fogPenMove(x, y, now) {
-                    if (!pen) {
-                        pen = { fx: {}, fy: {}, pts: [] };
-                        penDist = 0;
-                    }
+                    if (!pen) pen = { fx: {}, fy: {}, pts: [] };
                     const sx = fogEuro(pen.fx, x, now),
                         sy = fogEuro(pen.fy, y, now);
                     const last = pen.pts[pen.pts.length - 1];
@@ -32653,23 +32571,17 @@
                             d = pen.pts[2];
                         fogCut((c) => { c.moveTo((a.x + b.x) / 2, (a.y + b.y) / 2); c.quadraticCurveTo(b.x, b.y, (b.x + d.x) / 2, (b.y + d.y) / 2); }, w, 0.95);
                     }
-                    if (fogLevel(sx, sy, w) > 0.1) { // only counts as playing if there was fog to write in
-                        fogLastActivity = now;
-                        if (last) penDist += Math.hypot(sx - last.x, sy - last.y);
-                        if (penDist >= 20 * fogScale()) {
-                            penDist = 0;
-                            if (Math.random() < 0.22 && seeds.length < 60) seeds.push({ x: sx, y: sy + w * 0.2, at: now + 700 + Math.random() * 1500 });
-                        }
-                    }
+                    fogLastActivity = now;
                 }
 
-                function fogPenEnd() {
+                // pen up: forget the stroke and require a fresh hold before writing again
+                function fogDisarm() {
                     pen = null;
-                    penLostAt = 0;
+                    pinchSince = 0;
+                    pinchLostAt = 0;
                 }
 
-                /* ─── Hand: pinch thumb + index (👌) = write, fist = wipe ─── */
-                let fogPinching = false;
+                /* ─── Hand: pinch thumb + index (👌) = write, back of closed fist = wipe ─── */
                 function fogPinchState(lm) {
                     const vw = video.videoWidth || 1,
                         vh = video.videoHeight || 1;
@@ -32682,6 +32594,16 @@
                     return fogPinching;
                 }
 
+                // Which way is a closed fist facing? From the back, the fingers curl AWAY from the camera, so
+                // the middle joints sit farther than the knuckles; from the palm side they curl TOWARD it.
+                // Positive = back of the hand toward the screen.
+                function fogBackScore(lm) {
+                    const size = Math.hypot(lm[0].x - lm[9].x, lm[0].y - lm[9].y) || 0.1;
+                    const avg = (ids) => ids.reduce((a, i) => a + lm[i].z, 0) / ids.length;
+                    const mcp = avg([5, 9, 13, 17]);
+                    return ((avg([6, 10, 14, 18]) - mcp) + 0.5 * (avg([8, 12, 16, 20]) - mcp)) / size;
+                }
+
                 function fogOnHands(results) {
                     const now = performance.now();
                     const det = !!(results.multiHandLandmarks && results.multiHandLandmarks.length);
@@ -32690,9 +32612,11 @@
                         fogTip = null;
                         fogFist = null;
                         fogPinching = false;
-                        fogPenEnd();
-                        pointStreak = 0;
+                        fogDisarm();
                         rubPos = null;
+                        fogBackSmooth = 0;
+                        fogFistFrames = 0;
+                        fogFrontSince = 0;
                         lastLandmarks = null;
                         return;
                     }
@@ -32700,156 +32624,64 @@
                     lastLandmarks = lm;
                     if (!fogEnsure()) return;
                     const pinching = fogPinchState(lm);
-                    fogHandPose = pinching ? 'pinch' : classifyHandPose(lm);
+                    const pose = pinching ? 'pinch' : classifyHandPose(lm);
+                    fogHandPose = pose;
                     fogHandAt = now;
                     fogTip = mapPoint((lm[4].x + lm[8].x) / 2, (lm[4].y + lm[8].y) / 2); // the pen sits where the two fingertips meet
                     fogFist = null;
                     if (pinching) {
+                        lastPinchAt = now;
+                        pinchLostAt = 0;
                         rubPos = null;
-                        penLostAt = 0;
-                        pointStreak++;
-                        if (pointStreak >= 2) fogPenMove(fogTip.x, fogTip.y, now); // ignore the single flicker frame while a hand changes shape
-                    } else {
-                        pointStreak = 0;
-                        if (pen && !penLostAt) penLostAt = now; // a brief tracking blip doesn't break a letter (see fogUpdate)
-                        if (fogHandPose === 'fist') {
-                            const ids = [0, 5, 9, 13, 17];
-                            const c = mapPoint(ids.reduce((a, i) => a + lm[i].x, 0) / ids.length, ids.reduce((a, i) => a + lm[i].y, 0) / ids.length);
-                            const vw = video.videoWidth || 1,
-                                vh = video.videoHeight || 1;
-                            const palmW = Math.hypot((lm[5].x - lm[17].x) * vw, (lm[5].y - lm[17].y) * vh) * (cover ? cover.scale : 1);
-                            const minSide = Math.min(canvas.width, canvas.height);
-                            const r = Math.max(20 * fogScale(), Math.min(minSide * 0.17, palmW * 0.85));
-                            fogFist = { x: c.x, y: c.y, r };
-                            if (rubPos && Math.hypot(c.x - rubPos.x, c.y - rubPos.y) >= 2) {
-                                const a = rubPos;
-                                if (fogLevel(c.x, c.y, r) > 0.05) fogLastActivity = now;
-                                fogCut((cx) => { cx.moveTo(a.x, a.y); cx.lineTo(c.x, c.y); }, r * 2, 0.78);
-                                gridWipe(a.x, a.y, c.x, c.y, r);
-                                drops = drops.filter((d) => distToSeg(d.x, d.y, a.x, a.y, c.x, c.y) > r + d.r * 0.5);
+                        fogFistFrames = 0;
+                        fogFrontSince = 0;
+                        if (!pinchSince) pinchSince = now;
+                        if (now - pinchSince >= FOG_ARM_MS) fogPenMove(fogTip.x, fogTip.y, now); // pen touches the glass only after a short hold
+                        return;
+                    }
+                    if (pinchSince && !pinchLostAt) pinchLostAt = now; // a brief tracking blip doesn't end the stroke (see fogUpdate)
+                    // wipe: a CLOSED fist, back of the hand toward the screen, not right after a pinch
+                    let wiping = false;
+                    if (pose === 'fist' && now - lastPinchAt > 500) {
+                        fogBackSmooth += (fogBackScore(lm) - fogBackSmooth) * 0.5;
+                        fogFistFrames++;
+                        wiping = fogFistFrames >= 3 && fogBackSmooth > (rubPos ? 0 : 0.12);
+                        if (!wiping && fogBackSmooth < 0.05) { // palm-side fist: wipe nothing, but explain once in a while
+                            if (!fogFrontSince) fogFrontSince = now;
+                            if (now - fogFrontSince > 900 && now > fogTurnCool) {
+                                fogTurnUntil = now + 3000;
+                                fogTurnCool = now + 9000;
                             }
-                            rubPos = { x: c.x, y: c.y };
                         } else {
-                            rubPos = null;
+                            fogFrontSince = 0;
                         }
+                    } else {
+                        fogFistFrames = 0;
+                        fogFrontSince = 0;
+                        if (pose !== 'fist') fogBackSmooth = 0;
                     }
-                }
-
-                /* ─── Droplets ─── */
-                function spawnDrop(x, y, now) {
-                    const k = fogScale();
-                    if (drops.length >= FOG_MAX_DROPS) return;
-                    if (drops.some((d) => Math.hypot(d.x - x, d.y - y) < 16 * k)) return;
-                    drops.push({
-                        x, y, px: x, py: y, r: 1.1 * k, rMax: (2.8 + Math.random() * 2.6) * k, born: now, growDur: 600 + Math.random() * 700,
-                        state: 'grow', v: 0, moving: false, nextSwitch: 0, dist: 0, wob: Math.random() * TAU, starve: 0, fade: 1, dying: false
-                    });
-                }
-
-                function fogUpdateDrops(now, dt) {
-                    const k = fogScale();
-                    for (let n = drops.length - 1; n >= 0; n--) {
-                        const d = drops[n];
-                        if (d.dying) {
-                            d.fade -= dt * 1.3;
-                            if (d.fade <= 0) drops.splice(n, 1);
-                            continue;
+                    if (wiping) {
+                        const ids = [0, 5, 9, 13, 17];
+                        const c = mapPoint(ids.reduce((a, i) => a + lm[i].x, 0) / ids.length, ids.reduce((a, i) => a + lm[i].y, 0) / ids.length);
+                        const vw = video.videoWidth || 1,
+                            vh = video.videoHeight || 1;
+                        const palmW = Math.hypot((lm[5].x - lm[17].x) * vw, (lm[5].y - lm[17].y) * vh) * (cover ? cover.scale : 1);
+                        const minSide = Math.min(canvas.width, canvas.height);
+                        const r = Math.max(20 * fogScale(), Math.min(minSide * 0.17, palmW * 0.85));
+                        fogFist = { x: c.x, y: c.y, r };
+                        if (rubPos && Math.hypot(c.x - rubPos.x, c.y - rubPos.y) >= 2) {
+                            const a = rubPos;
+                            fogCut((cx) => { cx.moveTo(a.x, a.y); cx.lineTo(c.x, c.y); }, r * 2, 0.78);
+                            fogLastActivity = now;
                         }
-                        if (d.state === 'grow') {
-                            const t = Math.min(1, (now - d.born) / d.growDur);
-                            d.r = 1.1 * k + (d.rMax - 1.1 * k) * (t * t * (3 - 2 * t));
-                            if (t >= 1) {
-                                d.state = 'slide';
-                                d.moving = true;
-                                d.nextSwitch = now + 250 + Math.random() * 450;
-                            }
-                            continue;
-                        }
-                        // stick-and-slip: runs, hangs, runs again, like a real drop
-                        if (now >= d.nextSwitch) {
-                            if (d.moving && Math.random() < 0.5) {
-                                d.moving = false;
-                                d.nextSwitch = now + 150 + Math.random() * 400;
-                            } else {
-                                d.moving = true;
-                                d.nextSwitch = now + 250 + Math.random() * 600;
-                            }
-                        }
-                        const vT = d.moving ? 34 + 10 * d.r : 0;
-                        d.v += (vT - d.v) * Math.min(1, dt * 6);
-                        const step = d.v * dt;
-                        if (step > 0.05) {
-                            d.px = d.x;
-                            d.py = d.y;
-                            d.y += step;
-                            d.x += Math.sin(d.wob + d.dist * 0.05) * step * 0.12;
-                            d.dist += step;
-                            const a = { x: d.px, y: d.py },
-                                b = { x: d.x, y: d.y };
-                            fogCut((c) => { c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); }, d.r * 1.15, 0.9);
-                            d.r *= 1 - 0.0022 * step; // loses water as it runs
-                        }
-                        // no fog left ahead → the drop just sits and dries
-                        if (fogLevel(d.x, d.y + d.r * 3, d.r) < 0.06) d.starve += dt;
-                        else d.starve = 0;
-                        if (d.r < 1.7 * k || d.starve > 0.4) {
-                            d.moving = false;
-                            d.dying = true;
-                        }
-                        if (d.y > canvas.height + d.r) drops.splice(n, 1);
+                        rubPos = { x: c.x, y: c.y };
+                    } else {
+                        rubPos = null;
                     }
-                }
-
-                function fogDrawDrop(d) {
-                    const r = d.r;
-                    ctx.save();
-                    ctx.globalAlpha = Math.max(0, d.fade);
-                    ctx.fillStyle = 'rgba(0,0,0,0.16)'; // soft shadow underneath
-                    ctx.beginPath();
-                    ctx.ellipse(d.x + r * 0.1, d.y + r * 0.3, r * 1.05, r * 1.1, 0, 0, TAU);
-                    ctx.fill();
-                    // the drop acts as a tiny lens: the room, upside-down and magnified
-                    if (video.readyState >= 2 && cover && r >= 2.2) {
-                        const m = 2.4,
-                            sc = cover.scale;
-                        const vx = (canvas.width - d.x - cover.offsetX) / sc,
-                            vy = (d.y - cover.offsetY) / sc;
-                        const half = r / (m * sc);
-                        ctx.save();
-                        ctx.beginPath();
-                        ctx.arc(d.x, d.y, r, 0, TAU);
-                        ctx.clip();
-                        ctx.translate(d.x, d.y);
-                        ctx.scale(1, -1);
-                        ctx.drawImage(video, vx - half, vy - half, half * 2, half * 2, -r, -r, r * 2, r * 2);
-                        ctx.restore();
-                    }
-                    const g = ctx.createRadialGradient(d.x - r * 0.35, d.y - r * 0.4, r * 0.05, d.x, d.y, r);
-                    g.addColorStop(0, 'rgba(255,255,255,0.5)');
-                    g.addColorStop(0.4, 'rgba(255,255,255,0.05)');
-                    g.addColorStop(0.82, 'rgba(14,22,36,0.16)');
-                    g.addColorStop(1, 'rgba(10,16,28,0.42)');
-                    ctx.fillStyle = g;
-                    ctx.beginPath();
-                    ctx.arc(d.x, d.y, r, 0, TAU);
-                    ctx.fill();
-                    ctx.strokeStyle = 'rgba(255,255,255,0.55)'; // bright edge where light collects
-                    ctx.lineWidth = Math.max(0.8, r * 0.16);
-                    ctx.beginPath();
-                    ctx.arc(d.x, d.y, r * 0.88, Math.PI * 0.12, Math.PI * 0.88);
-                    ctx.stroke();
-                    ctx.fillStyle = 'rgba(255,255,255,0.92)'; // specular glint
-                    ctx.beginPath();
-                    ctx.arc(d.x - r * 0.38, d.y - r * 0.42, Math.max(0.7, r * 0.2), 0, TAU);
-                    ctx.fill();
-                    ctx.restore();
                 }
 
                 /* ─── Per-frame update + draw ─── */
                 function fogUpdate(now, dt) {
-                    const W = canvas.width,
-                        H = canvas.height,
-                        minSide = Math.min(W, H);
                     const faceFresh = mouth.seen && now - mouth.at < 600;
                     const blowing = (mouth.blowing && faceFresh) || !!pressFog;
                     if (blowing) {
@@ -32864,23 +32696,11 @@
                     } else {
                         fogBlowT = Math.max(0, fogBlowT - dt * 1.5);
                     }
-                    fogEvaporate(now, dt);
-                    if (fogSum < 0.35) {
-                        seeds.length = 0;
-                        drops.forEach((d) => { d.dying = true; });
-                    }
-                    for (let i = seeds.length - 1; i >= 0; i--) {
-                        const s = seeds[i];
-                        if (now < s.at) continue;
-                        seeds.splice(i, 1);
-                        if (fogLevel(s.x, s.y, FOG_CELL) > 0.12) spawnDrop(s.x, s.y, now);
-                    }
-                    if (pen && penLostAt && now - penLostAt > 140) fogPenEnd();
-                    fogUpdateDrops(now, dt);
+                    if (pinchLostAt && now - pinchLostAt > 140) fogDisarm();
                 }
 
                 function fogComposite() {
-                    if (fogSum < 0.35 || !(video.readyState >= 2 && cover)) return;
+                    if (!fogActive || !(video.readyState >= 2 && cover)) return;
                     const W = canvas.width,
                         H = canvas.height;
                     // 1. the live camera, shrunk to a tiny blurred copy (the oversize margin keeps the blur from fading at the edges)
@@ -32906,7 +32726,7 @@
                     c.imageSmoothingEnabled = true;
                     c.imageSmoothingQuality = 'high';
                     c.drawImage(fogMid, 0, 0, fogW, fogH);
-                    // 3. milky blue-white tint (matches the reference)
+                    // 3. milky blue-white tint
                     c.fillStyle = 'rgba(226,231,247,0.54)';
                     c.fillRect(0, 0, fogW, fogH);
                     // 4. keep only what the fog mask covers, then lay it over the picture
@@ -32942,31 +32762,46 @@
                     }
                     if (fogTip && now - fogHandAt < 300) {
                         ctx.save();
-                        if (fogHandPose === 'pinch') { // pen down: solid ring the size of your writing
-                            ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-                            ctx.lineWidth = 1.8;
-                            ctx.beginPath();
-                            ctx.arc(fogTip.x, fogTip.y, fogPenWidth() / 2, 0, TAU);
-                            ctx.stroke();
-                            ctx.shadowColor = 'rgba(255,255,255,0.9)';
-                            ctx.shadowBlur = 10;
-                            ctx.fillStyle = 'rgba(255,255,255,0.95)';
-                            ctx.beginPath();
-                            ctx.arc(fogTip.x, fogTip.y, 3 * k, 0, TAU);
-                            ctx.fill();
-                        } else if (fogHandPose === 'fist' && fogFist) {
-                            ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                        const rr = fogPenWidth() / 2;
+                        if (fogHandPose === 'pinch') {
+                            const prog = pinchSince ? Math.min(1, (now - pinchSince) / FOG_ARM_MS) : 0;
+                            if (prog < 1) { // getting ready: ring fills, pen not down yet
+                                ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+                                ctx.lineWidth = 1.5;
+                                ctx.beginPath();
+                                ctx.arc(fogTip.x, fogTip.y, rr, 0, TAU);
+                                ctx.stroke();
+                                ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+                                ctx.lineWidth = 2.5;
+                                ctx.beginPath();
+                                ctx.arc(fogTip.x, fogTip.y, rr + 5 * k, -Math.PI / 2, -Math.PI / 2 + TAU * prog);
+                                ctx.stroke();
+                            } else { // pen down
+                                ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+                                ctx.lineWidth = 1.8;
+                                ctx.beginPath();
+                                ctx.arc(fogTip.x, fogTip.y, rr, 0, TAU);
+                                ctx.stroke();
+                                ctx.shadowColor = 'rgba(255,255,255,0.9)';
+                                ctx.shadowBlur = 10;
+                                ctx.fillStyle = 'rgba(255,255,255,0.95)';
+                                ctx.beginPath();
+                                ctx.arc(fogTip.x, fogTip.y, 3 * k, 0, TAU);
+                                ctx.fill();
+                            }
+                        } else if (fogFist) { // wiping
+                            ctx.strokeStyle = 'rgba(255,255,255,0.55)';
                             ctx.lineWidth = 2;
                             ctx.setLineDash([6, 6]);
                             ctx.beginPath();
                             ctx.arc(fogFist.x, fogFist.y, fogFist.r, 0, TAU);
                             ctx.stroke();
-                        } else { // pen up: faint dashed ring shows where the pen would land
+                        } else if (fogHandPose !== 'fist') { // pen up: faint dashed ring shows where the pen would land
                             ctx.strokeStyle = 'rgba(255,255,255,0.4)';
                             ctx.lineWidth = 1.5;
                             ctx.setLineDash([4, 5]);
                             ctx.beginPath();
-                            ctx.arc(fogTip.x, fogTip.y, fogPenWidth() / 2, 0, TAU);
+                            ctx.arc(fogTip.x, fogTip.y, rr, 0, TAU);
                             ctx.stroke();
                         }
                         ctx.restore();
@@ -33005,22 +32840,24 @@
                     fogLast = now;
                     fogUpdate(now, dt);
                     fogComposite();
-                    drops.forEach(fogDrawDrop);
                     fogDrawCursors(now);
-                    // instructions stay up until you start playing, and return if you go quiet
+                    // one place decides what the hint says and whether it shows
+                    const turn = now < fogTurnUntil;
+                    const text = turn ? FOG_TURN_HINT : faceState === 'loading' ? FOG_LOADING : faceState === 'failed' ? FOG_HINT_FALLBACK : FOG_HINT;
+                    if (hint.textContent !== text) hint.textContent = text;
                     const handNow = fogTip && now - fogHandAt < 800;
-                    const busy = handNow || mouth.blowing || fogSum > 1 || !!pressFog;
-                    const needsMsg = faceState === 'loading' || faceState === 'failed';
-                    hint.classList.toggle('hidden', !(needsMsg || (!busy && now - fogLastActivity > 5000)));
+                    const busy = handNow || mouth.blowing || fogActive || !!pressFog;
+                    const wanted = turn || faceState === 'loading' || faceState === 'failed' || (!busy && now - fogLastActivity > 5000);
+                    hint.classList.toggle('hidden', !wanted || fogPanelOpen());
                 }
 
-                // press-and-hold fallback: breathe on the glass with a finger or mouse
+                // press-and-hold fallback: only when face tracking couldn't load
                 function fogPointerPos(e) {
                     const rc = canvas.getBoundingClientRect();
                     return { x: (e.clientX - rc.left) * (canvas.width / rc.width), y: (e.clientY - rc.top) * (canvas.height / rc.height) };
                 }
                 canvas.addEventListener('pointerdown', (e) => {
-                    if (mode !== 'fog' || overlay.hidden) return;
+                    if (mode !== 'fog' || overlay.hidden || faceState !== 'failed' || fogPanelOpen()) return;
                     pressFog = fogPointerPos(e);
                     try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
                 });
@@ -33204,7 +33041,6 @@
                                 minTrackingConfidence: 0.6
                             });
                             handsInstance.onResults(onHandsResults);
-                            if (mode === 'fog') handsInstance.setOptions({ modelComplexity: 0 });
                         }
                         sendLoopActive = true;
                         sendFrameLoop();
@@ -33307,7 +33143,6 @@
                         fogReset();
                         pressFog = null;
                         fogPanelSync();
-                        if (handsInstance) { try { handsInstance.setOptions({ modelComplexity: mode === 'fog' ? 0 : 1 }); } catch (err) {} } // lighter hand model while fogging keeps the pen smooth
                         if (mode === 'bts') {
                             hint.textContent = 'Hold up 2 or 3 fingers to summon a photo · Open your palm to get ready · Close your fist to catch!';
                             loadBtsCollection();
