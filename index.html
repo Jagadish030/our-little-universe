@@ -13174,118 +13174,6 @@
         }
         .pb-duel-retry-btn.hidden { display: none; }
 
-        /* ════════════════════════════════════════════════════════
-           PER-PAGE CUSTOMIZE — a small floating icon that appears
-           whenever one of the "little things" pages (Notes, Doodles,
-           Mood Calendar, Time Capsules, Bucket List, Constellation,
-           Games, Special Days) is open, letting you set a background
-           and accent colour for just THAT page — independent of the
-           site's global theme. Nothing here touches the home screen
-           or any other page's look.
-           ════════════════════════════════════════════════════════ */
-        #pageCustomizeBtn {
-            position: fixed;
-            right: max(16px, env(safe-area-inset-right));
-            bottom: max(84px, calc(70px + env(safe-area-inset-bottom)));
-            z-index: 860;
-            width: 46px;
-            height: 46px;
-            border-radius: 50%;
-            border: 1px solid var(--glass-border);
-            background: var(--glass-bg-strong);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            box-shadow: 0 8px 22px var(--shadow), inset 0 1px 0 var(--glass-highlight);
-            font-size: 1.15rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            opacity: 0;
-            transform: scale(.5) translateY(10px);
-            pointer-events: none;
-            transition: opacity .3s var(--premium-bounce, ease), transform .3s var(--premium-bounce, ease);
-        }
-        #pageCustomizeBtn.show { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
-        #pageCustomizeBtn:active { transform: scale(.88); }
-        .page-customize-backdrop {
-            position: fixed;
-            inset: 0;
-            z-index: 1600;
-            background: rgba(20, 14, 12, .45);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-        }
-        .page-customize-backdrop.hidden { display: none; }
-        .page-customize-card {
-            width: 100%;
-            max-width: 420px;
-            background: var(--white);
-            border-radius: 24px 24px 0 0;
-            padding: 1.4rem 1.5rem max(1.4rem, env(safe-area-inset-bottom));
-            box-shadow: 0 -12px 40px rgba(0, 0, 0, .3);
-            max-height: 82vh;
-            overflow-y: auto;
-        }
-        body.dark-mode .page-customize-card { background: var(--paper-deep, #2a2320); }
-        .page-customize-card h3 {
-            margin: 0 0 .2rem;
-            font-family: 'Caveat', cursive;
-            font-size: 1.6rem;
-            color: var(--ink);
-        }
-        .page-customize-card p.hint { margin: 0 0 1rem; font-size: .82rem; color: var(--ink-soft); }
-        .page-customize-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            padding: .6rem 0;
-            border-bottom: 1px solid var(--glass-border);
-        }
-        .page-customize-row:last-of-type { border-bottom: none; }
-        .page-customize-row label { font-size: .9rem; color: var(--ink); font-weight: 600; }
-        .page-customize-row input[type="color"] {
-            width: 42px; height: 32px; border: none; border-radius: 8px; cursor: pointer; background: none; padding: 0;
-        }
-        .page-customize-actions {
-            display: flex;
-            gap: .6rem;
-            margin-top: 1.2rem;
-        }
-        .page-customize-actions button {
-            flex: 1;
-            border: none;
-            border-radius: 999px;
-            padding: .7rem 1rem;
-            font-weight: 700;
-            font-size: .9rem;
-            cursor: pointer;
-        }
-        #pageCustomizeReset { background: var(--glass-bg); color: var(--ink); border: 1px solid var(--glass-border); }
-        #pageCustomizeClose { background: var(--rose); color: var(--ink); }
-        /* Applied to whichever wall has a saved customization. Backgrounds
-           default to fully transparent (today's look) via the var()
-           fallback, so a page with no customization is pixel-identical
-           to before. */
-        .notes-wall, .doodles-wall, .extras-wall {
-            background: linear-gradient(165deg, var(--page-bg-a, transparent), var(--page-bg-b, transparent));
-            transition: background .3s ease;
-        }
-        .page-has-custom-bg {
-            border-radius: 28px;
-            padding-top: 1.3rem;
-            padding-bottom: 1.6rem;
-        }
-        .page-has-custom-bg .notes-header h2 {
-            background: none;
-            -webkit-text-fill-color: initial;
-            animation: none;
-            color: var(--page-accent, var(--rose-deep));
-        }
-
         /* ═══════════════════ "Just Us" — private, login-gated section ═══════════════════
            Everything here is UI only — the real security is the Supabase
            Auth session + Row Level Security policies behind it. This
@@ -14291,7 +14179,6 @@
     .style-modal:not(.hidden) .style-card,
     .glass-modal:not(.hidden) .glass-card,
     .countdown-overlay:not(.hidden) .countdown-card,
-    .page-customize-backdrop:not(.hidden) .page-customize-card,
     .diary-popover-backdrop:not(.hidden) .diary-popover-card {
         animation: jellySpringIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
     }
@@ -20383,8 +20270,8 @@
             const SPECIAL_DAYS = [
                 { emoji: '🎀', title: "National Girlfriend's Day", blurb: "A little something made just for this day.",
                     unlockDate: '2026-08-01', href: 'for-you.html' },
-                { emoji: '🤍', title: 'Happy Birthday, Mummy', blurb: "A quiet little something made with love, for a very special day.",
-                    unlockDate: '2026-11-14', href: 'with-love.html' }
+                //{ emoji: '🤍', title: 'Happy Birthday, Mummy', blurb: "A quiet little something made with love, for a very special day.",
+                  //  unlockDate: '2026-11-14', href: 'with-love.html' }
             ];
 
             function renderSpecialDays() {
@@ -32404,6 +32291,10 @@
                     fogHandPose = null;
                     fogTip = null;
                     fogFist = null;
+                    fogLostAt = 0;
+                    fogLm = null;
+                    fogWipeOn = false;
+                    fogFistLostAt = 0;
                 }
 
                 /* ─── mask drawing (all native canvas ops) ─── */
@@ -32581,22 +32472,62 @@
                     pinchLostAt = 0;
                 }
 
-                /* ─── Hand: pinch thumb + index (👌) = write, back of closed fist = wipe ─── */
-                function fogPinchState(lm) {
+                /* ─── Hand: pinch thumb + index (👌) = write, back of a closed fist = wipe ───
+                   Tracking is made forgiving on purpose: landmarks are smoothed, a hand that
+                   drops out for a moment keeps its state, and every on/off decision uses
+                   hysteresis so one noisy frame can't flip it. */
+                let fogLostAt = 0,
+                    fogLm = null,
+                    fogWipeOn = false,
+                    fogFistLostAt = 0,
+                    fogDbg = '';
+                let fogFlip = 1, // learned: +1 if MediaPipe's left/right label works as assumed, -1 if it is inverted
+                    fogAgree = 0,
+                    fogDisagree = 0;
+                try { if (localStorage.getItem('mw.fog.flip') === '-1') fogFlip = -1; } catch (err) {}
+                const FOG_DEBUG = (() => { try { return localStorage.getItem('mw.fog.debug') === '1'; } catch (err) { return false; } })();
+
+                function fogApplyHandOptions() { // fog mode lets the tracker hold on through pinches and fists
+                    if (!handsInstance) return;
+                    try {
+                        handsInstance.setOptions(mode === 'fog' ? { minDetectionConfidence: 0.5, minTrackingConfidence: 0.35 } : { minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+                    } catch (err) {}
+                }
+
+                function fogSmoothLandmarks(lm, now) {
+                    if (!fogLm || now - fogHandAt > 400) {
+                        fogLm = lm.map((p) => ({ x: p.x, y: p.y, z: p.z }));
+                        return fogLm;
+                    }
+                    for (let i = 0; i < 21; i++) {
+                        const o = fogLm[i],
+                            n = lm[i];
+                        o.x += (n.x - o.x) * 0.55;
+                        o.y += (n.y - o.y) * 0.55;
+                        o.z += (n.z - o.z) * 0.55;
+                    }
+                    return fogLm;
+                }
+
+                // every distance is divided by the hand's own size (wrist → middle knuckle), so it works near or far
+                function fogFeatures(lm) {
                     const vw = video.videoWidth || 1,
                         vh = video.videoHeight || 1;
                     const d = (i, j) => Math.hypot((lm[i].x - lm[j].x) * vw, (lm[i].y - lm[j].y) * vh);
-                    const size = d(0, 9) || 1; // wrist → middle knuckle: scales every distance to the hand's size on screen
-                    const gap = d(4, 8) / size; // thumb tip ↔ index tip
-                    const reach = d(8, 5) / size; // index tip ↔ its own knuckle: tiny in a fist, large in a pinch
-                    const ok = reach > 0.42;
-                    fogPinching = fogPinching ? (gap < 0.36 && ok) : (gap < 0.24 && ok); // easy to hold, deliberate to start
-                    return fogPinching;
+                    const size = d(0, 9) || 1;
+                    const ax = (lm[5].x - lm[0].x) * vw,
+                        ay = (lm[5].y - lm[0].y) * vh,
+                        bx = (lm[17].x - lm[0].x) * vw,
+                        by = (lm[17].y - lm[0].y) * vh;
+                    return {
+                        gap: d(4, 8) / size, // thumb tip ↔ index tip
+                        reach: d(8, 5) / size, // index tip ↔ its knuckle: tiny in a fist, large in a pinch
+                        curled: [[8, 5], [12, 9], [16, 13], [20, 17]].map(([t, m]) => d(t, 0) / (d(m, 0) || 1)), // fingertip vs knuckle distance from the wrist: ~2 open, ~1 closed
+                        cross: (ax * by - ay * bx) / (size * size) // winding of wrist → index knuckle → pinky knuckle: flips between palm and back
+                    };
                 }
 
-                // Which way is a closed fist facing? From the back, the fingers curl AWAY from the camera, so
-                // the middle joints sit farther than the knuckles; from the palm side they curl TOWARD it.
-                // Positive = back of the hand toward the screen.
+                // depth cue: from the back the fingers curl AWAY from the camera, from the palm side TOWARD it
                 function fogBackScore(lm) {
                     const size = Math.hypot(lm[0].x - lm[9].x, lm[0].y - lm[9].y) || 0.1;
                     const avg = (ids) => ids.reduce((a, i) => a + lm[i].z, 0) / ids.length;
@@ -32604,49 +32535,101 @@
                     return ((avg([6, 10, 14, 18]) - mcp) + 0.5 * (avg([8, 12, 16, 20]) - mcp)) / size;
                 }
 
+                // positive = back of the hand toward the screen. Two cues: the 2D winding + which hand it is
+                // (steady, but depends on the tracker's left/right label), and the depth cue (label-free, noisier).
+                function fogFacing(ft, z, labelSign) {
+                    const zc = Math.max(-1, Math.min(1, z / 0.4));
+                    if (!labelSign || Math.abs(ft.cross) < 0.08) return zc;
+                    const geo = labelSign * Math.sign(ft.cross) * fogFlip * Math.min(1, Math.abs(ft.cross) / 0.3);
+                    const w = fogAgree + fogDisagree >= 10 ? 0.7 : 0.35; // lean on the 2D cue once it has proven itself
+                    return w * geo + (1 - w) * zc;
+                }
+
+                // Learns, from your own fists, whether the tracker's left/right label is inverted on this device,
+                // by checking the two cues against each other. Remembered between visits.
+                function fogLearn(ft, z, labelSign) {
+                    if (!labelSign || Math.abs(z) < 0.25 || Math.abs(ft.cross) < 0.15) return;
+                    if (Math.sign(z) === labelSign * Math.sign(ft.cross)) fogAgree++;
+                    else fogDisagree++;
+                    if (fogAgree + fogDisagree > 60) { fogAgree *= 0.5; fogDisagree *= 0.5; }
+                    if (fogAgree + fogDisagree >= 10) {
+                        const nf = fogDisagree > fogAgree * 1.4 ? -1 : fogAgree > fogDisagree * 1.4 ? 1 : fogFlip;
+                        if (nf !== fogFlip) {
+                            fogFlip = nf;
+                            try { localStorage.setItem('mw.fog.flip', String(nf)); } catch (err) {}
+                        }
+                    }
+                }
+
+                // hand gone for good (or the mode changed): drop everything that depends on it
+                function fogResetHandState() {
+                    fogHandPose = null;
+                    fogTip = null;
+                    fogFist = null;
+                    fogPinching = false;
+                    fogDisarm();
+                    rubPos = null;
+                    fogWipeOn = false;
+                    fogFistLostAt = 0;
+                    fogBackSmooth = 0;
+                    fogFistFrames = 0;
+                    fogFrontSince = 0;
+                    fogLm = null;
+                    lastLandmarks = null;
+                }
+
                 function fogOnHands(results) {
                     const now = performance.now();
                     const det = !!(results.multiHandLandmarks && results.multiHandLandmarks.length);
-                    if (!det) {
-                        fogHandPose = null;
-                        fogTip = null;
-                        fogFist = null;
-                        fogPinching = false;
-                        fogDisarm();
-                        rubPos = null;
-                        fogBackSmooth = 0;
-                        fogFistFrames = 0;
-                        fogFrontSince = 0;
-                        lastLandmarks = null;
+                    if (!det) { // keep the state for a moment: a one-frame dropout must not cut a letter or a wipe (see fogUpdate)
+                        if (!fogLostAt) fogLostAt = now;
                         return;
                     }
-                    const lm = results.multiHandLandmarks[0];
-                    lastLandmarks = lm;
+                    fogLostAt = 0;
+                    const raw = results.multiHandLandmarks[0];
+                    lastLandmarks = raw;
                     if (!fogEnsure()) return;
-                    const pinching = fogPinchState(lm);
-                    const pose = pinching ? 'pinch' : classifyHandPose(lm);
-                    fogHandPose = pose;
+                    const lm = fogSmoothLandmarks(raw, now);
+                    const ft = fogFeatures(lm);
+                    fogPinching = ft.gap < (fogPinching ? 0.4 : 0.27) && ft.reach > (fogPinching ? 0.28 : 0.34); // easy to hold, deliberate to start
+                    const pinching = fogPinching;
+                    const curledCount = ft.curled.filter((r) => r < (fogFistFrames > 0 || fogWipeOn ? 1.55 : 1.4)).length;
+                    const isFist = !pinching && curledCount >= 3;
+                    fogHandPose = pinching ? 'pinch' : isFist ? 'fist' : 'other';
                     fogHandAt = now;
-                    fogTip = mapPoint((lm[4].x + lm[8].x) / 2, (lm[4].y + lm[8].y) / 2); // the pen sits where the two fingertips meet
+                    fogTip = mapPoint((raw[4].x + raw[8].x) / 2, (raw[4].y + raw[8].y) / 2); // the pen sits where the two fingertips meet
                     fogFist = null;
                     if (pinching) {
                         lastPinchAt = now;
                         pinchLostAt = 0;
                         rubPos = null;
+                        fogWipeOn = false;
                         fogFistFrames = 0;
                         fogFrontSince = 0;
                         if (!pinchSince) pinchSince = now;
-                        if (now - pinchSince >= FOG_ARM_MS) fogPenMove(fogTip.x, fogTip.y, now); // pen touches the glass only after a short hold
+                        if (now - pinchSince >= FOG_ARM_MS) {
+                            if (pen) { // hand came back after a dropout somewhere else: start a new stroke instead of drawing a long line
+                                const l = pen.pts[pen.pts.length - 1];
+                                if (l && Math.hypot(fogTip.x - l.x, fogTip.y - l.y) > Math.min(canvas.width, canvas.height) * 0.2) pen = null;
+                            }
+                            fogPenMove(fogTip.x, fogTip.y, now); // the pen touches the glass only after a short hold
+                        }
+                        fogDbg = 'pinch gap ' + ft.gap.toFixed(2);
                         return;
                     }
-                    if (pinchSince && !pinchLostAt) pinchLostAt = now; // a brief tracking blip doesn't end the stroke (see fogUpdate)
-                    // wipe: a CLOSED fist, back of the hand toward the screen, not right after a pinch
+                    if (pinchSince && !pinchLostAt) pinchLostAt = now; // a brief release/blip doesn't end the stroke (see fogUpdate)
+                    // wipe: a closed fist whose BACK faces the screen, not right after a pinch
                     let wiping = false;
-                    if (pose === 'fist' && now - lastPinchAt > 500) {
-                        fogBackSmooth += (fogBackScore(lm) - fogBackSmooth) * 0.5;
+                    const label = results.multiHandedness && results.multiHandedness[0] && results.multiHandedness[0].label;
+                    const labelSign = label === 'Left' ? 1 : label === 'Right' ? -1 : 0;
+                    if (isFist && now - lastPinchAt > 350) {
+                        fogFistLostAt = 0;
                         fogFistFrames++;
-                        wiping = fogFistFrames >= 3 && fogBackSmooth > (rubPos ? 0 : 0.12);
-                        if (!wiping && fogBackSmooth < 0.05) { // palm-side fist: wipe nothing, but explain once in a while
+                        const z = fogBackScore(lm);
+                        fogLearn(ft, z, labelSign);
+                        fogBackSmooth += (fogFacing(ft, z, labelSign) - fogBackSmooth) * 0.45;
+                        wiping = fogFistFrames >= 2 && fogBackSmooth > (fogWipeOn ? -0.1 : 0.2); // easier to keep than to start
+                        if (!wiping && fogBackSmooth < 0) { // palm-side fist: wipe nothing, but explain once in a while
                             if (!fogFrontSince) fogFrontSince = now;
                             if (now - fogFrontSince > 900 && now > fogTurnCool) {
                                 fogTurnUntil = now + 3000;
@@ -32655,11 +32638,20 @@
                         } else {
                             fogFrontSince = 0;
                         }
+                        fogDbg = 'fist ' + (wiping ? 'BACK' : 'front') + ' s ' + fogBackSmooth.toFixed(2) + ' z ' + z.toFixed(2) + ' cross ' + ft.cross.toFixed(2) + ' ' + (label || '-') + ' flip ' + fogFlip + ' agree ' + fogAgree + '/' + fogDisagree;
                     } else {
-                        fogFistFrames = 0;
-                        fogFrontSince = 0;
-                        if (pose !== 'fist') fogBackSmooth = 0;
+                        if (fogWipeOn) { // pose flickered for a frame mid-wipe: carry on briefly instead of stopping
+                            if (!fogFistLostAt) fogFistLostAt = now;
+                            if (now - fogFistLostAt < 150) wiping = true;
+                        }
+                        if (!wiping) {
+                            fogFistFrames = 0;
+                            fogFrontSince = 0;
+                            fogBackSmooth = 0;
+                        }
+                        fogDbg = 'hand ' + fogHandPose + ' curled ' + curledCount;
                     }
+                    fogWipeOn = wiping;
                     if (wiping) {
                         const ids = [0, 5, 9, 13, 17];
                         const c = mapPoint(ids.reduce((a, i) => a + lm[i].x, 0) / ids.length, ids.reduce((a, i) => a + lm[i].y, 0) / ids.length);
@@ -32696,7 +32688,11 @@
                     } else {
                         fogBlowT = Math.max(0, fogBlowT - dt * 1.5);
                     }
-                    if (pinchLostAt && now - pinchLostAt > 140) fogDisarm();
+                    if (pinchLostAt && now - pinchLostAt > 220) fogDisarm();
+                    if (fogLostAt && now - fogLostAt > 350) { // hand really gone
+                        fogLostAt = 0;
+                        fogResetHandState();
+                    }
                 }
 
                 function fogComposite() {
@@ -32834,6 +32830,17 @@
                     }
                 }
 
+                function fogDrawDebug(now) { // localStorage.setItem('mw.fog.debug','1') in the console to see what the tracker decides
+                    ctx.save();
+                    ctx.font = '12px monospace';
+                    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+                    ctx.fillRect(8, 64, Math.min(canvas.width - 16, 520), 38);
+                    ctx.fillStyle = '#fff';
+                    ctx.fillText(fogDbg.slice(0, 80), 14, 80);
+                    ctx.fillText('mouth ' + mouth.ratio.toFixed(3) + (mouth.blowing ? ' BLOWING' : '') + ' · hand ' + (fogTip && now - fogHandAt < 400 ? 'seen' : 'lost'), 14, 96);
+                    ctx.restore();
+                }
+
                 function fogRender(now) {
                     if (!fogEnsure()) return;
                     const dt = fogLast ? Math.min(0.05, (now - fogLast) / 1000) : 0.016;
@@ -32841,6 +32848,7 @@
                     fogUpdate(now, dt);
                     fogComposite();
                     fogDrawCursors(now);
+                    if (FOG_DEBUG) fogDrawDebug(now);
                     // one place decides what the hint says and whether it shows
                     const turn = now < fogTurnUntil;
                     const text = turn ? FOG_TURN_HINT : faceState === 'loading' ? FOG_LOADING : faceState === 'failed' ? FOG_HINT_FALLBACK : FOG_HINT;
@@ -32861,8 +32869,16 @@
                     pressFog = fogPointerPos(e);
                     try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
                 });
-                canvas.addEventListener('pointermove', (e) => { if (pressFog) pressFog = fogPointerPos(e); });
                 ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => canvas.addEventListener(ev, () => { pressFog = null; }));
+
+                // While the wand is open the site's cursor trails (hearts, petals, sparks, aura…) must stay silent.
+                // They all listen for mouse/pointer movement on window or document, so this capture-phase listener
+                // (which runs before any of them) swallows those events — after first feeding the fog fallback.
+                ['mousemove', 'pointermove'].forEach((type) => window.addEventListener(type, (e) => {
+                    if (!document.body.classList.contains('mw-scroll-locked')) return;
+                    if (type === 'pointermove' && pressFog) pressFog = fogPointerPos(e);
+                    e.stopImmediatePropagation();
+                }, true));
 
                 function onHandsResults(results) {
                     if (mode === 'fog') { fogOnHands(results); return; }
@@ -33041,6 +33057,7 @@
                                 minTrackingConfidence: 0.6
                             });
                             handsInstance.onResults(onHandsResults);
+                            fogApplyHandOptions();
                         }
                         sendLoopActive = true;
                         sendFrameLoop();
@@ -33143,6 +33160,7 @@
                         fogReset();
                         pressFog = null;
                         fogPanelSync();
+                        fogApplyHandOptions();
                         if (mode === 'bts') {
                             hint.textContent = 'Hold up 2 or 3 fingers to summon a photo · Open your palm to get ready · Close your fist to catch!';
                             loadBtsCollection();
@@ -35219,33 +35237,6 @@
     })();
     </script>
 
-    <!-- ════════════════════════════════════════════════════════
-         PER-PAGE CUSTOMIZE — floating icon + popover. Hidden by
-         default; the script below shows it only while one of the
-         customizable "little things" pages is open. ══════════ -->
-    <button type="button" id="pageCustomizeBtn" aria-label="Customize this page's look">🎨</button>
-    <div class="page-customize-backdrop hidden" id="pageCustomizeBackdrop">
-        <div class="page-customize-card">
-            <h3>Customize this page</h3>
-            <p class="hint">Give just this page its own background and accent colour — the rest of the site stays as you've set it.</p>
-            <div class="page-customize-row">
-                <label for="pageCustomizeBgA">Background — top</label>
-                <input type="color" id="pageCustomizeBgA" value="#fbf3ea">
-            </div>
-            <div class="page-customize-row">
-                <label for="pageCustomizeBgB">Background — bottom</label>
-                <input type="color" id="pageCustomizeBgB" value="#fbf3ea">
-            </div>
-            <div class="page-customize-row">
-                <label for="pageCustomizeAccent">Heading accent</label>
-                <input type="color" id="pageCustomizeAccent" value="#d98a93">
-            </div>
-            <div class="page-customize-actions">
-                <button type="button" id="pageCustomizeReset">Reset to default</button>
-                <button type="button" id="pageCustomizeClose">Done</button>
-            </div>
-        </div>
-    </div>
 
 
 
@@ -37241,123 +37232,6 @@
     })();
     </script>
 
-    <!-- ════════════════════════════════════════════════════════
-         PER-PAGE CUSTOMIZE — logic. Purely additive: watches the
-         8 "little things" sections for visibility via
-         MutationObserver (never touches the functions that open/
-         close them), shows the floating icon only while one is
-         open, and applies each page's saved colours as inline
-         custom properties on that page's own element — so a page
-         with nothing saved renders byte-for-byte as before.
-         Wrapped in try/catch so a failure here can never affect
-         the rest of the site. ════════════════════════════════ -->
-    <script>
-    (function pageCustomize() {
-        try {
-            const PAGES = [
-                { id: 'notesWall', label: 'Love Notes' },
-                { id: 'doodlesWall', label: 'Doodles Wall' },
-                { id: 'moodsWall', label: 'Mood Calendar' },
-                { id: 'capsulesWall', label: 'Time Capsules' },
-                { id: 'bucketWall', label: 'Our Bucket List' },
-                { id: 'constellationWall', label: 'Memory Constellation' },
-                { id: 'gamesWall', label: 'Mini Games' },
-                { id: 'specialDaysWall', label: 'Special Days' },
-            ];
-            const STORAGE_PREFIX = 'ourLittleUniversePageStyle:';
-
-            const btn = document.getElementById('pageCustomizeBtn');
-            const backdrop = document.getElementById('pageCustomizeBackdrop');
-            const inputA = document.getElementById('pageCustomizeBgA');
-            const inputB = document.getElementById('pageCustomizeBgB');
-            const inputAccent = document.getElementById('pageCustomizeAccent');
-            const resetBtn = document.getElementById('pageCustomizeReset');
-            const closeBtn = document.getElementById('pageCustomizeClose');
-            if (!btn || !backdrop || !inputA || !inputB || !inputAccent || !resetBtn || !closeBtn) return;
-
-            function readSaved(id) {
-                try {
-                    const raw = localStorage.getItem(STORAGE_PREFIX + id);
-                    return raw ? JSON.parse(raw) : null;
-                } catch (e) { return null; }
-            }
-            function applyStyle(el, style) {
-                if (style) {
-                    el.style.setProperty('--page-bg-a', style.a);
-                    el.style.setProperty('--page-bg-b', style.b);
-                    el.style.setProperty('--page-accent', style.accent);
-                    el.classList.add('page-has-custom-bg');
-                } else {
-                    el.style.removeProperty('--page-bg-a');
-                    el.style.removeProperty('--page-bg-b');
-                    el.style.removeProperty('--page-accent');
-                    el.classList.remove('page-has-custom-bg');
-                }
-            }
-
-            const elements = {};
-            PAGES.forEach(page => {
-                const el = document.getElementById(page.id);
-                if (!el) return;
-                elements[page.id] = el;
-                applyStyle(el, readSaved(page.id));
-            });
-
-            let currentPageId = null;
-
-            function findVisiblePage() {
-                for (const page of PAGES) {
-                    const el = elements[page.id];
-                    if (el && !el.classList.contains('hidden')) return page.id;
-                }
-                return null;
-            }
-
-            function syncButtonVisibility() {
-                currentPageId = findVisiblePage();
-                btn.classList.toggle('show', !!currentPageId);
-            }
-
-            PAGES.forEach(page => {
-                const el = elements[page.id];
-                if (!el) return;
-                new MutationObserver(syncButtonVisibility)
-                    .observe(el, { attributes: true, attributeFilter: ['class'] });
-            });
-            syncButtonVisibility();
-
-            btn.addEventListener('click', () => {
-                if (!currentPageId) return;
-                const saved = readSaved(currentPageId) || { a: '#fbf3ea', b: '#fbf3ea', accent: '#d98a93' };
-                inputA.value = saved.a;
-                inputB.value = saved.b;
-                inputAccent.value = saved.accent;
-                backdrop.classList.remove('hidden');
-            });
-
-            function saveCurrent() {
-                if (!currentPageId) return;
-                const style = { a: inputA.value, b: inputB.value, accent: inputAccent.value };
-                try { localStorage.setItem(STORAGE_PREFIX + currentPageId, JSON.stringify(style)); } catch (e) {}
-                applyStyle(elements[currentPageId], style);
-            }
-            [inputA, inputB, inputAccent].forEach(input => input.addEventListener('input', saveCurrent));
-
-            resetBtn.addEventListener('click', () => {
-                if (!currentPageId) return;
-                try { localStorage.removeItem(STORAGE_PREFIX + currentPageId); } catch (e) {}
-                applyStyle(elements[currentPageId], null);
-                inputA.value = '#fbf3ea';
-                inputB.value = '#fbf3ea';
-                inputAccent.value = '#d98a93';
-            });
-            closeBtn.addEventListener('click', () => backdrop.classList.add('hidden'));
-            backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.classList.add('hidden'); });
-        } catch (err) {
-            console.error('Per-page customize failed to initialize (core site unaffected):', err);
-        }
-    })();
-    </script>
 
     <!-- ════════════════════════════════════════════════════════
          DESKTOP INTERACTIVE PHYSICS & PLAYFUL MOTION SUITE
