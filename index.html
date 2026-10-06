@@ -7148,27 +7148,45 @@
         }
 
         /* ─── Period tracker ─── */
-        .period-card { margin: .5rem 0 .3rem; padding: .7rem .8rem .55rem; border-radius: 14px; border: 1px solid rgba(222, 92, 118, .38); background: linear-gradient(160deg, rgba(232, 106, 129, .16), rgba(232, 106, 129, .05)); color: var(--ink); }
-        .period-card.soon { animation: periodCardGlow 3s ease-in-out infinite; }
-        .period-head { display: flex; align-items: center; gap: .65rem; }
-        .period-head-drop { width: 26px; height: 26px; flex: none; position: relative; display: flex; }
-        .period-head-drop svg { width: 100%; height: 100%; fill: #e0516f; filter: drop-shadow(0 0 4px rgba(224, 81, 111, .55)); animation: periodDrop 2.6s ease-in-out infinite; }
-        .period-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
-        .period-text strong { font: 700 .92rem 'Quicksand', sans-serif; }
-        .period-text span { font: 600 .72rem 'Quicksand', sans-serif; color: var(--ink-soft); }
-        .period-actions, .period-pick, .period-suggest { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin-top: .55rem; }
-        .period-pick { justify-content: space-between; padding: .45rem .6rem; border-radius: 10px; background: rgba(224, 81, 111, .16); font: 700 .72rem 'Quicksand', sans-serif; }
-        .period-suggest { font: 600 .72rem 'Quicksand', sans-serif; color: var(--ink-soft); }
-        .period-btn { border: 1px solid rgba(222, 92, 118, .5); background: rgba(224, 81, 111, .14); color: var(--ink); border-radius: 999px; padding: .38rem .8rem; min-height: 34px; font: 700 .72rem 'Quicksand', sans-serif; cursor: pointer; }
-        .period-btn.primary { background: linear-gradient(135deg, #f1899d, #e0516f); border-color: transparent; color: #fff; }
-        .period-btn.icon { width: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
-        .period-btn:disabled { opacity: .5; cursor: default; }
-        .period-more { margin-top: .55rem; padding-top: .45rem; border-top: 1px dashed rgba(222, 92, 118, .35); }
-        .period-row { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin: .3rem 0; font: 700 .74rem 'Quicksand', sans-serif; }
-        .period-step { display: inline-flex; align-items: center; gap: .5rem; }
-        .period-step b { min-width: 62px; text-align: center; font-weight: 700; }
-        .period-legend { margin: .55rem 0 0; font: 600 .62rem 'Quicksand', sans-serif; color: var(--ink-soft); display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .45rem; }
-        .period-lg { display: inline-flex; align-items: center; gap: .25rem; white-space: nowrap; }
+        .period-card { margin: .55rem 0 .35rem; border-radius: 18px; border: 1px solid rgba(222, 92, 118, .32); background: linear-gradient(155deg, rgba(232, 106, 129, .17), rgba(232, 106, 129, .06)); color: var(--ink); overflow: hidden; transition: border-color .3s, background .3s; }
+        .period-card.soon { border-color: rgba(222, 92, 118, .58); animation: periodCardGlow 3s ease-in-out infinite; }
+        .period-card.late { border-color: rgba(240, 150, 90, .75); background: linear-gradient(155deg, rgba(240, 150, 90, .22), rgba(232, 106, 129, .08)); }
+        .period-chip { width: 100%; min-height: 58px; display: flex; align-items: center; gap: .75rem; padding: .65rem .85rem; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+        .period-chip-icon { width: 36px; height: 36px; flex: none; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, .55), rgba(224, 81, 111, .3)); box-shadow: 0 0 0 0 rgba(224, 81, 111, .5); animation: periodPulse 2.6s ease-out infinite; }
+        .period-chip-icon svg { width: 19px; height: 19px; fill: #e0516f; animation: periodDrop 2.6s ease-in-out infinite; }
+        .period-card.late .period-chip-icon { background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, .55), rgba(240, 150, 90, .4)); }
+        .period-text { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+        .period-text strong { font: 700 .95rem 'Quicksand', sans-serif; }
+        .period-text span { font: 600 .73rem 'Quicksand', sans-serif; color: var(--ink-soft); }
+        .period-chevron { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(224, 81, 111, .14); }
+        .period-chevron svg { width: 16px; height: 16px; fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .3s ease; }
+        .period-card.open .period-chevron svg { transform: rotate(180deg); }
+        .period-notice:empty { display: none; }
+        .period-pick, .period-suggest { margin: 0 .75rem .65rem; padding: .5rem .7rem; border-radius: 12px; background: rgba(224, 81, 111, .16); display: flex; align-items: center; gap: .5rem; font: 700 .72rem 'Quicksand', sans-serif; }
+        .period-pick span, .period-suggest span { flex: 1; min-width: 0; }
+        .period-chipbtn { border: 0; border-radius: 999px; padding: .38rem .8rem; min-height: 32px; background: linear-gradient(135deg, #f1899d, #e0516f); color: #fff; font: 700 .7rem 'Quicksand', sans-serif; cursor: pointer; }
+        .period-x { border: 0; background: none; color: var(--ink-soft); width: 30px; height: 30px; cursor: pointer; font-size: .8rem; }
+        .period-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .32s ease; }
+        .period-card.open .period-panel { grid-template-rows: 1fr; }
+        .period-panel-inner { overflow: hidden; min-height: 0; padding: 0 .85rem; }
+        .period-card.open .period-panel-inner { padding-bottom: .85rem; border-top: 1px dashed rgba(222, 92, 118, .3); padding-top: .7rem; }
+        .period-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; }
+        .period-tiles.single { grid-template-columns: 1fr; }
+        .period-tile { min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .3rem; border-radius: 15px; border: 1px solid rgba(222, 92, 118, .42); background: rgba(224, 81, 111, .12); color: var(--ink); font: 700 .75rem 'Quicksand', sans-serif; cursor: pointer; }
+        .period-tile svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+        .period-tile.primary { background: linear-gradient(135deg, #f1899d, #e0516f); border-color: transparent; color: #fff; box-shadow: 0 6px 16px rgba(224, 81, 111, .3); }
+        .period-tile:disabled, .period-step button:disabled, .period-link:disabled, .period-chipbtn:disabled { opacity: .5; cursor: default; }
+        .period-group { margin-top: .65rem; padding: .1rem .8rem; border-radius: 15px; background: rgba(224, 81, 111, .08); border: 1px solid rgba(222, 92, 118, .22); }
+        .period-row { min-height: 50px; display: flex; align-items: center; justify-content: space-between; gap: .6rem; font: 700 .76rem 'Quicksand', sans-serif; }
+        .period-row + .period-row { border-top: 1px solid rgba(222, 92, 118, .18); }
+        .period-row > span:first-child { white-space: nowrap; }
+        .period-step { display: inline-flex; align-items: center; gap: .4rem; }
+        .period-step b { min-width: 58px; text-align: center; font-weight: 700; white-space: nowrap; }
+        .period-step button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(222, 92, 118, .5); background: rgba(224, 81, 111, .14); color: var(--ink); font: 700 1rem 'Quicksand', sans-serif; cursor: pointer; display: grid; place-items: center; padding: 0; }
+        .period-links { display: flex; flex-wrap: wrap; gap: 0 1rem; margin-top: .45rem; }
+        .period-link { border: 0; background: none; padding: .4rem 0; min-height: 34px; color: var(--ink-soft); text-decoration: underline; text-underline-offset: 3px; font: 700 .72rem 'Quicksand', sans-serif; cursor: pointer; }
+        .period-legend { margin: .35rem 0 0; font: 600 .64rem 'Quicksand', sans-serif; color: var(--ink-soft); display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .8rem; }
+        .period-lg { display: inline-flex; align-items: center; gap: .3rem; white-space: nowrap; }
         .period-key { display: inline-block; width: 11px; height: 11px; border-radius: 4px; border: 1px solid rgba(222, 92, 118, .6); }
         .period-key.predicted { background: rgba(224, 81, 111, .22); }
         .period-key.confirmed { background: rgba(224, 81, 111, .62); }
@@ -7187,7 +7205,6 @@
         body.dark-mode .calendar-day.period-day { background: linear-gradient(160deg, rgba(232, 106, 129, .4), rgba(232, 106, 129, .18)); border-color: rgba(240, 120, 145, .75); }
         body.dark-mode .calendar-day.period-confirmed { background: linear-gradient(160deg, rgba(232, 106, 129, .66), rgba(232, 106, 129, .4)); }
         body.dark-mode .calendar-day.period-late { background: linear-gradient(160deg, rgba(240, 150, 90, .45), rgba(232, 106, 129, .2)); }
-        @media (max-width: 400px) { .period-btn { padding: .36rem .62rem; font-size: .68rem; } .period-actions { gap: .3rem; } }
         .period-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
         .mood-calendar.period-picking .calendar-day:not(.empty) { cursor: crosshair; border-color: rgba(224, 81, 111, .65); }
         @keyframes periodDrop { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(1.5px) scale(.92); } }
@@ -7195,7 +7212,8 @@
         @keyframes periodPulse { 0% { box-shadow: 0 0 0 0 rgba(224, 81, 111, .5); } 70%, 100% { box-shadow: 0 0 0 7px rgba(224, 81, 111, 0); } }
         @keyframes periodCardGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(224, 81, 111, 0); } 50% { box-shadow: 0 0 14px 1px rgba(224, 81, 111, .28); } }
         @media (prefers-reduced-motion: reduce) {
-            .period-card.soon, .period-head-drop svg, .period-drop svg, .period-drop::before, .period-start::after { animation: none !important; }
+            .period-card.soon, .period-chip-icon, .period-chip-icon svg, .period-drop svg, .period-drop::before, .period-start::after { animation: none !important; }
+            .period-panel, .period-chevron svg { transition: none !important; }
         }
         .extras-form input,
         .extras-form textarea,
@@ -15204,8 +15222,13 @@
                 <div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="moodAuthorToggle" aria-label="Choose mood author"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div>
                 <div class="mood-picker-row" id="calendarMoodPicker"></div>
                 <div class="period-card hidden" id="periodCard">
-                    <div class="period-head"><span class="period-head-drop" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.6C12 2.6 5.2 10.1 5.2 15a6.8 6.8 0 0013.6 0c0-4.9-6.8-12.4-6.8-12.4z"/></svg></span><div class="period-text"><strong id="periodTitle"></strong><span id="periodSub"></span></div></div>
-                    <div id="periodBody"></div>
+                    <button type="button" class="period-chip" id="periodChip" aria-expanded="false" aria-controls="periodPanel">
+                        <span class="period-chip-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.6C12 2.6 5.2 10.1 5.2 15a6.8 6.8 0 0013.6 0c0-4.9-6.8-12.4-6.8-12.4z"/></svg></span>
+                        <span class="period-text"><strong id="periodTitle"></strong><span id="periodSub"></span></span>
+                        <span class="period-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span>
+                    </button>
+                    <div class="period-notice" id="periodNotice"></div>
+                    <div class="period-panel" id="periodPanel" aria-hidden="true"><div class="period-panel-inner" id="periodBody"></div></div>
                 </div>
                 <div class="calendar-nav"><button id="calendarPrev" type="button" aria-label="Previous month">‹</button><div class="calendar-title" id="calendarTitle"></div><button id="calendarNext" type="button" aria-label="Next month">›</button></div>
                 <div class="mood-calendar" id="moodCalendar"></div>
@@ -20012,7 +20035,10 @@
             const periodCard = document.getElementById('periodCard'),
                 periodTitle = document.getElementById('periodTitle'),
                 periodSub = document.getElementById('periodSub'),
-                periodBody = document.getElementById('periodBody');
+                periodBody = document.getElementById('periodBody'),
+                periodChip = document.getElementById('periodChip'),
+                periodNotice = document.getElementById('periodNotice'),
+                periodPanel = document.getElementById('periodPanel');
             let periodData = null, // { starts:[YYYY-MM-DD…], cycle_len, period_len, next_override }
                 periodLoaded = false,
                 periodOffline = false,
@@ -20020,8 +20046,10 @@
                 periodVersion = 0, // bumps on every successful save, so an old toast's Undo can't wipe out a newer change
                 periodPicking = null, // null | 'next' | 'last'
                 periodSuggestCycle = 0,
-                periodMoreOpen = false;
+                periodOpen = false; // the options panel under the header
 
+            // This tracker is private to J: M's calendar is the plain mood calendar. (The database enforces it too.)
+            const periodAllowed = () => myAuthorNum() === 1;
             const pdPad = (n) => String(n).padStart(2, '0');
             const pdNum = (key) => { const [y, m, d] = key.split('-').map(Number); return Date.UTC(y, m - 1, d) / 86400000; };
             const pdKey = (num) => new Date(num * 86400000).toISOString().slice(0, 10);
@@ -20042,7 +20070,7 @@
             }
 
             function periodPlan() {
-                if (!periodData || !periodData.starts.length) return null;
+                if (!periodAllowed() || !periodData || !periodData.starts.length) return null;
                 const starts = periodData.starts.map(pdNum),
                     last = starts[starts.length - 1];
                 let override = periodData.next_override ? pdNum(periodData.next_override) : null;
@@ -20097,6 +20125,7 @@
             function periodRefresh() { renderPeriodCard(); renderMoodCalendar(); }
 
             async function loadPeriod() {
+                if (!periodAllowed()) { periodData = null; periodLoaded = false; renderPeriodCard(); return; }
                 if (!supabase) { periodData = periodCacheRead(); periodOffline = true; periodLoaded = true; periodRefresh(); return; }
                 try {
                     const { data, error } = await supabase.from(PERIOD_TABLE).select('*').eq('id', 1).maybeSingle();
@@ -20176,6 +20205,7 @@
                 nd.starts = nd.starts.slice(-24);
                 if (!(await periodSave(nd))) return false;
                 periodSuggestCycle = suggest;
+                periodOpen = false;
                 const savedVersion = periodVersion;
                 const np = periodPlan();
                 renderPeriodCard();
@@ -20192,7 +20222,7 @@
                 return true;
             }
 
-            function periodStartPick(target) { periodPicking = target; periodMoreOpen = false; periodRefresh(); }
+            function periodStartPick(target) { periodPicking = target; periodOpen = false; periodRefresh(); }
             function periodCancelPick() { if (!periodPicking) return; periodPicking = null; periodRefresh(); }
             async function periodPick(key) {
                 const target = periodPicking;
@@ -20205,64 +20235,83 @@
 
             function renderPeriodCard() {
                 if (!periodCard) return;
-                if (!periodLoaded) { periodCard.classList.add('hidden'); return; }
+                if (!periodAllowed() || !periodLoaded) { periodCard.classList.add('hidden'); return; }
                 periodCard.classList.remove('hidden');
                 const plan = periodData ? periodPlan() : null,
                     today = pdToday(),
                     off = periodOffline ? ' · offline copy' : '',
                     dis = periodSaving || periodOffline ? ' disabled' : '';
-                let title, sub, soon = false, during = false;
-                if (!periodData) { title = 'Couldn\'t load the period tracker'; sub = 'Check your connection, then reopen the calendar.'; }
-                else if (!plan) { title = 'Period tracker'; sub = 'Tell me the day her last period started and I\'ll mark the next ones.'; }
+                let title, sub, soon = false, late = false, during = false;
+                if (!periodData) { title = 'Couldn\'t load the period tracker'; sub = 'Tap to try again'; }
+                else if (!plan) { title = 'Period tracker'; sub = 'Tap to set her last start date'; }
                 else {
                     const since = today - plan.last,
-                        diff = plan.next - today;
+                        diff = plan.next - today,
+                        moved = plan.moved ? ' · moved by you' : '';
                     if (since >= 0 && since < plan.len) { during = true; soon = true; title = `Period · day ${since + 1} of ${plan.len}`; sub = `Next one expected ${pdPretty(plan.next)}`; }
-                    else if (diff > 1) { title = `Next period in ${diff} days`; sub = pdPretty(plan.next) + (plan.moved ? ' · moved by you' : ''); soon = diff <= 3; }
-                    else if (diff === 1) { soon = true; title = 'Next period: tomorrow'; sub = pdPretty(plan.next) + (plan.moved ? ' · moved by you' : ''); }
-                    else if (diff === 0) { soon = true; title = 'Expected today'; sub = 'Mark it when it starts, or move the mark.'; }
-                    else { soon = true; const n = -diff; title = `Expected ${n} day${n === 1 ? '' : 's'} ago`; sub = `${pdPretty(plan.next)} · has it started? Mark it, or move the mark.`; }
+                    else if (diff > 1) { title = `Next period in ${diff} days`; sub = pdPretty(plan.next) + moved; soon = diff <= 3; }
+                    else if (diff === 1) { soon = true; title = 'Next period: tomorrow'; sub = pdPretty(plan.next) + moved; }
+                    else if (diff === 0) { soon = true; title = 'Expected today'; sub = 'Mark it when it starts, or move the mark'; }
+                    else { soon = true; late = true; const n = -diff; title = `Expected ${n} day${n === 1 ? '' : 's'} ago`; sub = `${pdPretty(plan.next)} · has it started?`; }
                 }
-                periodCard.classList.toggle('soon', soon);
+                if (periodPicking) periodOpen = false;
+                periodCard.classList.toggle('soon', soon && !late);
+                periodCard.classList.toggle('late', late);
+                periodCard.classList.toggle('open', periodOpen);
+                periodChip.setAttribute('aria-expanded', String(periodOpen));
                 periodTitle.textContent = title;
                 periodSub.textContent = sub + off;
-                let html = '';
+
+                // slim line under the header: picking instructions, or a one-time cycle suggestion
+                let notice = '';
                 if (periodPicking) {
-                    html += `<div class="period-pick"><span>${periodPicking === 'last' ? 'Tap the day her last period started.' : 'Tap the day it actually started. The dates after it will shift too.'}</span><button type="button" class="period-btn" data-pa="cancel">Cancel</button></div>`;
-                } else if (!periodData) {
-                    html += `<div class="period-actions"><button type="button" class="period-btn primary" data-pa="retry">Try again</button></div>`;
-                } else if (!plan) {
-                    html += `<div class="period-actions"><button type="button" class="period-btn primary" data-pa="setup"${dis}>Pick the start date</button></div>`;
-                } else {
-                    html += '<div class="period-actions">';
-                    if (!during) html += `<button type="button" class="period-btn primary" data-pa="today"${dis}>Started today</button>`;
-                    html += `<button type="button" class="period-btn" data-pa="move"${dis}>Move the mark</button>`;
-                    html += `<button type="button" class="period-btn icon" data-pa="more" aria-expanded="${periodMoreOpen}" aria-label="More options">⋯</button></div>`;
-                    if (periodSuggestCycle) html += `<div class="period-suggest"><span>That cycle was ${periodSuggestCycle} days.</span><button type="button" class="period-btn" data-pa="suggest"${dis}>Use ${periodSuggestCycle} days from now on</button><button type="button" class="period-btn icon" data-pa="dismiss" aria-label="Dismiss">✕</button></div>`;
-                    if (periodMoreOpen) {
-                        html += `<div class="period-more">
-                            <div class="period-row"><span>Cycle length</span><span class="period-step"><button type="button" class="period-btn icon" data-pa="cycle-"${dis} aria-label="Shorter cycle">−</button><b>${plan.cycle} days</b><button type="button" class="period-btn icon" data-pa="cycle+"${dis} aria-label="Longer cycle">+</button></span></div>
-                            <div class="period-row"><span>Period lasts</span><span class="period-step"><button type="button" class="period-btn icon" data-pa="len-"${dis} aria-label="Fewer days">−</button><b>${plan.len} days</b><button type="button" class="period-btn icon" data-pa="len+"${dis} aria-label="More days">+</button></span></div>
-                            <div class="period-actions"><button type="button" class="period-btn" data-pa="fixlast"${dis}>Fix last start date</button>${plan.moved ? `<button type="button" class="period-btn" data-pa="resetmark"${dis}>Back to automatic</button>` : ''}${plan.starts.length > 1 ? `<button type="button" class="period-btn" data-pa="undo"${dis}>Remove last start</button>` : ''}</div>
-                        </div>`;
-                    }
+                    notice = `<div class="period-pick"><span>${periodPicking === 'last' ? 'Tap the day her last period started' : 'Tap the day it actually started — the dates after it will shift too'}</span><button type="button" class="period-link" data-pa="cancel">Cancel</button></div>`;
+                } else if (periodSuggestCycle && plan) {
+                    notice = `<div class="period-suggest"><span>That cycle was ${periodSuggestCycle} days.</span><button type="button" class="period-chipbtn" data-pa="suggest"${dis}>Use ${periodSuggestCycle} days</button><button type="button" class="period-x" data-pa="dismiss" aria-label="Dismiss">✕</button></div>`;
                 }
-                html += `<p class="period-legend"><span class="period-lg"><i class="period-key predicted"></i>expected</span><span class="period-lg"><i class="period-key confirmed"></i>confirmed</span><span class="period-lg"><i class="period-key late"></i>waiting to be confirmed</span></p>`;
+                periodNotice.innerHTML = notice;
+
+                // everything else lives in the panel that opens when you tap the header
+                const I = {
+                    check: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17M9 15l2 2 4-4"/></svg>',
+                    move: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12.5 6.5L18 12l-5.5 5.5"/></svg>'
+                };
+                let html = '';
+                if (!periodData) {
+                    html = `<div class="period-tiles single"><button type="button" class="period-tile primary" data-pa="retry">Try again</button></div>`;
+                } else if (!plan) {
+                    html = `<div class="period-tiles single"><button type="button" class="period-tile primary" data-pa="setup"${dis}>${I.check}Pick the start date</button></div>`;
+                } else {
+                    html += `<div class="period-tiles${during ? ' single' : ''}">`;
+                    if (!during) html += `<button type="button" class="period-tile primary" data-pa="today"${dis}>${I.check}Started today</button>`;
+                    html += `<button type="button" class="period-tile" data-pa="move"${dis}>${I.move}Move the mark</button></div>`;
+                    html += `<div class="period-group">
+                        <div class="period-row"><span>Cycle length</span><span class="period-step"><button type="button" data-pa="cycle-"${dis} aria-label="Shorter cycle">−</button><b>${plan.cycle} days</b><button type="button" data-pa="cycle+"${dis} aria-label="Longer cycle">+</button></span></div>
+                        <div class="period-row"><span>Period lasts</span><span class="period-step"><button type="button" data-pa="len-"${dis} aria-label="Fewer days">−</button><b>${plan.len} days</b><button type="button" data-pa="len+"${dis} aria-label="More days">+</button></span></div>
+                    </div>`;
+                    html += `<div class="period-links"><button type="button" class="period-link" data-pa="fixlast"${dis}>Fix last start date</button>${plan.moved ? `<button type="button" class="period-link" data-pa="resetmark"${dis}>Back to automatic</button>` : ''}${plan.starts.length > 1 ? `<button type="button" class="period-link" data-pa="undo"${dis}>Remove last start</button>` : ''}</div>`;
+                    html += `<p class="period-legend"><span class="period-lg"><i class="period-key predicted"></i>expected</span><span class="period-lg"><i class="period-key confirmed"></i>confirmed</span><span class="period-lg"><i class="period-key late"></i>waiting to be confirmed</span></p>`;
+                }
                 periodBody.innerHTML = html;
+                periodPanel.inert = !periodOpen; // closed panel: nothing in it can be tabbed to
+                periodPanel.setAttribute('aria-hidden', String(!periodOpen));
             }
 
             if (periodCard) periodCard.addEventListener('click', async (e) => {
+                if (e.target.closest('#periodChip')) {
+                    if (periodPicking) return;
+                    periodOpen = !periodOpen;
+                    return renderPeriodCard();
+                }
                 const b = e.target.closest('[data-pa]');
                 if (!b || b.disabled) return;
                 const act = b.dataset.pa,
                     plan = periodPlan();
                 if (act === 'cancel') return periodCancelPick();
                 if (act === 'retry') return loadPeriod();
-                if (act === 'setup') return periodStartPick('last');
+                if (act === 'setup' || act === 'fixlast') return periodStartPick('last');
                 if (act === 'move') return periodStartPick('next');
-                if (act === 'fixlast') return periodStartPick('last');
-                if (act === 'today') return periodSetStart('next', pdToday());
-                if (act === 'more') { periodMoreOpen = !periodMoreOpen; return renderPeriodCard(); }
+                if (act === 'today') { periodOpen = false; return periodSetStart('next', pdToday()); }
                 if (act === 'dismiss') { periodSuggestCycle = 0; return renderPeriodCard(); }
                 if (!plan) return;
                 const base = { ...periodData, starts: [...periodData.starts] };
@@ -20272,7 +20321,11 @@
                 if (act === 'resetmark') return periodSave({ ...base, next_override: null });
                 if (act === 'undo' && base.starts.length > 1) { base.starts.pop(); base.next_override = null; periodSuggestCycle = 0; return periodSave(base); }
             });
-            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') periodCancelPick(); });
+            document.addEventListener('keydown', (e) => {
+                if (e.key !== 'Escape') return;
+                if (periodPicking) periodCancelPick();
+                else if (periodOpen) { periodOpen = false; renderPeriodCard(); }
+            });
 
             function renderMoodCalendar() {
                 const now = new Date(),
@@ -20652,7 +20705,7 @@
                         if (!bucketWall.classList.contains('hidden') && table === BUCKET_LIST_TABLE) loadBucket();
                     }).subscribe());
                 supabase.channel('extras-period').on('postgres_changes', { event: '*', schema: 'public', table: PERIOD_TABLE }, () => {
-                    if (!moodsWall.classList.contains('hidden') && !periodSaving) loadPeriod();
+                    if (!moodsWall.classList.contains('hidden') && !periodSaving && periodAllowed()) loadPeriod();
                 }).subscribe();
             }
             startExtrasRealtime();
