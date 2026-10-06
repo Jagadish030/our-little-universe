@@ -7146,6 +7146,57 @@
         .calendar-day .day-mood.author-2 {
             filter: drop-shadow(0 0 3px var(--sage)) drop-shadow(0 0 6px var(--sage));
         }
+
+        /* ─── Period tracker ─── */
+        .period-card { margin: .5rem 0 .3rem; padding: .7rem .8rem .55rem; border-radius: 14px; border: 1px solid rgba(222, 92, 118, .38); background: linear-gradient(160deg, rgba(232, 106, 129, .16), rgba(232, 106, 129, .05)); color: var(--ink); }
+        .period-card.soon { animation: periodCardGlow 3s ease-in-out infinite; }
+        .period-head { display: flex; align-items: center; gap: .65rem; }
+        .period-head-drop { width: 26px; height: 26px; flex: none; position: relative; display: flex; }
+        .period-head-drop svg { width: 100%; height: 100%; fill: #e0516f; filter: drop-shadow(0 0 4px rgba(224, 81, 111, .55)); animation: periodDrop 2.6s ease-in-out infinite; }
+        .period-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+        .period-text strong { font: 700 .92rem 'Quicksand', sans-serif; }
+        .period-text span { font: 600 .72rem 'Quicksand', sans-serif; color: var(--ink-soft); }
+        .period-actions, .period-pick, .period-suggest { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin-top: .55rem; }
+        .period-pick { justify-content: space-between; padding: .45rem .6rem; border-radius: 10px; background: rgba(224, 81, 111, .16); font: 700 .72rem 'Quicksand', sans-serif; }
+        .period-suggest { font: 600 .72rem 'Quicksand', sans-serif; color: var(--ink-soft); }
+        .period-btn { border: 1px solid rgba(222, 92, 118, .5); background: rgba(224, 81, 111, .14); color: var(--ink); border-radius: 999px; padding: .38rem .8rem; min-height: 34px; font: 700 .72rem 'Quicksand', sans-serif; cursor: pointer; }
+        .period-btn.primary { background: linear-gradient(135deg, #f1899d, #e0516f); border-color: transparent; color: #fff; }
+        .period-btn.icon { width: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+        .period-btn:disabled { opacity: .5; cursor: default; }
+        .period-more { margin-top: .55rem; padding-top: .45rem; border-top: 1px dashed rgba(222, 92, 118, .35); }
+        .period-row { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin: .3rem 0; font: 700 .74rem 'Quicksand', sans-serif; }
+        .period-step { display: inline-flex; align-items: center; gap: .5rem; }
+        .period-step b { min-width: 62px; text-align: center; font-weight: 700; }
+        .period-legend { margin: .55rem 0 0; font: 600 .62rem 'Quicksand', sans-serif; color: var(--ink-soft); display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .45rem; }
+        .period-lg { display: inline-flex; align-items: center; gap: .25rem; white-space: nowrap; }
+        .period-key { display: inline-block; width: 11px; height: 11px; border-radius: 4px; border: 1px solid rgba(222, 92, 118, .6); }
+        .period-key.predicted { background: rgba(224, 81, 111, .22); }
+        .period-key.confirmed { background: rgba(224, 81, 111, .62); }
+        .period-key.late { border-style: dashed; border-color: rgba(240, 150, 90, .95); background: rgba(240, 150, 90, .25); }
+        .calendar-day.period-day { background: linear-gradient(160deg, rgba(232, 106, 129, .22), rgba(232, 106, 129, .09)); border-color: rgba(222, 92, 118, .5); }
+        .calendar-day.period-confirmed { background: linear-gradient(160deg, rgba(222, 92, 118, .44), rgba(222, 92, 118, .24)); border-color: rgba(222, 92, 118, .8); }
+        .calendar-day.period-late { border-style: dashed; border-color: rgba(240, 150, 90, .95); background: linear-gradient(160deg, rgba(240, 150, 90, .26), rgba(232, 106, 129, .12)); }
+        .period-drop { position: absolute; top: 3px; right: 3px; width: 13px; height: 13px; display: flex; pointer-events: none; }
+        .period-drop svg { width: 100%; height: 100%; fill: #e0516f; filter: drop-shadow(0 0 3px rgba(224, 81, 111, .65)); }
+        .period-predicted .period-drop svg, .period-late .period-drop svg { animation: periodDrop 2.4s ease-in-out infinite; }
+        .period-drop::before { content: ''; position: absolute; inset: -5px; border-radius: 50%; border: 1.5px solid rgba(224, 81, 111, .6); opacity: 0; }
+        .period-predicted .period-drop::before, .period-late .period-drop::before { animation: periodRipple 2.4s ease-out infinite; }
+        .period-late .period-drop::before { border-color: rgba(240, 150, 90, .85); }
+        .period-start.period-predicted::after, .period-start.period-late::after { content: ''; position: absolute; inset: -2px; border-radius: 10px; pointer-events: none; box-shadow: 0 0 0 0 rgba(224, 81, 111, .5); animation: periodPulse 2.4s ease-out infinite; }
+        .period-start.period-late::after { box-shadow: 0 0 0 0 rgba(240, 150, 90, .55); }
+        body.dark-mode .calendar-day.period-day { background: linear-gradient(160deg, rgba(232, 106, 129, .4), rgba(232, 106, 129, .18)); border-color: rgba(240, 120, 145, .75); }
+        body.dark-mode .calendar-day.period-confirmed { background: linear-gradient(160deg, rgba(232, 106, 129, .66), rgba(232, 106, 129, .4)); }
+        body.dark-mode .calendar-day.period-late { background: linear-gradient(160deg, rgba(240, 150, 90, .45), rgba(232, 106, 129, .2)); }
+        @media (max-width: 400px) { .period-btn { padding: .36rem .62rem; font-size: .68rem; } .period-actions { gap: .3rem; } }
+        .period-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .mood-calendar.period-picking .calendar-day:not(.empty) { cursor: crosshair; border-color: rgba(224, 81, 111, .65); }
+        @keyframes periodDrop { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(1.5px) scale(.92); } }
+        @keyframes periodRipple { 0% { transform: scale(.55); opacity: .75; } 100% { transform: scale(1.8); opacity: 0; } }
+        @keyframes periodPulse { 0% { box-shadow: 0 0 0 0 rgba(224, 81, 111, .5); } 70%, 100% { box-shadow: 0 0 0 7px rgba(224, 81, 111, 0); } }
+        @keyframes periodCardGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(224, 81, 111, 0); } 50% { box-shadow: 0 0 14px 1px rgba(224, 81, 111, .28); } }
+        @media (prefers-reduced-motion: reduce) {
+            .period-card.soon, .period-head-drop svg, .period-drop svg, .period-drop::before, .period-start::after { animation: none !important; }
+        }
         .extras-form input,
         .extras-form textarea,
         .bucket-add input {
@@ -15152,6 +15203,10 @@
             <div class="extras-card"><p>Choose who is pinning, choose a mood, then tap a day. Tap your own pinned mood again to unpin it.</p>
                 <div class="author-toggle-row"><button type="button" class="note-author-toggle extra-author" data-author="1" id="moodAuthorToggle" aria-label="Choose mood author"><span class="toggle-track"><span class="toggle-glow"></span><span class="toggle-letter" data-letter="1">By J</span><span class="toggle-letter" data-letter="2">By M</span></span></button></div>
                 <div class="mood-picker-row" id="calendarMoodPicker"></div>
+                <div class="period-card hidden" id="periodCard">
+                    <div class="period-head"><span class="period-head-drop" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.6C12 2.6 5.2 10.1 5.2 15a6.8 6.8 0 0013.6 0c0-4.9-6.8-12.4-6.8-12.4z"/></svg></span><div class="period-text"><strong id="periodTitle"></strong><span id="periodSub"></span></div></div>
+                    <div id="periodBody"></div>
+                </div>
                 <div class="calendar-nav"><button id="calendarPrev" type="button" aria-label="Previous month">‹</button><div class="calendar-title" id="calendarTitle"></div><button id="calendarNext" type="button" aria-label="Next month">›</button></div>
                 <div class="mood-calendar" id="moodCalendar"></div>
             </div>
@@ -19938,15 +19993,298 @@
                 return target.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
             }
 
+
+            /* ─── Period tracker (inside the Mood Calendar) ───
+               One shared row in the `period_tracker` table:
+                 starts        – days a period really started (confirmed, never in the future)
+                 next_override – a day you moved the next mark to that hasn't arrived yet
+                 cycle_len / period_len – days between starts / days each period lasts
+               Everything on the calendar is derived from that: the next expected start is
+               next_override (if you moved it) or last start + cycle length, and the ones after
+               it follow every cycle_len days. Moving the mark to a day that has come (or is
+               today) confirms it as the new last start, so every later date shifts with it.
+               All date maths uses whole-day numbers (UTC midnights), so time zones and
+               daylight-saving changes can never move a mark by a day. */
+            const PERIOD_TABLE = 'period_tracker',
+                PERIOD_CACHE_KEY = 'ourLittleUniversePeriodCache',
+                PERIOD_MIN_GAP = 15; // two period starts are never closer than this many days
+            const PERIOD_DROP_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6C12 2.6 5.2 10.1 5.2 15a6.8 6.8 0 0013.6 0c0-4.9-6.8-12.4-6.8-12.4z"/></svg>';
+            const periodCard = document.getElementById('periodCard'),
+                periodTitle = document.getElementById('periodTitle'),
+                periodSub = document.getElementById('periodSub'),
+                periodBody = document.getElementById('periodBody');
+            let periodData = null, // { starts:[YYYY-MM-DD…], cycle_len, period_len, next_override }
+                periodLoaded = false,
+                periodOffline = false,
+                periodSaving = false,
+                periodVersion = 0, // bumps on every successful save, so an old toast's Undo can't wipe out a newer change
+                periodPicking = null, // null | 'next' | 'last'
+                periodSuggestCycle = 0,
+                periodMoreOpen = false;
+
+            const pdPad = (n) => String(n).padStart(2, '0');
+            const pdNum = (key) => { const [y, m, d] = key.split('-').map(Number); return Date.UTC(y, m - 1, d) / 86400000; };
+            const pdKey = (num) => new Date(num * 86400000).toISOString().slice(0, 10);
+            const pdToday = () => { const n = new Date(); return pdNum(`${n.getFullYear()}-${pdPad(n.getMonth() + 1)}-${pdPad(n.getDate())}`); };
+            const pdPretty = (num) => new Date(num * 86400000).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+            const pdClamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+            function periodNorm(row) {
+                const ok = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+                const starts = [...new Set((row && row.starts || []).map((s) => String(s).slice(0, 10)).filter(ok))].sort();
+                const ov = row && row.next_override ? String(row.next_override).slice(0, 10) : null;
+                return {
+                    starts,
+                    cycle_len: pdClamp(Math.round(Number(row && row.cycle_len) || 28), 15, 60),
+                    period_len: pdClamp(Math.round(Number(row && row.period_len) || 5), 1, 10),
+                    next_override: ov && ok(ov) ? ov : null
+                };
+            }
+
+            function periodPlan() {
+                if (!periodData || !periodData.starts.length) return null;
+                const starts = periodData.starts.map(pdNum),
+                    last = starts[starts.length - 1];
+                let override = periodData.next_override ? pdNum(periodData.next_override) : null;
+                if (override != null && override < last + PERIOD_MIN_GAP) override = null; // stale: no longer after the last start
+                const cycle = periodData.cycle_len;
+                return { starts, last, cycle, len: periodData.period_len, next: override != null ? override : last + cycle, moved: override != null };
+            }
+
+            // day key → how that day should look in the visible month
+            function periodMarksFor(y, month) {
+                const map = new Map(),
+                    plan = periodPlan();
+                if (!plan) return map;
+                const first = pdNum(`${y}-${pdPad(month + 1)}-01`),
+                    end = first + new Date(y, month + 1, 0).getDate() - 1,
+                    today = pdToday();
+                const add = (s, kind) => {
+                    for (let i = 0; i < plan.len; i++) {
+                        const d = s + i;
+                        if (d < first || d > end) continue;
+                        const k = pdKey(d);
+                        if (map.has(k) && map.get(k).kind === 'confirmed') continue;
+                        map.set(k, { kind, start: i === 0, day: i + 1 });
+                    }
+                };
+                plan.starts.forEach((s) => add(s, 'confirmed'));
+                add(plan.next, plan.next < today ? 'late' : 'predicted');
+                for (let j = 1; j <= 40; j++) {
+                    const s = plan.next + j * plan.cycle;
+                    if (s > end) break;
+                    add(s, 'predicted');
+                }
+                return map;
+            }
+
+            function periodDecorate(button, mark, dayNumber) {
+                button.classList.add('period-day', 'period-' + mark.kind);
+                let label;
+                if (mark.kind === 'confirmed') label = mark.start ? 'Period started' : `Period · day ${mark.day}`;
+                else if (mark.kind === 'late') label = mark.start ? 'Expected here — move the mark when it actually starts' : 'Expected window';
+                else label = mark.start ? 'Period expected to start' : `Period expected · day ${mark.day}`;
+                button.title = label;
+                if (mark.start) {
+                    button.classList.add('period-start');
+                    button.insertAdjacentHTML('beforeend', `<span class="period-drop">${PERIOD_DROP_SVG}</span>`);
+                }
+                button.insertAdjacentHTML('beforeend', `<span class="period-sr">${label}</span>`);
+            }
+
+            function periodCacheWrite() { try { localStorage.setItem(PERIOD_CACHE_KEY, JSON.stringify(periodData)); } catch (e) {} }
+            function periodCacheRead() { try { const j = JSON.parse(localStorage.getItem(PERIOD_CACHE_KEY) || 'null'); return j ? periodNorm(j) : null; } catch (e) { return null; } }
+            function periodRefresh() { renderPeriodCard(); renderMoodCalendar(); }
+
+            async function loadPeriod() {
+                if (!supabase) { periodData = periodCacheRead(); periodOffline = true; periodLoaded = true; periodRefresh(); return; }
+                try {
+                    const { data, error } = await supabase.from(PERIOD_TABLE).select('*').eq('id', 1).maybeSingle();
+                    if (error) throw error;
+                    periodData = periodNorm(data || {});
+                    periodOffline = false;
+                    periodCacheWrite();
+                } catch (e) {
+                    console.error('Could not load the period tracker:', e);
+                    periodData = periodCacheRead();
+                    periodOffline = true;
+                }
+                periodLoaded = true;
+                periodRefresh();
+            }
+
+            async function periodSave(next) {
+                if (!supabase || periodOffline) { showToast('You seem to be offline — the period tracker can\'t be changed right now.', { type: 'error' }); return false; }
+                if (periodSaving) return false;
+                periodSaving = true;
+                renderPeriodCard();
+                let ok = false;
+                try {
+                    const n = periodNorm(next);
+                    const { data, error } = await supabase.from(PERIOD_TABLE).upsert({
+                        id: 1, starts: n.starts, cycle_len: n.cycle_len, period_len: n.period_len,
+                        next_override: n.next_override, updated_by: myAuthorNum()
+                    }, { onConflict: 'id' }).select();
+                    if (error || !data || !data.length) throw error || new Error('nothing was saved');
+                    periodData = periodNorm(data[0]);
+                    periodCacheWrite();
+                    periodVersion++;
+                    ok = true;
+                } catch (e) {
+                    console.error('Could not save the period tracker:', e);
+                    showToast('Could not save that. Please try again.', { type: 'error' });
+                }
+                periodSaving = false;
+                periodRefresh();
+                haptic(10);
+                return ok;
+            }
+
+            function periodValidate(target, d, plan, today) {
+                if (target === 'last') {
+                    if (d > today) return 'Pick the day the last period actually started — that date is still ahead.';
+                    const prev = plan && plan.starts.length > 1 ? plan.starts[plan.starts.length - 2] : null;
+                    if (prev != null && d < prev + PERIOD_MIN_GAP) return `That's too close to the start before it (${pdPretty(prev)}).`;
+                    return '';
+                }
+                if (!plan) return '';
+                if (d < plan.last + PERIOD_MIN_GAP) return `That's too close to the last period start (${pdPretty(plan.last)}).`;
+                if (d > today + 120) return 'That date is too far ahead.';
+                return '';
+            }
+
+            // target 'next': move/confirm the next mark.  target 'last': correct the last confirmed start.
+            async function periodSetStart(target, d) {
+                const today = pdToday(),
+                    plan = periodPlan(),
+                    err = periodValidate(target, d, plan, today);
+                if (err) { showToast(err, { type: 'error' }); return false; }
+                const before = periodData ? JSON.parse(JSON.stringify(periodData)) : null;
+                const nd = periodData ? { ...periodData, starts: [...periodData.starts] } : { starts: [], cycle_len: 28, period_len: 5, next_override: null };
+                let suggest = 0;
+                if (target === 'last') {
+                    if (nd.starts.length) nd.starts[nd.starts.length - 1] = pdKey(d); else nd.starts.push(pdKey(d));
+                    if (nd.next_override && pdNum(nd.next_override) < d + PERIOD_MIN_GAP) nd.next_override = null;
+                } else if (d <= today) { // it really started: confirm it, and every later date follows from it
+                    const gap = plan ? d - plan.last : 0;
+                    nd.starts.push(pdKey(d));
+                    nd.next_override = null;
+                    if (gap >= 18 && gap <= 45 && gap !== nd.cycle_len) suggest = gap;
+                } else { // a day that hasn't come yet: just move the expected mark there
+                    nd.next_override = pdKey(d);
+                }
+                nd.starts = nd.starts.slice(-24);
+                if (!(await periodSave(nd))) return false;
+                periodSuggestCycle = suggest;
+                const savedVersion = periodVersion;
+                const np = periodPlan();
+                renderPeriodCard();
+                const undo = before ? {
+                    actionLabel: 'Undo', duration: 7000,
+                    onAction: () => {
+                        if (periodVersion !== savedVersion) { showToast('That was already replaced by a newer change.'); return; }
+                        periodSuggestCycle = 0;
+                        periodSave(before);
+                    }
+                } : { duration: 5000 };
+                showToast(target === 'last' ? `Last start set to ${pdPretty(d)} · next expected ${pdPretty(np.next)}` :
+                    d <= today ? `Marked ${pdPretty(d)} · next expected ${pdPretty(np.next)}` : `Mark moved to ${pdPretty(d)}`, undo);
+                return true;
+            }
+
+            function periodStartPick(target) { periodPicking = target; periodMoreOpen = false; periodRefresh(); }
+            function periodCancelPick() { if (!periodPicking) return; periodPicking = null; periodRefresh(); }
+            async function periodPick(key) {
+                const target = periodPicking;
+                if (!target || periodSaving) return;
+                periodPicking = null;
+                renderPeriodCard();
+                await periodSetStart(target, pdNum(key));
+                renderMoodCalendar();
+            }
+
+            function renderPeriodCard() {
+                if (!periodCard) return;
+                if (!periodLoaded) { periodCard.classList.add('hidden'); return; }
+                periodCard.classList.remove('hidden');
+                const plan = periodData ? periodPlan() : null,
+                    today = pdToday(),
+                    off = periodOffline ? ' · offline copy' : '',
+                    dis = periodSaving || periodOffline ? ' disabled' : '';
+                let title, sub, soon = false, during = false;
+                if (!periodData) { title = 'Couldn\'t load the period tracker'; sub = 'Check your connection, then reopen the calendar.'; }
+                else if (!plan) { title = 'Period tracker'; sub = 'Tell me the day her last period started and I\'ll mark the next ones.'; }
+                else {
+                    const since = today - plan.last,
+                        diff = plan.next - today;
+                    if (since >= 0 && since < plan.len) { during = true; soon = true; title = `Period · day ${since + 1} of ${plan.len}`; sub = `Next one expected ${pdPretty(plan.next)}`; }
+                    else if (diff > 1) { title = `Next period in ${diff} days`; sub = pdPretty(plan.next) + (plan.moved ? ' · moved by you' : ''); soon = diff <= 3; }
+                    else if (diff === 1) { soon = true; title = 'Next period: tomorrow'; sub = pdPretty(plan.next) + (plan.moved ? ' · moved by you' : ''); }
+                    else if (diff === 0) { soon = true; title = 'Expected today'; sub = 'Mark it when it starts, or move the mark.'; }
+                    else { soon = true; const n = -diff; title = `Expected ${n} day${n === 1 ? '' : 's'} ago`; sub = `${pdPretty(plan.next)} · has it started? Mark it, or move the mark.`; }
+                }
+                periodCard.classList.toggle('soon', soon);
+                periodTitle.textContent = title;
+                periodSub.textContent = sub + off;
+                let html = '';
+                if (periodPicking) {
+                    html += `<div class="period-pick"><span>${periodPicking === 'last' ? 'Tap the day her last period started.' : 'Tap the day it actually started. The dates after it will shift too.'}</span><button type="button" class="period-btn" data-pa="cancel">Cancel</button></div>`;
+                } else if (!periodData) {
+                    html += `<div class="period-actions"><button type="button" class="period-btn primary" data-pa="retry">Try again</button></div>`;
+                } else if (!plan) {
+                    html += `<div class="period-actions"><button type="button" class="period-btn primary" data-pa="setup"${dis}>Pick the start date</button></div>`;
+                } else {
+                    html += '<div class="period-actions">';
+                    if (!during) html += `<button type="button" class="period-btn primary" data-pa="today"${dis}>Started today</button>`;
+                    html += `<button type="button" class="period-btn" data-pa="move"${dis}>Move the mark</button>`;
+                    html += `<button type="button" class="period-btn icon" data-pa="more" aria-expanded="${periodMoreOpen}" aria-label="More options">⋯</button></div>`;
+                    if (periodSuggestCycle) html += `<div class="period-suggest"><span>That cycle was ${periodSuggestCycle} days.</span><button type="button" class="period-btn" data-pa="suggest"${dis}>Use ${periodSuggestCycle} days from now on</button><button type="button" class="period-btn icon" data-pa="dismiss" aria-label="Dismiss">✕</button></div>`;
+                    if (periodMoreOpen) {
+                        html += `<div class="period-more">
+                            <div class="period-row"><span>Cycle length</span><span class="period-step"><button type="button" class="period-btn icon" data-pa="cycle-"${dis} aria-label="Shorter cycle">−</button><b>${plan.cycle} days</b><button type="button" class="period-btn icon" data-pa="cycle+"${dis} aria-label="Longer cycle">+</button></span></div>
+                            <div class="period-row"><span>Period lasts</span><span class="period-step"><button type="button" class="period-btn icon" data-pa="len-"${dis} aria-label="Fewer days">−</button><b>${plan.len} days</b><button type="button" class="period-btn icon" data-pa="len+"${dis} aria-label="More days">+</button></span></div>
+                            <div class="period-actions"><button type="button" class="period-btn" data-pa="fixlast"${dis}>Fix last start date</button>${plan.moved ? `<button type="button" class="period-btn" data-pa="resetmark"${dis}>Back to automatic</button>` : ''}${plan.starts.length > 1 ? `<button type="button" class="period-btn" data-pa="undo"${dis}>Remove last start</button>` : ''}</div>
+                        </div>`;
+                    }
+                }
+                html += `<p class="period-legend"><span class="period-lg"><i class="period-key predicted"></i>expected</span><span class="period-lg"><i class="period-key confirmed"></i>confirmed</span><span class="period-lg"><i class="period-key late"></i>waiting to be confirmed</span></p>`;
+                periodBody.innerHTML = html;
+            }
+
+            if (periodCard) periodCard.addEventListener('click', async (e) => {
+                const b = e.target.closest('[data-pa]');
+                if (!b || b.disabled) return;
+                const act = b.dataset.pa,
+                    plan = periodPlan();
+                if (act === 'cancel') return periodCancelPick();
+                if (act === 'retry') return loadPeriod();
+                if (act === 'setup') return periodStartPick('last');
+                if (act === 'move') return periodStartPick('next');
+                if (act === 'fixlast') return periodStartPick('last');
+                if (act === 'today') return periodSetStart('next', pdToday());
+                if (act === 'more') { periodMoreOpen = !periodMoreOpen; return renderPeriodCard(); }
+                if (act === 'dismiss') { periodSuggestCycle = 0; return renderPeriodCard(); }
+                if (!plan) return;
+                const base = { ...periodData, starts: [...periodData.starts] };
+                if (act === 'suggest') { const v = periodSuggestCycle; periodSuggestCycle = 0; return periodSave({ ...base, cycle_len: v }); }
+                if (act === 'cycle-' || act === 'cycle+') return periodSave({ ...base, cycle_len: pdClamp(plan.cycle + (act === 'cycle+' ? 1 : -1), 15, 60) });
+                if (act === 'len-' || act === 'len+') return periodSave({ ...base, period_len: pdClamp(plan.len + (act === 'len+' ? 1 : -1), 1, 10) });
+                if (act === 'resetmark') return periodSave({ ...base, next_override: null });
+                if (act === 'undo' && base.starts.length > 1) { base.starts.pop(); base.next_override = null; periodSuggestCycle = 0; return periodSave(base); }
+            });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') periodCancelPick(); });
+
             function renderMoodCalendar() {
                 const now = new Date(),
                     y = calendarCursor.getFullYear(),
                     month = calendarCursor.getMonth(),
                     first = new Date(y, month, 1),
                     last = new Date(y, month + 1, 0),
-                    today = dateKey(now);
+                    today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
                 calendarTitle.textContent = calendarCursor.toLocaleDateString(undefined, { month: 'long',
                     year: 'numeric' });
+                moodCalendar.classList.toggle('period-picking', !!periodPicking);
+                const periodMarks = periodMarksFor(y, month);
                 moodCalendar.innerHTML = ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(x =>
                     `<span class="calendar-weekday">${x}</span>`).join('');
                 for (let i = 0; i < first.getDay(); i++) moodCalendar.insertAdjacentHTML('beforeend',
@@ -19973,16 +20311,19 @@
                         inner += `</span>`;
                     }
                     b.innerHTML = inner;
+                    const periodMark = periodMarks.get(key);
+                    if (periodMark) periodDecorate(b, periodMark, day);
                     if (dayIsNew) { const tag = document.createElement('span');
                         tag.className = 'new-item-cloud';
                         tag.textContent = 'NEW';
                         b.appendChild(tag); }
-                    b.addEventListener('click', () => saveCalendarMood(key));
+                    b.addEventListener('click', () => { if (periodPicking) periodPick(key); else saveCalendarMood(key); });
                     moodCalendar.appendChild(b);
                 }
             }
 
             async function loadMoods() {
+                loadPeriod();
                 if (!supabase) return;
                 try {
                     const { data, error } = await supabase.from(MOODS_TABLE).select('*');
@@ -20251,7 +20592,7 @@
                     constellationSky.appendChild(star);
                 });
             }
-            moodsToggleBtn.addEventListener('click', () => { openExtra(moodsWall, 'mood');
+            moodsToggleBtn.addEventListener('click', () => { periodPicking = null; openExtra(moodsWall, 'mood');
                 loadMoods(); });
             capsulesToggleBtn.addEventListener('click', () => { openExtra(capsulesWall, 'capsules');
                 loadCapsules(); });
@@ -20270,8 +20611,8 @@
             const SPECIAL_DAYS = [
                 { emoji: '🎀', title: "National Girlfriend's Day", blurb: "A little something made just for this day.",
                     unlockDate: '2026-08-01', href: 'for-you.html' },
-                //{ emoji: '🤍', title: 'Happy Birthday, Mummy', blurb: "A quiet little something made with love, for a very special day.",
-                  //  unlockDate: '2026-11-14', href: 'with-love.html' }
+                { emoji: '🤍', title: 'Happy Birthday, Mummy', blurb: "A quiet little something made with love, for a very special day.",
+                    unlockDate: '2026-11-14', href: 'with-love.html' }
             ];
 
             function renderSpecialDays() {
@@ -20310,6 +20651,9 @@
                         if (!capsulesWall.classList.contains('hidden') && table === CAPSULES_TABLE) loadCapsules();
                         if (!bucketWall.classList.contains('hidden') && table === BUCKET_LIST_TABLE) loadBucket();
                     }).subscribe());
+                supabase.channel('extras-period').on('postgres_changes', { event: '*', schema: 'public', table: PERIOD_TABLE }, () => {
+                    if (!moodsWall.classList.contains('hidden') && !periodSaving) loadPeriod();
+                }).subscribe();
             }
             startExtrasRealtime();
 
