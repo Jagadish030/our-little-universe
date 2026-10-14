@@ -32551,6 +32551,7 @@
                 const FOG_ARM_MS = 320; // hold the pinch this long before the pen touches the glass
                 const FOG_HINT = 'Open your mouth and breathe out to fog the glass · Pinch 👌 and hold a moment to write · Rub with the back of a closed fist to wipe';
                 const FOG_TURN_HINT = 'To wipe, turn your hand so the back of your closed fist faces the screen';
+                const FOG_BACK_HINT = 'To write, turn your palm toward the screen';
                 const FOG_HINT_FALLBACK = "Couldn't load face tracking — press and hold the screen to breathe on it instead";
                 const FOG_LOADING = 'Loading breath detection… 🌫️';
                 const TAU = Math.PI * 2;
@@ -32567,7 +32568,7 @@
                 let fogActive = false, fogLast = 0, fogLastActivity = 0, fogBlowT = 0;
                 const mouth = { x: 0, y: 0, faceW: 0, ratio: 0, seen: false, at: 0, blowing: false, openSince: 0, closedSince: 0 };
                 let pen = null, pinchSince = 0, pinchLostAt = 0, lastPinchAt = 0, rubPos = null;
-                let fogPinching = false, fogBackSmooth = 0, fogFistFrames = 0, fogFrontSince = 0, fogTurnUntil = 0, fogTurnCool = 0;
+                let fogPinching = false, fogFistFrames = 0, fogFrontSince = 0, fogTurnUntil = 0, fogTurnCool = 0;
                 let pressFog = null; // press-and-hold fallback, used only if face tracking can't load
                 let fogHandPose = null, fogHandAt = 0, fogTip = null, fogFist = null;
 
@@ -32673,10 +32674,11 @@
                     lastPinchAt = 0;
                     rubPos = null;
                     fogPinching = false;
-                    fogBackSmooth = 0;
                     fogFistFrames = 0;
                     fogFrontSince = 0;
                     fogTurnUntil = 0;
+                    fogBackHintUntil = 0;
+                    fogBlockedSince = 0;
                     fogBlowT = 0;
                     fogLast = 0;
                     fogLastActivity = 0;
@@ -32869,7 +32871,8 @@
                     pinchLostAt = 0;
                 }
 
-                /* ─── Hand: pinch thumb + index (👌) = write, back of a closed fist = wipe ───
+                /* ─── Hand: pinch thumb + index (👌, palm toward the screen) = write; closed fist with its BACK
+                   toward the screen = wipe ───
                    Tracking is made forgiving on purpose: landmarks are smoothed, a hand that
                    drops out for a moment keeps its state, and every on/off decision uses
                    hysteresis so one noisy frame can't flip it. */
@@ -32878,10 +32881,17 @@
                     fogWipeOn = false,
                     fogFistLostAt = 0,
                     fogDbg = '';
-                let fogFlip = 1, // learned: +1 if MediaPipe's left/right label works as assumed, -1 if it is inverted
-                    fogAgree = 0,
-                    fogDisagree = 0;
-                try { if (localStorage.getItem('mw.fog.flip') === '-1') fogFlip = -1; } catch (err) {}
+                let fogFlip = 1, // learned: +1 if MediaPipe's left/right label works as assumed, -1 if it is inverted on this device
+                    fogFace = 0, // smoothed: which side of the hand faces the screen. Positive = the back, negative = the palm
+                    fogLabelAvg = 0,
+                    fogPinchBack = 0,
+                    fogPinchFront = 0,
+                    fogHolds = 0, // how many separate times a pinch was held (so one long back-side pinch can never trigger the flip)
+                    fogShapePinchAt = 0,
+                    fogBlockedSince = 0,
+                    fogBackHintUntil = 0,
+                    fogBackHintCool = 0;
+                try { if (localStorage.getItem('mw.fog.flip2') === '-1') fogFlip = -1; } catch (err) {}
                 const FOG_DEBUG = (() => { try { return localStorage.getItem('mw.fog.debug') === '1'; } catch (err) { return false; } })();
 
                 function fogApplyHandOptions() { // fog mode lets the tracker hold on through pinches and fists
@@ -32919,7 +32929,7 @@
                     return {
                         gap: d(4, 8) / size, // thumb tip ↔ index tip
                         reach: d(8, 5) / size, // index tip ↔ its knuckle: tiny in a fist, large in a pinch
-                        curled: [[8, 5], [12, 9], [16, 13], [20, 17]].map(([t, m]) => d(t, 0) / (d(m, 0) || 1)), // fingertip vs knuckle distance from the wrist: ~2 open, ~1 closed
+                        curled: [[8, 5], [12, 9], [16, 13], [20, 17]].map(([t, m]) => d(t, 0) / (d(m, 0) || 1)), // index, middle, ring, pinky: fingertip vs knuckle distance from the wrist, ~2 open, ~1 closed
                         cross: (ax * by - ay * bx) / (size * size) // winding of wrist → index knuckle → pinky knuckle: flips between palm and back
                     };
                 }
@@ -32932,29 +32942,34 @@
                     return ((avg([6, 10, 14, 18]) - mcp) + 0.5 * (avg([8, 12, 16, 20]) - mcp)) / size;
                 }
 
-                // positive = back of the hand toward the screen. Two cues: the 2D winding + which hand it is
-                // (steady, but depends on the tracker's left/right label), and the depth cue (label-free, noisier).
-                function fogFacing(ft, z, labelSign) {
-                    const zc = Math.max(-1, Math.min(1, z / 0.4));
-                    if (!labelSign || Math.abs(ft.cross) < 0.08) return zc;
+                // Which side of the hand faces the screen, right now? Positive = the back.
+                // Main cue: the 2D winding of the knuckles + which hand it is (the tracker's left/right label, smoothed).
+                // Helper cue: finger depth, which only means something once the fingers curl, so it counts for little otherwise.
+                function fogFacingNow(lm, ft, labelSign, curledHand) {
+                    const zc = Math.max(-1, Math.min(1, fogBackScore(lm) / 0.4));
+                    if (!labelSign || Math.abs(ft.cross) < 0.08) return zc * (curledHand ? 1 : 0.5);
                     const geo = labelSign * Math.sign(ft.cross) * fogFlip * Math.min(1, Math.abs(ft.cross) / 0.3);
-                    const w = fogAgree + fogDisagree >= 10 ? 0.7 : 0.35; // lean on the 2D cue once it has proven itself
-                    return w * geo + (1 - w) * zc;
+                    const wz = curledHand ? 0.4 : 0.15;
+                    return (1 - wz) * geo + wz * zc;
                 }
 
-                // Learns, from your own fists, whether the tracker's left/right label is inverted on this device,
-                // by checking the two cues against each other. Remembered between visits.
-                function fogLearn(ft, z, labelSign) {
-                    if (!labelSign || Math.abs(z) < 0.25 || Math.abs(ft.cross) < 0.15) return;
-                    if (Math.sign(z) === labelSign * Math.sign(ft.cross)) fogAgree++;
-                    else fogDisagree++;
-                    if (fogAgree + fogDisagree > 60) { fogAgree *= 0.5; fogDisagree *= 0.5; }
-                    if (fogAgree + fogDisagree >= 10) {
-                        const nf = fogDisagree > fogAgree * 1.4 ? -1 : fogAgree > fogDisagree * 1.4 ? 1 : fogFlip;
-                        if (nf !== fogFlip) {
-                            fogFlip = nf;
-                            try { localStorage.setItem('mw.fog.flip', String(nf)); } catch (err) {}
-                        }
+                // People write with the palm toward the screen, so if almost every pinch — across at least two separate
+                // holds — looks like a "back" pinch, the tracker's left/right label must be inverted on this device:
+                // flip it, and remember that.
+                function fogLearnPinch(F) {
+                    if (Math.abs(F) < 0.3) return;
+                    if (F > 0) fogPinchBack++; else fogPinchFront++;
+                    const total = fogPinchBack + fogPinchFront;
+                    if (total >= 45 && fogHolds >= 2 && fogPinchBack > total * 0.85) {
+                        fogFlip = -fogFlip;
+                        fogFace = -fogFace;
+                        fogPinchBack = 0;
+                        fogPinchFront = 0;
+                        fogHolds = 0;
+                        try { localStorage.setItem('mw.fog.flip2', String(fogFlip)); } catch (err) {}
+                    } else if (total > 120) {
+                        fogPinchBack *= 0.5;
+                        fogPinchFront *= 0.5;
                     }
                 }
 
@@ -32968,7 +32983,9 @@
                     rubPos = null;
                     fogWipeOn = false;
                     fogFistLostAt = 0;
-                    fogBackSmooth = 0;
+                    fogFace = 0;
+                    fogLabelAvg = 0;
+                    fogBlockedSince = 0;
                     fogFistFrames = 0;
                     fogFrontSince = 0;
                     fogLm = null;
@@ -32986,16 +33003,46 @@
                     const raw = results.multiHandLandmarks[0];
                     lastLandmarks = raw;
                     if (!fogEnsure()) return;
+                    const fresh = !fogLm || now - fogHandAt > 400; // first frame of a newly seen hand
                     const lm = fogSmoothLandmarks(raw, now);
                     const ft = fogFeatures(lm);
-                    fogPinching = ft.gap < (fogPinching ? 0.4 : 0.27) && ft.reach > (fogPinching ? 0.28 : 0.34); // easy to hold, deliberate to start
-                    const pinching = fogPinching;
+                    // which hand: the label is smoothed so one wrong frame can't flip it
+                    const label = results.multiHandedness && results.multiHandedness[0] && results.multiHandedness[0].label;
+                    const ls = label === 'Left' ? 1 : label === 'Right' ? -1 : 0;
+                    if (ls) fogLabelAvg = fresh ? ls : fogLabelAvg + (ls - fogLabelAvg) * 0.2;
+                    const labelSign = Math.abs(fogLabelAvg) > 0.2 ? Math.sign(fogLabelAvg) : 0;
+                    // hand shapes. A pinch needs the other fingers mostly out (the 👌 shape): a closed fist with the thumb
+                    // resting on the index finger is not a pinch.
+                    const wasPinching = fogPinching;
+                    const othersOut = [1, 2, 3].filter((i) => ft.curled[i] > 1.45).length;
+                    const shapePinch = ft.gap < (wasPinching ? 0.4 : 0.27) && ft.reach > (wasPinching ? 0.28 : 0.34) && othersOut >= (wasPinching ? 1 : 2);
                     const curledCount = ft.curled.filter((r) => r < (fogFistFrames > 0 || fogWipeOn ? 1.55 : 1.4)).length;
-                    const isFist = !pinching && curledCount >= 3;
-                    fogHandPose = pinching ? 'pinch' : isFist ? 'fist' : 'other';
+                    const fistShape = !shapePinch && curledCount >= 3;
+                    // which side faces the screen
+                    const F = fogFacingNow(lm, ft, labelSign, fistShape);
+                    fogFace = fresh ? F : fogFace + (F - fogFace) * 0.35;
+                    if (shapePinch) {
+                        if (now - fogShapePinchAt > 300) fogHolds++;
+                        fogShapePinchAt = now;
+                        fogLearnPinch(F);
+                    }
+                    const backNow = fogFace > (wasPinching ? 0.45 : 0.25); // easy to keep, deliberate to start
+                    const pinching = shapePinch && !backNow; // writing only works with the palm side toward the screen
+                    const blocked = shapePinch && backNow;
+                    fogPinching = pinching;
+                    fogHandPose = pinching ? 'pinch' : blocked ? 'blocked' : fistShape ? 'fist' : 'other';
                     fogHandAt = now;
                     fogTip = mapPoint((raw[4].x + raw[8].x) / 2, (raw[4].y + raw[8].y) / 2); // the pen sits where the two fingertips meet
                     fogFist = null;
+                    if (blocked) { // a pinch seen from the back: explain, once in a while
+                        if (!fogBlockedSince) fogBlockedSince = now;
+                        if (now - fogBlockedSince > 700 && now > fogBackHintCool) {
+                            fogBackHintUntil = now + 3000;
+                            fogBackHintCool = now + 9000;
+                        }
+                    } else {
+                        fogBlockedSince = 0;
+                    }
                     if (pinching) {
                         lastPinchAt = now;
                         pinchLostAt = 0;
@@ -33011,22 +33058,17 @@
                             }
                             fogPenMove(fogTip.x, fogTip.y, now); // the pen touches the glass only after a short hold
                         }
-                        fogDbg = 'pinch gap ' + ft.gap.toFixed(2);
+                        fogDbg = 'PINCH face ' + fogFace.toFixed(2) + ' gap ' + ft.gap.toFixed(2) + ' out ' + othersOut + ' ' + (label || '-') + ' flip ' + fogFlip;
                         return;
                     }
                     if (pinchSince && !pinchLostAt) pinchLostAt = now; // a brief release/blip doesn't end the stroke (see fogUpdate)
-                    // wipe: a closed fist whose BACK faces the screen, not right after a pinch
+                    // wipe: a CLOSED fist whose BACK faces the screen, not right after a pinch
                     let wiping = false;
-                    const label = results.multiHandedness && results.multiHandedness[0] && results.multiHandedness[0].label;
-                    const labelSign = label === 'Left' ? 1 : label === 'Right' ? -1 : 0;
-                    if (isFist && now - lastPinchAt > 350) {
+                    if (fistShape && now - lastPinchAt > 350) {
                         fogFistLostAt = 0;
                         fogFistFrames++;
-                        const z = fogBackScore(lm);
-                        fogLearn(ft, z, labelSign);
-                        fogBackSmooth += (fogFacing(ft, z, labelSign) - fogBackSmooth) * 0.45;
-                        wiping = fogFistFrames >= 2 && fogBackSmooth > (fogWipeOn ? -0.1 : 0.2); // easier to keep than to start
-                        if (!wiping && fogBackSmooth < 0) { // palm-side fist: wipe nothing, but explain once in a while
+                        wiping = fogFistFrames >= 2 && fogFace > (fogWipeOn ? -0.1 : 0.2); // easier to keep than to start
+                        if (!wiping && fogFace < 0) { // palm-side fist: wipe nothing, but explain once in a while
                             if (!fogFrontSince) fogFrontSince = now;
                             if (now - fogFrontSince > 900 && now > fogTurnCool) {
                                 fogTurnUntil = now + 3000;
@@ -33035,7 +33077,7 @@
                         } else {
                             fogFrontSince = 0;
                         }
-                        fogDbg = 'fist ' + (wiping ? 'BACK' : 'front') + ' s ' + fogBackSmooth.toFixed(2) + ' z ' + z.toFixed(2) + ' cross ' + ft.cross.toFixed(2) + ' ' + (label || '-') + ' flip ' + fogFlip + ' agree ' + fogAgree + '/' + fogDisagree;
+                        fogDbg = 'fist ' + (wiping ? 'BACK' : 'front') + ' face ' + fogFace.toFixed(2) + ' ' + (label || '-') + ' flip ' + fogFlip;
                     } else {
                         if (fogWipeOn) { // pose flickered for a frame mid-wipe: carry on briefly instead of stopping
                             if (!fogFistLostAt) fogFistLostAt = now;
@@ -33044,9 +33086,8 @@
                         if (!wiping) {
                             fogFistFrames = 0;
                             fogFrontSince = 0;
-                            fogBackSmooth = 0;
                         }
-                        fogDbg = 'hand ' + fogHandPose + ' curled ' + curledCount;
+                        fogDbg = (blocked ? 'pinch from the BACK (ignored)' : 'hand ' + fogHandPose) + ' face ' + fogFace.toFixed(2) + ' curled ' + curledCount + ' ' + (label || '-') + ' flip ' + fogFlip;
                     }
                     fogWipeOn = wiping;
                     if (wiping) {
@@ -33248,11 +33289,11 @@
                     if (FOG_DEBUG) fogDrawDebug(now);
                     // one place decides what the hint says and whether it shows
                     const turn = now < fogTurnUntil;
-                    const text = turn ? FOG_TURN_HINT : faceState === 'loading' ? FOG_LOADING : faceState === 'failed' ? FOG_HINT_FALLBACK : FOG_HINT;
+                    const text = turn ? FOG_TURN_HINT : now < fogBackHintUntil ? FOG_BACK_HINT : faceState === 'loading' ? FOG_LOADING : faceState === 'failed' ? FOG_HINT_FALLBACK : FOG_HINT;
                     if (hint.textContent !== text) hint.textContent = text;
                     const handNow = fogTip && now - fogHandAt < 800;
                     const busy = handNow || mouth.blowing || fogActive || !!pressFog;
-                    const wanted = turn || faceState === 'loading' || faceState === 'failed' || (!busy && now - fogLastActivity > 5000);
+                    const wanted = turn || now < fogBackHintUntil || faceState === 'loading' || faceState === 'failed' || (!busy && now - fogLastActivity > 5000);
                     hint.classList.toggle('hidden', !wanted || fogPanelOpen());
                 }
 
