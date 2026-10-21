@@ -186,12 +186,121 @@ a.btn{display:inline-grid;place-items:center;text-decoration:none}
 .notecard{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:24px;background:rgba(12,6,16,.76);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);animation:enter .3s ease both;overflow:auto}
 .notecard .paper{max-width:420px;width:100%}
 
-/* photos */
-.reel{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:16px calc(50% - 130px) 22px;margin:0 -20px;scrollbar-width:none}
-.reel::-webkit-scrollbar{display:none}
-.polaroid{flex:0 0 260px;scroll-snap-align:center;background:#fffdf9;color:var(--ink);padding:12px 12px 18px;border-radius:6px;box-shadow:0 18px 44px rgba(0,0,0,.48),0 2px 8px rgba(0,0,0,.2);transform:rotate(var(--r,0deg))}
-.polaroid img{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:#e8e0d8;border-radius:2px}
-.polaroid p{margin:.75rem 0 0;font-family:var(--serif);font-style:italic;font-size:1.18rem;line-height:1.32}
+/* tilt to peek: holographic parallax cards */
+.holo{--w:min(280px,72vw);position:relative;width:var(--w);height:calc(var(--w) * 1.2);margin:.9rem auto .6rem;touch-action:none;user-select:none;-webkit-user-select:none}
+.hslot{position:absolute;inset:0;perspective:900px;transform-style:preserve-3d}
+.hslot.in-r{animation:hinr .42s cubic-bezier(.22,1,.36,1) both}
+.hslot.in-l{animation:hinl .42s cubic-bezier(.22,1,.36,1) both}
+.hslot.out-l{animation:houtl .38s ease-in both;pointer-events:none}
+.hslot.out-r{animation:houtr .38s ease-in both;pointer-events:none}
+@keyframes hinr{from{transform:translateX(70%) rotate(9deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes hinl{from{transform:translateX(-70%) rotate(-9deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes houtl{to{transform:translateX(-70%) rotate(-9deg);opacity:0}}
+@keyframes houtr{to{transform:translateX(70%) rotate(9deg);opacity:0}}
+.hcard{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(calc(var(--ty,0) * -12deg)) rotateY(calc(var(--tx,0) * 12deg));will-change:transform}
+.hback,.hphoto,.hsheen,.hglare,.hcap,.hsp{position:absolute}
+.hback{inset:0;border-radius:18px;overflow:hidden;background:#1d1220;box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 0 1px rgba(255,220,180,.28);transform:translate3d(calc(var(--tx,0) * -8px),calc(var(--ty,0) * -8px),-30px) scale(1.06)}
+.hback img{width:100%;height:100%;object-fit:cover;filter:blur(16px) brightness(.55) saturate(1.3);transform:scale(1.25)}
+.hphoto{inset:14px 14px 70px 14px;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.5),0 0 0 2px rgba(255,255,255,.55);transform:translate3d(calc(var(--tx,0) * 6px),calc(var(--ty,0) * 6px),10px)}
+.hphoto img{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none;-webkit-user-drag:none}
+.hsheen,.hglare{inset:14px 14px 70px 14px;border-radius:10px;pointer-events:none}
+.hsheen{background:linear-gradient(115deg,#ff6ec7,#ffd36e,#6effb8,#6ec8ff,#c36eff,#ff6ec7);background-size:300% 300%;background-position:var(--gx,50%) var(--gy,50%);opacity:.15;transform:translate3d(calc(var(--tx,0) * 8px),calc(var(--ty,0) * 8px),12px)}
+.hglare{background:radial-gradient(circle at var(--gx,50%) var(--gy,30%),rgba(255,255,255,.26),transparent 55%);transform:translate3d(calc(var(--tx,0) * 8px),calc(var(--ty,0) * 8px),14px)}
+.hcap{left:0;right:0;bottom:16px;margin:0;text-align:center;font-family:var(--serif);font-style:italic;font-weight:600;font-size:1.5rem;color:var(--cream);text-shadow:0 2px 16px rgba(255,190,130,.55);transform:translate3d(calc(var(--tx,0) * 18px),calc(var(--ty,0) * 14px),46px);pointer-events:none}
+.hsp{inset:0;pointer-events:none;transform:translate3d(calc(var(--tx,0) * 26px),calc(var(--ty,0) * 22px),70px)}
+.hsp i{position:absolute;width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 10px 3px rgba(255,214,150,.8);animation:htw 2.4s ease-in-out infinite}
+@keyframes htw{0%,100%{opacity:.1;scale:.5}50%{opacity:1;scale:1}}
+.hnav{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:.4rem}
+.hcount{margin:0;min-width:3.6em;font-variant-numeric:tabular-nums;color:var(--muted);font-size:.95rem}
+
+/* film reel projector */
+.fscreen{position:relative;isolation:isolate;width:min(300px,76vw);aspect-ratio:1;margin:.9rem auto 0;border-radius:6px;overflow:hidden;background:#000;border:10px solid #17100f;box-shadow:0 0 0 2px #3c2d26,0 20px 50px rgba(0,0,0,.6),0 0 90px 10px rgba(255,200,130,.16);touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;outline:none}
+.fscreen.rise{animation:frise .9s ease-out}
+@keyframes frise{0%{filter:brightness(3.2) contrast(.7)}100%{filter:none}}
+.fscreen.jolt{animation:fjolt .3s ease-out}
+@keyframes fjolt{0%{filter:brightness(1.6)}100%{filter:none}}
+.fgate{position:absolute;inset:0;overflow:hidden}
+.ffr{position:absolute;inset:0;box-shadow:0 10px 0 #000,0 -10px 0 #000;background:#000}
+.ffr img{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none;-webkit-user-drag:none;filter:sepia(.3) contrast(1.07) saturate(.9) brightness(.95)}
+.ffr.from-b{animation:ffb .3s cubic-bezier(.7,0,.2,1) both}
+.ffr.from-t{animation:fft .3s cubic-bezier(.7,0,.2,1) both}
+.ffr.to-t{animation:ftt .3s cubic-bezier(.7,0,.2,1) both}
+.ffr.to-b{animation:ftb .3s cubic-bezier(.7,0,.2,1) both}
+.ffr.settle{animation:fset .3s ease-out}
+@keyframes ffb{from{transform:translateY(100%)}to{transform:none}}
+@keyframes fft{from{transform:translateY(-100%)}to{transform:none}}
+@keyframes ftt{to{transform:translateY(-100%)}}
+@keyframes ftb{to{transform:translateY(100%)}}
+@keyframes fset{0%{transform:translateY(6px)}50%{transform:translateY(-2px)}100%{transform:none}}
+.fgrain{position:absolute;inset:0;width:100%;height:100%;mix-blend-mode:overlay;opacity:.28;image-rendering:pixelated;pointer-events:none}
+.fflick{position:absolute;inset:0;background:#ffe9c4;opacity:0;pointer-events:none;animation:ffl .22s steps(1) infinite}
+.fflick.big{opacity:.3;animation:none}
+@keyframes ffl{0%{opacity:.03}20%{opacity:.1}40%{opacity:.02}60%{opacity:.13}80%{opacity:.05}}
+.fscr{position:absolute;top:0;bottom:0;left:12%;width:1px;background:rgba(255,245,225,.38);pointer-events:none;animation:fscr 1.7s steps(1) infinite}
+.fscr.b{width:2px;opacity:.5;animation-duration:2.3s;animation-delay:-.7s}
+@keyframes fscr{0%{left:12%}20%{left:63%}40%{left:31%}60%{left:82%}80%{left:47%}}
+.fdust{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 18% 22%,rgba(255,255,255,.8) 0 1px,transparent 1.8px),radial-gradient(circle at 71% 64%,rgba(255,255,255,.65) 0 1.2px,transparent 2px),radial-gradient(circle at 42% 85%,rgba(0,0,0,.85) 0 2px,transparent 3px);animation:fdust 1.1s steps(1) infinite}
+@keyframes fdust{0%{background-position:0 0,0 0,0 0}25%{background-position:40px -30px,-60px 20px,20px 50px}50%{background-position:-30px 60px,50px -40px,-50px -20px}75%{background-position:70px 10px,-20px -60px,30px 40px}}
+.fvig{position:absolute;inset:0;box-shadow:inset 0 0 90px 24px rgba(0,0,0,.72);pointer-events:none}
+.ftc{position:absolute;top:8px;left:10px;font:600 .68rem/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.14em;color:#ffd9a0;text-shadow:0 0 6px rgba(255,180,90,.6);pointer-events:none}
+.fleader{position:absolute;inset:0;z-index:5;display:grid;place-items:center;background:#0b0807;transition:opacity .35s ease}
+.fleader.gone{opacity:0;pointer-events:none}
+.fleader::before{content:"";position:absolute;width:70%;aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,230,190,.55);box-shadow:inset 0 0 0 10px rgba(0,0,0,.2)}
+.fleader::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(255,230,190,.35),rgba(255,230,190,.35)) center/1px 100% no-repeat,linear-gradient(rgba(255,230,190,.35),rgba(255,230,190,.35)) center/100% 1px no-repeat}
+.fnum{position:relative;z-index:1;font-family:var(--serif);font-style:italic;font-weight:700;font-size:5.4rem;color:#ffe3b8;text-shadow:0 0 18px rgba(255,190,120,.6)}
+.fnum.pop{animation:bpop .42s ease both}
+@keyframes bpop{from{transform:scale(1.5);opacity:0}to{transform:none;opacity:1}}
+.fwrap{position:relative;width:100%;max-width:360px;height:86px;margin:.9rem auto 0;overflow:hidden;background:#120d0c;border-radius:4px;touch-action:none}
+.ftrack{position:relative;display:flex;gap:6px;width:max-content;padding:14px 0;transition:transform .32s cubic-bezier(.6,0,.2,1)}
+.ftrack::before,.ftrack::after{content:"";position:absolute;left:0;right:0;height:7px;background:repeating-linear-gradient(90deg,#e8dcc0 0 7px,transparent 7px 15px);opacity:.85}
+.ftrack::before{top:3px}.ftrack::after{bottom:3px}
+.ft{flex:none;width:58px;height:58px;padding:0;border:0;border-radius:2px;background:#000;overflow:hidden;opacity:.5;transition:opacity .3s,transform .3s}
+.ft img{display:block;width:100%;height:100%;object-fit:cover;filter:sepia(.5);pointer-events:none}
+.ft.on{opacity:1;transform:translateY(-2px)}
+.frow{display:flex;align-items:center;justify-content:center;gap:12px;margin:.8rem auto 0;max-width:360px}
+.ftitle{flex:1;margin:0;min-height:2.8em;display:grid;place-items:center;padding:.4rem .9rem;border:1px solid rgba(255,220,180,.28);outline:1px solid rgba(255,220,180,.14);outline-offset:3px;border-radius:2px;font-family:var(--serif);font-style:italic;font-weight:600;font-size:1.3rem;color:#ffe3b8;background:rgba(0,0,0,.35)}
+.ftitle.swap{animation:fadeup .5s ease both}
+@media (prefers-reduced-motion:reduce){.fflick,.fscr,.fdust{display:none}}
+
+/* combined scene: mode switch + tilt upgrades */
+.pmode{display:inline-flex;gap:4px;padding:4px;margin:.1rem auto .5rem;border-radius:999px;background:var(--glass);border:1px solid var(--glass-border);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.pm{border:0;background:transparent;color:var(--muted);padding:.45rem 1.05rem;min-height:36px;border-radius:999px;font-weight:600;font-size:.88rem;letter-spacing:.01em;transition:background .3s,color .3s}
+.pm.on{background:linear-gradient(135deg,#ffe2ad 0%,#ffb199 55%,#ff98a3 100%);color:#281424;box-shadow:0 4px 14px rgba(255,150,120,.3)}
+.ppanel{animation:fadeup .5s ease both}
+.ppanel[hidden]{display:none}
+.hslot.in-r{animation:hinr .55s cubic-bezier(.34,1.4,.64,1) both}
+.hslot.in-l{animation:hinl .55s cubic-bezier(.34,1.4,.64,1) both}
+.hslot.drag{transition:none}
+.hslot.spring{transition:translate .5s cubic-bezier(.34,1.56,.64,1),rotate .5s cubic-bezier(.34,1.56,.64,1)}
+.hslot.flingout{transition:translate .4s cubic-bezier(.5,0,.9,.5),rotate .4s ease-in,opacity .4s ease-in;pointer-events:none}
+.hback{box-shadow:calc(var(--tx,0) * -16px) calc(24px + var(--ty,0) * -14px) 60px rgba(0,0,0,.55),0 0 46px rgba(var(--glow,255,196,120),.28),0 0 0 1px rgba(255,220,180,.28)}
+.hcap{text-shadow:0 2px 16px rgba(var(--glow,255,190,130),.75)}
+.hdeck{position:absolute;inset:0;pointer-events:none}
+.hdeck::before{content:"";position:absolute;inset:-42px;background:radial-gradient(closest-side,rgba(var(--glow,255,196,120),.5),transparent);filter:blur(8px);animation:hglow 3.5s ease-in-out infinite alternate}
+@keyframes hglow{from{opacity:.5}to{opacity:.95}}
+.hghost{position:absolute;inset:0;border-radius:18px;overflow:hidden;background:#1d1220;box-shadow:0 16px 40px rgba(0,0,0,.5),0 0 0 1px rgba(255,220,180,.18)}
+.hghost img{width:100%;height:100%;object-fit:cover;filter:brightness(.45) saturate(.9) blur(1px)}
+.hghost.g1{transform:translate(10px,12px) scale(.95) rotate(3.5deg)}
+.hghost.g2{transform:translate(-10px,22px) scale(.9) rotate(-4deg)}
+.hghost.bump{animation:hbump .55s cubic-bezier(.34,1.56,.64,1)}
+@keyframes hbump{from{translate:0 14px;scale:.93;opacity:.3}}
+.hfx{inset:14px;pointer-events:none;transform:translate3d(calc(var(--tx,0) * 20px),calc(var(--ty,0) * 18px),52px)}
+.hfx i{position:absolute;top:-6%;width:var(--sz);height:var(--sz);opacity:0;animation:hfall var(--t) linear var(--d) infinite}
+.hfx .f-petals{background:linear-gradient(135deg,#ffc9d9,#ff8fb1);border-radius:100% 0 100% 0}
+.hfx .f-bokeh{top:auto;bottom:-8%;width:calc(var(--sz) * 2.2);height:calc(var(--sz) * 2.2);border-radius:50%;background:radial-gradient(circle,rgba(255,236,190,.95),rgba(255,200,120,.25) 60%,transparent 70%);filter:blur(1px);animation-name:hrise}
+.hfx .f-hearts{top:auto;bottom:-8%;width:auto;height:auto;font-style:normal;font-size:calc(var(--sz) * 1.6);line-height:1;color:#ff9fb0;text-shadow:0 0 8px rgba(255,120,150,.7);animation-name:hrise}
+.hfx .f-hearts::before{content:"♥"}
+@keyframes hfall{0%{transform:translate(0,0) rotate(0);opacity:0}10%{opacity:.95}90%{opacity:.85}100%{transform:translate(var(--dx),320px) rotate(300deg);opacity:0}}
+@keyframes hrise{0%{transform:translate(0,0) scale(.6);opacity:0}15%{opacity:.9}85%{opacity:.7}100%{transform:translate(var(--dx),-320px) scale(1.1);opacity:0}}
+.hgather{position:absolute;inset:0;pointer-events:none;z-index:5}
+.hg{position:absolute;left:50%;top:44%;width:6px;height:6px;margin:-3px;border-radius:50%;background:#ffe3b8;box-shadow:0 0 10px 3px rgba(var(--glow,255,196,120),.9);animation:hgin 1.1s cubic-bezier(.5,0,.8,.4) forwards}
+@keyframes hgin{from{transform:translate(var(--x),var(--y)) scale(.4);opacity:0}30%{opacity:1}to{transform:translate(0,0) scale(1.5);opacity:1}}
+.hwish{position:absolute;z-index:6;inset:14px 14px 70px 14px;border-radius:10px;display:grid;place-content:center;gap:.8rem;padding:1.2rem;text-align:center;background:rgba(24,12,23,.86);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,220,180,.3);opacity:0;pointer-events:none;transition:opacity .5s ease}
+.hwish.on{opacity:1;pointer-events:auto}
+.hwish p{margin:0;font-family:var(--serif);font-style:italic;font-weight:600;font-size:1.45rem;line-height:1.3;color:var(--cream);text-shadow:0 0 18px rgba(var(--glow,255,190,130),.6)}
+.hwish small{color:var(--muted);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase}
+.fscreen{box-shadow:0 0 0 2px #3c2d26,0 20px 50px rgba(0,0,0,.6),0 0 90px 10px rgba(var(--glow,255,200,130),.2)}
+@media (prefers-reduced-motion:reduce){.hfx,.hg{display:none}}
 
 /* balloons */
 .balloons{display:grid;grid-template-columns:repeat(3,1fr);gap:34px 10px;max-width:336px;margin:1rem auto 3.2rem}
@@ -282,7 +391,21 @@ const CONFIG = {
   pet: 'Ammulu',              // the name her mom called her. Leave '' to remove that line from the letter
   from: '',                   // your name for the letter's sign-off. Leave '' for no name
   candles: 5,                 // candles on the cake (1 to 7)
-  photos: [],                 // e.g. [{ src: 'Assets/Mom/1.jpg', caption: 'Her smile' }]
+  photos: [
+    { src: 'Assets/With-Love/1.png', caption: 'Her smile', fx: 'petals', wish: 'Your smile is the first thing that makes any room feel like home.' },
+    { src: 'Assets/With-Love/2.jpg', caption: 'Her laugh', fx: 'bokeh', wish: 'May you always laugh like this, from the very bottom of your heart.' },
+    { src: 'Assets/With-Love/3.png', caption: 'Her hugs', fx: 'hearts', wish: 'Your hugs fix everything, and we never want to let go.' },
+    { src: 'Assets/With-Love/4.jpg', caption: 'Her love', fx: 'sparkle', wish: 'Your love is the quiet strength behind all of us.' },
+    { src: 'Assets/With-Love/5.jpg', caption: 'Her heart', fx: 'petals', wish: 'Thank you for always giving so much of your heart.' },
+    { src: 'Assets/With-Love/6.png', caption: 'Her warmth', fx: 'bokeh', wish: 'Wherever you are, there is warmth. That is you.' },
+    { src: 'Assets/With-Love/7.webp', caption: 'Her kindness', fx: 'hearts', wish: 'Your kindness makes the world better, one little thing at a time.' },
+    { src: 'Assets/With-Love/8.jpg', caption: 'Her spirit', fx: 'sparkle', wish: 'Your spirit is a light that will never go out.' },
+    { src: 'Assets/With-Love/9.jpg', caption: 'Her love for you', fx: 'petals', wish: 'Her love for you is a gift that will always be with you.' },
+    { src: 'Assets/With-Love/10.png', caption: 'Her laughter', fx: 'bokeh', wish: 'Her laughter is a melody that will always echo in your heart.' },
+    //{ src: 'Assets/With-Love/11.png', caption: 'Her hugs', fx: 'hearts', wish: 'Her hugs are a warm embrace that will always comfort you.' },
+    //{ src: 'Assets/With-Love/12.png', caption: 'Her love for life', fx: 'sparkle', wish: 'Her love for life is an inspiration that will guide you.' },
+    //{ src: 'Assets/With-Love/8.png', caption: 'Her spirit' },
+  ],                 // e.g. [{ src: 'Assets/Mom/1.jpg', caption: 'Her smile' }]
   memories: [],               // up to 8 of your own lines; they replace the first star messages
 };
 /* ═══════════════════════════════════════════════════════════════ */
@@ -318,7 +441,9 @@ const T = {
   lanternFrom: 'A lantern from {who}', whoYou: 'you', whoHer: 'her', whoHim: 'him', legYours: 'yours', legHer: 'hers', legHim: 'his', edit: 'Edit', del: 'Delete', edited: 'edited', cancel: 'Cancel',
   confirmDel: 'Delete this lantern for good?', yesDel: 'Yes, delete', keepIt: 'Keep it',
   cloudFail: 'I could not reach the sky just now. Please check your connection and try again.', lanternsOffline: 'The lanterns are out of reach right now. They will be back when you are online.',
-  photosH: 'Her', photosSmall: 'Swipe through.',
+  photosH: 'Her', modeTilt: '✨ Tilt', modeFilm: '🎞 Film', modeLabel: 'How to look at the photos', holoSmall: 'Hold her up to the light.', filmSmall: 'A little home movie, made of her.',
+  holoHint: 'Tilt your phone slowly. Press and hold the photo to make a wish.', holoEnable: 'Enable tilt', holoNoTilt: 'Tilt is switched off, so drag the photo instead. Press and hold to make a wish.', holoMouse: 'Move your mouse over the photo. Press and hold to make a wish.', holoDrag: 'Drag the photo to tilt it. Press and hold to make a wish.', holoDone: 'That is all of her. Swipe back any time.', holoWishDefault: 'Happy birthday, with all our love.', holoWishClose: 'Tap to close',
+  filmHint: 'Swipe, tap or use the arrows to advance the film.', filmSound: 'Turn the sound on for the projector clicks.', filmEnd: 'The end. Roll it again any time.', photoPrev: 'Previous photo', photoNext: 'Next photo',
   promH: 'A few promises', promSmall: 'Pop a balloon to read one.', balloon: 'Balloon {n} of {t}',
   proms: [
     'I promise to stay by your side, even when you hog the blanket.',
@@ -1013,15 +1138,338 @@ add('lantern', (root, api) => {
 
 if (CONFIG.photos.length) {
   add('photos', (root, api) => {
-    root.append(el('h2', { text: tr('photosH') }), el('p', { class: 'small', text: tr('photosSmall') }));
-    const reel = el('div', { class: 'reel' });
-    CONFIG.photos.forEach((p, i) => {
-      const img = el('img', { src: p.src, alt: p.caption || '', loading: 'lazy' });
-      const card = el('figure', { class: 'polaroid', style: 'margin:0;--r:' + ((i % 2 ? 1 : -1) * (1 + (i % 3))) + 'deg' }, img, p.caption ? el('p', { text: p.caption }) : null);
-      img.addEventListener('error', () => card.remove());
-      reel.append(card);
+    const P = CONFIG.photos, N = P.length;
+    const S = { i: 0, seen: new Set([0]), finished: false, mode: 'tilt' };
+    const timers = [], ints = []; let dead = false, raf = 0;
+    const later = (fn, ms) => { const t = wait(() => { if (!dead) fn(); }, ms); timers.push(t); return t; };
+    const clamp = (v) => Math.max(-1, Math.min(1, v));
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const tick = (vol, hz) => {
+  if (!soundOn || !ac || ac.state !== 'running') return;
+  const t = ac.currentTime, len = Math.floor(ac.sampleRate * 0.045), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+  for (let k = 0; k < len; k++) d[k] = (Math.random() * 2 - 1) * Math.pow(1 - k / len, 3);
+  const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+  s.buffer = buf; f.type = 'bandpass'; f.frequency.value = hz || 1800; f.Q.value = 0.9; g.gain.value = (vol || 1) * 2.4;
+  s.connect(f); f.connect(g); g.connect(sfxGain); s.start(t);
+};
+
+
+    /* ---- shared: colours taken from each photo ---- */
+    const FALLBACK = [[255, 196, 120], [255, 158, 158], [255, 170, 200], [255, 214, 150], [255, 180, 140], [240, 170, 255], [255, 205, 120]];
+    const glows = {};
+    const setGlow = (n) => root.style.setProperty('--glow', (glows[n] || FALLBACK[n % FALLBACK.length]).join(','));
+    P.forEach((p, n) => {
+      const im = new Image();
+      im.onload = () => {
+        try {
+          const cv = document.createElement('canvas'); cv.width = cv.height = 24; const g = cv.getContext('2d'); g.drawImage(im, 0, 0, 24, 24);
+          const d = g.getImageData(0, 0, 24, 24).data; let r = 0, gg = 0, b = 0, w = 0;
+          for (let k = 0; k < d.length; k += 4) {
+            const R = d[k], G = d[k + 1], B = d[k + 2], mx = Math.max(R, G, B), mn = Math.min(R, G, B), sat = mx ? (mx - mn) / mx : 0, lum = (R + G + B) / 3;
+            if (lum < 25 || lum > 235) continue; const wt = 0.15 + sat * sat * 3; r += R * wt; gg += G * wt; b += B * wt; w += wt;
+          }
+          if (!w) return; let c = [r / w, gg / w, b / w]; const m = Math.max(...c), sc = m ? Math.min(1.6, 225 / m) : 1;
+          glows[n] = c.map((v) => Math.min(255, Math.round(v * sc))); if (S.i === n) setGlow(n);
+        } catch (e) { /* canvas blocked on file://, the fallback colours stay */ }
+      };
+      im.src = p.src;
     });
-    root.append(reel); api.ready();
+    setGlow(0);
+
+    const FX = ['petals', 'bokeh', 'hearts', 'sparkle'];
+    const fxOf = (n) => P[n].fx || FX[n % FX.length];
+
+    const mark = (n) => {
+      S.seen.add(n);
+      if (!S.finished && S.seen.size === N) { S.finished = true; api.ready(); tilt.hintNow(); film.hintNow(); }
+    };
+
+    /* ================= TILT ================= */
+    const tilt = (() => {
+      const holo = el('div', { class: 'holo' });
+      const g1 = el('div', { class: 'hghost g1' }, el('img', { alt: '' })), g2 = el('div', { class: 'hghost g2' }, el('img', { alt: '' }));
+      holo.append(el('div', { class: 'hdeck' }, g1, g2));
+      const wishT = el('p'), wish = el('div', { class: 'hwish', role: 'dialog' }, wishT, el('small', { text: tr('holoWishClose') }));
+      const gather = el('div', { class: 'hgather' });
+      holo.append(gather, wish);
+      const hint = el('p', { class: 'phint', 'aria-live': 'polite' });
+      const count = el('p', { class: 'hcount' });
+      const tgt = { x: 0, y: 0, px: 0.5, py: 0.5 }, cur = { x: 0, y: 0, px: 0.5, py: 0.5 };
+      let card = null, busy = false, lastGyro = 0, gyroOn = false, base = null, pressed = false, hintKey = 'holoHint', wishOpen = false, wishDone = false;
+      const kScale = () => (holo.getBoundingClientRect().width / holo.offsetWidth) || 1;
+      const currentSlot = () => holo.querySelector('.hslot:not(.out-l):not(.out-r):not(.flingout)');
+      const hintNow = () => { hint.textContent = S.finished ? tr('holoDone') : tr(hintKey); };
+
+      const make = (n) => {
+        const p = P[n], sp = el('div', { class: 'hsp' }), kind = fxOf(n), fx = el('div', { class: 'hfx' });
+        for (let k = 0; k < 10; k++) { const s = el('i'); s.style.left = (6 + Math.random() * 88) + '%'; s.style.top = (6 + Math.random() * 88) + '%'; s.style.animationDelay = (-Math.random() * 2.4) + 's'; sp.append(s); }
+        if (kind !== 'sparkle') for (let k = 0; k < 14; k++) {
+          const s = el('i', { class: 'f-' + kind }); s.style.left = (Math.random() * 96) + '%';
+          s.style.setProperty('--d', (-Math.random() * 9) + 's'); s.style.setProperty('--t', (6 + Math.random() * 6) + 's');
+          s.style.setProperty('--sz', (6 + Math.random() * 10) + 'px'); s.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px'); fx.append(s);
+        }
+        const c = el('div', { class: 'hcard' },
+          el('div', { class: 'hback' }, el('img', { src: p.src, alt: '' })),
+          el('div', { class: 'hphoto' }, el('img', { src: p.src, alt: p.caption || '', draggable: 'false' })),
+          el('div', { class: 'hsheen' }), el('div', { class: 'hglare' }), el('p', { class: 'hcap', text: p.caption || '' }), fx, sp);
+        return { slot: el('div', { class: 'hslot' }, c), c };
+      };
+      const label = () => { count.textContent = (S.i + 1) + ' / ' + N; };
+      const updateDeck = () => {
+        g1.hidden = N < 2; g2.hidden = N < 3;
+        g1.firstChild.src = P[(S.i + 1) % N].src; g2.firstChild.src = P[(S.i + 2) % N].src;
+        [g1, g2].forEach((g) => { g.classList.remove('bump'); void g.offsetWidth; g.classList.add('bump'); });
+      };
+
+      /* wish: press and hold */
+      let hold = null;
+      const cancelHold = () => { if (hold) { clearTimeout(hold.a); clearTimeout(hold.b); hold = null; } gather.textContent = ''; };
+      const hideWish = () => { wish.classList.remove('on'); wishOpen = false; };
+      const startHold = () => {
+        cancelHold(); hold = {};
+        hold.a = setTimeout(() => {
+          for (let k = 0; k < 22; k++) {
+            const a = Math.random() * 6.283, rr = 110 + Math.random() * 60, d = el('i', { class: 'hg' });
+            d.style.setProperty('--x', Math.cos(a) * rr + 'px'); d.style.setProperty('--y', Math.sin(a) * rr + 'px'); d.style.animationDelay = (Math.random() * 0.25) + 's'; gather.append(d);
+          }
+          vib(12);
+        }, 320);
+        hold.b = setTimeout(() => {
+          hold = null; gather.textContent = ''; wishDone = true;
+          wishT.textContent = P[S.i].wish || tr('holoWishDefault'); wish.classList.add('on'); wishOpen = true;
+          const r = centerOf(holo); burst(r.x, r.y); [0, 2, 4, 7].forEach((s, k) => later(() => chime(s), k * 110)); vib([30, 40, 30]);
+        }, 1500);
+      };
+
+      const go = (n, dir, fromDrag) => {
+        if (busy || N < 2) return; busy = true; hideWish(); cancelHold();
+        const oldSlot = currentSlot();
+        S.i = (n + N) % N; const m = make(S.i);
+        m.slot.classList.add(dir > 0 ? 'in-r' : 'in-l'); holo.append(m.slot);
+        if (oldSlot) {
+          if (fromDrag) {
+            oldSlot.classList.remove('drag'); oldSlot.classList.add('flingout');
+            oldSlot.style.translate = (dir > 0 ? '-130%' : '130%') + ' 0'; oldSlot.style.rotate = (dir > 0 ? -28 : 28) + 'deg'; oldSlot.style.opacity = '0';
+          } else oldSlot.classList.add(dir > 0 ? 'out-l' : 'out-r');
+          later(() => oldSlot.remove(), 440);
+        }
+        card = m.c; later(() => { m.slot.classList.remove('in-r', 'in-l'); busy = false; }, 560);
+        chime(S.i); vib(8); label(); updateDeck(); setGlow(S.i); mark(S.i); hintNow();
+      };
+      const sync = (n) => {
+        holo.querySelectorAll('.hslot').forEach((s) => s.remove()); hideWish(); cancelHold(); busy = false;
+        S.i = n; const m = make(n); holo.append(m.slot); card = m.c; label(); updateDeck(); setGlow(n); hintNow();
+      };
+
+      /* frame loop: smooth tilt + shimmer sound that follows how fast she tilts */
+      let shim = null, prevX = 0, prevY = 0, spd = 0, fn = 0;
+      const shimStart = () => {
+        if (shim || !soundOn || !ac) return;
+        try {
+          const o1 = ac.createOscillator(), o2 = ac.createOscillator(), lp = ac.createBiquadFilter(), g = ac.createGain();
+          o1.type = 'sine'; o2.type = 'triangle'; lp.type = 'lowpass'; lp.frequency.value = 2400; g.gain.value = 0;
+          o1.connect(lp); o2.connect(lp); lp.connect(g); g.connect(ac.destination); o1.start(); o2.start(); shim = { o1, o2, g };
+        } catch (e) { shim = null; }
+      };
+      const shimStop = () => {
+        if (!shim) return; const s = shim; shim = null;
+        try { s.g.gain.setTargetAtTime(0, ac.currentTime, 0.05); } catch (e) {}
+        setTimeout(() => { try { s.o1.stop(); s.o2.stop(); s.g.disconnect(); } catch (e) {} }, 300);
+      };
+      const frame = () => {
+        if (dead) return;
+        if (S.mode === 'tilt') {
+          for (const k of ['x', 'y', 'px', 'py']) cur[k] += (tgt[k] - cur[k]) * 0.14;
+          if (card) {
+            card.style.setProperty('--tx', cur.x.toFixed(3)); card.style.setProperty('--ty', cur.y.toFixed(3));
+            card.style.setProperty('--gx', (cur.px * 100).toFixed(1) + '%'); card.style.setProperty('--gy', (cur.py * 100).toFixed(1) + '%');
+          }
+          spd += (Math.hypot(cur.x - prevX, cur.y - prevY) - spd) * 0.2; prevX = cur.x; prevY = cur.y;
+          if (soundOn && ac && ac.state === 'running') {
+            shimStart();
+            if (shim && (fn++ % 2 === 0)) {
+              const mag = Math.min(1.4, Math.hypot(cur.x, cur.y)), f = 520 + mag * 620, t = ac.currentTime;
+              shim.o1.frequency.setTargetAtTime(f, t, 0.06); shim.o2.frequency.setTargetAtTime(f * 1.5, t, 0.06); shim.g.gain.setTargetAtTime(Math.min(spd * 1.6, 1) * 0.02, t, 0.05);
+            }
+          } else shimStop();
+        } else shimStop();
+        raf = requestAnimationFrame(frame);
+      };
+      const aim = (e) => {
+        if (performance.now() - lastGyro < 800) return;
+        const r = holo.getBoundingClientRect(), nx = ((e.clientX - r.left) / r.width) * 2 - 1, ny = ((e.clientY - r.top) / r.height) * 2 - 1;
+        tgt.x = clamp(nx); tgt.y = clamp(ny); tgt.px = (clamp(nx) + 1) / 2; tgt.py = (clamp(ny) + 1) / 2;
+      };
+      const rest = () => { if (performance.now() - lastGyro < 800) return; tgt.x = 0; tgt.y = 0; tgt.px = 0.5; tgt.py = 0.5; };
+
+      let down = false, moved = false, dragging = false, sx = 0, sy = 0, lastX = 0, lastT = 0, vx = 0, curSlot = null;
+      holo.addEventListener('pointerdown', (e) => {
+        if (wishOpen) { hideWish(); return; }
+        if (busy) return;
+        down = true; pressed = true; moved = false; dragging = false; wishDone = false; sx = lastX = e.clientX; sy = e.clientY; lastT = performance.now(); vx = 0;
+        curSlot = currentSlot(); try { holo.setPointerCapture(e.pointerId); } catch (er) {}
+        aim(e); startHold();
+      });
+      holo.addEventListener('pointermove', (e) => {
+        if (e.pointerType === 'mouse' || pressed) aim(e);
+        if (!down) return;
+        const dx = e.clientX - sx, dy = e.clientY - sy;
+        if (!moved && Math.hypot(dx, dy) > 12) { moved = true; cancelHold(); }
+        if (moved && !dragging && Math.abs(dx) > Math.abs(dy) * 1.2 && N > 1) dragging = true;
+        if (dragging && curSlot) {
+          const now = performance.now(), k = kScale(); vx = (e.clientX - lastX) / Math.max(1, now - lastT); lastX = e.clientX; lastT = now;
+          curSlot.classList.remove('spring'); curSlot.classList.add('drag'); curSlot.style.translate = (dx / k) + 'px 0'; curSlot.style.rotate = (dx / k / 22) + 'deg';
+        }
+      });
+      holo.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse' && !pressed) rest(); });
+      const endP = (e, cancelled) => {
+        if (!down) return; down = false; pressed = false;
+        const dx = e.clientX - sx; cancelHold();
+        if (wishDone) { wishDone = false; if (e.pointerType !== 'mouse') rest(); return; }
+        if (dragging && curSlot) {
+          if (!cancelled && (Math.abs(dx) > 80 || Math.abs(vx) > 0.55)) go(S.i + ((dx < 0 || vx < -0.55) ? 1 : -1), (dx < 0 || vx < -0.55) ? 1 : -1, true);
+          else { const s = curSlot; s.classList.remove('drag'); s.classList.add('spring'); s.style.translate = '0 0'; s.style.rotate = '0deg'; later(() => { s.classList.remove('spring'); s.style.translate = ''; s.style.rotate = ''; }, 540); }
+        } else if (!cancelled && !moved) { const r = centerOf(holo); burst(r.x, r.y); chime(S.i + 2); vib(10); }
+        if (e.pointerType !== 'mouse') rest();
+      };
+      holo.addEventListener('pointerup', (e) => endP(e, false));
+      holo.addEventListener('pointercancel', (e) => endP(e, true));
+
+      const onOri = (e) => {
+        if (e.gamma == null || e.beta == null) return;
+        lastGyro = performance.now(); gyroOn = true;
+        if (!base) base = { g: e.gamma, b: e.beta };
+        base.g += (e.gamma - base.g) * 0.006; base.b += (e.beta - base.b) * 0.006;
+        const dx = clamp((e.gamma - base.g) / 22), dy = clamp((e.beta - base.b) / 22);
+        tgt.x = dx; tgt.y = dy; tgt.px = (dx + 1) / 2; tgt.py = (dy + 1) / 2;
+      };
+      const listen = () => window.addEventListener('deviceorientation', onOri);
+      const needsPerm = typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function';
+      const permBtn = el('button', { class: 'btn ghost', type: 'button', text: tr('holoEnable') });
+      if (needsPerm) {
+        permBtn.addEventListener('click', () => {
+          DeviceOrientationEvent.requestPermission().then((s) => {
+            if (s === 'granted') { listen(); permBtn.remove(); hintKey = 'holoHint'; } else hintKey = 'holoNoTilt'; hintNow();
+          }).catch(() => { hintKey = 'holoNoTilt'; hintNow(); });
+        });
+      } else if (typeof DeviceOrientationEvent !== 'undefined') listen();
+      const coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+      if (!needsPerm) later(() => { if (!gyroOn) { hintKey = coarse ? 'holoDrag' : 'holoMouse'; hintNow(); } }, 1800);
+
+      const prev = el('button', { class: 'iconbtn', type: 'button', 'aria-label': tr('photoPrev'), text: '‹', onclick: () => go(S.i - 1, -1) });
+      const next = el('button', { class: 'iconbtn', type: 'button', 'aria-label': tr('photoNext'), text: '›', onclick: () => go(S.i + 1, 1) });
+      const panel = el('div', { class: 'ppanel' }, holo, hint);
+      if (needsPerm) panel.append(permBtn);
+      panel.append(el('div', { class: 'hnav' }, N > 1 ? prev : null, count, N > 1 ? next : null));
+      sync(0);
+      if (!reduce) raf = requestAnimationFrame(frame);
+      return {
+        panel, hintNow, sync,
+        activate: () => sync(S.i),
+        deactivate: () => { cancelHold(); hideWish(); shimStop(); },
+        destroy: () => { cancelAnimationFrame(raf); window.removeEventListener('deviceorientation', onOri); cancelHold(); shimStop(); },
+      };
+    })();
+
+    /* ================= FILM ================= */
+    const film = (() => {
+      const mk = (n) => el('div', { class: 'ffr' }, el('img', { src: P[n].src, alt: P[n].caption || '', draggable: 'false' }));
+      const gate = el('div', { class: 'fgate' });
+      const grain = el('canvas', { class: 'fgrain', width: 140, height: 140 }), flick = el('div', { class: 'fflick' });
+      const tc = el('div', { class: 'ftc' }), num = el('span', { class: 'fnum' }), leader = el('div', { class: 'fleader' }, num);
+      const screen = el('div', { class: 'fscreen', tabindex: '0', role: 'group', 'aria-label': tr('filmSmall') },
+        gate, el('div', { class: 'fdust' }), el('i', { class: 'fscr' }), el('i', { class: 'fscr b' }), flick, grain, el('div', { class: 'fvig' }), tc, leader);
+      const tiles = P.map((p, n) => el('button', { class: 'ft', type: 'button', 'aria-label': p.caption || ('Frame ' + (n + 1)), onclick: () => { if (!swiped) jump(n); } }, el('img', { src: p.src, alt: '', draggable: 'false' })));
+      const track = el('div', { class: 'ftrack' }, tiles), wrap = el('div', { class: 'fwrap' }, track);
+      const title = el('p', { class: 'ftitle', 'aria-live': 'polite' });
+      const prev = el('button', { class: 'iconbtn', type: 'button', 'aria-label': tr('photoPrev'), text: '‹', onclick: () => step(-1) });
+      const next = el('button', { class: 'iconbtn', type: 'button', 'aria-label': tr('photoNext'), text: '›', onclick: () => step(1) });
+      const hint = el('p', { class: 'phint', 'aria-live': 'polite' });
+      const panel = el('div', { class: 'ppanel' }, screen, wrap, el('div', { class: 'frow' }, N > 1 ? prev : null, title, N > 1 ? next : null), hint);
+      let busy = false, started = false, swiped = false, active = false, leaderRan = false;
+      const hintNow = () => { hint.textContent = S.finished ? tr('filmEnd') : tr('filmHint') + (soundOn ? '' : ' ' + tr('filmSound')); };
+      const center = () => {
+        const t = tiles[S.i]; if (!t || !wrap.clientWidth) return;
+        track.style.transform = 'translateX(' + Math.round(wrap.clientWidth / 2 - (t.offsetLeft + t.offsetWidth / 2)) + 'px)';
+      };
+      const paint = (swap) => {
+        tc.textContent = '▶ ' + pad2(S.i + 1) + ' / ' + pad2(N);
+        tiles.forEach((t, k) => t.classList.toggle('on', k === S.i));
+        title.textContent = P[S.i].caption || ''; if (swap) { title.classList.remove('swap'); void title.offsetWidth; title.classList.add('swap'); }
+        center();
+      };
+      const clickSfx = () => { tick(1.3, 1500); later(() => tick(0.8, 3400), 55); vib(8); };
+      const show = (n, dir) => {
+        if (busy || !started || N < 2) return; busy = true;
+        const old = gate.lastElementChild, nf = mk(n);
+        nf.classList.add(dir > 0 ? 'from-b' : 'from-t'); gate.append(nf); old.classList.add(dir > 0 ? 'to-t' : 'to-b');
+        clickSfx(); screen.classList.remove('jolt'); void screen.offsetWidth; screen.classList.add('jolt');
+        S.i = n; setGlow(n); paint(true); mark(n); hintNow();
+        later(() => { old.remove(); nf.classList.remove('from-b', 'from-t'); nf.classList.add('settle'); busy = false; }, 310);
+        later(() => nf.classList.remove('settle'), 640);
+      };
+      const step = (d) => show((S.i + d + N) % N, d);
+      const jump = (n) => { if (n !== S.i) show(n, n > S.i ? 1 : -1); };
+      let sx = 0, sy = 0, dn = false, tgtEl = null;
+      const down = (e) => { dn = true; sx = e.clientX; sy = e.clientY; tgtEl = e.currentTarget; };
+      const up = (e) => {
+        if (!dn) return; dn = false; const dx = e.clientX - sx, dy = e.clientY - sy;
+        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { swiped = true; setTimeout(() => { swiped = false; }, 250); step(dx < 0 ? 1 : -1); }
+        else if (tgtEl === screen && Math.hypot(dx, dy) < 10) { if (!started) startFilm(); else step(1); }
+      };
+      [screen, wrap].forEach((n) => { n.addEventListener('pointerdown', down); n.addEventListener('pointerup', up); n.addEventListener('pointercancel', () => { dn = false; }); });
+      screen.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!started) startFilm(); else step(1); } });
+
+      const gctx = grain.getContext('2d'), gimg = gctx.createImageData(140, 140);
+      const noise = () => { if (!active) return; const d = gimg.data; for (let k = 0; k < d.length; k += 4) { const v = (Math.random() * 255) | 0; d[k] = d[k + 1] = d[k + 2] = v; d[k + 3] = 255; } gctx.putImageData(gimg, 0, 0); };
+      noise(); if (!reduce) ints.push(setInterval(noise, 90));
+      const blink = () => { if (dead) return; if (active) { flick.classList.add('big'); later(() => flick.classList.remove('big'), 110); } later(blink, 2400 + Math.random() * 3200); };
+      if (!reduce) later(blink, 2500);
+
+      function startFilm() {
+        if (started) return; started = true; leader.classList.add('gone'); screen.classList.add('rise');
+        tick(1.4, 1100); later(() => tick(0.8, 3000), 60); later(() => screen.classList.remove('rise'), 950); paint(false);
+      }
+      const sync = (n) => { S.i = n; gate.textContent = ''; gate.append(mk(n)); busy = false; paint(false); };
+      sync(0);
+      return {
+        panel, hintNow,
+        activate: () => {
+          active = true; sync(S.i); hintNow(); noise();
+          if (!leaderRan) {
+            leaderRan = true;
+            ['3', '2', '1'].forEach((n, k) => later(() => { if (started) return; num.textContent = n; num.classList.remove('pop'); void num.offsetWidth; num.classList.add('pop'); tick(1, 900); chime(k + 3); }, 250 + k * 520));
+            later(startFilm, 250 + 3 * 520 + 150);
+          }
+          later(center, 60);
+        },
+        deactivate: () => { active = false; },
+        center,
+      };
+    })();
+
+    /* ================= switcher ================= */
+    const small = el('p', { class: 'small' });
+    const bT = el('button', { class: 'pm', type: 'button', role: 'tab', text: tr('modeTilt'), onclick: () => setMode('tilt') });
+    const bF = el('button', { class: 'pm', type: 'button', role: 'tab', text: tr('modeFilm'), onclick: () => setMode('film') });
+    const pmode = el('div', { class: 'pmode', role: 'tablist', 'aria-label': tr('modeLabel') }, bT, bF);
+    const modes = { tilt, film };
+    const setMode = (m, first) => {
+      if (!first && m === S.mode) return;
+      const prevM = modes[S.mode]; if (!first && prevM) { prevM.deactivate(); prevM.panel.hidden = true; }
+      S.mode = m; window.__wlMode = m;
+      const cur = modes[m]; cur.panel.hidden = false; cur.panel.style.animation = 'none'; void cur.panel.offsetWidth; cur.panel.style.animation = '';
+      bT.classList.toggle('on', m === 'tilt'); bF.classList.toggle('on', m === 'film');
+      bT.setAttribute('aria-selected', m === 'tilt'); bF.setAttribute('aria-selected', m === 'film');
+      small.textContent = tr(m === 'tilt' ? 'holoSmall' : 'filmSmall'); chime(m === 'tilt' ? 4 : 2); vib(8);
+      cur.activate();
+    };
+    root.append(pmode, el('h2', { text: tr('photosH') }), small, tilt.panel, film.panel);
+    film.panel.hidden = true;
+    setMode(window.__wlMode === 'film' ? 'film' : 'tilt', true);
+    if (N === 1) { S.finished = true; api.ready(); }
+    const onRes = () => film.center(); window.addEventListener('resize', onRes);
+    return () => { dead = true; timers.forEach(clearTimeout); ints.forEach(clearInterval); window.removeEventListener('resize', onRes); tilt.destroy(); };
   });
 }
 
