@@ -21,7 +21,7 @@ html,body{margin:0;height:100%;background:#1a0f1c;color:var(--cream);font-family
 #menu{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 62px);z-index:11;padding:.4rem;border-radius:18px;display:grid;gap:2px;min-width:200px}
 #menu button{border:0;background:transparent;color:var(--cream);padding:.7rem .9rem;text-align:left;border-radius:12px;font:600 .95rem var(--sans);cursor:pointer}
 #menu button:active{background:rgba(255,255,255,.12)}
-#joy{position:fixed;right:calc(env(safe-area-inset-right,0px) + 22px);bottom:calc(env(safe-area-inset-bottom,0px) + 26px);width:132px;height:132px;border-radius:50%;z-index:9;touch-action:none;background:rgba(34,20,38,.35);border:1px solid var(--glass-b)}
+#joy{position:fixed;left:calc(env(safe-area-inset-left,0px) + 22px);bottom:calc(env(safe-area-inset-bottom,0px) + 26px);width:132px;height:132px;border-radius:50%;z-index:9;touch-action:none;background:rgba(34,20,38,.35);border:1px solid var(--glass-b)}
 #joy.run{box-shadow:0 0 0 3px rgba(255,177,153,.55),0 0 26px rgba(255,152,163,.5)}
 #knob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:linear-gradient(135deg,#ffe2ad,#ffb199 55%,#ff98a3);box-shadow:0 6px 18px rgba(0,0,0,.4)}
 #act{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 34px);transform:translateX(-50%);z-index:9;max-width:min(78vw,380px);padding:.8rem 1.4rem;border-radius:999px;border:0;font:700 1rem var(--sans);color:#281424;background:linear-gradient(135deg,#ffe2ad,#ffb199 55%,#ff98a3);box-shadow:0 8px 26px rgba(255,150,120,.4);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -66,14 +66,15 @@ html,body{margin:0;height:100%;background:#1a0f1c;color:var(--cream);font-family
 .pcard input{width:100%;padding:.85rem 1rem;border-radius:14px;border:1px solid var(--glass-b);background:rgba(255,255,255,.08);color:var(--cream);font:600 1rem var(--sans);text-align:center;outline:none;user-select:text;-webkit-user-select:text}
 .perr{min-height:1.3em;margin:.5rem 0 0;color:#ffb3b3;font-size:.85rem}
 
+body.touch #act,body.touch #act2{max-width:calc(100vw - 160px)}
 body.touch #act{bottom:calc(env(safe-area-inset-bottom,0px) + 184px)}
 body.touch #act2{bottom:calc(env(safe-area-inset-bottom,0px) + 238px)}
 body.touch #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 300px)}
 #act2{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 88px);transform:translateX(-50%);z-index:9;max-width:min(78vw,380px);padding:.65rem 1.2rem;border-radius:999px;font:700 .95rem var(--sans);color:var(--cream);background:var(--glass);border:1px solid var(--glass-b);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;white-space:nowrap}
-#side{position:fixed;left:calc(env(safe-area-inset-left,0px) + 14px);bottom:calc(env(safe-area-inset-bottom,0px) + 26px);z-index:9;display:flex;flex-direction:column-reverse;gap:10px}
+#side{position:fixed;right:calc(env(safe-area-inset-right,0px) + 14px);bottom:calc(env(safe-area-inset-bottom,0px) + 26px);z-index:9;display:flex;flex-direction:column-reverse;gap:10px}
 #side .rbtn.off{opacity:.55}
 #map{position:fixed;left:12px;top:calc(env(safe-area-inset-top,0px) + 62px);width:150px;height:220px;z-index:9;border-radius:16px;background:rgba(24,13,28,.82);border:1px solid var(--glass-b);backdrop-filter:blur(8px)}
-#emotes{position:fixed;left:calc(env(safe-area-inset-left,0px) + 70px);bottom:calc(env(safe-area-inset-bottom,0px) + 70px);z-index:12;padding:.45rem;border-radius:20px;display:grid;grid-template-columns:repeat(3,48px);gap:6px}
+#emotes{position:fixed;right:calc(env(safe-area-inset-right,0px) + 70px);bottom:calc(env(safe-area-inset-bottom,0px) + 26px);z-index:12;padding:.45rem;border-radius:20px;display:grid;grid-template-columns:repeat(4,48px);gap:6px;max-height:58vh;overflow-y:auto;touch-action:pan-y}
 #emotes button{width:48px;height:48px;border:0;border-radius:14px;background:rgba(255,255,255,.08);font-size:1.5rem;cursor:pointer}
 #emotes button:active{background:rgba(255,255,255,.2)}
 #heartChip{position:fixed;left:12px;top:calc(env(safe-area-inset-top,0px) + 62px);z-index:8;padding:.35rem .8rem;border-radius:999px;font:700 .85rem var(--sans)}
@@ -84,11 +85,6 @@ body.touch #capChip{bottom:calc(env(safe-area-inset-bottom,0px) + 300px)}
 #flare{position:fixed;inset:0;z-index:7;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 46%,rgba(255,236,200,.95),rgba(255,200,150,.45) 38%,rgba(255,170,140,0) 72%)}
 #flare.go{animation:flare .95s ease-out}
 @keyframes flare{0%{opacity:0}22%{opacity:.62}100%{opacity:0}}
-#wt{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 70px);transform:translateX(-50%);z-index:8;width:min(82vw,420px);padding:.5rem;border-radius:18px;background:rgba(18,9,22,.78);border:1px solid var(--glass-b);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);text-align:center}
-#wt img{display:block;width:100%;max-height:34vh;object-fit:contain;border-radius:10px;background:#000;transition:opacity .5s}
-#wt .wtcap{margin:.4rem 0 .1rem;font-family:'Caveat',cursive;font-size:1.35rem}
-#wt .wtrow{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.78rem;opacity:.85;padding:0 .3rem .2rem}
-#wt button{border:1px solid var(--glass-b);background:transparent;color:var(--cream);border-radius:999px;padding:.3rem .8rem;font:700 .78rem var(--sans);cursor:pointer}
 #photoUI{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);z-index:12;display:flex;align-items:center;justify-content:center;gap:14px;pointer-events:none}
 #photoUI>*{pointer-events:auto}
 #shutter{width:72px;height:72px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,.25);cursor:pointer}
@@ -108,6 +104,30 @@ body.touch #capChip{bottom:calc(env(safe-area-inset-bottom,0px) + 300px)}
 .gentry .gmeta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:.3rem;font-size:.75rem;opacity:.7}
 .gentry img.sig{height:34px;max-width:50%;object-fit:contain}
 .gentry b{font-family:'Caveat',cursive;font-size:1.3rem}
+
+#chatBtn{position:relative}
+#chatBadge{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#ff5d7a;color:#fff;font:700 .68rem/18px var(--sans);text-align:center}
+#chat{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);transform:translateX(-50%);z-index:14;width:min(95vw,430px);height:min(52vh,420px);display:flex;flex-direction:column;border-radius:22px;padding:.6rem .7rem .7rem;background:rgba(20,10,24,.9);border:1px solid var(--glass-b);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+#chat header{display:flex;align-items:center;justify-content:space-between;padding:0 .2rem .4rem;font-family:var(--serif);font-style:italic;font-weight:600;font-size:1.15rem}
+#chat header button{border:0;background:transparent;color:var(--cream);font-size:1.2rem;width:36px;height:36px;border-radius:50%;cursor:pointer}
+#chatList{flex:1;overflow-y:auto;touch-action:pan-y;display:flex;flex-direction:column;gap:.4rem;padding:.2rem .1rem}
+.cmsg{max-width:82%;padding:.45rem .75rem;border-radius:16px;font-size:.95rem;line-height:1.25;word-break:break-word;user-select:text;-webkit-user-select:text}
+.cmsg small{display:block;opacity:.55;font-size:.66rem;margin-top:.1rem}
+.cmsg.me{align-self:flex-end;background:linear-gradient(135deg,#ffe2ad,#ffb199 55%,#ff98a3);color:#281424;border-bottom-right-radius:5px}
+.cmsg.them{align-self:flex-start;background:rgba(255,255,255,.12);border-bottom-left-radius:5px}
+.cmsg.quick{font-weight:700}
+#chatNote{margin:.2rem .3rem;font-size:.72rem;opacity:.6;min-height:1em}
+#chatQuick{display:flex;gap:6px;overflow-x:auto;touch-action:pan-x;padding:.3rem .1rem .45rem;scrollbar-width:none}
+#chatQuick::-webkit-scrollbar{display:none}
+#chatQuick button{flex:none;border:1px solid var(--glass-b);background:rgba(255,255,255,.07);color:var(--cream);border-radius:999px;padding:.42rem .8rem;font:700 .82rem var(--sans);cursor:pointer;white-space:nowrap}
+#chatQuick button:active{background:rgba(255,255,255,.2)}
+#chatForm{display:flex;gap:8px}
+#chatInput{flex:1;min-width:0;padding:.7rem .9rem;border-radius:14px;border:1px solid var(--glass-b);background:rgba(255,255,255,.08);color:var(--cream);font:600 1rem var(--sans);outline:none;user-select:text;-webkit-user-select:text}
+#chatSend{border:0;border-radius:14px;padding:0 1rem;font:700 .95rem var(--sans);color:#281424;background:linear-gradient(135deg,#ffe2ad,#ffb199 55%,#ff98a3);cursor:pointer}
+body.chat-open #joy,body.chat-open #act,body.chat-open #act2,body.chat-open #side,body.chat-open #capChip{display:none!important}
+#dbg{position:fixed;left:8px;top:calc(env(safe-area-inset-top,0px) + 120px);z-index:50;padding:.3rem .5rem;border-radius:8px;background:rgba(0,0,0,.65);font:600 .68rem/1.35 ui-monospace,Menlo,monospace;white-space:pre;pointer-events:none}
+.emx{grid-column:span 4;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:300px}
+.emx button{width:42px;height:42px;font-size:1.3rem;border:0;border-radius:12px;background:rgba(255,255,255,.08);cursor:pointer}
 </style>
 </head>
 <body>
@@ -148,6 +168,7 @@ body.touch #capChip{bottom:calc(env(safe-area-inset-bottom,0px) + 300px)}
   <button class="rbtn" id="mapBtn" aria-label="Map" type="button">🗺</button>
   <button class="rbtn" id="musicBtn" aria-label="Music on or off" type="button">🎵</button>
   <button class="rbtn" id="emoteBtn" aria-label="Emotes" type="button">😊</button>
+  <button class="rbtn" id="chatBtn" aria-label="Chat" type="button">💬<span id="chatBadge" class="hidden">0</span></button>
   <button class="rbtn" id="photoBtn" aria-label="Photo mode" type="button">📸</button>
 </div>
 <canvas id="map" class="hidden" width="300" height="440"></canvas>
@@ -155,7 +176,6 @@ body.touch #capChip{bottom:calc(env(safe-area-inset-bottom,0px) + 300px)}
 <div id="heartChip" class="glass hidden">💗 0/6</div>
 <div id="capChip" class="glass hidden"></div>
 <button id="act2" class="hidden" type="button"></button>
-<div id="wt" class="hidden"><img id="wtImg" alt=""><div class="wtcap" id="wtCap"></div><div class="wtrow"><span id="wtInfo"></span><button id="wtStop" type="button">Stop</button></div></div>
 <div id="photoUI" class="hidden">
   <button class="rbtn" id="pmExit" type="button" aria-label="Exit photo mode">✕</button>
   <button id="shutter" type="button" aria-label="Take photo"></button>
@@ -163,6 +183,14 @@ body.touch #capChip{bottom:calc(env(safe-area-inset-bottom,0px) + 300px)}
   <button class="rbtn" id="pmPose" type="button" aria-label="Pose">😊</button>
 </div>
 <div id="count" class="hidden"></div>
+
+<div id="chat" class="hidden" role="dialog" aria-label="Chat">
+  <header><span>💬 Chat</span><button id="chatClose" type="button" aria-label="Close chat">✕</button></header>
+  <div id="chatList"></div>
+  <div id="chatNote"></div>
+  <div id="chatQuick"></div>
+  <form id="chatForm" autocomplete="off"><input id="chatInput" maxlength="120" placeholder="Type a message…" enterkeyhint="send"><button id="chatSend" type="submit">Send</button></form>
+</div>
 <div id="overlay" class="overlay hidden"></div>
 
 <div id="viewer" class="hidden" role="dialog" aria-modal="true"></div>
@@ -363,7 +391,6 @@ const MUSIC = { all: [], lobby: [], memories: [], doodles: [], notes: [], things
    type: 'diwali' | 'christmas' | 'petals'. Add a  label  if you want a different banner text. For a quick preview, open gallery.html?season=diwali */
 const SEASONS = [
   { name: 'Diwali', type: 'diwali', from: '2026-11-01', to: '2026-11-12' },
-  { name: "Mummy's birthday", type: 'petals', from: '2026-11-13', to: '2026-11-15', label: "🌹 Mummy's birthday" },
   { name: 'Christmas', type: 'christmas', from: '12-15', to: '12-31' },
   { name: "Valentine's", type: 'petals', from: '02-10', to: '02-15', label: '💘 Happy Valentine\'s' },
 ];
@@ -372,7 +399,7 @@ const HEART_PRIZE = { title: 'You found every heart 💗', text: 'Every corner o
 
 /* ═══ three.js world ═══ */
 const canvas = $('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1a0f1c);
@@ -563,7 +590,7 @@ function layoutFrame(f, aspect) {
   f.frame.scale.set(W + 0.26, H + 0.26, 0.05); f.frame.position.set(0, cy, 0.025);
   f.matte.scale.set(W + 0.12, H + 0.12, 1); f.matte.position.set(0, cy, 0.052);
   f.pic.scale.set(W, H, 1); f.pic.position.set(0, cy, 0.056);
-  f.glow.scale.set(W + 3.2, H + 3.2, 1); f.glow.position.set(0, cy, 0.006);
+  f.glow.scale.set(W + 2.4, H + 2.4, 1); f.glow.position.set(0, cy, 0.006);
   f.brass.scale.set(W + 0.2, H + 0.2, 1); f.brass.position.set(0, cy, 0.0505);
   f.shadow.scale.set(W + 1.1, H + 1.1, 1); f.shadow.position.set(0.05, cy - 0.1, 0.004);
   const pw = 1.5 * sc, ph = pw / 4; f.plaque.scale.set(pw, ph, 1); f.plaque.position.set(0, cy - H / 2 - 0.13 - ph / 2 - 0.04, 0.02);
@@ -770,7 +797,7 @@ function makeAvatar(who) {
   const [lc, lg] = mkCanvas(96, 96); lg.fillStyle = who === 'M' ? '#c4343c' : '#1f6f78'; lg.beginPath(); lg.arc(48, 48, 44, 0, 7); lg.fill(); lg.fillStyle = '#fff'; lg.font = '700 56px Quicksand, sans-serif'; lg.textAlign = 'center'; lg.textBaseline = 'middle'; lg.fillText(who, 48, 52);
   const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: canvasTex(lc), depthTest: false, transparent: true })); tag.scale.set(0.42, 0.42, 1); tag.position.y = 2.15; tag.renderOrder = 5; root.add(tag);
   const blob = new THREE.Mesh(unitPlane, blobMat); blob.rotation.x = -Math.PI / 2; blob.scale.set(1.0, 1.0, 1); blob.position.y = 0.02; root.add(blob);
-  root.userData = { body, legL, legR, armL, armR, tag, t: Math.random() * 6, moving: 0, sit: 0, em: null };
+  root.userData = { who, body, legL, legR, armL, armR, tag, t: Math.random() * 6, moving: 0, sit: 0, em: null };
   return root;
 }
 function animateAvatar(av, speed, dt, sitting) {
@@ -778,18 +805,30 @@ function animateAvatar(av, speed, dt, sitting) {
   u.sit += ((sitting ? 1 : 0) - u.sit) * Math.min(1, dt * 8);
   const w = 1 - u.sit, s = Math.sin(u.t) * 0.7 * u.moving * w;
   u.legL.rotation.x = s - u.sit * 1.35; u.legR.rotation.x = -s - u.sit * 1.35; u.armL.rotation.x = -s * 0.8 - u.sit * 0.35; u.armR.rotation.x = s * 0.8 - u.sit * 0.35;
-  u.armL.rotation.z = 0; u.armR.rotation.z = 0; u.body.rotation.z = 0;
+  u.armL.rotation.z = 0; u.armR.rotation.z = 0; u.body.rotation.z = 0; u.body.rotation.y = 0;
   u.body.position.y = Math.abs(Math.sin(u.t)) * 0.05 * u.moving * w - u.sit * 0.17;
   if (u.em) {
-    const k = performance.now() / 1000 - u.em.t0, id = u.em.id;
+    const k = performance.now() / 1000 - u.em.t0, id = u.em.id, q = k * 7, A = u.armL, B = u.armR;
     if (k > u.em.dur) u.em = null;
-    else if (id === 'wave') { u.armR.rotation.x = 0; u.armR.rotation.z = 2.4 + Math.sin(k * 11) * 0.4; }
-    else if (id === 'dance' && !sitting) {
-      const q = k * 7; u.body.rotation.z = Math.sin(q) * 0.12; u.body.position.y += Math.abs(Math.sin(q)) * 0.09;
-      u.armL.rotation.x = 0; u.armR.rotation.x = 0; u.armL.rotation.z = -2.2 + Math.sin(q) * 0.5; u.armR.rotation.z = 2.2 - Math.sin(q) * 0.5; u.legL.rotation.x = Math.sin(q) * 0.5; u.legR.rotation.x = -Math.sin(q) * 0.5;
+    else switch (id) {
+      case 'wave': B.rotation.x = 0; B.rotation.z = 2.4 + Math.sin(k * 11) * 0.4; break;
+      case 'dance':
+        A.rotation.x = 0; B.rotation.x = 0; A.rotation.z = -2.2 + Math.sin(q) * 0.5; B.rotation.z = 2.2 - Math.sin(q) * 0.5;
+        if (!sitting) { u.body.rotation.z = Math.sin(q) * 0.12; u.body.position.y += Math.abs(Math.sin(q)) * 0.09; u.legL.rotation.x = Math.sin(q) * 0.5; u.legR.rotation.x = -Math.sin(q) * 0.5; } break;
+      case 'clap': { A.rotation.x = -1.35; B.rotation.x = -1.35; const c = Math.abs(Math.sin(k * 12)); A.rotation.z = 0.15 + c * 0.45; B.rotation.z = -0.15 - c * 0.45; break; }
+      case 'jump': A.rotation.x = 0; B.rotation.x = 0; A.rotation.z = -1.1; B.rotation.z = 1.1; if (!sitting) { u.body.position.y += Math.abs(Math.sin(k * 5.2)) * 0.55; u.legL.rotation.x = -0.3; u.legR.rotation.x = -0.3; } break;
+      case 'spin': A.rotation.x = 0; B.rotation.x = 0; A.rotation.z = -1.4; B.rotation.z = 1.4; if (!sitting) u.body.rotation.y = (k / u.em.dur) * Math.PI * 4; break;
+      case 'cheer': A.rotation.x = 0; B.rotation.x = 0; A.rotation.z = -2.7 + Math.sin(q) * 0.2; B.rotation.z = 2.7 - Math.sin(q) * 0.2; if (!sitting) u.body.position.y += Math.abs(Math.sin(q)) * 0.12; break;
+      case 'shy': A.rotation.x = -2.35; B.rotation.x = -2.35; A.rotation.z = 0.5; B.rotation.z = -0.5; u.body.rotation.z = Math.sin(k * 3) * 0.06; break;
+      case 'thumbs': B.rotation.x = -1.6 + Math.sin(k * 8) * 0.08; B.rotation.z = -0.05; break;
+      case 'point': B.rotation.x = -1.55; B.rotation.z = -0.08; break;
+      case 'hug': A.rotation.x = -1.2; B.rotation.x = -1.2; A.rotation.z = -0.7 + Math.sin(k * 3) * 0.08; B.rotation.z = 0.7 - Math.sin(k * 3) * 0.08; break;
+      case 'sleep': u.body.rotation.z = 0.17 + Math.sin(k * 1.6) * 0.03; break;
+      case 'shrug': A.rotation.z = -0.95; B.rotation.z = 0.95; A.rotation.x = -0.25; B.rotation.x = -0.25; u.body.position.y += 0.03 * Math.max(0, Math.sin(k * 5)); break;
+      case 'wow': A.rotation.x = -0.9; B.rotation.x = -0.9; A.rotation.z = -0.5; B.rotation.z = 0.5; if (k < 0.5) u.body.position.y += Math.sin(k / 0.5 * Math.PI) * 0.15; break;
+      case 'laugh': u.body.position.y += Math.abs(Math.sin(k * 14)) * 0.045; u.body.rotation.z = Math.sin(k * 14) * 0.03; break;
+      default: if (k < 1.4) u.body.position.y += Math.abs(Math.sin(k * 9)) * 0.07;
     }
-    else if (id === 'clap') { u.armL.rotation.x = -1.35; u.armR.rotation.x = -1.35; const c = Math.abs(Math.sin(k * 12)); u.armL.rotation.z = 0.15 + c * 0.45; u.armR.rotation.z = -0.15 - c * 0.45; }
-    else if (k < 1.4) { u.body.position.y += Math.abs(Math.sin(k * 9)) * 0.07; }
   }
 }
 
@@ -797,9 +836,9 @@ function animateAvatar(av, speed, dt, sitting) {
 function clientFor(it) { return it.client === 'ju' ? sbJU : sb; }
 function mediaOf(it) { return resolveMedia(clientFor(it), it.bucket, it.path, it.mime || mimeFromPath(it.path, false), it.fallback); }
 function loadImg(url) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = rej; im.src = url; }); }
-async function makeTexture(url) {
+async function makeTexture(url, maxDim) {
   let im; try { im = await loadImg(url); } catch (e) { const r = await fetch(url); if (!r.ok) throw e; im = await loadImg(URL.createObjectURL(await r.blob())); }
-  const nw = im.naturalWidth || 1, nh = im.naturalHeight || 1, sc = Math.min(1, 768 / Math.max(nw, nh));
+  const nw = im.naturalWidth || 1, nh = im.naturalHeight || 1, sc = Math.min(1, (maxDim || 768) / Math.max(nw, nh));
   const [c, g] = mkCanvas(Math.max(2, Math.round(nw * sc)), Math.max(2, Math.round(nh * sc)));
   g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0, c.width, c.height);
   return { tex: canvasTex(c), aspect: nw / nh };
@@ -845,8 +884,8 @@ function joyMove(e) {
   const r = joyEl.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, dx = e.clientX - cx, dy = e.clientY - cy, d = Math.hypot(dx, dy), m = 46, kd = Math.min(d, m);
   knob.style.transform = d ? `translate(${dx / d * kd}px,${dy / d * kd}px)` : '';
   joy.x = d ? dx / d : 0; joy.y = d ? -dy / d : 0; joy.d = d;
-  joy.sp = d <= m ? 1.2 + 2.2 * (d / m) : 3.4 + clamp((d - 70) / 60, 0, 1) * 2.4;      // slow push = slow walk, finger far past the ring = run
-  joyEl.classList.toggle('run', d > 70);
+  joy.sp = d <= m ? 1.2 + 2.4 * (d / m) : 3.6 + clamp((d - m) / 64, 0, 1) * 3.4;      // slow push = slow walk, the further the finger travels past the knob the faster you run
+  joyEl.classList.toggle('run', d > 60);
 }
 joyEl.addEventListener('pointerdown', (e) => { joy.id = e.pointerId; try { joyEl.setPointerCapture(e.pointerId); } catch (er) {} joyMove(e); lastActive = Date.now(); e.preventDefault(); });
 joyEl.addEventListener('pointermove', (e) => { if (e.pointerId === joy.id) joyMove(e); });
@@ -1076,6 +1115,7 @@ function slowTick() {
   for (const id in rooms) rooms[id].group.visible = rectDist(rooms[id].zone) < 22;
   allFrames.forEach((f) => {
     f.dist = Math.hypot(player.x - f.worldPos.x, player.z - f.worldPos.z);
+    if (f.glow) { const near = f.dist < 15; if (f.glow.visible !== near) { f.glow.visible = near; if (f.shadow) f.shadow.visible = near; } }
     if (f.state === 'idle' && f.dist < 15) { f.state = 'queued'; loadQ.push(f); } else if (f.state === 'ready' && f.dist > 34) unloadFrame(f);
   });
   loadQ.sort((a, b) => a.dist - b.dist); pump();
@@ -1090,7 +1130,7 @@ function update(dt, now) {
   if (joy.d > 8) { mx = joy.x; my = joy.y; sp = joy.sp; }
   else {
     mx = ((keys.KeyD || keys.ArrowRight) ? 1 : 0) - ((keys.KeyA || keys.ArrowLeft) ? 1 : 0); my = ((keys.KeyW || keys.ArrowUp) ? 1 : 0) - ((keys.KeyS || keys.ArrowDown) ? 1 : 0);
-    const len = Math.hypot(mx, my); if (len > 1) { mx /= len; my /= len; } sp = (keys.ShiftLeft || keys.ShiftRight) ? 5.4 : 3.4;
+    const len = Math.hypot(mx, my); if (len > 1) { mx /= len; my /= len; } sp = (keys.ShiftLeft || keys.ShiftRight) ? 6.4 : 3.6;
   }
   if (viewerOpen || !$('passcode').classList.contains('hidden') || overlayOpen) { mx = my = 0; }
   const sy = Math.sin(camYaw), cy = Math.cos(camYaw);
@@ -1102,7 +1142,8 @@ function update(dt, now) {
     else if (Math.hypot(mx, my) > 0.4) standUp();
     player.speed = 0;
   } else {
-    player.x += vx * dt; player.z += vz * dt; collide(player);
+    const steps = Math.max(1, Math.ceil(Math.hypot(vx * dt, vz * dt) / 0.18));
+    for (let i = 0; i < steps; i++) { player.x += vx * dt / steps; player.z += vz * dt / steps; collide(player); }
     player.speed = Math.hypot(player.x - ox, player.z - oz) / Math.max(dt, 1e-4);
     if (Math.hypot(vx, vz) > 0.1) { const target = Math.atan2(vx, vz); let d = target - player.heading; d = Math.atan2(Math.sin(d), Math.cos(d)); player.heading += d * Math.min(1, dt * 12); }
   }
@@ -1135,8 +1176,16 @@ function update(dt, now) {
   sendLive(now);
 }
 let lastT = performance.now(), running = false;
-function loop(now) { requestAnimationFrame(loop); if (!running || document.hidden) { lastT = now; return; } const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now; update(dt, now); renderer.render(scene, camera); }
-if (TEST || window.__GALLERY_DEBUG) window.__gallery = { player, rooms, allFrames, colliders, lock: () => lockJustUs(), get justUnlocked() { return justUnlocked; }, remotes, onRemote, teleport: (id) => teleport(TELE.find((t) => t.id === id)), get yaw() { return camYaw; }, set yaw(v) { camYaw = v; }, camera, scene, pickFrame, benches, get sit() { return sit; }, sim: (sec) => { for (let i = 0; i < sec / 0.05; i++) update(0.05, performance.now()); }, get tour() { return typeof Tour !== 'undefined' ? Tour : null; }, hearts: () => HEARTS, WT: () => WT, prefs: () => prefs, openGuestBook: () => openGuestBook(), triggerEmote: (id) => triggerEmote(id), enterPhoto: () => enterPhoto(), startTour: () => Tour.start(), applyTime: (f) => applyTime(f), remotes_: () => remotes, joy, triggerAction, updateCandidate, get candidate() { return candidate; }, get camDist() { return camDistCur; }, THREE_REVISION: THREE.REVISION };
+const dprMax = Math.min(window.devicePixelRatio || 1, 1.75); let dprCur = Math.min(dprMax, 1.5), ftSum = 0, ftN = 0;
+function setDpr(v) { dprCur = v; renderer.setPixelRatio(v); onResize(); }
+renderer.setPixelRatio(dprCur); onResize();
+function loop(now) {
+  requestAnimationFrame(loop); if (!running || document.hidden) { lastT = now; return; }
+  const raw = (now - lastT) / 1000, dt = Math.min(0.1, raw); lastT = now; update(dt, now); renderer.render(scene, camera);
+  ftSum += raw; ftN++; window.__fps = ftN ? ftN / Math.max(ftSum, 1e-3) : 0;
+  if (ftN >= 90) { const avg = ftSum / ftN; ftSum = 0; ftN = 0; if (avg > 0.027 && dprCur > 1.0) setDpr(Math.max(1.0, dprCur - 0.25)); else if (avg < 0.0165 && dprCur < dprMax) setDpr(Math.min(dprMax, dprCur + 0.25)); }
+}
+if (TEST || window.__GALLERY_DEBUG) window.__gallery = { player, rooms, allFrames, colliders, lock: () => lockJustUs(), get justUnlocked() { return justUnlocked; }, remotes, onRemote, teleport: (id) => teleport(TELE.find((t) => t.id === id)), get yaw() { return camYaw; }, set yaw(v) { camYaw = v; }, camera, scene, pickFrame, benches, get sit() { return sit; }, sim: (sec) => { for (let i = 0; i < sec / 0.05; i++) update(0.05, performance.now()); }, get tour() { return typeof Tour !== 'undefined' ? Tour : null; }, hearts: () => HEARTS, WT: () => WT, prefs: () => prefs, openGuestBook: () => openGuestBook(), triggerEmote: (id) => triggerEmote(id), enterPhoto: () => enterPhoto(), startTour: () => Tour.start(), applyTime: (f) => applyTime(f), remotes_: () => remotes, joy, liveEvents, playEmote: (a, i, c) => playEmote(a, i, c), me3d_: () => me3d, chat: () => Chat, slide: () => Slide, fps: () => window.__fps, triggerAction, updateCandidate, get candidate() { return candidate; }, get camDist() { return camDistCur; }, THREE_REVISION: THREE.REVISION };
 
 
 /* ═══════════════════════════ extras ═══════════════════════════ */
@@ -1296,35 +1345,120 @@ function drawMap() {
 $('mapBtn').addEventListener('click', () => { mapOpen = !mapOpen; mapC.classList.toggle('hidden', !mapOpen); $('mapBtn').classList.toggle('off', false); if (mapOpen) drawMap(); });
 frameHooks.push((dt) => { if (!mapOpen) return; if ((mapAcc += dt) < 0.12) return; mapAcc = 0; drawMap(); });
 
-/* ── emotes ── */
-const EMOTES = [['wave', '👋'], ['love', '❤️'], ['dance', '💃'], ['laugh', '😂'], ['kiss', '😘'], ['clap', '👏']], EMOJI = Object.fromEntries(EMOTES);
-const emoTray = $('emotes'); EMOTES.forEach(([id, e]) => { const b = document.createElement('button'); b.textContent = e; b.setAttribute('aria-label', id); b.onclick = () => { emoTray.classList.add('hidden'); triggerEmote(id); }; emoTray.append(b); });
-$('emoteBtn').addEventListener('click', () => emoTray.classList.toggle('hidden'));
+/* ── emotes (16 built in, plus your own emoji) ── */
+const EMOTES = [['wave', '👋'], ['love', '❤️'], ['dance', '💃'], ['laugh', '😂'], ['kiss', '😘'], ['clap', '👏'], ['jump', '🤸'], ['spin', '🌀'], ['cheer', '🙌'], ['shy', '🙈'], ['thumbs', '👍'], ['point', '👉'], ['hug', '🤗'], ['sleep', '😴'], ['shrug', '🤷'], ['wow', '😮']];
+const EMOJI = Object.fromEntries(EMOTES), EDUR = { dance: 4.5, wave: 2.6, clap: 3, jump: 2.2, spin: 2.2, cheer: 3, shy: 3, thumbs: 2.6, point: 2.6, hug: 3, sleep: 4, shrug: 2.6, wow: 2.2, laugh: 2.6, love: 2.4, kiss: 2.4 };
+const emoTray = $('emotes');
+const firstGrapheme = (str) => { const t = String(str || '').trim(); if (!t) return ''; try { if (window.Intl && Intl.Segmenter) { const it = new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(t)[Symbol.iterator]().next(); return it.value ? it.value.segment : ''; } } catch (e) {} return Array.from(t)[0] || ''; };
+const isEmoji = (g) => { if (!g || g.length > 16) return false; try { return /\p{Extended_Pictographic}|\p{Regional_Indicator}/u.test(g); } catch (e) { return g.length >= 1; } };
+let customEmotes = (() => { try { const a = JSON.parse(lsGet('gallery-custom-emotes', '[]')); return Array.isArray(a) ? a.filter(isEmoji).slice(0, 12) : []; } catch (e) { return []; } })();
+function buildTray() {
+  emoTray.textContent = '';
+  EMOTES.forEach(([id, e]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = e; b.setAttribute('aria-label', id); b.onclick = () => { emoTray.classList.add('hidden'); triggerEmote(id); }; emoTray.append(b); });
+  customEmotes.forEach((e) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = e; b.setAttribute('aria-label', 'your emoji'); b.onclick = () => { emoTray.classList.add('hidden'); triggerEmote('custom', e); }; emoTray.append(b); });
+  const plus = document.createElement('button'); plus.type = 'button'; plus.textContent = '＋'; plus.setAttribute('aria-label', 'Add your own emoji'); plus.style.fontWeight = '700'; plus.onclick = () => { emoTray.classList.add('hidden'); openEmojiAdder(); }; emoTray.append(plus);
+}
+const PALETTE = '😀 😁 🥰 😍 🤩 😎 🥳 😇 😜 🤭 🥹 😭 😡 😱 🤔 🙄 😏 🫶 💖 💘 💋 🔥 ✨ 🌹 🌸 🎉 🎂 🎁 🍫 🍕 🍦 ☕ 🐶 🐱 🐻 🦋 🌈 ⭐ 🌙 ☀️ 🍀 💃 🕺 🙏 💪 👀 🤝 🎶'.split(' ');
+function openEmojiAdder() {
+  const sheet = mk('div', 'sheet glass'); sheet.append(mk('h2', '', 'Add your own emoji'));
+  const inp = document.createElement('input'); inp.placeholder = 'Paste or type an emoji'; inp.maxLength = 16; inp.style.textAlign = 'center'; inp.style.fontSize = '1.4rem'; sheet.append(inp);
+  const pal = mk('div', 'emx'); PALETTE.forEach((e) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = e; b.onclick = () => { inp.value = e; }; pal.append(b); }); sheet.append(pal);
+  const mine = mk('div', 'emx'); sheet.append(mk('div', 'sub', 'Your emoji (tap to remove)'), mine);
+  const renderMine = () => { mine.textContent = ''; if (!customEmotes.length) mine.append(mk('span', 'sub', 'None yet')); customEmotes.forEach((e, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = e; b.title = 'Remove'; b.onclick = () => { customEmotes.splice(i, 1); lsSet('gallery-custom-emotes', JSON.stringify(customEmotes)); buildTray(); renderMine(); }; mine.append(b); }); };
+  renderMine();
+  const row = mk('div', 'srow'); sheet.append(row);
+  row.append(btn('Add', () => {
+    const g = firstGrapheme(inp.value); if (!isEmoji(g)) { toast('That is not an emoji. Try one from the list.'); return; }
+    if (customEmotes.includes(g)) { toast('Already in your list'); return; } if (customEmotes.length >= 12) { toast('You can keep up to 12'); return; }
+    customEmotes.push(g); lsSet('gallery-custom-emotes', JSON.stringify(customEmotes)); buildTray(); inp.value = ''; renderMine(); toast('Added ' + g, 1600);
+  }), btn('Done', closeOverlay, 'pbtn ghost')); openOverlay(sheet);
+}
 const bubbleTexCache = {};
 function bubbleTex(emoji) {
   if (bubbleTexCache[emoji]) return bubbleTexCache[emoji]; const [c, g] = mkCanvas(160, 160);
   g.fillStyle = 'rgba(255,255,255,.95)'; g.beginPath(); g.moveTo(80, 150); g.lineTo(62, 118); g.lineTo(98, 118); g.closePath(); g.fill(); g.beginPath(); g.arc(80, 62, 56, 0, 7); g.fill();
   g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '66px sans-serif'; g.fillText(emoji, 80, 66); return (bubbleTexCache[emoji] = canvasTex(c));
 }
+function textBubble(text) {
+  const [m, mg] = mkCanvas(8, 8); mg.font = HAND(44); const lines = wrapLines(mg, text, 400).slice(0, 4); let w = 0; lines.forEach((l) => { w = Math.max(w, mg.measureText(l).width); });
+  const cw = Math.round(clamp(w + 64, 200, 512)), ch = lines.length * 50 + 70, [c, g] = mkCanvas(cw, ch);
+  g.fillStyle = 'rgba(255,252,246,.96)'; g.beginPath(); g.roundRect ? g.roundRect(4, 4, cw - 8, ch - 38, 26) : g.rect(4, 4, cw - 8, ch - 38); g.fill();
+  g.beginPath(); g.moveTo(cw / 2 - 16, ch - 36); g.lineTo(cw / 2, ch - 6); g.lineTo(cw / 2 + 16, ch - 36); g.closePath(); g.fill();
+  g.fillStyle = '#2b1a24'; g.textAlign = 'center'; g.font = HAND(44); lines.forEach((l, i) => g.fillText(l, cw / 2, 56 + i * 50));
+  return { tex: canvasTex(c), sw: cw / 512 * 2.1, sh: ch / 512 * 2.1 };
+}
+function setBubble(av, tex, sw, sh, ms, own) {
+  const u = av.userData; if (u.bubble) { av.remove(u.bubble.sp); if (u.bubble.own) u.bubble.sp.material.map.dispose(); u.bubble.sp.material.dispose(); u.bubble = null; }
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false })); sp.scale.set(sw, sh, 1); sp.renderOrder = 7; av.add(sp); sp.position.y = 2.3 + sh / 2;
+  u.bubble = { sp, t0: performance.now(), dur: ms, base: 2.3 + sh / 2, own: !!own };
+}
+function showTextBubble(av, text) { const t = textBubble(text); setBubble(av, t.tex, t.sw, t.sh, clamp(2600 + text.length * 70, 3500, 8000), true); }
 const heartSpriteTex = (() => { const [c, g] = mkCanvas(64, 64); g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '48px sans-serif'; g.fillStyle = '#ff6b8a'; g.shadowColor = 'rgba(255,100,140,.9)'; g.shadowBlur = 12; g.fillText('♥', 32, 34); return canvasTex(c); })();
-const floaters = [];
+const floaters = [], pings = [];
 function floatHearts(pos, n, spread) {
   for (let i = 0; i < n; i++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: heartSpriteTex, transparent: true, depthTest: false })); sp.scale.set(0.3, 0.3, 1); sp.renderOrder = 6; sp.position.set(pos.x + (Math.random() - 0.5) * (spread || 0.5), pos.y + Math.random() * 0.3, pos.z + (Math.random() - 0.5) * (spread || 0.5)); scene.add(sp); floaters.push({ sp, t0: performance.now(), life: 1400 + Math.random() * 900, vy: 0.7 + Math.random() * 0.5, ph: Math.random() * 6 }); }
 }
-function playEmote(av, id) {
-  const u = av.userData, dur = id === 'dance' ? 4.5 : id === 'wave' ? 2.6 : id === 'clap' ? 3 : 2.4;
-  u.em = { id, t0: performance.now() / 1000, dur };
-  if (u.bubble) { av.remove(u.bubble.sp); u.bubble = null; }
-  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: bubbleTex(EMOJI[id] || '💬'), transparent: true, depthTest: false })); sp.scale.set(0.95, 0.95, 1); sp.position.y = 2.7; sp.renderOrder = 7; av.add(sp); u.bubble = { sp, t0: performance.now(), dur: dur * 1000 };
+function pingAt(x, z) {
+  for (let k = 0; k < 2; k++) { const m = new THREE.Mesh(new THREE.RingGeometry(0.34, 0.5, 40), new THREE.MeshBasicMaterial({ color: 0xff9aa8, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })); m.rotation.x = -Math.PI / 2; m.position.set(x, 0.06, z); m.visible = false; scene.add(m); pings.push({ m, t0: performance.now() + k * 550, life: 2400 }); }
+}
+function playEmote(av, id, custom) {
+  const u = av.userData, dur = EDUR[id] || 2.4; u.em = { id, t0: performance.now() / 1000, dur };
+  const emoji = id === 'custom' ? (custom || '💬') : (EMOJI[id] || '💬'); setBubble(av, bubbleTex(emoji), 0.95, 0.95, dur * 1000, false);
   if (id === 'love' || id === 'kiss') { const p = new THREE.Vector3(); av.getWorldPosition(p); p.y = 2.2; floatHearts(p, 7, 0.6); }
 }
-function triggerEmote(id) { playEmote(me3d, id); sendEvent('emote', { e: id }); }
-liveEvents.emote = (p) => { const r = remotes.get(p.c); if (r) playEmote(r.av, p.e); };
+function triggerEmote(id, custom) { playEmote(me3d, id, custom); sendEvent('emote', { e: id, x: custom || '' }); }
+liveEvents.emote = (p) => {
+  const r = remotes.get(p.c); if (!r) return; let custom;
+  if (p.e === 'custom') { const g = firstGrapheme(p.x); custom = isEmoji(g) ? g : '💬'; } else if (!EMOJI[p.e]) return;
+  playEmote(r.av, p.e, custom);
+};
+$('emoteBtn').addEventListener('click', () => emoTray.classList.toggle('hidden'));
 frameHooks.push((dt) => {
   const now = performance.now();
-  avatars().forEach((av) => { const b = av.userData.bubble; if (!b) return; const age = now - b.t0; if (age > b.dur) { av.remove(b.sp); av.userData.bubble = null; return; } b.sp.material.opacity = age > b.dur - 400 ? (b.dur - age) / 400 : 1; b.sp.position.y = 2.6 + Math.min(age / 400, 1) * 0.15 + Math.sin(age / 250) * 0.02; });
+  avatars().forEach((av) => { const b = av.userData.bubble; if (!b) return; const age = now - b.t0; if (age > b.dur) { av.remove(b.sp); if (b.own) b.sp.material.map.dispose(); b.sp.material.dispose(); av.userData.bubble = null; return; } b.sp.material.opacity = age > b.dur - 400 ? (b.dur - age) / 400 : 1; b.sp.position.y = b.base + Math.min(age / 400, 1) * 0.12 + Math.sin(age / 250) * 0.02; });
   for (let i = floaters.length - 1; i >= 0; i--) { const f = floaters[i], age = now - f.t0; if (age > f.life) { scene.remove(f.sp); f.sp.material.dispose(); floaters.splice(i, 1); continue; } f.sp.position.y += f.vy * dt; f.sp.position.x += Math.sin(age / 220 + f.ph) * dt * 0.25; f.sp.material.opacity = clamp(1 - age / f.life, 0, 1); }
+  for (let i = pings.length - 1; i >= 0; i--) { const q = pings[i], age = now - q.t0; if (age < 0) continue; if (age > q.life) { scene.remove(q.m); q.m.geometry.dispose(); q.m.material.dispose(); pings.splice(i, 1); continue; } q.m.visible = true; const k = age / q.life; q.m.scale.setScalar(1 + k * 4.5); q.m.material.opacity = (1 - k) * 0.9; }
 });
+
+/* ── chat (only while you are both in the gallery) ── */
+const QUICK = ['Follow me 👣', 'Come here 👋', 'Come to me 💕', 'Wait for me ✋', 'Over here! 📍', 'Look at this 👀', "Let's sit 🪑", 'Photo time 📸', 'Love this 😍', 'Haha 😂', 'Hi 👋', 'Be right back ⏳'];
+const PING_QUICK = new Set(['Follow me 👣', 'Come here 👋', 'Come to me 💕', 'Over here! 📍']);
+const Chat = { open: false, list: [], unread: 0 };
+try { const old = JSON.parse(sessionStorage.getItem('gallery-chat') || '[]'); if (Array.isArray(old)) Chat.list = old.filter((x) => x && typeof x.m === 'string' && (x.w === 'J' || x.w === 'M')).slice(-40); } catch (e) {}
+const chatText = (m) => String(m == null ? '' : m).replace(/\s+/g, ' ').trim().slice(0, 120);
+function chatBadge() { const b = $('chatBadge'); b.textContent = Chat.unread > 9 ? '9+' : String(Chat.unread); b.classList.toggle('hidden', !Chat.unread); }
+function renderChat() {
+  const l = $('chatList'); l.textContent = '';
+  if (!Chat.list.length) l.append(mk('div', 'sub', 'Say hi 👋 Use a quick reply below, or type your own.'));
+  Chat.list.forEach((x) => { const d = mk('div', 'cmsg ' + (x.w === me ? 'me' : 'them') + (x.k === 'q' ? ' quick' : '')); d.append(document.createTextNode(x.m)); d.append(mk('small', '', (x.w === me ? 'You' : x.w) + ' · ' + new Date(x.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))); l.append(d); });
+  l.scrollTop = l.scrollHeight;
+}
+function addChat(w, m, k) {
+  Chat.list.push({ w, m, k, t: Date.now() }); if (Chat.list.length > 60) Chat.list.shift(); try { sessionStorage.setItem('gallery-chat', JSON.stringify(Chat.list)); } catch (e) {}
+  if (Chat.open) renderChat(); else if (w !== me) { Chat.unread++; chatBadge(); }
+}
+function chatNote() { $('chatNote').textContent = remotes.size ? '' : (me === 'M' ? 'J' : 'M') + " isn't in the gallery right now. Messages only reach them while you are both here."; }
+function openChat() {
+  if (Chat.open) return; if (photo.on) return; emoTray.classList.add('hidden'); $('menu').classList.add('hidden'); Chat.open = true; Chat.unread = 0; chatBadge(); $('chat').classList.remove('hidden'); document.body.classList.add('chat-open'); renderChat(); chatNote();
+  if (!document.body.classList.contains('touch')) setTimeout(() => $('chatInput').focus(), 80);
+}
+function closeChat() { if (!Chat.open) return; Chat.open = false; $('chat').classList.add('hidden'); document.body.classList.remove('chat-open'); $('chatInput').blur(); }
+function sendChat(text, kind) {
+  const m = chatText(text); if (!m) return; addChat(me, m, kind);
+  const ping = kind === 'q' && PING_QUICK.has(m); sendEvent('chat', { m, k: kind, pg: ping ? 1 : 0, x: +player.x.toFixed(2), z: +player.z.toFixed(2) });
+  if (kind === 'q') showTextBubble(me3d, m); if (ping) pingAt(player.x, player.z); chatNote();
+}
+liveEvents.chat = (p) => {
+  const m = chatText(p.m), k = p.k === 'q' ? 'q' : 't'; if (!m) return; const w = p.w === 'M' ? 'M' : 'J', r = remotes.get(p.c), wasOpen = Chat.open;
+  addChat(w, m, k);
+  if (r && (k === 'q' || !wasOpen)) showTextBubble(r.av, m);
+  if (!wasOpen) { chimeSeq([988, 1319], 0.05); if (!r || Math.hypot(player.x - r.x, player.z - r.z) > 14) toast(w + ': ' + m, 3200); }
+  if (p.pg && isFinite(p.x) && isFinite(p.z)) pingAt(+p.x, +p.z);
+};
+QUICK.forEach((q) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = q; b.onclick = () => sendChat(q, 'q'); $('chatQuick').append(b); });
+$('chatForm').addEventListener('submit', (e) => { e.preventDefault(); const i = $('chatInput'), v = i.value; if (!chatText(v)) return; sendChat(v, 't'); i.value = ''; });
+$('chatBtn').addEventListener('click', openChat); $('chatClose').addEventListener('click', closeChat);
+slowHooks.push(() => { if (Chat.open) chatNote(); });
 
 /* ── guest book ── */
 let guestLocal = [];
@@ -1455,18 +1589,61 @@ function tourStep(dt, mx, my) {
 }
 priorityHooks.push(() => (Tour.on ? { type: 'tour', label: '⏹  End tour', run: () => Tour.stop('Tour ended') } : null));
 
-/* ── watch together (on the benches) ── */
-const WT = { on: false, host: false, idx: 0, items: [], timer: 0, pending: null };
+/* ── watch together: the slideshow plays on the wall in front of the bench ── */
+const WT = { on: false, host: false, idx: 0, items: [], timer: 0, pending: null, tok: 0 };
 const act2 = $('act2');
+const Slide = { grp: null, planes: [], active: 0, t0: 0, capMat: null, tex: [null, null] };
 const remoteSeated = () => [...remotes.values()].some((r) => r.sit);
+function slideOpen() {
+  if (Slide.grp || !sit) return; const b = sit.bench, fp = new THREE.Vector3(b.perp.x * sit.side, 0, b.perp.z * sit.side), dist = b.group === hallGroup ? 3.78 : 5.52, o = sit.to;
+  const g = new THREE.Group(); g.position.set(o.x + fp.x * dist, 0, o.z + fp.z * dist); g.rotation.y = Math.atan2(-fp.x, -fp.z); scene.add(g);
+  const glow = new THREE.Mesh(unitPlane, glowMat); glow.scale.set(7.6, 5.2, 1); glow.position.set(0, 2.25, 0.012); g.add(glow);
+  const backing = new THREE.Mesh(unitBox, lam(0x0b0710)); backing.scale.set(4.5, 2.7, 0.06); backing.position.set(0, 2.25, 0.03); g.add(backing);
+  const brass = new THREE.Mesh(unitPlane, brassMat); brass.scale.set(4.6, 2.8, 1); brass.position.set(0, 2.25, 0.0615); g.add(brass);
+  const black = new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ color: 0x050308 })); black.scale.set(4.4, 2.6, 1); black.position.set(0, 2.25, 0.0625); g.add(black);
+  Slide.planes = [0, 1].map((i) => { const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), mesh = new THREE.Mesh(unitPlane, mat); mesh.position.set(0, 2.25, 0.065 + i * 0.001); mesh.scale.set(4.3, 2.5, 1); g.add(mesh); return { mesh, mat, w: 4.3, h: 2.5 }; });
+  Slide.capMat = new THREE.MeshBasicMaterial({ transparent: true }); const cap = new THREE.Mesh(unitPlane, Slide.capMat); cap.scale.set(3.4, 0.68, 1); cap.position.set(0, 0.62, 0.03); g.add(cap);
+  Slide.grp = g; Slide.active = 0; Slide.t0 = 0; Slide.tex = [null, null];
+}
+function slideClose() {
+  if (!Slide.grp) return; scene.remove(Slide.grp); Slide.tex.forEach((t) => { if (t) t.dispose(); }); if (Slide.capMat && Slide.capMat.map) Slide.capMat.map.dispose();
+  Slide.grp.traverse((o) => { if (o.material && o.material !== glowMat && o.material !== brassMat && o.material !== matteMat && !o.material._shared) o.material.dispose && o.material.dispose(); }); Slide.grp = null; Slide.planes = []; Slide.capMat = null;
+}
+function slidePaintCaption(text, count) {
+  const [c, g] = mkCanvas(640, 128); g.fillStyle = 'rgba(251,246,236,.97)'; g.fillRect(0, 0, 640, 128); g.strokeStyle = 'rgba(120,90,70,.4)'; g.lineWidth = 3; g.strokeRect(5, 5, 630, 118);
+  g.textAlign = 'center'; g.fillStyle = '#2b1a24'; fitFont(g, text || ' ', 580, 62, 30, HAND); g.fillText(ellipsize(g, text || ' ', 580), 320, 70); g.fillStyle = '#8a6f5a'; g.font = HAND(32); g.fillText(count, 320, 112);
+  if (Slide.capMat.map) Slide.capMat.map.dispose(); Slide.capMat.map = canvasTex(c); Slide.capMat.needsUpdate = true;
+}
+function slideShow(tex, aspect, text, count) {
+  if (!Slide.grp) { tex.dispose(); return; } const next = 1 - Slide.active, p = Slide.planes[next];
+  if (Slide.tex[next]) Slide.tex[next].dispose(); Slide.tex[next] = tex; p.mat.map = tex; p.mat.needsUpdate = true;
+  const W = Math.min(4.3, 2.5 * aspect), H = W / aspect; p.w = W; p.h = H; p.mesh.scale.set(W, H, 1); p.mesh.position.x = 0.5; p.mat.opacity = 0;
+  Slide.active = next; Slide.t0 = performance.now(); slidePaintCaption(text, count);
+}
+frameHooks.push((dt, now) => {
+  hemi.intensity += ((WT.on ? 0.62 : 1) - hemi.intensity) * Math.min(1, dt * 3);
+  if (!Slide.grp || !Slide.t0) return; const inc = Slide.planes[Slide.active], out = Slide.planes[1 - Slide.active], age = now - Slide.t0, k = clamp(age / 900, 0, 1), e = k * k * (3 - 2 * k), zoom = 1 + 0.03 * clamp(age / 7000, 0, 1);
+  inc.mat.opacity = e; inc.mesh.position.x = 0.5 * (1 - e); inc.mesh.scale.set(inc.w * zoom, inc.h * zoom, 1); out.mat.opacity = 1 - e; out.mesh.position.x = -0.5 * e;
+  if (k >= 1 && Slide.tex[1 - Slide.active]) { Slide.tex[1 - Slide.active].dispose(); Slide.tex[1 - Slide.active] = null; out.mat.map = null; out.mat.needsUpdate = true; out.mat.opacity = 0; }
+});
 function wtItems() { const r = rooms.memories, base = r ? r.frames.filter((f) => !f.item.locked && !f.isNote && !f.item.video).map((f) => f.item) : []; return base.length ? base : (rooms.doodles ? rooms.doodles.frames.filter((f) => !f.item.locked).map((f) => f.item) : []); }
 async function wtShow() {
-  const it = WT.items[WT.idx % WT.items.length]; if (!it) return; $('wtCap').textContent = it.title || it.sub || ''; $('wtInfo').textContent = (WT.idx % WT.items.length + 1) + ' / ' + WT.items.length + (remoteSeated() ? '  ·  watching together' : '');
-  const url = await mediaOf(it); if (WT.items[WT.idx % WT.items.length] !== it || !WT.on) return; const im = $('wtImg'); im.style.opacity = 0; setTimeout(() => { im.src = url || ''; im.style.opacity = 1; }, 160);
+  const my = ++WT.tok, idx = WT.idx, n = WT.items.length, it = WT.items[idx % n]; if (!it) return;
+  try {
+    const url = await mediaOf(it); if (!WT.on || my !== WT.tok) return; if (!url) throw new Error('no image');
+    const { tex, aspect } = await makeTexture(url, 1280); if (!WT.on || my !== WT.tok) { tex.dispose(); return; }
+    slideShow(tex, aspect, it.title || it.sub || '', (idx % n + 1) + ' / ' + n + (remoteSeated() ? '  ·  watching together' : ''));
+  } catch (e) { if (WT.on && my === WT.tok) { WT.idx++; if (WT.host) setTimeout(() => { if (WT.on) wtShow(); }, 300); } }
 }
-function wtBegin(idx, host) { WT.items = wtItems(); if (!WT.items.length) { toast('Nothing to show yet'); return; } WT.on = true; WT.host = host; WT.idx = idx || 0; $('wt').classList.remove('hidden'); wtShow(); clearInterval(WT.timer); if (host) WT.timer = setInterval(() => { WT.idx++; wtShow(); sendEvent('wt', { on: 1, idx: WT.idx }); }, 6500); }
-function wtEnd(broadcast) { if (!WT.on) return; WT.on = false; clearInterval(WT.timer); $('wt').classList.add('hidden'); if (broadcast && WT.host) sendEvent('wt', { on: 0 }); WT.host = false; }
-$('wtStop').addEventListener('click', () => wtEnd(true));
+function wtBegin(idx, host) {
+  WT.items = wtItems(); if (!WT.items.length) { toast('Nothing to show yet'); return; } if (!(sit && sit.seated)) return;
+  WT.on = true; WT.host = host; WT.idx = idx || 0; slideOpen(); camGoal = { dist: 4.4, pitch: 0.26 }; wtShow(); clearInterval(WT.timer);
+  if (host) WT.timer = setInterval(() => { WT.idx++; wtShow(); sendEvent('wt', { on: 1, idx: WT.idx }); }, 6500);
+}
+function wtEnd(broadcast) {
+  if (!WT.on) return; WT.on = false; clearInterval(WT.timer); WT.tok++; slideClose(); if (broadcast && WT.host) sendEvent('wt', { on: 0 }); WT.host = false;
+  if (sit && sit.seated) camGoal = { dist: 3.6, pitch: 0.13 };
+}
 liveEvents.wt = (p) => {
   if (!p.on) { if (WT.on && !WT.host) wtEnd(false); WT.pending = null; return; }
   if (sit && sit.seated) { if (!WT.on) wtBegin(p.idx, false); else if (!WT.host) { WT.idx = p.idx; wtShow(); } }
@@ -1480,16 +1657,16 @@ slowHooks.push(() => {
   if (!show) { act2.classList.add('hidden'); return; }
   act2.textContent = WT.on ? '⏹  Stop the slideshow' : (remoteSeated() ? '▶  Watch together' : '▶  Watch a slideshow'); act2.classList.remove('hidden');
 });
-act2.addEventListener('click', () => { if (WT.on) { wtEnd(true); return; } wtBegin(0, true); sendEvent('wt', { on: 1, idx: 0 }); });
+act2.addEventListener('click', () => { if (WT.on) { wtEnd(true); return; } wtBegin(0, true); if (WT.on) sendEvent('wt', { on: 1, idx: 0 }); });
 
 /* ── photo mode ── */
 const photo = { on: false, face: true, busy: false };
-const hudIds = ['top', 'side', 'act', 'act2', 'joy', 'heartChip', 'map', 'capChip', 'wt', 'menu', 'hint'];
+const hudIds = ['top', 'side', 'act', 'act2', 'joy', 'heartChip', 'map', 'capChip', 'menu', 'hint'];
 const hudState = {};
 function hideHUD() { hudIds.forEach((id) => { const e = $(id); hudState[id] = !e.classList.contains('hidden'); e.classList.add('hidden'); }); }
 function showHUD() { hudIds.forEach((id) => { if (hudState[id] && id !== 'act' && id !== 'act2' && id !== 'menu' && id !== 'hint') $(id).classList.remove('hidden'); }); paintHeartChip(); }
 function enterPhoto() {
-  if (photo.on || viewerOpen || overlayOpen) return; Tour.stop(); emoTray.classList.add('hidden'); photo.on = true; hideHUD(); $('photoUI').classList.remove('hidden'); moveOverride = () => ({ vx: 0, vz: 0 });
+  if (photo.on) return; if (viewerOpen) { toast('Close the picture first, then try photo mode'); return; } if (overlayOpen) closeOverlay(); Tour.stop(); closeChat(); emoTray.classList.add('hidden'); photo.on = true; hideHUD(); $('photoUI').classList.remove('hidden'); moveOverride = () => ({ vx: 0, vz: 0 });
   let near = null, bd = 4.8; allFrames.forEach((f) => { if (!f.room.group.visible || f.isNote) return; const dx = player.x - f.worldPos.x, dz = player.z - f.worldPos.z, d = Math.hypot(dx, dz); if (d < bd && dx * f.normal.x + dz * f.normal.z > 0) { bd = d; near = f; } });
   camGoal = { dist: 3.4, pitch: 0.12 }; if (near) camGoal.yaw = Math.atan2(player.x - near.worldPos.x, player.z - near.worldPos.z);
   toast('Drag to frame the shot, then tap the shutter 📸', 3000);
@@ -1500,16 +1677,21 @@ $('photoBtn').addEventListener('click', enterPhoto); $('pmExit').addEventListene
 $('pmFace').addEventListener('click', () => { photo.face = !photo.face; $('pmFace').classList.toggle('off', !photo.face); toast(photo.face ? 'Facing the camera' : 'Looking away', 1400); });
 $('pmPose').addEventListener('click', () => emoTray.classList.toggle('hidden'));
 $('shutter').addEventListener('click', async () => {
-  if (photo.busy) return; photo.busy = true; emoTray.classList.add('hidden'); const c = $('count'); c.classList.remove('hidden');
-  for (const n of ['3', '2', '1']) { c.textContent = n; chimeSeq([880], 0.05); await wait(750); }
-  c.classList.add('hidden'); $('photoUI').classList.add('hidden');
-  const tags = avatars().map((a) => a.userData.tag); tags.forEach((t) => { t.visible = false; });
-  flareEl.classList.remove('go'); void flareEl.offsetWidth; flareEl.classList.add('go'); chimeSeq([1319, 1047], 0.07);
-  renderer.render(scene, camera); const raw = canvas.toDataURL('image/png'); tags.forEach((t) => { t.visible = true; });
-  const img = await loadImg(raw), W = Math.min(1080, img.naturalWidth), H = Math.round(img.naturalHeight * W / img.naturalWidth), [oc, g] = mkCanvas(W, H);
-  g.drawImage(img, 0, 0, W, H); const gr = g.createLinearGradient(0, H - 110, 0, H); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.55)'); g.fillStyle = gr; g.fillRect(0, H - 110, W, 110);
-  g.fillStyle = '#fff3e6'; g.textAlign = 'center'; g.font = '600 ' + Math.max(18, Math.round(W * 0.052)) + 'px Caveat, cursive'; g.fillText('Our Little Gallery  ·  ' + new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }), W / 2, H - Math.max(14, Math.round(W * 0.035)));
-  const out = oc.toDataURL('image/png'); photo.busy = false; $('photoUI').classList.remove('hidden'); snapSheet(out);
+  if (photo.busy) return; photo.busy = true; emoTray.classList.add('hidden'); const c = $('count'), tags = [];
+  try {
+    c.classList.remove('hidden'); for (const n of ['3', '2', '1']) { c.textContent = n; chimeSeq([880], 0.05); await wait(750); }
+    c.classList.add('hidden'); $('photoUI').classList.add('hidden');
+    avatars().forEach((a) => { const t = a.userData.tag; if (t) { tags.push(t); t.visible = false; } });
+    flareEl.classList.remove('go'); void flareEl.offsetWidth; flareEl.classList.add('go'); chimeSeq([1319, 1047], 0.07);
+    renderer.render(scene, camera); let raw = canvas.toDataURL('image/png');
+    if (!raw || raw.length < 2000) { const blob = await new Promise((res) => canvas.toBlob(res, 'image/png')); if (!blob) throw new Error('the picture came out empty'); raw = URL.createObjectURL(blob); }
+    tags.forEach((t) => { t.visible = true; }); tags.length = 0;
+    const img = await loadImg(raw), W = Math.min(1080, img.naturalWidth), H = Math.round(img.naturalHeight * W / img.naturalWidth), [oc, g] = mkCanvas(W, H);
+    g.drawImage(img, 0, 0, W, H); const gr = g.createLinearGradient(0, H - 110, 0, H); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.55)'); g.fillStyle = gr; g.fillRect(0, H - 110, W, 110);
+    g.fillStyle = '#fff3e6'; g.textAlign = 'center'; g.font = '600 ' + Math.max(18, Math.round(W * 0.052)) + 'px Caveat, cursive'; g.fillText('Our Little Gallery  ·  ' + new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }), W / 2, H - Math.max(14, Math.round(W * 0.035)));
+    snapSheet(oc.toDataURL('image/png'));
+  } catch (e) { console.error(e); toast('Snapshot did not work: ' + ((e && e.message) || 'unknown problem') + '. Please try again.', 5000); }
+  finally { tags.forEach((t) => { t.visible = true; }); c.classList.add('hidden'); photo.busy = false; if (photo.on) $('photoUI').classList.remove('hidden'); }
 });
 function snapSheet(url) {
   const sheet = mk('div', 'sheet glass'); sheet.append(mk('h2', '', 'Nice one 📸')); const im = document.createElement('img'); im.className = 'snap'; im.src = url; sheet.append(im);
@@ -1527,7 +1709,7 @@ function snapSheet(url) {
   row.append(save, btn('Download', () => { const a = document.createElement('a'); a.href = url; a.download = 'our-little-gallery.png'; document.body.append(a); a.click(); a.remove(); }, 'pbtn ghost'), btn('Retake', closeOverlay, 'pbtn ghost'));
   openOverlay(sheet);
 }
-window.addEventListener('keydown', (e) => { if (e.code !== 'Escape') return; if (overlayOpen) closeOverlay(); else if (photo.on) exitPhoto(); });
+window.addEventListener('keydown', (e) => { if (e.code !== 'Escape') return; if (overlayOpen) closeOverlay(); else if (Chat.open) closeChat(); else if (photo.on) exitPhoto(); });
 
 /* ── seasons ── */
 function activeSeasons() {
@@ -1591,9 +1773,16 @@ menuExtras.push(() => ({ label: '🧭  Take me on a tour', run: () => Tour.start
 menuExtras.push(() => ({ label: (prefs.music ? '🎵  Music: on' : '🔇  Music: off'), run: () => { Music.setEnabled(!prefs.music); paintMusicBtn(); } }));
 menuExtras.push(() => ({ label: (prefs.voices ? '🎙  Room voices: on' : '🎙  Room voices: off'), run: () => { prefs.voices = !prefs.voices; lsSet('gallery-voices', prefs.voices ? 'on' : 'off'); if (!prefs.voices) Voice.stop(); } }));
 menuExtras.push(() => { const [a, b] = heartCount(); return HEARTS.length ? { label: '💗  Hidden hearts: ' + a + '/' + b, run: () => toast(a === b ? 'You found every heart 💗' : 'Look in every room, they are tiny ✨', 2800) } : null; });
+menuExtras.push(() => ({ label: '💬  Chat', run: openChat }));
 menuExtras.push(() => ({ label: '📸  Photo mode', run: enterPhoto }));
 function initExtras() {
-  buildLectern(); makeHearts(); activeSeasons().forEach(buildSeason); applyTime(true); paintHeartChip(); $('side').classList.remove('hidden');
+  buildTray(); buildLectern(); makeHearts(); activeSeasons().forEach(buildSeason); applyTime(true); paintHeartChip(); $('side').classList.remove('hidden');
+}
+window.addEventListener('error', (e) => { window.__lastErr = String(e.message || e).slice(0, 90); });
+window.addEventListener('unhandledrejection', (e) => { window.__lastErr = String((e.reason && e.reason.message) || e.reason).slice(0, 90); });
+if (new URLSearchParams(location.search).has('debug')) {
+  const d = document.createElement('div'); d.id = 'dbg'; document.body.append(d);
+  setInterval(() => { d.textContent = 'fps ' + (window.__fps || 0).toFixed(0) + '  dpr ' + dprCur.toFixed(2) + '\njoy d ' + joy.d.toFixed(0) + '  sp ' + joy.sp.toFixed(1) + '\nspeed ' + player.speed.toFixed(1) + (window.__lastErr ? '\nerr ' + window.__lastErr : ''); }, 250);
 }
 /* ═══ boot ═══ */
 const safe = async (fn, fallback) => { try { return await fn(); } catch (e) { console.warn('gallery: could not load', fn.name, e); return fallback; } };
@@ -1634,6 +1823,7 @@ async function boot() {
     const coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches) || 'ontouchstart' in window;
     if (coarse) { joyEl.classList.remove('hidden'); document.body.classList.add('touch'); }
     const hint = $('hint'); hint.textContent = coarse ? 'Drag to look · joystick to walk · tap a picture to open it' : 'WASD to walk · drag to look · click a picture to open it'; hint.classList.add('on'); setTimeout(() => hint.classList.remove('on'), 6500);
+    if (coarse && !lsGet('gallery-run-tip', '')) { lsSet('gallery-run-tip', '1'); setTimeout(() => toast('Tip: push the joystick further to run 🏃', 4500), 7200); }
     running = true;
   } catch (e) { console.error(e); showGate('Something went wrong', 'The gallery could not open. Please go back and try again.'); }
 }
