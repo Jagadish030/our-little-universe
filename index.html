@@ -12,10 +12,12 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Our Universe" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Patrick+Hand&family=Quicksand:wght@400;500;600;700&family=Permanent+Marker&family=Kalam:wght@400;700&family=Amatic+SC:wght@700&family=Playfair+Display:ital,wght@0,600;1,600&family=Pacifico&family=Architects+Daughter&family=Dancing+Script:wght@600&family=Special+Elite&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="preconnect" href="https://cctlzqlchijwrxrxnmmm.supabase.co" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Patrick+Hand&family=Quicksand:wght@400;500;600;700&family=Permanent+Marker&family=Kalam:wght@400;700&family=Amatic+SC:wght@700&family=Playfair+Display:ital,wght@0,600;1,600&family=Pacifico&family=Architects+Daughter&family=Dancing+Script:wght@600&family=Special+Elite&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Patrick+Hand&family=Quicksand:wght@400;500;600;700&family=Permanent+Marker&family=Kalam:wght@400;700&family=Amatic+SC:wght@700&family=Playfair+Display:ital,wght@0,600;1,600&family=Pacifico&family=Architects+Daughter&family=Dancing+Script:wght@600&family=Special+Elite&display=swap" rel="stylesheet" /></noscript>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
     </script>
     <script>
         window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
@@ -17354,7 +17356,9 @@
                 try {
                     const { data, error } = await supabase.from(TABLE).select('*').order('created_at', { ascending: true });
                     if (error) throw error;
-                    const results = await mapWithConcurrency(data, 6, async (row) => {
+                    const partial = []; let resolvedCount = 0, earlyPainted = false;
+                    const results = await mapWithConcurrency(data, 8, async (row, rowIdx) => {
+                        const out = await (async () => {
                         try {
                             // Image bytes: try to decrypt; fall back to the
                             // raw public URL if that fails — this row may
@@ -17411,6 +17415,14 @@
                             console.error('Could not decrypt/render a memory row', row && row.id, rowErr);
                             return null;
                         }
+                        })();
+                        // Show the first screenful as soon as it is ready instead of waiting for every photo.
+                        partial[rowIdx] = out; resolvedCount++;
+                        if (!earlyPainted && resolvedCount >= 10 && data.length > 14 && sortMode === 'oldest') {
+                            earlyPainted = true;
+                            try { photos = partial.filter(Boolean); render(); } catch (e) { console.error('early paint skipped', e); }
+                        }
+                        return out;
                     });
                     photos = results.filter(Boolean);
                 } catch (err) {
@@ -24869,6 +24881,16 @@
             async function downloadBackup() {
                 if (!photos.length) { showToast('No memories to back up yet.'); return; }
                 if (typeof JSZip === 'undefined') {
+                    // JSZip is no longer loaded with the page (it blocked startup); fetch it only when a backup is requested.
+                    try {
+                        await new Promise((resolve, reject) => {
+                            const sc = document.createElement('script');
+                            sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+                            sc.onload = resolve; sc.onerror = reject; document.head.appendChild(sc);
+                        });
+                    } catch (e) { /* handled just below */ }
+                }
+                if (typeof JSZip === 'undefined') {
                     showToast('The backup tool did not load — check your connection and try again.', { type: 'error' });
                     return;
                 }
@@ -31129,8 +31151,10 @@
                 renderDaysTogether();
                 buildAmbientHearts();
                 loadSiteSettings();
-                await loadSignatures();
+                // Memories no longer wait for the signatures request; both run side by side.
+                const signaturesDone = loadSignatures();
                 loadPhotos();
+                await signaturesDone;
                 startPresence();
                 startSettingsRealtime();
                 startSignaturesRealtime();

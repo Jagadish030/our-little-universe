@@ -73,12 +73,12 @@ body.touch #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 300px)}
 #act2{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 88px);transform:translateX(-50%);z-index:9;max-width:min(78vw,380px);padding:.65rem 1.2rem;border-radius:999px;font:700 .95rem var(--sans);color:var(--cream);background:var(--glass);border:1px solid var(--glass-b);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;white-space:nowrap}
 #side{position:fixed;right:calc(env(safe-area-inset-right,0px) + 14px);bottom:calc(env(safe-area-inset-bottom,0px) + 26px);z-index:9;display:flex;flex-direction:column-reverse;gap:10px}
 #side .rbtn.off{opacity:.55}
-#map{position:fixed;left:12px;top:calc(env(safe-area-inset-top,0px) + 62px);width:150px;height:220px;z-index:9;border-radius:16px;background:rgba(24,13,28,.82);border:1px solid var(--glass-b);backdrop-filter:blur(8px)}
+#map{position:fixed;left:12px;top:calc(env(safe-area-inset-top,0px) + 62px);width:168px;height:246px;z-index:9;border-radius:16px;background:rgba(24,13,28,.82);border:1px solid var(--glass-b);backdrop-filter:blur(8px)}
 #emotes{position:fixed;right:calc(env(safe-area-inset-right,0px) + 70px);bottom:calc(env(safe-area-inset-bottom,0px) + 26px);z-index:12;padding:.45rem;border-radius:20px;display:grid;grid-template-columns:repeat(4,48px);gap:6px;max-height:58vh;overflow-y:auto;touch-action:pan-y}
 #emotes button{width:48px;height:48px;border:0;border-radius:14px;background:rgba(255,255,255,.08);font-size:1.5rem;cursor:pointer}
 #emotes button:active{background:rgba(255,255,255,.2)}
 #heartChip{position:fixed;left:12px;top:calc(env(safe-area-inset-top,0px) + 62px);z-index:8;padding:.35rem .8rem;border-radius:999px;font:700 .85rem var(--sans)}
-#map:not(.hidden) ~ #heartChip{top:calc(env(safe-area-inset-top,0px) + 292px)}
+#map:not(.hidden) ~ #heartChip{top:calc(env(safe-area-inset-top,0px) + 320px)}
 #capChip{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);transform:translateX(-50%);z-index:8;max-width:86vw;padding:.7rem 1.2rem;border-radius:18px;text-align:center;font-family:var(--serif);font-style:italic;font-size:1.1rem;pointer-events:none}
 #capChip small{display:block;font:600 .78rem var(--sans);opacity:.7;margin-top:.15rem;font-style:normal}
 body.touch #capChip{bottom:calc(env(safe-area-inset-bottom,0px) + 300px)}
@@ -128,6 +128,11 @@ body.chat-open #joy,body.chat-open #act,body.chat-open #act2,body.chat-open #sid
 #dbg{position:fixed;left:8px;top:calc(env(safe-area-inset-top,0px) + 120px);z-index:50;padding:.3rem .5rem;border-radius:8px;background:rgba(0,0,0,.65);font:600 .68rem/1.35 ui-monospace,Menlo,monospace;white-space:pre;pointer-events:none}
 .emx{grid-column:span 4;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:300px}
 .emx button{width:42px;height:42px;font-size:1.3rem;border:0;border-radius:12px;background:rgba(255,255,255,.08);cursor:pointer}
+#wtBar{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);transform:translateX(-50%);z-index:12;display:none;align-items:center;gap:10px;padding:.45rem .6rem;border-radius:999px;transition:opacity .6s}
+#wtBar .rbtn{width:52px;height:52px;font-size:1.3rem}
+#wtBar.dim{opacity:.28}
+body.cinema #wtBar{display:flex}
+body.cinema #top,body.cinema #side,body.cinema #joy,body.cinema #act,body.cinema #act2,body.cinema #heartChip,body.cinema #map,body.cinema #emotes,body.cinema #menu,body.cinema #capChip,body.cinema #hint{display:none!important}
 </style>
 </head>
 <body>
@@ -183,6 +188,12 @@ body.chat-open #joy,body.chat-open #act,body.chat-open #act2,body.chat-open #sid
   <button class="rbtn" id="pmPose" type="button" aria-label="Pose">😊</button>
 </div>
 <div id="count" class="hidden"></div>
+<div id="wtBar" class="glass" role="group" aria-label="Slideshow controls">
+  <button class="rbtn" id="wtPrev" type="button" aria-label="Previous picture">⏮</button>
+  <button class="rbtn" id="wtPlay" type="button" aria-label="Pause or play">⏸</button>
+  <button class="rbtn" id="wtNext" type="button" aria-label="Next picture">⏭</button>
+  <button class="rbtn" id="wtStop" type="button" aria-label="Stop the slideshow">⏹</button>
+</div>
 
 <div id="chat" class="hidden" role="dialog" aria-label="Chat">
   <header><span>💬 Chat</span><button id="chatClose" type="button" aria-label="Close chat">✕</button></header>
@@ -257,6 +268,7 @@ async function encBytes(plain) {                     // same layout the site use
   const out = new Uint8Array(12 + ct.length); out.set(iv, 0); out.set(ct, 12); return out;
 }
 async function encText(text) { const b = await encBytes(new TextEncoder().encode(text)); let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); }
+async function sha256Hex(text) { const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)); return Array.from(new Uint8Array(d)).map((b) => b.toString(16).padStart(2, '0')).join(''); }
 async function decText(raw) {                      // falls back to the raw value when a field was never encrypted
   if (!raw) return raw || '';
   if (!vaultKey) return raw;
@@ -275,7 +287,22 @@ function mimeFromPath(path, isVideo) {
 
 /* ═══ clients ═══ */
 let sb = null, sbJU = null, me = 'J';
-const mediaCache = new Map();
+const mediaCache = new Map(), signedMap = new Map(); let signedBatchP = null;
+/* One request per bucket instead of one per picture */
+async function prefetchSigned(items) {
+  if (TEST) return;
+  const groups = new Map();
+  items.forEach((it) => { if (!it || !it.path || !it.bucket || it.locked || it.secret) return; const k = (it.client === 'ju' ? 'ju:' : 'sb:') + it.bucket; if (!groups.has(k)) groups.set(k, { cl: it.client === 'ju' ? sbJU : sb, bucket: it.bucket, paths: new Set() }); groups.get(k).paths.add(it.path); });
+  await Promise.all([...groups.values()].map(async (gr) => {
+    if (!gr.cl) return; const all = [...gr.paths];
+    for (let i = 0; i < all.length; i += 100) {
+      try {
+        const { data, error } = await gr.cl.storage.from(gr.bucket).createSignedUrls(all.slice(i, i + 100), 3600); if (error || !data) continue;
+        data.forEach((d) => { if (d && d.signedUrl && !d.error) signedMap.set(gr.bucket + '/' + d.path, d.signedUrl); });
+      } catch (e) { /* the per-picture path below still works */ }
+    }
+  }));
+}
 async function resolveMedia(client, bucket, path, mime, fallback) {
   if (TEST) return fallback || null;
   if (!path) return fallback || null;
@@ -283,9 +310,9 @@ async function resolveMedia(client, bucket, path, mime, fallback) {
   if (mediaCache.has(key)) return mediaCache.get(key);
   const p = (async () => {
     try {
-      const { data: signed, error } = await client.storage.from(bucket).createSignedUrl(path, 3600);
-      if (error || !signed || !signed.signedUrl) return fallback || null;
-      let out = signed.signedUrl;
+      if (signedBatchP) { try { await signedBatchP; } catch (e) {} }
+      let out = signedMap.get(key);
+      if (!out) { const { data: signed, error } = await client.storage.from(bucket).createSignedUrl(path, 3600); if (error || !signed || !signed.signedUrl) return fallback || null; out = signed.signedUrl; }
       if (vaultKey) { try { out = await decToObjectUrl(out, mime); } catch (e) { /* not encrypted: leave the signed URL */ } }
       return out;
     } catch (e) { return fallback || null; }
@@ -364,13 +391,18 @@ async function loadPhotoThings() {
 }
 async function loadJustUs() {
   const rows = await fetchRows(sbJU, 'secure_photos');
+  /* A secret photo is only sealed for the person who did NOT upload it, and only until they have entered its passcode once
+     (the site records that in revealed_by_j / revealed_by_m). The uploader and anyone who already revealed it see it normally. */
+  const viewer = String(pickedEmail || (me === 'M' ? EMAIL_M : EMAIL_J)).toLowerCase(), vk = viewer === EMAIL_M ? 'm' : 'j';
   return Promise.all(rows.map(async (r) => {
     const isV = r.media_type === 'video';
+    const sealed = !!r.is_secret && String(r.uploaded_by || '').toLowerCase() !== viewer && !r['revealed_by_' + vk];
     return base({
       id: 's' + r.id, type: 'photo', client: 'ju', bucket: 'secure-photos', path: r.storage_path, video: isV, mime: mimeFromPath(r.storage_path, isV),
       title: await decText(r.caption), sub: 'Just Us · ' + letterOfEmail(r.uploaded_by) + ' · ' + fmtDate(r.created_at), fav: !!r.favorite,
       reply: await decText(r.reply_text), author: letterOfEmail(r.uploaded_by), created: r.created_at,
-      secret: !!r.is_secret, voice: r.voice_path ? { bucket: 'secure-photos', path: r.voice_path, client: 'ju' } : null,
+      secret: sealed, hint: sealed ? await decText(r.overlay_text) : '', sealHash: sealed ? await decText(r.secret_password_hash) : '', rowId: r.id, vk,
+      voice: r.voice_path ? { bucket: 'secure-photos', path: r.voice_path, client: 'ju' } : null,
     });
   }));
 }
@@ -403,8 +435,8 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPrefere
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1a0f1c);
-scene.fog = new THREE.Fog(0x1a0f1c, 24, 60);
-const camera = new THREE.PerspectiveCamera(62, 1, 0.15, 120);
+scene.fog = new THREE.Fog(0x1a0f1c, 70, 150);
+const camera = new THREE.PerspectiveCamera(62, 1, 0.3, 140); scene.add(camera);
 const hemi = new THREE.HemisphereLight(0xfff0e0, 0x4a3050, 1.0); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffe6c8, 0.5); sun.position.set(6, 12, 4); scene.add(sun);
 function onResize() { const w = window.innerWidth, h = window.innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -439,7 +471,7 @@ function plaqueTex(item) {
   g.fillStyle = '#fbf6ec'; g.fillRect(0, 0, 512, 128); g.strokeStyle = 'rgba(120,90,70,.4)'; g.lineWidth = 3; g.strokeRect(5, 5, 502, 118);
   g.strokeStyle = 'rgba(180,140,90,.5)'; g.lineWidth = 1.5; g.strokeRect(11, 11, 490, 106);
   g.textAlign = 'center'; g.fillStyle = '#2b1a24';
-  let title = item.title || (item.type === 'doodle' ? 'Untitled doodle' : 'Untitled memory'); if (item.fav) title = '♥ ' + title;
+  let title = item.secret ? 'A secret 🤫' : (item.title || (item.type === 'doodle' ? 'Untitled doodle' : 'Untitled memory')); if (item.fav && !item.secret) title = '♥ ' + title;
   fitFont(g, title, 450, 56, 30, HAND); title = ellipsize(g, title, 450); g.fillText(title, 256, 62);
   g.fillStyle = '#8a6f5a'; g.font = HAND(32); g.fillText(ellipsize(g, [item.sub, item.reaction].filter(Boolean).join('   '), 450), 256, 104);
   return canvasTex(c);
@@ -449,9 +481,10 @@ function lockedTex(item) {
   const gr = g.createLinearGradient(0, 0, 512, 512); gr.addColorStop(0, '#2d1d33'); gr.addColorStop(1, '#14091a'); g.fillStyle = gr; g.fillRect(0, 0, 512, 512);
   g.textAlign = 'center'; g.font = '120px sans-serif'; g.fillText(item.secret ? '🤫' : '🔒', 256, 200);
   g.fillStyle = '#ffe9cf'; g.font = SERIF(34);
-  const msg = item.secret ? 'A secret for the two of you' : (item.hint || 'A surprise is waiting here');
+  const msg = item.secret ? (item.hint || 'A secret for the two of you') : (item.hint || 'A surprise is waiting here');
   wrapLines(g, msg, 400).slice(0, 4).forEach((l, i) => g.fillText(l, 256, 290 + i * 42));
   if (item.lockDate) { g.fillStyle = '#ffb199'; g.font = SANS(26); g.fillText('opens ' + fmtDate(item.lockDate + 'T00:00:00'), 256, 468); }
+  else if (item.secret && item.sealHash) { g.fillStyle = '#ffb199'; g.font = SANS(26); g.fillText('tap to reveal', 256, 468); }
   return canvasTex(c);
 }
 const PAPER = { J: ['#e1f4f1', '#c6e6e1', '#1f4f55', 0x2aa198], M: ['#ffe8ea', '#ffd0d9', '#7a2c3d', 0xe0566f] };
@@ -570,7 +603,7 @@ function makeFrame(item, th, big) {
   const f = { group: g, item, big: !!big, state: 'idle', worldPos: new THREE.Vector3(), normal: new THREE.Vector3(), dist: 99 };
   f.frame = new THREE.Mesh(unitBox, frameBoxMat(th.frame)); g.add(f.frame);
   f.matte = new THREE.Mesh(unitPlane, matteMat); g.add(f.matte);
-  f.picMat = new THREE.MeshBasicMaterial({ map: placeholderTex });
+  f.picMat = new THREE.MeshBasicMaterial({ map: placeholderTex, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
   f.pic = new THREE.Mesh(unitPlane, f.picMat); g.add(f.pic);
   f.glow = new THREE.Mesh(unitPlane, glowMat); g.add(f.glow);
   f.brass = new THREE.Mesh(unitPlane, brassMat); g.add(f.brass);
@@ -588,10 +621,10 @@ function layoutFrame(f, aspect) {
   const W = Math.min(maxW, maxH * a), H = W / a, cy = FRAME_Y + (f.big ? 0.2 : 0);
   f.W = W; f.H = H;
   f.frame.scale.set(W + 0.26, H + 0.26, 0.05); f.frame.position.set(0, cy, 0.025);
-  f.matte.scale.set(W + 0.12, H + 0.12, 1); f.matte.position.set(0, cy, 0.052);
-  f.pic.scale.set(W, H, 1); f.pic.position.set(0, cy, 0.056);
+  f.matte.scale.set(W + 0.12, H + 0.12, 1); f.matte.position.set(0, cy, 0.058);
+  f.pic.scale.set(W, H, 1); f.pic.position.set(0, cy, 0.064);
   f.glow.scale.set(W + 2.4, H + 2.4, 1); f.glow.position.set(0, cy, 0.006);
-  f.brass.scale.set(W + 0.2, H + 0.2, 1); f.brass.position.set(0, cy, 0.0505);
+  f.brass.scale.set(W + 0.2, H + 0.2, 1); f.brass.position.set(0, cy, 0.054);
   f.shadow.scale.set(W + 1.1, H + 1.1, 1); f.shadow.position.set(0.05, cy - 0.1, 0.004);
   const pw = 1.5 * sc, ph = pw / 4; f.plaque.scale.set(pw, ph, 1); f.plaque.position.set(0, cy - H / 2 - 0.13 - ph / 2 - 0.04, 0.02);
 }
@@ -664,9 +697,9 @@ function buildRoom(def) {
   const plan = planLayout(def), L = plan.len, room = { id: def.id, name: def.name, emoji: def.emoji, group: G, len: L, frames: [], viewables: [], def, theme: th };
   const wallM = lam(th.wall), trimM = lam(th.trim);
   const fl = new THREE.Mesh(unitPlane, new THREE.MeshLambertMaterial({ map: (() => { const t = canvasTex(floorCanvas(th.floor[0], th.floor[1])); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set((L + 0.4) / 4, 12.4 / 4); return t; })() }));
-  fl.rotation.x = -Math.PI / 2; fl.scale.set(L + 0.4, 12.4, 1); fl.position.set((L - 0.4) / 2, 0, 0); G.add(fl);
-  const ce = new THREE.Mesh(unitPlane, lam(th.ceil)); ce.rotation.x = Math.PI / 2; ce.scale.set(L + 0.8, 12.4, 1); ce.position.set(L / 2, WALL_H, 0); G.add(ce);
-  wallWithCollider(G, -0.4, -6.2, L + 0.4, -5.8, WALL_H, wallM); wallWithCollider(G, -0.4, 5.8, L + 0.4, 6.2, WALL_H, wallM);
+  fl.rotation.x = -Math.PI / 2; fl.scale.set(L + 0.4, 12.4, 1); fl.position.set((L + 0.4) / 2, 0, 0); G.add(fl);
+  const ce = new THREE.Mesh(unitPlane, lam(th.ceil)); ce.rotation.x = Math.PI / 2; ce.scale.set(L + 0.4, 12.4, 1); ce.position.set((L + 0.4) / 2, WALL_H, 0); G.add(ce);
+  wallWithCollider(G, 0, -6.2, L + 0.4, -5.8, WALL_H, wallM); wallWithCollider(G, 0, 5.8, L + 0.4, 6.2, WALL_H, wallM);
   wallWithCollider(G, L, -6.2, L + 0.4, 6.2, WALL_H, wallM);
   [[-5.8, -5.74], [5.74, 5.8]].forEach(([a, b]) => addBox(G, 0, a, L, b, 0.14, trimM)); addBox(G, L - 0.06, -5.8, L, 5.8, 0.14, trimM);
   if (plan.feature) { const pm = new THREE.Mesh(unitBox, lam(th.feature || 0x1c1620)); pm.scale.set(0.08, 3.9, 10.6); pm.position.set(L - 0.04, 2.0, 0); G.add(pm); }
@@ -680,9 +713,9 @@ function buildRoom(def) {
   // hang everything
   const place = (f, wall, u, v, y, rot) => {
     const g = f.group;
-    if (wall === 'A') { g.position.set(u, y || 0, -5.78); g.rotation.y = 0; }
-    else if (wall === 'B') { g.position.set(u, y || 0, 5.78); g.rotation.y = Math.PI; }
-    else { g.position.set(L - (plan.feature ? 0.1 : 0.02), y || 0, v); g.rotation.y = -Math.PI / 2; }
+    if (wall === 'A') { g.position.set(u, y || 0, -5.76); g.rotation.y = 0; }
+    else if (wall === 'B') { g.position.set(u, y || 0, 5.76); g.rotation.y = Math.PI; }
+    else { g.position.set(L - (plan.feature ? 0.14 : 0.05), y || 0, v); g.rotation.y = -Math.PI / 2; }
     if (rot) g.rotation.z = rot;
     G.add(g);
   };
@@ -794,10 +827,8 @@ function makeAvatar(who) {
   const legL = limb(0.085, 0.72, pants, -0.11, 0.72), legR = limb(0.085, 0.72, pants, 0.11, 0.72);
   [legL, legR].forEach((l) => { const s = new THREE.Mesh(unitBox, shoe); s.scale.set(0.15, 0.08, 0.26); s.position.set(0, -0.72, 0.05); l.add(s); });
   const armL = limb(0.065, 0.58, shirt, -0.33, 1.34), armR = limb(0.065, 0.58, shirt, 0.33, 1.34);
-  const [lc, lg] = mkCanvas(96, 96); lg.fillStyle = who === 'M' ? '#c4343c' : '#1f6f78'; lg.beginPath(); lg.arc(48, 48, 44, 0, 7); lg.fill(); lg.fillStyle = '#fff'; lg.font = '700 56px Quicksand, sans-serif'; lg.textAlign = 'center'; lg.textBaseline = 'middle'; lg.fillText(who, 48, 52);
-  const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: canvasTex(lc), depthTest: false, transparent: true })); tag.scale.set(0.42, 0.42, 1); tag.position.y = 2.15; tag.renderOrder = 5; root.add(tag);
   const blob = new THREE.Mesh(unitPlane, blobMat); blob.rotation.x = -Math.PI / 2; blob.scale.set(1.0, 1.0, 1); blob.position.y = 0.02; root.add(blob);
-  root.userData = { who, body, legL, legR, armL, armR, tag, t: Math.random() * 6, moving: 0, sit: 0, em: null };
+  root.userData = { who, body, legL, legR, armL, armR, tag: null, t: Math.random() * 6, moving: 0, sit: 0, em: null };
   return root;
 }
 function animateAvatar(av, speed, dt, sitting) {
@@ -844,14 +875,15 @@ async function makeTexture(url, maxDim) {
   return { tex: canvasTex(c), aspect: nw / nh };
 }
 const loadQ = []; let loading = 0;
-function pump() { while (loading < 3 && loadQ.length) { const f = loadQ.shift(); if (f.state !== 'queued') continue; loading++; f.state = 'loading'; loadTexture(f).finally(() => { loading--; pump(); }); } }
+const TEX_BUDGET = 110;                              // the nearest pictures stay loaded wherever you stand
+function pump() { while (loading < 5 && loadQ.length) { const f = loadQ.shift(); if (f.state !== 'queued') continue; loading++; f.state = 'loading'; loadTexture(f).finally(() => { loading--; pump(); }); } }
 async function loadTexture(f) {
   try {
     const url = await mediaOf(f.item); if (!url) throw new Error('no url');
-    const { tex, aspect } = await makeTexture(url);
+    const { tex, aspect } = await makeTexture(url, f.dist < 14 ? 768 : 512);
     if (f.state !== 'loading') { tex.dispose(); return; }
     f.tex = tex; f.picMat.map = tex; f.picMat.needsUpdate = true; layoutFrame(f, aspect); f.aspect = aspect; f.state = 'ready';
-  } catch (e) { f.picMat.map = brokenTex; f.picMat.needsUpdate = true; f.state = 'failed'; }
+  } catch (e) { f.picMat.map = brokenTex; f.picMat.needsUpdate = true; f.state = 'failed'; f.failAt = performance.now(); f.tries = (f.tries || 0) + 1; }
 }
 function unloadFrame(f) { if (f.tex) { f.tex.dispose(); f.tex = null; } f.picMat.map = placeholderTex; f.picMat.needsUpdate = true; f.state = 'idle'; }
 
@@ -915,11 +947,12 @@ function pickFrame(cx, cy) {
   return hits.length && hits[0].object.userData.frame ? hits[0].object.userData.frame : null;
 }
 function tapAt(cx, cy) {
+  if (WT.on) return;
   const f = pickFrame(cx, cy); if (!f) return;
   if (Math.hypot(player.x - f.worldPos.x, player.z - f.worldPos.z) > 8) { toast('Walk a little closer ✨'); return; }
   openViewer(f);
 }
-let sit = null, camGoal = null, moveOverride = null, overlayOpen = false;
+let sit = null, camGoal = null, moveOverride = null, overlayOpen = false, camShiftGoal = 0, camShiftCur = 0;
 const candidateHooks = [];
 const seatSpot = (b, who, side) => { const off = who === 'M' ? 0.5 : -0.5; return { x: b.pos.x + b.axis.x * off, z: b.pos.z + b.axis.z * off, h: Math.atan2(b.perp.x * side, b.perp.z * side) }; };
 function startSit(b) {
@@ -949,7 +982,7 @@ function updateCandidate() {
   if (!best && !justUnlocked && player.z > HALL_L - 3.4 && Math.abs(player.x) < 2.6) best = { type: 'door' };
   candidate = best;
   if (!best || viewerOpen || !$('passcode').classList.contains('hidden')) { actBtn.classList.add('hidden'); return; }
-  actBtn.textContent = best.label ? best.label : best.type === 'bench' ? '🪑  Sit and enjoy the view' : best.type === 'door' ? '🔒  Enter the passcode' : best.f.isSpecial ? (best.f.item.locked ? '🔒  A surprise is on the way' : '🎉  ' + best.f.item.title) : (best.f.item.locked ? '🔒  A surprise…' : best.f.isNote ? '💌  Read this note' : '👁  ' + (best.f.item.title || 'View'));
+  actBtn.textContent = best.label ? best.label : best.type === 'bench' ? '🪑  Sit and enjoy the view' : best.type === 'door' ? '🔒  Enter the passcode' : best.f.isSpecial ? (best.f.item.locked ? '🔒  A surprise is on the way' : '🎉  ' + best.f.item.title) : (best.f.item.locked ? '🔒  A surprise…' : best.f.item.secret ? '🤫  A secret…' : best.f.isNote ? '💌  Read this note' : '👁  ' + (best.f.item.title || 'View'));
   actBtn.classList.remove('hidden');
 }
 function triggerAction() { if (!candidate) return; if (candidate.run) candidate.run(); else if (candidate.type === 'door') askPasscode(); else if (candidate.type === 'bench') startSit(candidate.b); else if (candidate.type === 'stand') standUp(); else openViewer(candidate.f); }
@@ -963,8 +996,20 @@ function openViewer(f) { vList = f.room.frames.slice(); vIdx = Math.max(0, vList
 function closeViewer() { viewerOpen = false; vTok++; stopAudio(); viewerEl.classList.add('hidden'); viewerEl.textContent = ''; }
 function stepViewer(d) { if (vList.length < 2) return; vIdx = (vIdx + d + vList.length) % vList.length; renderViewer(); }
 const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+async function revealSecret(f, entered) {
+  const it = f.item; if (!it.sealHash || !sbJU) return false;
+  if ((await sha256Hex(entered)) !== it.sealHash) return false;
+  const field = 'revealed_by_' + it.vk, { error } = await sbJU.from('secure_photos').update({ [field]: true, reveal_seen_by_uploader: false }).eq('id', it.rowId);
+  if (error) throw error;
+  it.secret = false; it.sealHash = ''; it.hint = '';
+  if (f.picMat.map && f.picMat.map !== placeholderTex && f.picMat.map !== videoTex) f.picMat.map.dispose();
+  f.plaqueMat.map.dispose(); f.plaqueMat.map = plaqueTex(it); f.plaqueMat.needsUpdate = true;
+  f.aspect = 1; layoutFrame(f, 1);
+  if (it.video) { f.picMat.map = videoTex; f.state = 'static'; } else { f.picMat.map = placeholderTex; f.state = 'idle'; }
+  f.picMat.needsUpdate = true; return true;
+}
 function renderViewer() {
-  stopAudio(); const tok = ++vTok, f = vList[vIdx], it = f.item; viewerEl.textContent = '';
+  stopAudio(); const tok = ++vTok, f = vList[vIdx], it = f.item, sealed = !!(it.locked || it.secret); viewerEl.textContent = '';
   const box = mk('div', 'vbox'), media = mk('div', 'vmedia'); box.append(media);
   if (it.type === 'special') {
     const l = mk('div', 'vlock'); l.append(mk('b', '', it.locked ? '🔒' : it.emoji));
@@ -980,8 +1025,21 @@ function renderViewer() {
     if (it.reply) n.append(mk('span', 'rp', '↳ ' + it.reply));
     n.append(mk('span', 'sg', '— ' + it.author + ' · ' + it.sub)); media.append(n);
   } else if (it.locked || it.secret) {
-    const l = mk('div', 'vlock'); l.append(mk('b', '', it.secret ? '🤫' : '🔒'), mk('div', '', it.secret ? 'A secret for the two of you. Open it in Just Us.' : (it.hint || 'A surprise is waiting here.')));
-    if (it.lockDate) l.append(mk('div', 'sub', 'opens ' + fmtDate(it.lockDate + 'T00:00:00'))); media.append(l);
+    const l = mk('div', 'vlock'); l.append(mk('b', '', it.secret ? '🤫' : '🔒'), mk('div', '', it.secret ? (it.hint || 'A secret for the two of you.') : (it.hint || 'A surprise is waiting here.')));
+    if (it.lockDate) l.append(mk('div', 'sub', 'opens ' + fmtDate(it.lockDate + 'T00:00:00')));
+    if (it.secret && it.sealHash) {
+      const inp = document.createElement('input'); inp.type = 'password'; inp.placeholder = 'Enter the passcode'; inp.autocomplete = 'off';
+      inp.style.cssText = 'width:100%;margin-top:.9rem;padding:.8rem 1rem;border-radius:14px;border:1px solid var(--glass-b);background:rgba(255,255,255,.08);color:var(--cream);font:600 1rem var(--sans);text-align:center;outline:none;user-select:text;-webkit-user-select:text';
+      const err = mk('div', 'perr', ''), go = btn('Reveal ✨', async () => {
+        if (!inp.value) { err.textContent = 'Enter the passcode.'; return; } go.disabled = true; err.textContent = '';
+        try { if (await revealSecret(f, inp.value)) { toast('Unlocked 🔓', 1800); if (tok === vTok) renderViewer(); return; } err.textContent = 'That passcode is not correct.'; }
+        catch (e) { err.textContent = 'Could not save, try again.'; }
+        go.disabled = false;
+      });
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); go.click(); } });
+      l.append(inp, err, go);
+    } else if (it.secret) l.append(mk('div', 'sub', 'Open it in Just Us.'));
+    media.append(l);
   } else {
     media.append(mk('div', 'sub', 'Loading…'));
     mediaOf(it).then((url) => {
@@ -992,9 +1050,9 @@ function renderViewer() {
     });
   }
   if (it.type !== 'note' && it.type !== 'special') {
-    const cap = mk('div', 'vcap'); if (it.title && !it.locked) cap.append(mk('h3', '', it.title));
-    const sub = [it.sub, it.mood && ('mood: ' + it.mood), it.reaction].filter(Boolean).join('  ·  '); if (sub && !it.locked) cap.append(mk('p', 'sub', sub));
-    if (it.reply && !it.locked) cap.append(mk('div', 'reply', '💬 ' + it.reply)); box.append(cap);
+    const cap = mk('div', 'vcap'); if (it.title && !sealed) cap.append(mk('h3', '', it.title));
+    const sub = [it.sub, it.mood && ('mood: ' + it.mood), it.reaction].filter(Boolean).join('  ·  '); if (sub && !sealed) cap.append(mk('p', 'sub', sub));
+    if (it.reply && !sealed) cap.append(mk('div', 'reply', '💬 ' + it.reply)); box.append(cap);
   }
   const row = mk('div', 'vrow');
   if (vList.length > 1) { const p = mk('button', '', '‹'); p.setAttribute('aria-label', 'Previous'); p.onclick = () => stepViewer(-1); row.append(p); }
@@ -1038,6 +1096,7 @@ $('passForm').addEventListener('submit', async (e) => {
       sbJU = sbJU || window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'sb-just-us-auth', storage: window.sessionStorage } });
       const { error } = await sbJU.auth.signInWithPassword({ email: pickedEmail, password: pw }); if (error) throw error;
       items = await loadJustUs();
+      signedBatchP = prefetchSigned(items);
     }
     $('passPw').value = ''; $('passcode').classList.add('hidden');
     jusColl[0] = colliders.length;
@@ -1112,12 +1171,18 @@ function zoneName() {
 const rectDist = (z) => Math.hypot(Math.max(z.x1 - player.x, 0, player.x - z.x2), Math.max(z.z1 - player.z, 0, player.z - z.z2));
 let slowT = 0, lastZone = '';
 function slowTick() {
-  for (const id in rooms) rooms[id].group.visible = rectDist(rooms[id].zone) < 22;
+  for (const id in rooms) rooms[id].group.visible = rectDist(rooms[id].zone) < 34;
   allFrames.forEach((f) => {
     f.dist = Math.hypot(player.x - f.worldPos.x, player.z - f.worldPos.z);
     if (f.glow) { const near = f.dist < 15; if (f.glow.visible !== near) { f.glow.visible = near; if (f.shadow) f.shadow.visible = near; } }
-    if (f.state === 'idle' && f.dist < 15) { f.state = 'queued'; loadQ.push(f); } else if (f.state === 'ready' && f.dist > 34) unloadFrame(f);
+    if (f.state === 'failed' && f.tries < 3 && performance.now() - f.failAt > 15000) f.state = 'idle';   // try a flaky one again
   });
+  const order = allFrames.slice().sort((a, b) => a.dist - b.dist);
+  for (let i = 0; i < order.length; i++) {
+    const f = order[i];
+    if (i < TEX_BUDGET) { if (f.state === 'idle') { f.state = 'queued'; loadQ.push(f); } }
+    else if (i > TEX_BUDGET + 12) { if (f.state === 'ready') unloadFrame(f); else if (f.state === 'queued') f.state = 'idle'; }
+  }
   loadQ.sort((a, b) => a.dist - b.dist); pump();
   const z = zoneName(); if (z !== lastZone) { lastZone = z; $('roomName').textContent = z; }
   const now = performance.now(); remotes.forEach((r, c) => { if (now - r.last > 6000) dropRemote(c); });
@@ -1132,7 +1197,7 @@ function update(dt, now) {
     mx = ((keys.KeyD || keys.ArrowRight) ? 1 : 0) - ((keys.KeyA || keys.ArrowLeft) ? 1 : 0); my = ((keys.KeyW || keys.ArrowUp) ? 1 : 0) - ((keys.KeyS || keys.ArrowDown) ? 1 : 0);
     const len = Math.hypot(mx, my); if (len > 1) { mx /= len; my /= len; } sp = (keys.ShiftLeft || keys.ShiftRight) ? 6.4 : 3.6;
   }
-  if (viewerOpen || !$('passcode').classList.contains('hidden') || overlayOpen) { mx = my = 0; }
+  if (viewerOpen || !$('passcode').classList.contains('hidden') || overlayOpen || WT.on) { mx = my = 0; }
   const sy = Math.sin(camYaw), cy = Math.cos(camYaw);
   let vx = (-sy * my + cy * mx) * sp, vz = (-cy * my - sy * mx) * sp;
   if (moveOverride) { const o = moveOverride(dt, mx, my); if (o) { vx = o.vx; vz = o.vz; } }
@@ -1157,9 +1222,11 @@ function update(dt, now) {
   remotes.forEach((r) => {
     if (r.tx == null) return; const ox2 = r.x, oz2 = r.z; r.x += (r.tx - r.x) * Math.min(1, dt * 9); r.z += (r.tz - r.z) * Math.min(1, dt * 9);
     let d = r.th - r.h; d = Math.atan2(Math.sin(d), Math.cos(d)); r.h += d * Math.min(1, dt * 10);
-    r.av.position.set(r.x, 0, r.z); r.av.rotation.y = r.h; animateAvatar(r.av, Math.hypot(r.x - ox2, r.z - oz2) / Math.max(dt, 1e-4), dt, !!r.sit);
+    r.av.visible = !WT.on; r.av.position.set(r.x, 0, r.z); r.av.rotation.y = r.h; animateAvatar(r.av, Math.hypot(r.x - ox2, r.z - oz2) / Math.max(dt, 1e-4), dt, !!r.sit);
   });
-  const tx = player.x, ty = 1.45, tz = player.z;
+  let tx = player.x, ty = 1.45, tz = player.z;
+  camShiftCur += (camShiftGoal - camShiftCur) * (1 - Math.exp(-dt * 3));
+  if (camShiftCur > 0.01 && Slide.grp) { const gx = Slide.grp.position.x - player.x, gz = Slide.grp.position.z - player.z, gl = Math.hypot(gx, gz) || 1; tx += gx / gl * camShiftCur; tz += gz / gl * camShiftCur; }   // cinema: camera glides toward the screen
   const dirAt = (pitch) => tmpDir.set(Math.sin(camYaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(camYaw) * Math.cos(pitch));
   dirAt(camPitch);
   let want = camDist;                                   // how far back the camera may go before a wall gets in the way
@@ -1168,8 +1235,9 @@ function update(dt, now) {
   if (insideWall(tx + tmpDir.x * camDistCur, tz + tmpDir.z * camDistCur, 0.18)) camDistCur = Math.min(camDistCur, want);
   const close = 1 - clamp((camDistCur - 0.9) / Math.max(0.1, camDist - 0.9), 0, 1);          // when squeezed, lift the camera over the shoulder
   let pe = camPitch + close * 0.4; pe = Math.min(pe, Math.asin(clamp((WALL_H - 0.3 - ty) / Math.max(camDistCur, 0.5), -1, 1))); dirAt(pe);
-  camera.position.set(tx + tmpDir.x * camDistCur, ty + tmpDir.y * camDistCur, tz + tmpDir.z * camDistCur); camera.lookAt(tx, ty + 0.15, tz);
-  if (camDistCur < 1.05) me3d.visible = false; else if (camDistCur > 1.3) me3d.visible = true;
+  camera.position.set(tx + tmpDir.x * camDistCur, ty + tmpDir.y * camDistCur, tz + tmpDir.z * camDistCur);
+  if (WT.on && Slide.grp) camera.lookAt(Slide.grp.position.x, 2.2, Slide.grp.position.z); else camera.lookAt(tx, ty + 0.15, tz);
+  if (WT.on || camDistCur < 1.05) me3d.visible = false; else if (camDistCur > 1.3) me3d.visible = true;
   slowT += dt; if (slowT > 0.35) { slowT = 0; slowTick(); }
   const ts = now / 1000; for (let i = 0; i < tickers.length; i++) tickers[i](ts);
   for (let i = 0; i < frameHooks.length; i++) frameHooks[i](dt, now);
@@ -1323,25 +1391,41 @@ frameHooks.push((dt) => {
 /* ── little museum map ── */
 const mapC = $('map'), mapG = mapC.getContext('2d'); let mapOpen = false, mapAcc = 0;
 const MAPROWS = { memories: [-1, 8], notes: [-1, 22], special: [-1, 36], doodles: [1, 8], things: [1, 22] };
-const mapY = (z) => 410 - clamp(z, 0, HALL_L) / HALL_L * 330;
+const mapY = (z) => 410 - clamp(z, 0, HALL_L) / HALL_L * 320;
+const MAP_NAMES = { memories: 'Memories', notes: 'Notes', special: 'Special', doodles: 'Doodles', things: 'Photo' };
+function mapPos(x, z) {
+  if (z > HALL_L + 0.4) { const r = rooms.justus, f = clamp((z - HALL_L - 0.4) / ((r && r.len) || 14), 0, 1); return [150 - clamp(x / 6, -1, 1) * 38, 66 - f * 44]; }
+  if (Math.abs(x) <= 4.2) return [150 + clamp(x / 4, -1, 1) * 18, mapY(z)];
+  for (const id in MAPROWS) {
+    const [side, zc] = MAPROWS[id], r = rooms[id];
+    if (Math.sign(x) === side && Math.abs(z - zc) <= 6.4) { const f = clamp((Math.abs(x) - 4.4) / ((r && r.len) || 14), 0, 1); return [side < 0 ? 108 - f * 88 : 192 + f * 88, mapY(zc) - clamp((z - zc) / 6.2, -1, 1) * 27]; }
+  }
+  return [150, mapY(z)];
+}
 function drawMap() {
-  const g = mapG; g.clearRect(0, 0, 300, 440); g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillStyle = 'rgba(255,236,210,.16)'; g.strokeStyle = 'rgba(255,220,180,.55)'; g.lineWidth = 2;
-  const box = (x, y, w, h, label, lock) => { g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, 10) : g.rect(x, y, w, h); g.fill(); g.stroke(); g.fillStyle = 'rgba(255,243,230,.92)'; g.font = '600 20px Quicksand, sans-serif'; g.fillText((lock ? '🔒 ' : '') + label, x + w / 2, y + h / 2); g.fillStyle = 'rgba(255,236,210,.16)'; };
-  box(125, 80, 50, 330, 'Lobby'); mapC.dataset.ok = 1;
-  const names = { memories: 'Memories', notes: 'Notes', special: 'Special', doodles: 'Doodles', things: 'Photo' };
-  for (const id in MAPROWS) { const [side, zc] = MAPROWS[id], y = mapY(zc); box(side < 0 ? 18 : 175, y - 34, 107, 68, names[id]); }
-  box(100, 14, 100, 56, 'Just Us', !justUnlocked);
-  const pos = (x, z, len) => {
-    if (z > HALL_L + 0.4) { const f = clamp((z - HALL_L - 0.4) / (len || 14), 0, 1); return [150, 66 - f * 44]; }
-    if (Math.abs(x) <= 4.2) return [150 + clamp(x / 4, -1, 1) * 20, mapY(z)];
-    for (const id in MAPROWS) { const [side, zc] = MAPROWS[id], r = rooms[id]; if (r && Math.abs(z - zc) <= 6.4) { const f = clamp((Math.abs(x) - 4.4) / r.len, 0, 1); return [side < 0 ? 125 - f * 105 : 175 + f * 105, mapY(zc)]; } }
-    return [150, mapY(z)];
+  const g = mapG, here = zoneIdAt(player.x, player.z); g.clearRect(0, 0, 300, 440); g.textAlign = 'center'; g.textBaseline = 'middle';
+  const rr = (x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); };
+  const box = (x, y, w, h, label, on, lock) => {
+    rr(x, y, w, h, 12); g.fillStyle = on ? 'rgba(255,200,160,.38)' : 'rgba(255,236,210,.13)'; g.fill(); g.lineWidth = on ? 3 : 2; g.strokeStyle = on ? 'rgba(255,214,170,.95)' : 'rgba(255,220,180,.5)'; g.stroke();
+    if (!label) return; const txt = (lock ? '🔒 ' : '') + label; let size = 22; do { g.font = '700 ' + size + 'px Quicksand, sans-serif'; size -= 1; } while (g.measureText(txt).width > w - 16 && size > 11);
+    g.fillStyle = 'rgba(255,243,230,.95)'; g.fillText(txt, x + w / 2, y + h / 2 + 1);
   };
-  const dot = (x, z, who, h, big) => { const rj = rooms.justus, p = pos(x, z, rj && rj.len); g.save(); g.translate(p[0], p[1]); g.rotate(-h + Math.PI); g.fillStyle = who === 'M' ? '#e0566f' : '#2aa198'; g.beginPath(); g.moveTo(0, -16); g.lineTo(9, -5); g.lineTo(-9, -5); g.closePath(); g.fill(); g.restore(); g.fillStyle = who === 'M' ? '#c4343c' : '#1f6f78'; g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); g.arc(p[0], p[1], big ? 12 : 10, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#fff'; g.font = '700 14px Quicksand, sans-serif'; g.fillText(who, p[0], p[1] + 1); };
-  remotes.forEach((r) => dot(r.x, r.z, r.av.userData.who || (me === 'M' ? 'J' : 'M'), r.h || 0, false));
+  g.fillStyle = 'rgba(255,236,210,.28)';                                   // little doorways first, so the boxes sit on top
+  g.fillRect(140, 70, 20, 20); for (const id in MAPROWS) { const [side, zc] = MAPROWS[id], y = mapY(zc); g.fillRect(side < 0 ? 110 : 172, y - 11, 18, 22); }
+  box(124, 86, 52, 328, '', here === 'lobby');
+  g.save(); g.translate(150, 250); g.rotate(-Math.PI / 2); g.font = '700 22px Quicksand, sans-serif'; g.fillStyle = 'rgba(255,243,230,.95)'; g.fillText('Lobby', 0, 1); g.restore();
+  for (const id in MAPROWS) { const [side, zc] = MAPROWS[id]; box(side < 0 ? 12 : 188, mapY(zc) - 37, 100, 74, MAP_NAMES[id], here === id); }
+  box(96, 10, 108, 62, 'Just Us', here === 'justus', !justUnlocked); mapC.dataset.ok = 1;
+  const dot = (x, z, who, h, mine) => {
+    const p = mapPos(x, z), col = who === 'M' ? '#e0566f' : '#2aa198', r = mine ? 11 : 9;
+    g.save(); g.translate(p[0], p[1]); g.rotate(h || 0); g.fillStyle = col; g.beginPath(); g.moveTo(0, -r - 12); g.lineTo(r * 0.85, -r + 1); g.lineTo(-r * 0.85, -r + 1); g.closePath(); g.fill(); g.restore();
+    g.fillStyle = col; g.strokeStyle = '#fff'; g.lineWidth = 3.5; g.beginPath(); g.arc(p[0], p[1], r, 0, 7); g.fill(); g.stroke();
+    if (mine) { g.fillStyle = '#fff'; g.beginPath(); g.arc(p[0], p[1], 3.5, 0, 7); g.fill(); }
+  };
+  remotes.forEach((r) => dot(r.x, r.z, (r.av.userData && r.av.userData.who) || (me === 'M' ? 'J' : 'M'), r.h || 0, false));
   dot(player.x, player.z, me, player.heading, true);
 }
+function closeMap() { mapOpen = false; mapC.classList.add('hidden'); }
 $('mapBtn').addEventListener('click', () => { mapOpen = !mapOpen; mapC.classList.toggle('hidden', !mapOpen); $('mapBtn').classList.toggle('off', false); if (mapOpen) drawMap(); });
 frameHooks.push((dt) => { if (!mapOpen) return; if ((mapAcc += dt) < 0.12) return; mapAcc = 0; drawMap(); });
 
@@ -1589,25 +1673,27 @@ function tourStep(dt, mx, my) {
 }
 priorityHooks.push(() => (Tour.on ? { type: 'tour', label: '⏹  End tour', run: () => Tour.stop('Tour ended') } : null));
 
-/* ── watch together: the slideshow plays on the wall in front of the bench ── */
-const WT = { on: false, host: false, idx: 0, items: [], timer: 0, pending: null, tok: 0 };
+/* ── watch together: a little cinema on the wall in front of the bench ── */
+const WT = { on: false, host: false, idx: 0, items: [], timer: 0, pending: null, tok: 0, room: 'lobby', paused: false };
 const act2 = $('act2');
 const Slide = { grp: null, planes: [], active: 0, t0: 0, capMat: null, tex: [null, null] };
 const remoteSeated = () => [...remotes.values()].some((r) => r.sit);
+/* a dark veil fixed to the camera: everything in the room dims, the screen (drawn after it) stays bright */
+const dimMat = new THREE.MeshBasicMaterial({ color: 0x07040b, transparent: true, opacity: 0, depthTest: false, depthWrite: false });
+const dimMesh = new THREE.Mesh(unitPlane, dimMat); dimMesh.position.set(0, 0, -0.5); dimMesh.scale.set(8, 8, 1); dimMesh.renderOrder = 90; dimMesh.visible = false; dimMesh.frustumCulled = false; camera.add(dimMesh);
 function slideOpen() {
   if (Slide.grp || !sit) return; const b = sit.bench, fp = new THREE.Vector3(b.perp.x * sit.side, 0, b.perp.z * sit.side), dist = b.group === hallGroup ? 3.78 : 5.52, o = sit.to;
   const g = new THREE.Group(); g.position.set(o.x + fp.x * dist, 0, o.z + fp.z * dist); g.rotation.y = Math.atan2(-fp.x, -fp.z); scene.add(g);
-  const glow = new THREE.Mesh(unitPlane, glowMat); glow.scale.set(7.6, 5.2, 1); glow.position.set(0, 2.25, 0.012); g.add(glow);
-  const backing = new THREE.Mesh(unitBox, lam(0x0b0710)); backing.scale.set(4.5, 2.7, 0.06); backing.position.set(0, 2.25, 0.03); g.add(backing);
-  const brass = new THREE.Mesh(unitPlane, brassMat); brass.scale.set(4.6, 2.8, 1); brass.position.set(0, 2.25, 0.0615); g.add(brass);
-  const black = new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ color: 0x050308 })); black.scale.set(4.4, 2.6, 1); black.position.set(0, 2.25, 0.0625); g.add(black);
-  Slide.planes = [0, 1].map((i) => { const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), mesh = new THREE.Mesh(unitPlane, mat); mesh.position.set(0, 2.25, 0.065 + i * 0.001); mesh.scale.set(4.3, 2.5, 1); g.add(mesh); return { mesh, mat, w: 4.3, h: 2.5 }; });
-  Slide.capMat = new THREE.MeshBasicMaterial({ transparent: true }); const cap = new THREE.Mesh(unitPlane, Slide.capMat); cap.scale.set(3.4, 0.68, 1); cap.position.set(0, 0.62, 0.03); g.add(cap);
+  const glow = new THREE.Mesh(unitPlane, glowMat); glow.scale.set(7.6, 5.2, 1); glow.position.set(0, 2.25, 0.012); glow.renderOrder = 100; g.add(glow);
+  const flat = (hex, w, h, z, ro) => { const m = new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ color: hex, transparent: true, depthWrite: false })); m.scale.set(w, h, 1); m.position.set(0, 2.25, z); m.renderOrder = ro; g.add(m); return m; };
+  flat(0x0b0710, 4.7, 2.9, 0.03, 101); flat(0xc9a24a, 4.6, 2.8, 0.0615, 102); flat(0x050308, 4.4, 2.6, 0.0625, 103);
+  Slide.planes = [0, 1].map((i) => { const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), mesh = new THREE.Mesh(unitPlane, mat); mesh.renderOrder = 104 + i; mesh.position.set(0, 2.25, 0.065 + i * 0.001); mesh.scale.set(4.3, 2.5, 1); g.add(mesh); return { mesh, mat, w: 4.3, h: 2.5 }; });
+  Slide.capMat = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false }); const cap = new THREE.Mesh(unitPlane, Slide.capMat); cap.renderOrder = 106; cap.scale.set(3.4, 0.68, 1); cap.position.set(0, 0.62, 0.03); g.add(cap);
   Slide.grp = g; Slide.active = 0; Slide.t0 = 0; Slide.tex = [null, null];
 }
 function slideClose() {
   if (!Slide.grp) return; scene.remove(Slide.grp); Slide.tex.forEach((t) => { if (t) t.dispose(); }); if (Slide.capMat && Slide.capMat.map) Slide.capMat.map.dispose();
-  Slide.grp.traverse((o) => { if (o.material && o.material !== glowMat && o.material !== brassMat && o.material !== matteMat && !o.material._shared) o.material.dispose && o.material.dispose(); }); Slide.grp = null; Slide.planes = []; Slide.capMat = null;
+  Slide.grp.traverse((o) => { if (o.material && o.material !== glowMat && o.material.dispose) o.material.dispose(); }); Slide.grp = null; Slide.planes = []; Slide.capMat = null;
 }
 function slidePaintCaption(text, count) {
   const [c, g] = mkCanvas(640, 128); g.fillStyle = 'rgba(251,246,236,.97)'; g.fillRect(0, 0, 640, 128); g.strokeStyle = 'rgba(120,90,70,.4)'; g.lineWidth = 3; g.strokeRect(5, 5, 630, 118);
@@ -1621,43 +1707,81 @@ function slideShow(tex, aspect, text, count) {
   Slide.active = next; Slide.t0 = performance.now(); slidePaintCaption(text, count);
 }
 frameHooks.push((dt, now) => {
-  hemi.intensity += ((WT.on ? 0.62 : 1) - hemi.intensity) * Math.min(1, dt * 3);
+  hemi.intensity += ((WT.on ? 0.3 : 1) - hemi.intensity) * Math.min(1, dt * 3);
+  dimMat.opacity += ((WT.on ? 0.88 : 0) - dimMat.opacity) * Math.min(1, dt * 3); dimMesh.visible = dimMat.opacity > 0.01;
   if (!Slide.grp || !Slide.t0) return; const inc = Slide.planes[Slide.active], out = Slide.planes[1 - Slide.active], age = now - Slide.t0, k = clamp(age / 900, 0, 1), e = k * k * (3 - 2 * k), zoom = 1 + 0.03 * clamp(age / 7000, 0, 1);
   inc.mat.opacity = e; inc.mesh.position.x = 0.5 * (1 - e); inc.mesh.scale.set(inc.w * zoom, inc.h * zoom, 1); out.mat.opacity = 1 - e; out.mesh.position.x = -0.5 * e;
   if (k >= 1 && Slide.tex[1 - Slide.active]) { Slide.tex[1 - Slide.active].dispose(); Slide.tex[1 - Slide.active] = null; out.mat.map = null; out.mat.needsUpdate = true; out.mat.opacity = 0; }
 });
-function wtItems() { const r = rooms.memories, base = r ? r.frames.filter((f) => !f.item.locked && !f.isNote && !f.item.video).map((f) => f.item) : []; return base.length ? base : (rooms.doodles ? rooms.doodles.frames.filter((f) => !f.item.locked).map((f) => f.item) : []); }
+/* which pictures play depends on the room the bench is in: Memories shows memories, Doodles shows doodles, Just Us its own photos, the lobby a mix */
+function benchRoomId(b) { if (b.group === hallGroup) return 'lobby'; for (const id in rooms) if (rooms[id].group === b.group) return id; return 'lobby'; }
+function wtItems(roomId) {
+  const ok = (f) => !f.item.locked && !f.item.secret && !f.isNote && !f.isSpecial && !f.item.video && f.item.type !== 'note' && f.item.type !== 'special';
+  const of = (id) => (rooms[id] ? rooms[id].frames.filter(ok).map((f) => f.item) : []);
+  if (roomId === 'lobby' || !rooms[roomId]) { const a = of('memories'), b = of('doodles'), out = []; for (let i = 0; i < Math.max(a.length, b.length); i++) { if (a[i]) out.push(a[i]); if (b[i]) out.push(b[i]); } return out; }
+  return of(roomId);
+}
+let wtWakeT = 0;
+function wtWake() { const b = $('wtBar'); b.classList.remove('dim'); clearTimeout(wtWakeT); wtWakeT = setTimeout(() => b.classList.add('dim'), 4000); }
+function paintWtBar() { $('wtPlay').textContent = WT.paused ? '▶' : '⏸'; }
+/* camera for the cinema: the screen should fill the view on any phone or window shape */
+function wtCamera() {
+  if (!sit || !Slide.grp) return;
+  const sd = Math.hypot(Slide.grp.position.x - sit.to.x, Slide.grp.position.z - sit.to.z), asp = window.innerWidth / Math.max(1, window.innerHeight), vh = 2 * Math.tan(camera.fov * Math.PI / 360);
+  const need = Math.max(2.9, 4.6 / (0.88 * vh * asp)), dist = Math.max(1.4, need - sd), shift = clamp(sd + dist - need, 0, Math.max(0, sd - 1.5));
+  camGoal = { yaw: Math.atan2(-Math.sin(sit.to.h), -Math.cos(sit.to.h)), dist, pitch: 0.16 }; camShiftGoal = shift;
+}
+window.addEventListener('resize', () => { if (WT.on) wtCamera(); });
 async function wtShow() {
   const my = ++WT.tok, idx = WT.idx, n = WT.items.length, it = WT.items[idx % n]; if (!it) return;
   try {
     const url = await mediaOf(it); if (!WT.on || my !== WT.tok) return; if (!url) throw new Error('no image');
     const { tex, aspect } = await makeTexture(url, 1280); if (!WT.on || my !== WT.tok) { tex.dispose(); return; }
     slideShow(tex, aspect, it.title || it.sub || '', (idx % n + 1) + ' / ' + n + (remoteSeated() ? '  ·  watching together' : ''));
+    const nx = WT.items[(idx + 1) % n]; if (nx && nx !== it) mediaOf(nx).then((u) => { if (u) loadImg(u).catch(() => {}); }).catch(() => {});   // warm up the next one
   } catch (e) { if (WT.on && my === WT.tok) { WT.idx++; if (WT.host) setTimeout(() => { if (WT.on) wtShow(); }, 300); } }
 }
-function wtBegin(idx, host) {
-  WT.items = wtItems(); if (!WT.items.length) { toast('Nothing to show yet'); return; } if (!(sit && sit.seated)) return;
-  WT.on = true; WT.host = host; WT.idx = idx || 0; slideOpen(); camGoal = { dist: 4.4, pitch: 0.26 }; wtShow(); clearInterval(WT.timer);
-  if (host) WT.timer = setInterval(() => { WT.idx++; wtShow(); sendEvent('wt', { on: 1, idx: WT.idx }); }, 6500);
+function wtStartTimer() { clearInterval(WT.timer); WT.timer = setInterval(() => { if (!WT.on || WT.paused) return; WT.idx++; wtShow(); sendEvent('wt', { on: 1, idx: WT.idx, rm: WT.room, p: 0 }); }, 6500); }
+function wtSync() { sendEvent('wt', { on: 1, idx: WT.idx, rm: WT.room, p: WT.paused ? 1 : 0 }); }
+function wtStep(d) { if (!WT.on || !WT.items.length) return; const n = WT.items.length; WT.idx = (((WT.idx + d) % n) + n) % n; wtShow(); if (WT.host && !WT.paused) wtStartTimer(); wtSync(); wtWake(); }
+function wtTogglePause() { if (!WT.on) return; WT.paused = !WT.paused; if (WT.host) { if (WT.paused) clearInterval(WT.timer); else wtStartTimer(); } paintWtBar(); wtSync(); wtWake(); }
+function wtBegin(idx, host, roomId) {
+  if (!(sit && sit.seated)) return;
+  const rid = roomId || benchRoomId(sit.bench);
+  if (rid !== 'lobby' && !rooms[rid]) { toast('Unlock that room first to watch along 🔒', 3000); return; }
+  const items = wtItems(rid); if (!items.length) { toast('Nothing to show in this room yet'); return; }
+  WT.items = items; WT.room = rid; WT.on = true; WT.host = host; WT.paused = false; WT.idx = idx || 0;
+  document.body.classList.add('cinema'); emoTray.classList.add('hidden'); closeMap(); paintWtBar(); wtWake();
+  slideOpen(); wtCamera(); wtShow(); clearInterval(WT.timer); if (host) wtStartTimer();
 }
 function wtEnd(broadcast) {
-  if (!WT.on) return; WT.on = false; clearInterval(WT.timer); WT.tok++; slideClose(); if (broadcast && WT.host) sendEvent('wt', { on: 0 }); WT.host = false;
+  if (!WT.on) return; WT.on = false; clearInterval(WT.timer); WT.tok++; slideClose(); if (broadcast && WT.host) sendEvent('wt', { on: 0 }); WT.host = false; WT.paused = false;
+  document.body.classList.remove('cinema'); clearTimeout(wtWakeT); camShiftGoal = 0; if (me3d) me3d.visible = camDistCur >= 1.05;
   if (sit && sit.seated) camGoal = { dist: 3.6, pitch: 0.13 };
 }
 liveEvents.wt = (p) => {
   if (!p.on) { if (WT.on && !WT.host) wtEnd(false); WT.pending = null; return; }
-  if (sit && sit.seated) { if (!WT.on) wtBegin(p.idx, false); else if (!WT.host) { WT.idx = p.idx; wtShow(); } }
-  else { WT.pending = { idx: p.idx, t: performance.now(), who: p.w }; toast((p.w || 'They') + ' started a slideshow. Sit on a bench to join 🪑', 3500); }
+  if (sit && sit.seated) {
+    if (!WT.on) wtBegin(p.idx, false, p.rm);
+    else { const changed = WT.idx !== p.idx; WT.idx = p.idx; WT.paused = !!p.p; if (WT.host) { if (WT.paused) clearInterval(WT.timer); else if (changed) wtStartTimer(); } paintWtBar(); if (changed) wtShow(); }
+  } else { WT.pending = { idx: p.idx, rm: p.rm, t: performance.now(), who: p.w }; toast((p.w || 'They') + ' started a slideshow. Sit on a bench to join 🪑', 3500); }
 };
 slowHooks.push(() => {
   const seated = !!(sit && sit.seated);
   if (WT.on && !seated) wtEnd(true);
-  if (seated && !WT.on && WT.pending && performance.now() - WT.pending.t < 20000) { wtBegin(WT.pending.idx, false); WT.pending = null; }
+  if (seated && !WT.on && WT.pending && performance.now() - WT.pending.t < 20000) { const pd = WT.pending; WT.pending = null; wtBegin(pd.idx, false, pd.rm); }
   const show = seated && !viewerOpen && !overlayOpen && !photo.on;
   if (!show) { act2.classList.add('hidden'); return; }
   act2.textContent = WT.on ? '⏹  Stop the slideshow' : (remoteSeated() ? '▶  Watch together' : '▶  Watch a slideshow'); act2.classList.remove('hidden');
 });
-act2.addEventListener('click', () => { if (WT.on) { wtEnd(true); return; } wtBegin(0, true); if (WT.on) sendEvent('wt', { on: 1, idx: 0 }); });
+act2.addEventListener('click', () => { if (WT.on) { wtEnd(true); return; } wtBegin(0, true); if (WT.on) wtSync(); });
+$('wtPrev').addEventListener('click', () => wtStep(-1)); $('wtNext').addEventListener('click', () => wtStep(1));
+$('wtPlay').addEventListener('click', wtTogglePause); $('wtStop').addEventListener('click', () => wtEnd(true));
+window.addEventListener('keydown', (e) => {
+  if (!WT.on || isTyping(e)) return;
+  if (e.code === 'ArrowRight') { wtStep(1); e.preventDefault(); } else if (e.code === 'ArrowLeft') { wtStep(-1); e.preventDefault(); }
+  else if (e.code === 'Space') { wtTogglePause(); e.preventDefault(); } else if (e.code === 'Escape') wtEnd(true);
+});
 
 /* ── photo mode ── */
 const photo = { on: false, face: true, busy: false };
@@ -1775,6 +1899,16 @@ menuExtras.push(() => ({ label: (prefs.voices ? '🎙  Room voices: on' : '🎙 
 menuExtras.push(() => { const [a, b] = heartCount(); return HEARTS.length ? { label: '💗  Hidden hearts: ' + a + '/' + b, run: () => toast(a === b ? 'You found every heart 💗' : 'Look in every room, they are tiny ✨', 2800) } : null; });
 menuExtras.push(() => ({ label: '💬  Chat', run: openChat }));
 menuExtras.push(() => ({ label: '📸  Photo mode', run: enterPhoto }));
+/* tap anywhere else to close whichever panel is open (the map stays put while you use the joystick) */
+document.addEventListener('pointerdown', (e) => {
+  const t = e.target; if (!t || !t.closest) return; const inside = (id) => { const el = $(id); return !!el && el.contains(t); };
+  const menu = $('menu'); if (!menu.classList.contains('hidden') && !inside('menu') && !inside('menuBtn')) { menu.classList.add('hidden'); $('menuBtn').setAttribute('aria-expanded', 'false'); }
+  if (!emoTray.classList.contains('hidden') && !inside('emotes') && !inside('emoteBtn') && !inside('pmPose')) emoTray.classList.add('hidden');
+  if (mapOpen && !inside('map') && !inside('mapBtn') && !inside('joy')) closeMap();
+  if (Chat.open && !inside('chat') && !inside('chatBtn')) closeChat();
+  if (WT.on) wtWake();
+}, true);
+window.addEventListener('keydown', (e) => { if (e.code === 'Escape' && !WT.on) { if (mapOpen) closeMap(); emoTray.classList.add('hidden'); } });
 function initExtras() {
   buildTray(); buildLectern(); makeHearts(); activeSeasons().forEach(buildSeason); applyTime(true); paintHeartChip(); $('side').classList.remove('hidden');
 }
@@ -1802,10 +1936,11 @@ async function boot() {
       me = letterOfEmail(data.session.user.email);
     } else me = TEST.who || 'J';
     setLoad('Polishing the frames…', 12);
-    await Promise.race([Promise.all([document.fonts.load('italic 600 40px "Playfair Display"'), document.fonts.load('600 40px Caveat'), document.fonts.load('600 24px Quicksand')]), wait(2500)]).catch(() => {});
+    await Promise.race([Promise.all([document.fonts.load('italic 600 40px "Playfair Display"'), document.fonts.load('600 40px Caveat'), document.fonts.load('600 24px Quicksand')]), wait(1200)]).catch(() => {});
     setLoad('Hanging the pictures…', 30);
     const [mem, doo, notes, things] = await Promise.all([safe(loadMemories, []), safe(loadDoodles, []), safe(loadNotes, []), safe(loadPhotoThings, { booth: [], wand: [], pict: [] })]);
     setLoad('Building the rooms…', 70);
+    signedBatchP = prefetchSigned([].concat(mem, doo, things.booth, things.wand, things.pict));
     await wait(30);
     const lefts = [{ id: 'memories', name: 'Memories', emoji: '📷', zc: 8 }, { id: 'notes', name: 'Love Notes', emoji: '💌', zc: 22 }, { id: 'special', name: 'Special Days', emoji: '🎉', zc: 36 }];
     const rights = [{ id: 'doodles', name: 'Doodles', emoji: '✏️', zc: 8 }, { id: 'things', name: 'Photo Things', emoji: '🪄', zc: 22 }];
