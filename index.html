@@ -16235,6 +16235,7 @@
             const musicBtn = document.getElementById('musicBtn');
             const musicFileInput = document.getElementById('musicFileInput');
             const onThisDay = document.getElementById('onThisDay');
+            let otdDone = false;   // the "months ago" card is picked once, before the first paint, so photos never jump down when it appears
             const otdImg = document.getElementById('otdImg');
             const otdCaption = document.getElementById('otdCaption');
             const otdLabel = document.getElementById('otdLabel');
@@ -17420,7 +17421,7 @@
                         partial[rowIdx] = out; resolvedCount++;
                         if (!earlyPainted && resolvedCount >= 10 && data.length > 14 && sortMode === 'oldest') {
                             earlyPainted = true;
-                            try { photos = partial.filter(Boolean); render(); } catch (e) { console.error('early paint skipped', e); }
+                            try { photos = partial.filter(Boolean); if (!otdDone) { otdDone = true; maybeShowOnThisDay(); } render(); } catch (e) { console.error('early paint skipped', e); }
                         }
                         return out;
                     });
@@ -17430,8 +17431,8 @@
                     showToast('Could not load your memories — check your connection.', { type: 'error' });
                     photos = [];
                 }
+                if (!otdDone) { otdDone = true; maybeShowOnThisDay(); }
                 render();
-                maybeShowOnThisDay();
             }
 
             // One-time migration for anything uploaded before encryption

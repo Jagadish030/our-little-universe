@@ -1402,23 +1402,30 @@ function mapPos(x, z) {
   }
   return [150, mapY(z)];
 }
+let mapFlip = false;   // false: you are looking down the hall toward Just Us (mirrored so left stays left), true: looking back toward the entrance
 function drawMap() {
-  const g = mapG, here = zoneIdAt(player.x, player.z); g.clearRect(0, 0, 300, 440); g.textAlign = 'center'; g.textBaseline = 'middle';
+  /* The map turns with you so that up on the map is the way you are looking and left is always left on screen. */
+  const fz = -Math.cos(camYaw); if (fz < -0.3) mapFlip = true; else if (fz > 0.3) mapFlip = false;
+  const XF = !mapFlip, F = mapFlip, g = mapG, here = zoneIdAt(player.x, player.z); g.clearRect(0, 0, 300, 440); g.textAlign = 'center'; g.textBaseline = 'middle';
+  const R = (x, y, w, h) => [XF ? 300 - x - w : x, F ? 424 - y - h : y, w, h];
   const rr = (x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); };
-  const box = (x, y, w, h, label, on, lock) => {
+  const box = (x0, y0, w0, h0, label, on, lock) => {
+    const [x, y, w, h] = R(x0, y0, w0, h0);
     rr(x, y, w, h, 12); g.fillStyle = on ? 'rgba(255,200,160,.38)' : 'rgba(255,236,210,.13)'; g.fill(); g.lineWidth = on ? 3 : 2; g.strokeStyle = on ? 'rgba(255,214,170,.95)' : 'rgba(255,220,180,.5)'; g.stroke();
     if (!label) return; const txt = (lock ? '🔒 ' : '') + label; let size = 22; do { g.font = '700 ' + size + 'px Quicksand, sans-serif'; size -= 1; } while (g.measureText(txt).width > w - 16 && size > 11);
     g.fillStyle = 'rgba(255,243,230,.95)'; g.fillText(txt, x + w / 2, y + h / 2 + 1);
   };
-  g.fillStyle = 'rgba(255,236,210,.28)';                                   // little doorways first, so the boxes sit on top
-  g.fillRect(140, 70, 20, 20); for (const id in MAPROWS) { const [side, zc] = MAPROWS[id], y = mapY(zc); g.fillRect(side < 0 ? 110 : 172, y - 11, 18, 22); }
+  const door = (x, y, w, h) => { const [a, b, c, d] = R(x, y, w, h); g.fillRect(a, b, c, d); };
+  g.fillStyle = 'rgba(255,236,210,.28)';
+  door(140, 70, 20, 20); for (const id in MAPROWS) { const [side, zc] = MAPROWS[id]; door(side < 0 ? 110 : 172, mapY(zc) - 11, 18, 22); }
   box(124, 86, 52, 328, '', here === 'lobby');
-  g.save(); g.translate(150, 250); g.rotate(-Math.PI / 2); g.font = '700 22px Quicksand, sans-serif'; g.fillStyle = 'rgba(255,243,230,.95)'; g.fillText('Lobby', 0, 1); g.restore();
+  g.save(); g.translate(150, F ? 174 : 250); g.rotate(F ? Math.PI / 2 : -Math.PI / 2); g.font = '700 22px Quicksand, sans-serif'; g.fillStyle = 'rgba(255,243,230,.95)'; g.fillText('Lobby', 0, 1); g.restore();
   for (const id in MAPROWS) { const [side, zc] = MAPROWS[id]; box(side < 0 ? 12 : 188, mapY(zc) - 37, 100, 74, MAP_NAMES[id], here === id); }
   box(96, 10, 108, 62, 'Just Us', here === 'justus', !justUnlocked); mapC.dataset.ok = 1;
   const dot = (x, z, who, h, mine) => {
-    const p = mapPos(x, z), col = who === 'M' ? '#e0566f' : '#2aa198', r = mine ? 11 : 9;
-    g.save(); g.translate(p[0], p[1]); g.rotate(h || 0); g.fillStyle = col; g.beginPath(); g.moveTo(0, -r - 12); g.lineTo(r * 0.85, -r + 1); g.lineTo(-r * 0.85, -r + 1); g.closePath(); g.fill(); g.restore();
+    let p = mapPos(x, z); p = [XF ? 300 - p[0] : p[0], F ? 424 - p[1] : p[1]];
+    const col = who === 'M' ? '#e0566f' : '#2aa198', r = mine ? 11 : 9;
+    g.save(); g.translate(p[0], p[1]); g.rotate((XF ? -(h || 0) : (h || 0) + Math.PI)); g.fillStyle = col; g.beginPath(); g.moveTo(0, -r - 12); g.lineTo(r * 0.85, -r + 1); g.lineTo(-r * 0.85, -r + 1); g.closePath(); g.fill(); g.restore();
     g.fillStyle = col; g.strokeStyle = '#fff'; g.lineWidth = 3.5; g.beginPath(); g.arc(p[0], p[1], r, 0, 7); g.fill(); g.stroke();
     if (mine) { g.fillStyle = '#fff'; g.beginPath(); g.arc(p[0], p[1], 3.5, 0, 7); g.fill(); }
   };
@@ -1899,16 +1906,15 @@ menuExtras.push(() => ({ label: (prefs.voices ? '🎙  Room voices: on' : '🎙 
 menuExtras.push(() => { const [a, b] = heartCount(); return HEARTS.length ? { label: '💗  Hidden hearts: ' + a + '/' + b, run: () => toast(a === b ? 'You found every heart 💗' : 'Look in every room, they are tiny ✨', 2800) } : null; });
 menuExtras.push(() => ({ label: '💬  Chat', run: openChat }));
 menuExtras.push(() => ({ label: '📸  Photo mode', run: enterPhoto }));
-/* tap anywhere else to close whichever panel is open (the map stays put while you use the joystick) */
+/* tap anywhere else to close whichever panel is open (the map only closes from its own button) */
 document.addEventListener('pointerdown', (e) => {
   const t = e.target; if (!t || !t.closest) return; const inside = (id) => { const el = $(id); return !!el && el.contains(t); };
   const menu = $('menu'); if (!menu.classList.contains('hidden') && !inside('menu') && !inside('menuBtn')) { menu.classList.add('hidden'); $('menuBtn').setAttribute('aria-expanded', 'false'); }
   if (!emoTray.classList.contains('hidden') && !inside('emotes') && !inside('emoteBtn') && !inside('pmPose')) emoTray.classList.add('hidden');
-  if (mapOpen && !inside('map') && !inside('mapBtn') && !inside('joy')) closeMap();
   if (Chat.open && !inside('chat') && !inside('chatBtn')) closeChat();
   if (WT.on) wtWake();
 }, true);
-window.addEventListener('keydown', (e) => { if (e.code === 'Escape' && !WT.on) { if (mapOpen) closeMap(); emoTray.classList.add('hidden'); } });
+window.addEventListener('keydown', (e) => { if (e.code === 'Escape' && !WT.on) emoTray.classList.add('hidden'); });
 function initExtras() {
   buildTray(); buildLectern(); makeHearts(); activeSeasons().forEach(buildSeason); applyTime(true); paintHeartChip(); $('side').classList.remove('hidden');
 }
