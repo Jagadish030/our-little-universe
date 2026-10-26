@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#1a0f1c">
-<!-- gallery build 6: real avatars -->
+<!-- gallery build 7: real avatars -->
 <title>Our Little Gallery</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
@@ -19,9 +19,17 @@ html,body{margin:0;height:100%;background:#1a0f1c;color:var(--cream);font-family
 #top>*{pointer-events:auto}
 .rbtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--cream);font-size:1.25rem;text-decoration:none;border:1px solid var(--glass-b);background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;font-family:var(--sans)}
 #roomName{padding:.5rem 1.1rem;border-radius:999px;font-family:var(--serif);font-style:italic;font-size:1.05rem;white-space:nowrap;transition:opacity .4s}
-#menu{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 62px);z-index:11;padding:.4rem;border-radius:18px;display:grid;gap:2px;min-width:200px}
-#menu button{border:0;background:transparent;color:var(--cream);padding:.7rem .9rem;text-align:left;border-radius:12px;font:600 .95rem var(--sans);cursor:pointer}
-#menu button:active{background:rgba(255,255,255,.12)}
+#menu{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 62px);z-index:11;padding:.45rem;border-radius:20px;display:grid;gap:2px;min-width:236px;max-height:calc(100vh - env(safe-area-inset-top,0px) - 84px);max-height:calc(100dvh - env(safe-area-inset-top,0px) - 84px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent;transform-origin:top right;animation:menuIn .24s cubic-bezier(.22,1,.36,1) both}
+#menu button{border:0;background:transparent;color:var(--cream);padding:.66rem .9rem;text-align:left;border-radius:13px;font:600 .95rem var(--sans);cursor:pointer;display:flex;align-items:center;gap:.55rem;width:100%;transition:background .18s,transform .18s}
+#menu button:active{background:rgba(255,255,255,.14)}
+@media (hover:hover){#menu button:hover{background:linear-gradient(90deg,rgba(255,206,170,.24),rgba(255,160,176,.08));transform:translateX(3px)}}
+#menu .mdiv{height:1px;background:var(--glass-b);margin:.3rem .7rem}
+#menu .chev{margin-left:auto;opacity:.7;transition:transform .25s}
+#menu .mhead.open .chev{transform:rotate(180deg)}
+#menu .mrooms{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease}
+#menu .mrooms.open{grid-template-rows:1fr}
+#menu .mrooms>div{overflow:hidden;display:grid;gap:2px;padding-left:.7rem;min-height:0}
+@keyframes menuIn{from{opacity:0;transform:translateY(-6px) scale(.97)}to{opacity:1;transform:none}}
 #joy{position:fixed;left:calc(env(safe-area-inset-left,0px) + 22px);bottom:calc(env(safe-area-inset-bottom,0px) + 26px);width:132px;height:132px;border-radius:50%;z-index:9;touch-action:none;background:rgba(34,20,38,.35);border:1px solid var(--glass-b)}
 #joy.run{box-shadow:0 0 0 3px rgba(255,177,153,.55),0 0 26px rgba(255,152,163,.5)}
 #knob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:linear-gradient(135deg,#ffe2ad,#ffb199 55%,#ff98a3);box-shadow:0 6px 18px rgba(0,0,0,.4)}
@@ -1141,7 +1149,7 @@ function startLive() {
 function onRemote(p) {
   if (!p || p.c === clientId || (p.w !== 'J' && p.w !== 'M')) return;
   let r = remotes.get(p.c);
-  if (!r) { r = { av: makeAvatar(p.w, p.o || ''), cid: p.c, x: p.x, z: p.z, h: p.r, moving: 0, last: 0 }; r.av.userData.who = p.w; r.av.position.set(p.x, 0, p.z); scene.add(r.av); remotes.set(p.c, r); toast(p.w + ' is here too ✨', 2600); }
+  if (!r) { r = { av: makeAvatar(p.w, p.o || ''), cid: p.c, x: p.x, z: p.z, h: p.r, moving: 0, last: 0 }; r.av.userData.who = p.w; r.av.position.set(p.x, 0, p.z); scene.add(r.av); remotes.set(p.c, r); toast(p.w === me ? 'You are also in the gallery on another device 📱' : p.w + ' is here too ✨', p.w === me ? 4200 : 2600); }
   r.tx = p.x; r.tz = p.z; r.th = p.r; r.sit = !!p.s; r.last = performance.now(); applyRemoteLook(r, p);
 }
 function dropRemote(c) { const r = remotes.get(c); if (!r) return; scene.remove(r.av); remotes.delete(c); setPet(c, 'none'); if (HOLD.on && HOLD.pc === c) HOLD.on = false; }
@@ -1169,7 +1177,12 @@ function teleport(t) {
   if (t.id === 'justus') { player.x = 0; player.z = justUnlocked ? HALL_L + 3 : t.z; camYaw = Math.PI; if (!justUnlocked) askPasscode(); return; }
   player.x = t.x; player.z = t.z; camYaw = t.yaw; player.heading = Math.atan2(-Math.sin(t.yaw), -Math.cos(t.yaw));
 }
-function buildMenu() { const m = $('menu'); m.textContent = ''; menuExtras.forEach((fn) => { const x = fn(); if (!x) return; const b = document.createElement('button'); b.textContent = x.label; b.onclick = () => { m.classList.add('hidden'); $('menuBtn').setAttribute('aria-expanded', 'false'); x.run(); }; m.append(b); }); TELE.forEach((t) => { const b = document.createElement('button'); b.textContent = t.label; b.onclick = () => teleport(t); m.append(b); }); }
+function buildMenu() { const m = $('menu'); m.textContent = ''; menuExtras.forEach((fn) => { const x = fn(); if (!x) return; const b = document.createElement('button'); b.textContent = x.label; b.onclick = () => { m.classList.add('hidden'); $('menuBtn').setAttribute('aria-expanded', 'false'); x.run(); }; m.append(b); }); m.append(mk('div', 'mdiv'));
+  const head = document.createElement('button'); head.type = 'button'; head.className = 'mhead'; head.append(document.createTextNode('🚪  Rooms'), mk('span', 'chev', '⌄'));
+  const wrap = mk('div', 'mrooms'), inner = document.createElement('div'); wrap.append(inner);
+  TELE.forEach((t) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t.label; b.onclick = () => teleport(t); inner.append(b); });
+  head.onclick = () => { const o = !wrap.classList.contains('open'); wrap.classList.toggle('open', o); head.classList.toggle('open', o); if (o) setTimeout(() => head.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 30); };
+  m.append(head, wrap); }
 $('menuBtn').addEventListener('click', () => { const m = $('menu'), open = m.classList.contains('hidden'); if (open) buildMenu(); m.classList.toggle('hidden', !open); $('menuBtn').setAttribute('aria-expanded', String(open)); });
 
 /* ═══ zones, per-frame update, main loop ═══ */
@@ -2043,10 +2056,15 @@ function animateReal(av, speed, dt, sitting) {
   const u = av.userData; u.mixer.update(dt); u.t += dt;
   u.sit += ((sitting ? 1 : 0) - u.sit) * Math.min(1, dt * 6);
   let bob = 0, k = 0;
-  if (u.em) { k = performance.now() / 1000 - u.em.t0; if (k > u.em.dur || (speed > 0.6 && u.em.clip)) u.em = null; }
-  let want; if (sitting) want = 'sit_idle'; else if (u.em && u.em.clip) want = u.em.clip; else if (speed > 3.8) want = 'run'; else if (speed > 0.25) want = 'walk'; else want = 'idle';
+  u.spd = (u.spd || 0) + (speed - (u.spd || 0)) * Math.min(1, dt * 3.5);          // smoothed speed: network updates arrive in steps, raw speed jitters
+  const sp = u.spd; let lo = u.loco || 'idle';
+  if (lo === 'idle') { if (sp > 0.6) lo = 'walk'; } else if (lo === 'walk') { if (sp > 4.6) lo = 'run'; else if (sp < 0.3) lo = 'idle'; } else if (sp < 2.8) lo = 'walk';
+  if (lo !== u.loco && u.t - (u.locoT || -9) > 0.5) { u.loco = lo; u.locoT = u.t; }
+  if (u.em) { k = performance.now() / 1000 - u.em.t0; if (k > u.em.dur || (sp > 0.9 && u.em.clip)) u.em = null; }
+  let want; if (sitting) want = 'sit_idle'; else if (u.em && u.em.clip) want = u.em.clip; else want = u.loco || 'idle';
   if (want !== u.cur) fadeTo(u, want);
-  if (want === 'walk') u.acts.walk.timeScale = clamp(speed / 1.9, 0.7, 2.0); else if (want === 'run') u.acts.run.timeScale = clamp(speed / 5.2, 0.9, 1.5);
+  const tsT = want === 'walk' ? clamp(sp / 1.9, 0.7, 2.0) : want === 'run' ? clamp(sp / 5.2, 0.9, 1.5) : 0;
+  if (tsT) { const a = u.acts[want]; a.timeScale += (tsT - a.timeScale) * Math.min(1, dt * 5); }
   if (u.em && !u.em.clip && !sitting) { if (u.em.id === 'laugh') bob = Math.abs(Math.sin(k * 14)) * 0.025; else if (u.em.id === 'wow' && k < 0.5) bob = Math.sin(k / 0.5 * Math.PI) * 0.12; }
   u.model.position.y = u.sit * 0.11 + bob;
   u.model.rotation.y = (u.em && u.em.id === 'spin' && !sitting) ? (k / u.em.dur) * Math.PI * 4 : 0;
