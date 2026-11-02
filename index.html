@@ -14619,7 +14619,8 @@
                     <button type="button" id="navDockMoreWand" role="menuitem">🪄 Magic Wand</button>
                     <button type="button" id="navDockMoreFight" role="menuitem">🔨 In case of a fight<span class="nav-dock-dot nav-dock-dot-inline" id="navDockFightDot"></span></button>
                     <button type="button" id="navDockMoreSecure" role="menuitem">🔒 Just Us</button>
-                    <button type="button" id="navDockMoreGallery" role="menuitem">🏛️ 3D Gallery</button>
+                   // <button type="button" id="navDockMoreGallery" role="menuitem">🏛️ 3D Gallery</button>
+                    <button type="button" id="navDockMoreGallery" role="menuitem">🏰 Our Castle (3D)</button>
                 </div>
             </nav>
         </div>
@@ -35533,7 +35534,8 @@
             moreProxy('navDockMoreTheme', 'seasonMenuBtn');
             moreProxy('navDockMoreWand', 'magicWandToggleBtn');
             moreProxy('navDockMoreFight', 'breakGlassBtn');
-            (function () { const g = byId('navDockMoreGallery'); if (g) g.addEventListener('click', () => { closeMore(); window.location.href = 'gallery.html?v=7'; }); })();
+            (function () { const g = byId('navDockMoreGallery'); if (g) g.addEventListener('click', () => { closeMore(); window.location.href = 'castle.html?v=1'; }); })();
+           // (function () { const g = byId('navDockMoreGallery'); if (g) g.addEventListener('click', () => { closeMore(); window.location.href = 'gallery.html?v=7'; }); })();
 
             /* ─── Sliding selection indicator ───
                Measures the target button's own box and moves a pill
@@ -39594,5 +39596,22 @@
     })();
     </script>
 
+<script>
+/* Games Room support: castle.html opens a game inside an iframe as index.html?embed=games&game=<id> */
+(function () {
+  var q = new URLSearchParams(location.search); if (q.get('embed') !== 'games') return;
+  var game = q.get('game') || '';
+  var st = document.createElement('style');
+  st.textContent = '.embed-hide{display:none!important}#gamesWall{position:fixed!important;inset:0!important;overflow:auto!important;z-index:5!important;background:#120a1c!important;margin:0!important}#gamesWall .extras-close,#gamesWall .wall-close{display:none!important}';
+  document.head.appendChild(st);
+  var tries = 0, done = false, t = setInterval(function () {
+    tries++; if (tries > 150 || done) return clearInterval(t);
+    var btn = document.getElementById('gamesToggleBtn'), wall = document.getElementById('gamesWall'); if (!btn || !wall) return;
+    if (wall.classList.contains('hidden')) { btn.click(); return; }
+    var n = wall; while (n && n !== document.body) { var p = n.parentNode; Array.prototype.forEach.call(p.children, function (c) { if (c !== n && !/^(SCRIPT|STYLE|LINK)$/.test(c.tagName)) c.classList.add('embed-hide'); }); n = p; }
+    var g = game && document.getElementById(game); if (g) g.click(); done = true; clearInterval(t);
+  }, 400);
+})();
+</script>
 </body>
 </html>
