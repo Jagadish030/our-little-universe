@@ -1998,7 +1998,7 @@ function makeRealAvatar(who, outfit) {
   return root;
 }
 /* ── what each emote plays (a real clip where we have one) ── */
-const EMOTE_CLIP = { wave: 'wave', dance: ['dance_1', 'dance_2', 'dance_3'], clap: 'clap', jump: 'jump', cheer: 'cheer', thumbs: 'thumbs_up', shrug: 'shrug', kiss: 'kiss', love: 'kiss' };
+const EMOTE_CLIP = { wave: 'wave', dance: ['dance_1', 'dance_2', 'dance_3'], clap: 'clap', jump: 'jump', cheer: 'cheer', thumbs: 'thumbs_up', shrug: 'shrug', hug: 'hug', kiss: 'kiss', love: 'kiss_couple' };
 const EMOTE_FACE = { love: { smile: 0.9 }, kiss: { smile: 0.5 }, shy: { smile: 0.9 }, hug: { smile: 0.9 }, laugh: { smile: 1, laugh: 1 }, wow: { open: 0.8, brow: 0.9 }, sleep: { closed: 1, smile: 0 }, cheer: { smile: 1 }, wave: { smile: 0.8 }, thumbs: { smile: 0.8 }, dance: { smile: 0.9 }, jump: { smile: 0.8 }, spin: { smile: 0.8 }, clap: { smile: 0.9 }, point: { smile: 0.6 } };
 function realEmote(av, id, variant) {
   const u = av.userData, c = EMOTE_CLIP[id]; if (!c || u.sit > 0.5) return;
@@ -2042,7 +2042,7 @@ function animateReal(av, speed, dt, sitting) {
   if (lo === 'idle') { if (sp > 0.6) lo = 'walk'; } else if (lo === 'walk') { if (sp > 4.6) lo = 'run'; else if (sp < 0.3) lo = 'idle'; } else if (sp < 2.8) lo = 'walk';
   if (lo !== u.loco && u.t - (u.locoT || -9) > 0.5) { u.loco = lo; u.locoT = u.t; }
   if (u.em) { k = performance.now() / 1000 - u.em.t0; if (k > u.em.dur || (sp > 0.9 && u.em.clip)) u.em = null; }
-  let want; if (sitting) want = 'sit_idle'; else if (u.em && u.em.clip) want = u.em.clip; else want = u.loco || 'idle';
+  let want; if (av === me3d && player.swim) want = (sp > 0.4 && u.acts.swimming) ? 'swimming' : (u.acts.floating ? 'floating' : 'idle'); else if (sitting) want = 'sit_idle'; else if (u.em && u.em.clip) want = u.em.clip; else want = u.loco || 'idle';
   if (want !== u.cur) fadeTo(u, want);
   const tsT = want === 'walk' ? clamp(sp / 1.9, 0.7, 2.0) : want === 'run' ? clamp(sp / 5.2, 0.9, 1.5) : 0;
   if (tsT) { const a = u.acts[want]; a.timeScale += (tsT - a.timeScale) * Math.min(1, dt * 5); }
