@@ -27,7 +27,7 @@ html,body{margin:0;height:100%;background:#1a0f1c;color:var(--cream);font-family
 #dpad button small{font-size:10px;letter-spacing:.08em;opacity:.8}
 #dpad button:active{background:rgba(255,152,163,.62);transform:scale(.94)}
 #dpad.hidden{display:none}
-body.driving #joy{display:none!important}
+body.driving #joy,body.driving #top,body.driving #side,body.driving #heartChip,body.driving #capChip,body.driving #map,body.driving #emotes,body.driving #menu,body.driving #hint{display:none!important}
 .movie i{position:absolute;bottom:-20px;font-style:normal;color:#ff9aa8;opacity:.7;animation:movieUp linear infinite}
 @keyframes movieUp{to{transform:translateY(-110vh);opacity:0}}
 .glass{background:var(--glass);border:1px solid var(--glass-b);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
@@ -1237,7 +1237,7 @@ function update(dt, now) {
     const len = Math.hypot(mx, my); if (len > 1) { mx /= len; my /= len; } sp = (keys.ShiftLeft || keys.ShiftRight) ? 6.4 : 3.6;
   }
   if (viewerOpen || !$('passcode').classList.contains('hidden') || overlayOpen || WT.on) { mx = my = 0; }
-  if (player.swim) sp *= 0.55;
+  if (player.swim) sp *= 0.55; else if (player.wade) sp *= 0.8;
   const sy = Math.sin(camYaw), cy = Math.cos(camYaw);
   let vx = (-sy * my + cy * mx) * sp, vz = (-cy * my - sy * mx) * sp;
   if (moveOverride) { const o = moveOverride(dt, mx, my); if (o) { vx = o.vx; vz = o.vz; } }
@@ -1254,7 +1254,7 @@ function update(dt, now) {
     player.speed = Math.hypot(player.x - ox, player.z - oz) / Math.max(dt, 1e-4);
     if (Math.hypot(vx, vz) > 0.1) { const target = Math.atan2(vx, vz); let d = target - player.heading; d = Math.atan2(Math.sin(d), Math.cos(d)); player.heading += d * Math.min(1, dt * 12); }
   }
-  castleStep(dt); kitSwim();
+  castleStep(dt); kitSwim(dt);
   if (camGoal) {
     const k = 1 - Math.exp(-dt * 4);
     if (camGoal.yaw != null) { let d = camGoal.yaw - camYaw; d = Math.atan2(Math.sin(d), Math.cos(d)); camYaw += d * k; }
@@ -1718,7 +1718,7 @@ function slideShow(tex, aspect, text, count) {
   Slide.active = next; Slide.t0 = performance.now(); slidePaintCaption(text, count);
 }
 frameHooks.push((dt, now) => {
-  hemi.intensity += ((WT.on ? 0.3 : 1) - hemi.intensity) * Math.min(1, dt * 3);
+  hemi.intensity += ((WT.on ? 0.3 : KIT.darkK) - hemi.intensity) * Math.min(1, dt * 3);
   dimMat.opacity += ((WT.on ? 0.88 : 0) - dimMat.opacity) * Math.min(1, dt * 3); dimMesh.visible = dimMat.opacity > 0.01;
   if (!Slide.grp || !Slide.t0) return; const inc = Slide.planes[Slide.active], out = Slide.planes[1 - Slide.active], age = now - Slide.t0, k = clamp(age / 900, 0, 1), e = k * k * (3 - 2 * k), zoom = 1 + 0.03 * clamp(age / 7000, 0, 1);
   inc.mat.opacity = e; inc.mesh.position.x = 0.5 * (1 - e); inc.mesh.scale.set(inc.w * zoom, inc.h * zoom, 1); out.mat.opacity = 1 - e; out.mesh.position.x = -0.5 * e;
@@ -2268,7 +2268,7 @@ const clouds = [];
 frameHooks.push((dt) => {
   ENV.k += ((player.out ? 1 : 0) - ENV.k) * Math.min(1, dt * 2.2);
   scene.fog.color.lerpColors(fogIn, fogOut, ENV.k); scene.background.copy(scene.fog.color); scene.fog.near = 70 + 10 * ENV.k; scene.fog.far = 150 + 230 * ENV.k;
-  sun.intensity = 0.5 + 0.18 * ENV.k; const vis = ENV.k > 0.02; castle.sky.visible = vis; castle.sky.position.set(camera.position.x, 0, camera.position.z);
+  sun.intensity = (0.5 + 0.18 * ENV.k) * (KIT.darkK < 1 ? 0.3 : 1); const vis = ENV.k > 0.02; castle.sky.visible = vis; castle.sky.position.set(camera.position.x, 0, camera.position.z);
   for (let i = 0; i < clouds.length; i++) { const m = clouds[i]; m.visible = vis; if (vis) { m.position.x += dt * 1.2; if (m.position.x > camera.position.x + 360) m.position.x -= 720; m.quaternion.copy(camera.quaternion); } }
 });
 /* ── rides: swings, carousel, slide… anything that carries the player ── */
@@ -2425,7 +2425,8 @@ function decorateGames(G, L) {
   [[L - 2, -3.2, 0xff4fa3], [L - 2, 3.2, 0x4fd2ff], [L - 3.2, 0, 0xffd84f]].forEach(([u, v, col]) => { const bb = new THREE.Mesh(new THREE.SphereGeometry(0.62, 14, 10), new THREE.MeshLambertMaterial({ color: col })); bb.scale.set(1, 0.6, 1); bb.position.set(u, 0.36, v); G.add(bb); });
   const sg = new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ map: signTex('🎮  Games Room', 'press ✦ at a machine to play', 900, 260, '#241044') })); sg.scale.set(5, 1.45, 1); sg.position.set(L - 0.06, 3.2, 0); sg.rotation.y = -Math.PI / 2; G.add(sg);
 }
-function decorateKind(G, L, kind, name) {
+function decorateKind(G, L, kind, name, orig) {
+  if (!orig && (kind === 'bedroom' || kind === 'kitchen')) { KIT_LATER.push(() => { if (KIT.ok && kitHas('fu2-bed') && kitHas('ck2-pan')) (kind === 'bedroom' ? kitBedroom : kitKitchen)(G, L, name); else decorateKind(G, L, kind, name, true); }); return; }
   const wood = lam(0x8a6a4a), M = (c) => new THREE.MeshLambertMaterial({ color: c }), solid = (u1, v1, u2, v2, h, mat, y0) => { const m = addBox(G, u1, v1, u2, v2, h, mat, null, y0); colliders.push(worldRect(G, u1, v1, u2, v2)); return m; };
   const rug = new THREE.Mesh(new THREE.CircleGeometry(3, 40), M(0xb86b7a)); rug.rotation.x = -Math.PI / 2; rug.position.set(L / 2, 0.016, 0); G.add(rug);
   if (kind === 'library') { solid(1.5, -5.7, L - 1.5, -5.3, 3.4, wood); const cols = [0xd9534f, 0xf0ad4e, 0x5bc0de, 0x8e6bbf, 0x5cb85c, 0xe8869a]; for (let r = 0; r < 5; r++) for (let i = 0; i < Math.floor((L - 3.5) / 0.3); i++) { const b = new THREE.Mesh(unitBox, M(cols[(i + r) % 6])); b.scale.set(0.2, 0.46, 0.34); b.position.set(1.8 + i * 0.3, 0.45 + r * 0.62, -5.15); G.add(b); } makeBench(G, L / 2, 1.8, 'u'); }
@@ -2497,7 +2498,7 @@ function buildShell() {
    Every model is loaded once, flattened into a single vertex-coloured mesh (or its own texture), and placed with instancing,
    so a whole street costs only a handful of draw calls. If the files are missing the town falls back to the built-in blocks. */
 const KIT = { dir: 'Assets/Town/', ok: false, inShop: null, anim: {}, cache: {}, info: {}, parts: {}, chunks: [], lampSpots: [], failed: 0 };
-const KIT_FILES = ["cp-building-c", "cp-building-e", "cp-building-j", "cp-building-n", "cp-sky-d", "cp-parasol-a", "cp-parasol-b", "tb-1story", "tb-2story", "tb-2story-balcony", "tb-2story-columns", "tb-2story-wide", "tb-2story-gable", "car-sedan", "car-taxi", "car-suv", "car-van", "car-police", "car-truck", "car-delivery", "car-ambulance", "car-firetruck", "car-hatchback-sports", "car-sedan-sports", "car-suv-luxury", "car-garbage-truck", "car-sportscar", "car-normalcar1", "car-normalcar2", "rd-light-curved", "rd-light-double", "rd-traffic-light", "rd-sign-street", "rd-sign-stop", "rd-cone", "pr-mailbox", "pr-trash-bin", "pr-picnic-table", "pr-planter", "nt-apple", "nt-orange", "nt-palm", "nt-bush", "nt-flower", "nt-mushroom", "an-horse", "an-cow", "an-alpaca", "an-deer", "an-shibainu", "an-fox", "tr-loco", "tr-flatbed", "tr-rail", "sh-galleon", "sh-sail", "sh-speed", "sh-fishing", "sh-tug", "sh-liner", "sh-house", "sh-buoy", "fd-pizza", "fd-pizza_slice", "fd-croissant", "fd-cupcake", "fd-donut1", "fd-icecream_cone2", "fd-burger", "fd-hotdog", "fd-popsicle_multiple", "fd-waffle", "fd-pancakes_stack", "fd-bread", "fd-apple", "fd-carrot", "fd-tomato", "fd-pumpkin", "fd-soda", "fd-fries", "fd-chocolatebar", "fd-sushi_roll1", "fd-orange", "fd-banana", "fu-chair", "fu-table", "fu-shelf", "ck-stove", "ck-fridge", "ck-kettle", "ck-mug", "ck-toaster", "ck-blender", "ck-cloche", "ck-board", "cr-wheat", "cr-corn", "cr-tomato", "cr-carrot", "cr-lettuce", "cr-pumpkin", "cr-watermelon", "cr-beet", "cr-rice"];
+const KIT_FILES = ["cp-building-c", "cp-building-e", "cp-building-j", "cp-building-n", "cp-sky-d", "cp-parasol-a", "cp-parasol-b", "tb-1story", "tb-2story", "tb-2story-balcony", "tb-2story-columns", "tb-2story-wide", "tb-2story-gable", "car-sedan", "car-taxi", "car-suv", "car-van", "car-police", "car-truck", "car-delivery", "car-ambulance", "car-firetruck", "car-hatchback-sports", "car-sedan-sports", "car-suv-luxury", "car-garbage-truck", "car-sportscar", "car-normalcar1", "car-normalcar2", "rd-light-curved", "rd-light-double", "rd-traffic-light", "rd-sign-street", "rd-sign-stop", "rd-cone", "pr-mailbox", "pr-trash-bin", "pr-picnic-table", "pr-planter", "nt-apple", "nt-orange", "nt-palm", "nt-bush", "nt-flower", "nt-mushroom", "an-horse", "an-cow", "an-alpaca", "an-deer", "an-shibainu", "an-fox", "tr-loco", "tr-flatbed", "tr-rail", "sh-galleon", "sh-sail", "sh-speed", "sh-fishing", "sh-tug", "sh-liner", "sh-house", "sh-buoy", "fd-pizza", "fd-pizza_slice", "fd-croissant", "fd-cupcake", "fd-donut1", "fd-icecream_cone2", "fd-burger", "fd-hotdog", "fd-popsicle_multiple", "fd-waffle", "fd-pancakes_stack", "fd-bread", "fd-apple", "fd-carrot", "fd-tomato", "fd-pumpkin", "fd-soda", "fd-fries", "fd-chocolatebar", "fd-sushi_roll1", "fd-orange", "fd-banana", "fu-chair", "fu-table", "fu-shelf", "ck-stove", "ck-fridge", "ck-kettle", "ck-mug", "ck-toaster", "ck-blender", "ck-cloche", "ck-board", "cr-wheat", "cr-corn", "cr-tomato", "cr-carrot", "cr-lettuce", "cr-pumpkin", "cr-watermelon", "cr-beet", "cr-rice", "ck2-microwave", "ck2-toaster-oven", "ck2-rice-cooker", "ck2-electric-oven", "ck2-induction", "ck2-stove2", "ck2-processor", "ck2-juicer", "ck2-pan", "ck2-wok", "ck2-skillet", "ck2-saucepan", "ck2-stockpot", "ck2-dutch", "ck2-bowl", "ck2-cutboard", "ck2-rolling", "ck2-whisk", "ck2-spatula", "ck2-muffin", "ck2-loaf", "ck2-strainer", "ck2-tongs", "ck2-mitts", "ck2-plate", "ck2-serving", "ck2-salt", "ck2-pepper", "ck2-knife", "ck2-measure", "ck2-pot", "ck2-casserole", "ck2-teacup", "fu2-bed", "fu2-bedside", "fu2-cabinet", "fu2-plate", "fu2-bowl", "fu2-rpot"];
 const KIT_FRONT = { cp: [0, -1], tb: [0, 1], car: [0, 1], rd: [0, 1], pr: [0, 1], nt: [0, 1] };
 const KIT_PAL = [null, { m: '#b8654a', t: '#ead6b4' }, { m: '#d4b483', t: '#f3e8d2' }, { m: '#c9788a', t: '#f4dfd3' }, { m: '#6f93bf', t: '#ebe4d6' }, { m: '#8aa376', t: '#ece1c4' }, { m: '#8f6aa6', t: '#ecddca' }, { m: '#d1a33f', t: '#f4ebd5' }];
 const KIT_SHOPS = [['Bakery', '🥐'], ['Café', '☕'], ['Books', '📚'], ['Flowers', '🌷'], ['Pizza', '🍕'], ['Toys', '🧸'], ['Ice Cream', '🍦'], ['Cinema', '🎬'], ['Music', '🎵'], ['Market', '🛒'], ['Gifts', '🎁'], ['Games', '🎮'], ['Pharmacy', '💊'], ['Barber', '💈']];
@@ -2544,14 +2545,14 @@ function kitParts(name, v) {                             // → [{geo, mat}] ; t
 class KitBatch {
   constructor() { this.m = new Map(); }
   add(name, x, y, z, ry, s, v, sz) { if (!KIT.cache[name]) return; const k = name + '|' + (v || 0) + '|' + Math.floor(x / 45) + ',' + Math.floor(z / 45); let a = this.m.get(k); if (!a) this.m.set(k, a = { name, v: v || 0, items: [] }); a.items.push([x, y, z, ry, s, sz]); }
-  flush(parent) {
+  flush(parent, noCull) {
     const tmp = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), sc = new THREE.Vector3();
     this.m.forEach((g) => kitParts(g.name, g.v).forEach((part) => {
       const im = new THREE.InstancedMesh(part.geo, part.mat, g.items.length); let sx = 0, sz = 0, big = 0;
       g.items.forEach((it, i) => { q.setFromEuler(e.set(0, it[3], 0)); tmp.compose(p.set(it[0], it[1], it[2]), q, sc.set(it[4], it[4], it[5] == null ? it[4] : it[5])); im.setMatrixAt(i, tmp); sx += it[0]; sz += it[2]; big = Math.max(big, it[4] * Math.max(KIT.info[g.name].w, KIT.info[g.name].d, KIT.info[g.name].h)); });
       im.instanceMatrix.needsUpdate = true; im.frustumCulled = false; parent.add(im);
       const cx = sx / g.items.length, cz = sz / g.items.length; let r = 0; g.items.forEach((it) => { r = Math.max(r, Math.hypot(it[0] - cx, it[2] - cz)); });
-      KIT.chunks.push({ im, cx, cz, r: r + big * 0.6 + 4 });
+      if (!noCull) KIT.chunks.push({ im, cx, cz, r: r + big * 0.6 + 4 });
     }));
     this.m.clear();
   }
@@ -2745,10 +2746,13 @@ function kitDrive(my, sync) {
 }
 /* ── the harbour: a sea you can swim in, a pier, boats you can drive and boats that sail about ── */
 const kitOnPier = (x, z) => x > -143.5 && x < SEA_X2 + 0.5 && Math.abs(z + 90) < 3.4;
-function kitSwim() {
-  const sw = !ride && player.out && !KIT.inShop && player.x < SEA_X2 - 0.6 && player.x > -189.5 && player.z > -207 && player.z < 97 && !kitOnPier(player.x, player.z);
-  if (sw !== !!player.swim) { player.swim = sw; if (sw) toast('🏊  You are swimming!', 2200); }
-  if (sw) player.y = -0.95 + Math.sin(performance.now() / 450) * 0.04;
+const kitDepth = (x) => x < SEA_X2 ? Math.min(4.2, 0.3 + 0.33 * (SEA_X2 - x)) : 0;
+let _swY = 0;
+function kitSwim(dt) {
+  dt = dt || 0.016; const inSea = !ride && player.out && !KIT.inShop && player.x < SEA_X2 && player.x > -189.5 && player.z > -207 && player.z < 97 && !kitOnPier(player.x, player.z);
+  const d = inSea ? kitDepth(player.x) : 0, sw = d >= 0.95, wd = inSea && !sw;
+  if (sw !== !!player.swim) { player.swim = sw; if (sw) toast('🏊  You are swimming!', 2200); } player.wade = wd;
+  if (sw) { const tgt = player.speed > 0.4 ? 0.02 : -0.9; _swY += (tgt - _swY) * Math.min(1, dt * 6); player.y = _swY + Math.sin(performance.now() / 450) * 0.03; } else { _swY = wd ? -d * 0.55 : 0; if (wd) player.y = _swY; }
 }
 function kitBoatDrive(b, spec) {
   const g = b.g; let sp = 0, h = g.rotation.y; const MAXS = spec.max, TURN = spec.turn;
@@ -2766,10 +2770,13 @@ function kitBoatDrive(b, spec) {
     exit() { kitDpad(false); b.driven = false; me3d.visible = true; const px = g.position.x, pz = g.position.z; if (px > -150 && Math.abs(pz + 90) < 12) { player.x = clamp(px, -140, SEA_X2 + 1); player.z = -90; player.y = 0; } else { player.x = px + 2.4; player.z = pz; player.y = -0.95; } collide(player); } });
 }
 function buildSea(T, kb) {
-  const X1 = -192, X2 = SEA_X2, Z1 = -208, Z2 = 98, cw = document.createElement('canvas'); cw.width = cw.height = 128; const g = cw.getContext('2d'); g.fillStyle = '#4ab4e6'; g.fillRect(0, 0, 128, 128);
-  for (let i = 0; i < 26; i++) { g.strokeStyle = 'rgba(255,255,255,' + (0.12 + Math.random() * 0.2) + ')'; g.lineWidth = 2; const x = Math.random() * 128, y = Math.random() * 128; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + 10, y - 5, x + 22, y); g.stroke(); g.beginPath(); g.moveTo(x - 128, y); g.quadraticCurveTo(x - 118, y - 5, x - 106, y); g.stroke(); }
+  const X1 = -192, X2 = SEA_X2, Z1 = -208, Z2 = 98, cw = document.createElement('canvas'); cw.width = cw.height = 128; const g = cw.getContext('2d'); g.fillStyle = '#d2f0fb'; g.fillRect(0, 0, 128, 128);
+  for (let i = 0; i < 26; i++) { g.strokeStyle = 'rgba(80,170,220,' + (0.25 + Math.random() * 0.3) + ')'; g.lineWidth = 2; const x = Math.random() * 128, y = Math.random() * 128; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + 10, y - 5, x + 22, y); g.stroke(); g.beginPath(); g.moveTo(x - 128, y); g.quadraticCurveTo(x - 118, y - 5, x - 106, y); g.stroke(); }
   const wt = new THREE.CanvasTexture(cw); wt.wrapS = wt.wrapT = THREE.RepeatWrapping; wt.repeat.set(10, 38); wt.anisotropy = 4;
-  const sea = new THREE.Mesh(new THREE.PlaneGeometry(X2 - X1, Z2 - Z1), new THREE.MeshLambertMaterial({ map: wt, color: 0xffffff })); sea.rotation.x = -Math.PI / 2; sea.position.set((X1 + X2) / 2, 0.012, (Z1 + Z2) / 2); T.add(sea);
+  const sg = new THREE.PlaneGeometry(X2 - X1, Z2 - Z1, 40, 1); sg.rotateX(-Math.PI / 2); const sp = sg.attributes.position, cols = new Float32Array(sp.count * 3);
+  for (let i = 0; i < sp.count; i++) { const wx = (X1 + X2) / 2 + sp.getX(i), k = Math.min(1, kitDepth(wx) / 4.2), c0 = [0.55, 0.9, 0.92], c1 = [0.2, 0.62, 0.82], c2 = [0.07, 0.25, 0.55], a = k < 0.4 ? k / 0.4 : (k - 0.4) / 0.6, A = k < 0.4 ? c0 : c1, Bc = k < 0.4 ? c1 : c2; for (let j = 0; j < 3; j++) cols[i * 3 + j] = A[j] + (Bc[j] - A[j]) * a; }
+  sg.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+  const sea = new THREE.Mesh(sg, new THREE.MeshLambertMaterial({ map: wt, vertexColors: true })); sea.position.set((X1 + X2) / 2, 0.012, (Z1 + Z2) / 2); T.add(sea);
   const sand = new THREE.Mesh(new THREE.PlaneGeometry(9, Z2 - Z1), new THREE.MeshLambertMaterial({ color: 0xead9a6 })); sand.rotation.x = -Math.PI / 2; sand.position.set(X2 + 4.5 - 0.4, 0.02, (Z1 + Z2) / 2); T.add(sand);
   const foam = new THREE.Mesh(new THREE.PlaneGeometry(1.4, Z2 - Z1), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 })); foam.rotation.x = -Math.PI / 2; foam.position.set(X2 - 0.5, 0.03, (Z1 + Z2) / 2); T.add(foam);
   frameHooks.push((dt, now) => { if (!player.out || player.x > -60) return; wt.offset.x = (now / 1000 * 0.012) % 1; wt.offset.y = (now / 1000 * 0.02) % 1; });
@@ -2785,7 +2792,7 @@ function buildSea(T, kb) {
   [['sh-galleon', 1.3, ell(-166, -130, 17, 52, 0.045, 0)], ['sh-tug', 2.0, line(-132, -200, -150, 2.4)], ['sh-liner', 1.7, line(-182, -196, 85, 2.6)]].forEach(([n, s, path]) => { const g2 = mk(n, s); if (g2) boats.push({ g: g2, path, ph: TR() * 6 }); });
   const fish = mk('sh-fishing', 2.0); if (fish) { fish.position.set(-132, 0, -75); fish.rotation.y = 0.5; boats.push({ g: fish, fixed: true, ph: 1 }); }
   const hb = mk('sh-house', 2.2); if (hb) { hb.position.set(-124, 0, -101); hb.rotation.y = Math.PI / 2; boats.push({ g: hb, fixed: true, ph: 2 }); }
-  const mine = [['sh-speed', 1.5, { max: 13, acc: 6, turn: 1.7 }, [-128, -83.5, -Math.PI / 2], 'Speedboat', '🚤'], ['sh-sail', 2.1, { max: 8, acc: 3.4, turn: 1.25 }, [-134, -98.5, -Math.PI / 2], 'Sailboat', '⛵']].map(([n, s, spec, [x, z, ry], label, emoji]) => { const g2 = mk(n, s); if (!g2) return null; g2.position.set(x, 0.02, z); g2.rotation.y = ry; const b = { g: g2, spec, home: [x, z, ry], label, emoji, driven: false }; boats.push({ g: g2, fixed: true, ph: 3, mine: b }); return b; }).filter(Boolean);
+  const mine = [['sh-speed', 1.5, { max: 13, acc: 6, turn: 1.7 }, [-128, -83.5, Math.PI / 2], 'Speedboat', '🚤'], ['sh-sail', 2.1, { max: 8, acc: 3.4, turn: 1.25 }, [-134, -98.5, Math.PI / 2], 'Sailboat', '⛵']].map(([n, s, spec, [x, z, ry], label, emoji]) => { const g2 = mk(n, s); if (!g2) return null; g2.position.set(x, 0.02, z); g2.rotation.y = ry; const b = { g: g2, spec, home: [x, z, ry], label, emoji, driven: false }; boats.push({ g: g2, fixed: true, ph: 3, mine: b }); return b; }).filter(Boolean);
   TOWN.myBoats = mine;
   frameHooks.push((dt, now) => { if (!player.out || player.x > -40) { boats.forEach((b) => { b.g.visible = false; }); return; } const t = now / 1000;
     boats.forEach((b) => { b.g.visible = true; if (b.mine && b.mine.driven) return; if (!b.fixed) { const r = b.path(t + b.ph), hd = Math.atan2(r[2], r[3]); b.g.position.x = r[0]; b.g.position.z = r[1]; let da = hd - b.g.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); b.g.rotation.y += da * Math.min(1, dt * 3); } b.g.position.y = 0.02 + Math.sin(t * 1.3 + b.ph) * 0.07; b.g.userData.body.rotation.z = Math.sin(t * 0.9 + b.ph) * 0.03; b.g.userData.body.rotation.x = Math.sin(t * 1.1 + b.ph * 2) * 0.02; }); });
@@ -2818,13 +2825,10 @@ function kitBuildInterior(s, k, T) {
   const plane = (tex, w, h, x, y, z, ry, basic) => { const m = new THREE.Mesh(unitPlane, basic === false ? new THREE.MeshLambertMaterial({ map: tex }) : new THREE.MeshBasicMaterial({ map: tex })); m.scale.set(w, h, 1); m.position.set(X(x), y, Z(z)); m.rotation.y = ry; g.add(m); return m; };
   const ft = kitFloorTex(th.floor[0], th.floor[1], th.floor[2]); ft.repeat.set(W / 4, D / 4); const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshLambertMaterial({ map: ft })); fl.rotation.x = -Math.PI / 2; fl.position.set(IX, 0.02, IZ); g.add(fl);
   const ce = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshLambertMaterial({ color: 0xf4ead8 })); ce.rotation.x = Math.PI / 2; ce.position.set(IX, H, IZ); g.add(ce);
-  const solid = (x, z, w, d, soft) => colliders.push({ x1: X(x) - w / 2, x2: X(x) + w / 2, z1: Z(z) - d / 2, z2: Z(z) + d / 2, on: true, fl: -1, soft: !!soft });
-  const wall = (x, z, th2, w, h, y, c) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshLambertMaterial({ color: c })); m.position.set(X(x), y, Z(z)); m.rotation.y = th2; g.add(m); };
-  // walls are one-sided planes facing in: you see them from inside, and the room stays open to the camera from outside (a dolls'-house view)
-  wall(0, -D / 2, 0, W, H, H / 2, th.wall); wall(0, D / 2, Math.PI, W, H, H / 2, th.wall); wall(-W / 2, 0, Math.PI / 2, D, H, H / 2, th.wall); wall(W / 2, 0, -Math.PI / 2, D, H, H / 2, th.wall);
-  wall(0, -D / 2 + 0.012, 0, W, 1.0, 0.5, th.trim); wall(0, D / 2 - 0.012, Math.PI, W, 1.0, 0.5, th.trim); wall(-W / 2 + 0.012, 0, Math.PI / 2, D, 1.0, 0.5, th.trim); wall(W / 2 - 0.012, 0, -Math.PI / 2, D, 1.0, 0.5, th.trim);
-  solid(0, -D / 2 - 0.15, W + 0.6, 0.3, false); solid(0, D / 2 + 0.15, W + 0.6, 0.3, 'soft'); solid(-W / 2 - 0.15, 0, 0.3, D, false); solid(W / 2 + 0.15, 0, 0.3, D, false);
-    plane(kitDoorTex(), 1.6, 2.5, 0, 1.25, D / 2 - 0.02, Math.PI, true); plane(signTex('EXIT', '', 256, 80, '#2a7a4a'), 1.2, 0.38, 0, 2.7, D / 2 - 0.03, Math.PI);
+  box(0, H / 2, -D / 2 - 0.15, W + 0.6, H, 0.3, th.wall, true); box(0, H / 2, D / 2 + 0.15, W + 0.6, H, 0.3, th.wall, true); box(-W / 2 - 0.15, H / 2, 0, 0.3, H, D, th.wall, true); box(W / 2 + 0.15, H / 2, 0, 0.3, H, D, th.wall, true);
+  box(0, 0.5, -D / 2 + 0.05, W, 1.0, 0.1, th.trim); box(0, 0.5, D / 2 - 0.05, W, 1.0, 0.1, th.trim); box(-W / 2 + 0.05, 0.5, 0, 0.1, 1.0, D, th.trim); box(W / 2 - 0.05, 0.5, 0, 0.1, 1.0, D, th.trim);
+  [-3.2, 0, 3.2].forEach((x) => box(x, H - 0.06, 0, 0.25, 0.12, D, th.trim));
+  plane(kitDoorTex(), 1.6, 2.5, 0, 1.25, D / 2 - 0.02, Math.PI, true); plane(signTex('EXIT', '', 256, 80, '#2a7a4a'), 1.2, 0.38, 0, 2.7, D / 2 - 0.03, Math.PI);
   const wtx = kitWindowTex(); [-1.8, 2.2].forEach((z) => { plane(wtx, 2.2, 1.6, -W / 2 + 0.03, 2.1, z, Math.PI / 2); plane(wtx, 2.2, 1.6, W / 2 - 0.03, 2.1, z, -Math.PI / 2); });
   [[-3, -2], [3, -2], [-3, 2], [3, 2]].forEach(([x, z]) => { const l = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), new THREE.MeshBasicMaterial({ color: 0xfff0c0 })); l.position.set(X(x), H - 0.75, Z(z)); g.add(l); box(x, H - 0.35, z, 0.03, 0.7, 0.03, 0x444444); });
   // the counter and the shopkeeper
@@ -2832,7 +2836,7 @@ function kitBuildInterior(s, k, T) {
   box(cx, 0.5, cz, cw[0], 1.0, cw[1], 0x7a5238, true); box(cx, 1.04, cz, cw[0] + 0.2, 0.08, cw[1] + 0.2, 0xe9d6b4);
   const kp = makeCitizen({ skin: tpick([0xf0c8a8, 0xc99872, 0x9a6a48]), shirt: 0xfff6ea, pants: 0x5a4636, hair: tpick([0x1a1410, 0x2a170f, 0x4a3020]), style: tpick(['short', 'bun', 'long']), hat: s.id === 'bakery' || s.id === 'pizza' ? 0xffffff : 0, skirt: false, scale: 1 });
   kp.position.set(X(cin ? -W / 2 + 0.8 : 0), 0, Z(cin ? 1.2 : -D / 2 + 1.0)); kp.rotation.y = cin ? Math.PI / 2 : 0; g.add(kp);
-  plane(signTex(s.emoji + ' ' + s.name, s.items.map((i) => i[0]).join('   '), 700, 190, s.col), 4.4, 1.2, cin ? 0 : 0, 2.9, -D / 2 + 0.03, 0);
+  plane(signTex(s.emoji + ' ' + s.name, 'menu · ' + s.items.map((i) => i[1]).slice(0, 3).join(' · '), 700, 190, s.col), 4.4, 1.2, cin ? 0 : 0, 2.9, -D / 2 + 0.03, 0);
   const onCounter = (name, dx, size) => kitProp(kb, name, X(cx) + (cin ? 0 : dx), 1.08, Z(cz) + (cin ? dx : 0), size, 0);
   const table = (tx, tz, nChairs, food) => { kitProp(kb, 'fu-table', X(tx), 0, Z(tz), 1.6, 0); kitProp(kb, 'fu-chair', X(tx - 1.15), 0, Z(tz), 1.0, Math.PI / 2); kitProp(kb, 'fu-chair', X(tx + 1.15), 0, Z(tz), 1.0, -Math.PI / 2); seats.push({ x: X(tx - 1.15), z: Z(tz), h: Math.PI / 2 }, { x: X(tx + 1.15), z: Z(tz), h: -Math.PI / 2 }); if (food) kitProp(kb, food, X(tx), 0.8, Z(tz), 0.22, 0); };
   const rug = (x, z, w, d, c) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshLambertMaterial({ color: c })); m.rotation.x = -Math.PI / 2; m.position.set(X(x), 0.035, Z(z)); g.add(m); };
@@ -2846,12 +2850,12 @@ function kitBuildInterior(s, k, T) {
   else if (s.id === 'toys') { kitProp(kb, 'fu-shelf', X(-3.8), 0, Z(-D / 2 + 0.7), 2.4, 0); kitProp(kb, 'fu-shelf', X(3.8), 0, Z(-D / 2 + 0.7), 2.4, 0); const tc = [0xe0505a, 0xf2c14e, 0x4aa3df, 0x5cb85c, 0xe8869a]; for (let i = 0; i < 18; i++) { const x = -4.2 + TR() * 8.4, z = 0.6 + TR() * 3.2; box(x, 0.12, z, 0.24, 0.24, 0.24, tc[i % 5], false); } for (let i = 0; i < 8; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.17, 10, 8), kitMat(tc[i % 5])); b.position.set(X(-3.5 + i), 0.17, Z(2.8 + (i % 3) * 0.3)); g.add(b); } for (let i = 0; i < 7; i++) { const bl = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), kitMat(tc[i % 5])); bl.position.set(X(-3 + i), H - 0.9, Z(0.5 + (i % 2) * 2)); g.add(bl); box(-3 + i, H - 0.5, 0.5 + (i % 2) * 2, 0.012, 0.8, 0.012, 0xffffff); } [[-3.2, 1.6], [3.2, 1.6], [0, 3.2]].forEach(([x, z]) => { kitProp(kb, 'nt-mushroom', X(x), 0, Z(z), 0.7, TR() * 6); seats.push({ x: X(x), z: Z(z), h: 0 }); }); const ted = (x, y, z) => { [[0, 0, 0.18, 0xb07a4a], [0, 0.3, 0.12, 0xb07a4a], [-0.1, 0.4, 0.05, 0xb07a4a], [0.1, 0.4, 0.05, 0xb07a4a]].forEach(([dx, dy, r, c]) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), kitMat(c)); m.position.set(X(x) + dx, y + dy, Z(z)); g.add(m); }); }; ted(-1.6, 1.12, cz); ted(1.6, 1.12, cz); rug(0, 2.2, 5, 3.4, 0xf48fb1); }
   g.add(B.mesh()); kb.flush(g);
   const talk = cin ? [X(-W / 2 + 3.5), Z(1.2)] : [X(0), Z(-D / 2 + 3.6)];
-  return { g, keeper: kp, ex: X(0), ez: Z(D / 2 - 1.5), doorX: X(0), doorZ: Z(D / 2 - 0.9), talkX: talk[0], talkZ: talk[1], seats, IX, IZ };
+  return { g, keeper: kp, ex: X(0), ez: Z(D / 2 - 2.4), doorX: X(0), doorZ: Z(D / 2 - 0.9), talkX: talk[0], talkZ: talk[1], seats, IX, IZ };
 }
 function kitEnter(s) {
-  const T = castle.town; if (!s.int) s.int = kitBuildInterior(s, SHOPS.indexOf(s), T); KIT.inShop = s; s.int.g.visible = true; player.x = s.int.ex; player.z = s.int.ez; player.y = 0; player.heading = Math.PI; player.fl = 0; camGoal = { yaw: 0, dist: 5.4, pitch: 0.46 }; toast(s.emoji + '  ' + s.name + ' · ' + s.keeper + ' is at the counter', 3000); lastZone = '';
+  const T = castle.town; if (!s.int) s.int = kitBuildInterior(s, SHOPS.indexOf(s), T); KIT.inShop = s; KIT.cool = performance.now() + 1800; s.int.g.visible = true; player.x = s.int.ex; player.z = s.int.ez; player.y = 0; player.heading = Math.PI; player.fl = 0; camGoal = { yaw: 0, dist: 4.6, pitch: 0.24 }; toast(s.emoji + '  ' + s.name + ' · ' + s.keeper + ' is at the counter', 3000); lastZone = '';
 }
-function kitLeave() { const s = KIT.inShop; if (!s) return; s.int.g.visible = false; KIT.inShop = null; player.x = s.cx + 2.3; player.z = -64.8; player.y = 0; player.heading = 0; camGoal = { yaw: Math.PI, dist: 5.6, pitch: 0.2 }; lastZone = ''; }
+function kitLeave() { const s = KIT.inShop; if (!s) return; s.int.g.visible = false; KIT.inShop = null; KIT.cool = performance.now() + 1800; player.x = s.doorX; player.z = -64.6; player.y = 0; player.heading = 0; camGoal = { yaw: Math.PI, dist: 5.6, pitch: 0.2 }; lastZone = ''; }
 function kitSit(seat) { startRide({ sitting: true, exitLabel: '🧍  Stand up', step() { player.x = seat.x; player.z = seat.z; player.y = 0.12; player.heading = seat.h; player.fl = 0; }, exit() { player.x = seat.x + Math.sin(seat.h) * 0.95; player.z = seat.z + Math.cos(seat.h) * 0.95; player.y = 0; collide(player); } }); }
 
 /* ── stalls (snack cart, farm stand) and the farm ── */
@@ -2873,14 +2877,14 @@ function kitStall(T, kb, st, keepers) {
   st.spot = [st.x + Math.sin(st.rot) * 2.1, st.z + Math.cos(st.rot) * 2.1];
 }
 function kitFarm(T, kb) {
-  const X1 = 50, X2 = 86, Z1 = 32, Z2 = 52, kinds = ['carrot', 'lettuce', 'tomato', 'corn', 'wheat', 'pumpkin', 'beet', 'rice'], sizes = { carrot: 0.55, lettuce: 0.4, tomato: 1.0, corn: 1.4, wheat: 0.8, pumpkin: 0.7, watermelon: 0.7, beet: 0.5, rice: 0.8 };
+  const X1 = 50, X2 = 86, Z1 = 32, Z2 = 52, kinds = ['carrot', 'lettuce', 'tomato', 'corn', 'wheat', 'pumpkin', 'watermelon', 'beet', 'rice'], sizes = { carrot: 0.55, lettuce: 0.4, tomato: 1.0, corn: 1.4, wheat: 0.8, pumpkin: 0.7, watermelon: 0.7, beet: 0.5, rice: 0.8 };
   const soil = new THREE.Mesh(new THREE.PlaneGeometry(X2 - X1, Z2 - Z1), new THREE.MeshLambertMaterial({ color: 0x8a6342 })); soil.rotation.x = -Math.PI / 2; soil.position.set((X1 + X2) / 2, 0.03, (Z1 + Z2) / 2); T.add(soil);
-  const B = new Batch(); for (let x = X1 + 1.5; x < X2; x += 3.0) B.box(x, 0.07, (Z1 + Z2) / 2, 1.5, 0.08, Z2 - Z1 - 1.5, 0x6e4a30);
+  const B = new Batch(); for (let x = X1 + 1.5; x < X2; x += 2.4) B.box(x, 0.07, (Z1 + Z2) / 2, 1.5, 0.08, Z2 - Z1 - 1.5, 0x6e4a30);
   [[X1, Z1, X2, Z1], [X1, Z2, X2, Z2]].forEach(([a, b, c, d]) => { for (let x = a; x <= c; x += 3) { B.box(x, 0.45, b, 0.12, 0.9, 0.12, 0x7a5a3c); } B.box((a + c) / 2, 0.75, b, c - a, 0.08, 0.1, 0x7a5a3c); B.box((a + c) / 2, 0.45, b, c - a, 0.08, 0.1, 0x7a5a3c); });
   [[X1, Z1, X1, Z2], [X2, Z1, X2, Z2]].forEach(([a, b, c, d]) => { for (let z = b; z <= d; z += 3) B.box(a, 0.45, z, 0.12, 0.9, 0.12, 0x7a5a3c); B.box(a, 0.75, (b + d) / 2, 0.1, 0.08, d - b, 0x7a5a3c); });
   B.box(68, 1.2, 42, 0.12, 2.4, 0.12, 0x7a5a3c); B.box(68, 1.9, 42, 1.6, 0.1, 0.1, 0x7a5a3c); T.add(B.mesh());
   const hat = new THREE.Mesh(new THREE.ConeGeometry(0.4, 0.4, 10), kitMat(0xc9a227)); hat.position.set(68, 2.65, 42); T.add(hat); const hd = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), kitMat(0xf2d9a6)); hd.position.set(68, 2.35, 42); T.add(hd);
-  let col = 0; for (let x = X1 + 1.2; x < X2 - 0.5; x += 3.0, col++) { const kind = kinds[col % kinds.length]; for (let z = Z1 + 1.5; z < Z2 - 1; z += 2.2) if (kind !== 'pumpkin' || TR() < 0.5) kitProp(kb, 'cr-' + kind, x + (TR() - 0.5) * 0.3, 0.1, z + (TR() - 0.5) * 0.3, sizes[kind] * (0.9 + TR() * 0.3), TR() * 6); }
+  let col = 0; for (let x = X1 + 1.2; x < X2 - 0.5; x += 2.4, col++) { const kind = kinds[col % kinds.length]; for (let z = Z1 + 1.5; z < Z2 - 1; z += 1.5) kitProp(kb, 'cr-' + kind, x + (TR() - 0.5) * 0.3, 0.1, z + (TR() - 0.5) * 0.3, sizes[kind] * (0.9 + TR() * 0.3), TR() * 6); }
   const kinds2 = [['🥕', 'carrot'], ['🍅', 'tomato'], ['🎃', 'pumpkin'], ['🥬', 'lettuce'], ['🌽', 'corn'], ['🍉', 'watermelon']];
   candidateHooks.push(() => { if (!player.out || ride || KIT.inShop) return null; if (player.x > X1 - 1.6 && player.x < X2 + 1.6 && player.z > Z1 - 1.6 && player.z < Z2 + 1.6) return { label: '🧺  Pick fresh veggies', run: () => { const k = tpick(kinds2); toast(k[0] + '  You picked a fresh ' + k[1] + '!', 2600); showTextBubble(me3d, k[0]); floatHearts({ x: player.x, y: 2.2, z: player.z }, 2, 0.3); } }; return null; });
   menuExtras.push(() => ({ label: '🌾  Farm tip', run: () => toast('🌾  Ride the train to Meadow Halt, then wander into the fields and pick fresh veggies', 5200) }));
@@ -2891,19 +2895,21 @@ function buildKitTown(T) {
     if (!kitHas(s.model)) return; const ry = kitFaceRy(s.model, 0, 1), fp = kitFootprint(s.model, ry, s.s), w = fp.hw * 2, depth = fp.hd * 2, a0 = s.side < 0 ? cur[-1] - w : cur[1], cx = a0 + w / 2, cz = LINE - depth / 2; cur[s.side] = s.side < 0 ? a0 - 2.6 : a0 + w + 2.6; s.cx = cx;
     const org = kitOrigin(s.model, cx, cz, ry, s.s); kb.add(s.model, org[0], -KIT.info[s.model].y0 * s.s, org[1], ry, s.s, s.model.indexOf('tb-') === 0 ? s.pal : 0); kitSolid(cx - fp.hw, cz - fp.hd, cx + fp.hw, cz + fp.hd, false);
     const sg = new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ map: signTex(s.emoji + ' ' + s.name, '', 520, 150, s.col) })); const sw = Math.min(w * 0.72, 5.6); sg.scale.set(sw, sw * 150 / 520, 1); sg.position.set(cx, s.model.indexOf('cp-') === 0 ? 3.6 : 3.5, LINE + 0.09); T.add(sg);
-    const dr = new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ map: kitDoorTex() })); dr.scale.set(1.5, 2.4, 1); dr.position.set(cx + 2.3, 1.2, LINE + 0.1); T.add(dr);
-    const sx = cx - 1.6, cm = kitMat(0x7a5238), top = kitMat(0xe9d6b4), counter = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.0, 0.8), cm); counter.position.set(sx, 0.5, -66.3); T.add(counter); const ct = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.08, 1.0), top); ct.position.set(sx, 1.04, -66.3); T.add(ct); colliders.push({ x1: sx - 1.4, x2: sx + 1.4, z1: -66.7, z2: -65.9, on: true, fl: -1, soft: false });
+    const DD = { icecream: [1.23, -1], toys: [-1.25, 1] }[s.id] || [0, s.side < 0 ? -1 : 1]; s.door = DD[0]; s.cs = DD[1]; s.doorX = cx + DD[0];
+    const mat = new THREE.Mesh(unitPlane, new THREE.MeshLambertMaterial({ color: 0x7a2f3a })); mat.rotation.x = -Math.PI / 2; mat.scale.set(1.5, 0.9, 1); mat.position.set(s.doorX, 0.11, -67.2); T.add(mat);
+    const sx = cx + s.cs * 2.5, cm = kitMat(0x7a5238), top = kitMat(0xe9d6b4), counter = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.0, 0.8), cm); counter.position.set(sx, 0.5, -66.3); T.add(counter); const ct = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.08, 1.0), top); ct.position.set(sx, 1.04, -66.3); T.add(ct); colliders.push({ x1: sx - 1.4, x2: sx + 1.4, z1: -66.7, z2: -65.9, on: true, fl: -1, soft: false });
     const cn = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 2.1), new THREE.MeshLambertMaterial({ map: kitStripeTex(s.col), side: THREE.DoubleSide })); cn.position.set(sx, 2.75, -67.0); cn.rotation.x = -1.12; T.add(cn); [-1.6, 1.6].forEach((dx) => { const pl = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.7, 6), kitMat(0xdcd2c2)); pl.position.set(sx + dx, 1.35, -65.9); T.add(pl); });
     const kp = makeCitizen({ skin: tpick([0xf0c8a8, 0xc99872, 0x9a6a48]), shirt: 0xfff6ea, pants: 0x5a4636, hair: tpick([0x1a1410, 0x2a170f, 0x4a3020]), style: tpick(['short', 'bun', 'long']), hat: s.id === 'bakery' || s.id === 'pizza' ? 0xffffff : 0, skirt: false, scale: 1 }); kp.position.set(sx, 0, -67.4); T.add(kp); keepers.push({ s, av: kp, say: 0 }); s.sx = sx;
-    kitSpot(kb, 'pr-planter', cx + 4.0 * (s.side < 0 ? -1 : 1) * 0 + (s.side < 0 ? -3.2 : 3.2), -65.4, 1.5, 0, 0.5);
+    if (!s.door) kitSpot(kb, 'pr-planter', cx - s.cs * 2.9, -65.4, 1.5, 0, 0.5);
   });
   KIT_STALLS.forEach((st) => kitStall(T, kb, st, keepers));
-  frameHooks.push((dt, now) => { if (!player.out) return; keepers.forEach((k) => { const d = Math.hypot(player.x - k.av.position.x, player.z - k.av.position.z); k.av.visible = d < 90 && !(k.inside); if (d > 12) return; let a = Math.atan2(player.x - k.av.position.x, player.z - k.av.position.z) - k.av.rotation.y; a = Math.atan2(Math.sin(a), Math.cos(a)); k.av.rotation.y += a * Math.min(1, dt * 4); if (d < 5 && now - k.say > 14000) { k.say = now; showTextBubble(k.av, k.s.greet); } animateAvatar(k.av, 0, dt, false); });
+  frameHooks.push((dt, now) => { if (!player.out) return; const sN = KIT.inShop; if (now > (KIT.cool || 0) && !ride) { if (sN) { const n = sN.int; if (player.z > n.IZ + 3.4 && Math.abs(player.x - n.IX) < 1.4) kitLeave(); } else for (const s of SHOPS) if (s.doorX != null && Math.hypot(player.x - s.doorX, player.z + 67.3) < 1.1) { kitEnter(s); break; } }
+    keepers.forEach((k) => { const d = Math.hypot(player.x - k.av.position.x, player.z - k.av.position.z); k.av.visible = d < 90 && !(k.inside); if (d > 12) return; let a = Math.atan2(player.x - k.av.position.x, player.z - k.av.position.z) - k.av.rotation.y; a = Math.atan2(Math.sin(a), Math.cos(a)); k.av.rotation.y += a * Math.min(1, dt * 4); if (d < 5 && now - k.say > 14000) { k.say = now; showTextBubble(k.av, k.s.greet); } animateAvatar(k.av, 0, dt, false); });
     const s = KIT.inShop; if (s && s.int) { const kp = s.int.keeper; if (s.id !== 'cinema') { let a = Math.atan2(player.x - kp.position.x, player.z - kp.position.z) - kp.rotation.y; a = Math.atan2(Math.sin(a), Math.cos(a)); kp.rotation.y += a * Math.min(1, dt * 4); } animateAvatar(kp, 0, dt, false); if (s.id === 'cinema' && s._scr) kitScreen(s, now); } });
   candidateHooks.push(() => {
     if (!player.out || ride) return null; const s = KIT.inShop;
-    if (s && s.int) { const n = s.int; if (Math.hypot(player.x - n.doorX, player.z - n.doorZ) < 1.9) return { label: '🚪  Leave ' + s.name, run: kitLeave }; if (Math.hypot(player.x - n.talkX, player.z - n.talkZ) < 2.4) return { label: s.emoji + '  Talk to ' + s.keeper, run: () => openOverlay(kitShopUI(s, n.keeper)) }; for (const seat of n.seats) if (Math.hypot(player.x - seat.x, player.z - seat.z) < 1.05) return { label: '🪑  Sit down', run: () => kitSit(seat) }; return null; }
-    for (const k of keepers) { if (k.stall) { if (Math.hypot(player.x - k.s.spot[0], player.z - k.s.spot[1]) < 2.6) return { label: k.s.emoji + '  ' + k.s.name + ' · talk to ' + k.s.keeper, run: () => openOverlay(kitShopUI(k.s, k.av)) }; continue; } if (Math.hypot(player.x - k.s.sx, player.z + 65.0) < 2.4) return { label: k.s.emoji + '  ' + k.s.name + ' · talk to ' + k.s.keeper, run: () => openOverlay(kitShopUI(k.s, k.av)) }; if (Math.hypot(player.x - (k.s.cx + 2.3), player.z + 65.4) < 1.9) return { label: '🚪  Enter ' + k.s.name, run: () => kitEnter(k.s) }; }
+    if (s && s.int) { const n = s.int; if (Math.hypot(player.x - n.talkX, player.z - n.talkZ) < 2.4) return { label: s.emoji + '  Talk to ' + s.keeper, run: () => openOverlay(kitShopUI(s, n.keeper)) }; for (const seat of n.seats) if (Math.hypot(player.x - seat.x, player.z - seat.z) < 1.05) return { label: '🪑  Sit down', run: () => kitSit(seat) }; return null; }
+    for (const k of keepers) { if (k.stall) { if (Math.hypot(player.x - k.s.spot[0], player.z - k.s.spot[1]) < 2.6) return { label: k.s.emoji + '  ' + k.s.name + ' · talk to ' + k.s.keeper, run: () => openOverlay(kitShopUI(k.s, k.av)) }; continue; } if (Math.hypot(player.x - k.s.sx, player.z + 65.0) < 2.4) return { label: k.s.emoji + '  ' + k.s.name + ' · talk to ' + k.s.keeper, run: () => openOverlay(kitShopUI(k.s, k.av)) }; }
     return null;
   });
   // the station building at Town Station, a landmark at the end of the avenue
@@ -2933,6 +2939,197 @@ function kitScreen(s, now) {
   for (let i = 0; i < 40; i++) { const x = (i * 97 + t * 14 * (1 + i % 3)) % 512, y = (i * 53) % 224; g.fillStyle = 'rgba(255,230,200,' + (0.3 + 0.5 * Math.abs(Math.sin(t + i))) + ')'; g.fillRect(x, y, 2, 2); }
   const L = ['Our Story', 'two people, one little castle', 'every day is a new scene', '♥'], i = Math.floor(t / 3.2) % L.length, f = (t % 3.2) / 3.2, a = Math.min(1, f * 4, (1 - f) * 4);
   g.globalAlpha = Math.max(0, a); g.fillStyle = '#ffe9c9'; g.font = (i === 0 ? '54px' : '34px') + ' serif'; g.textAlign = 'center'; g.fillText(L[i], 256, 124); g.globalAlpha = 1; s._scrTex.needsUpdate = true;
+}
+
+/* ═══════════════ CASTLE ROOMS: the bedroom (bed, lights, TV with your own videos) and the playable kitchen ═══════════════ */
+const KIT_LATER = [];
+KIT.darkK = 1;
+function kitMeshFor(name, size) { const i = KIT.info[name], s = size / Math.max(i.w, i.h, i.d), g = new THREE.Group(), body = new THREE.Group(); kitParts(name, 0).forEach((p) => body.add(new THREE.Mesh(p.geo, p.mat))); body.scale.setScalar(s); body.position.set(-i.cx * s, -i.y0 * s, -i.cz * s); g.add(body); return g; }
+const kitInRect = (r, x, z) => x > r.x1 && x < r.x2 && z > r.z1 && z < r.z2;
+/* ── the TV: pick a video from your device; play / pause / seek are shared live with your partner ── */
+const KIT_TV = { vid: null, vtex: null, name: '', screen: null, idleTex: null, idleCv: null, sync: true, remote: null, ar: 16 / 9, lastTick: 0, baseW: 1.7, baseH: 0.96 };
+function kitTvEnsure() { if (KIT_TV.vid) return KIT_TV.vid; const v = document.createElement('video'); v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'auto'; v.style.display = 'none'; document.body.appendChild(v); KIT_TV.vid = v; v.addEventListener('loadedmetadata', () => { KIT_TV.ar = (v.videoWidth || 16) / (v.videoHeight || 9); kitTvFit(); }); return v; }
+function kitTvFit() { const s = KIT_TV.screen; if (!s) return; const w = Math.min(KIT_TV.baseW, KIT_TV.baseH * KIT_TV.ar), h = w / KIT_TV.ar; s.scale.set(w, h, 1); }
+function kitTvSend(a) { const v = KIT_TV.vid; if (!KIT_TV.sync) return; sendEvent('tv', { a, t: v ? +v.currentTime.toFixed(2) : 0, n: KIT_TV.name, d: v ? +(v.duration || 0).toFixed(1) : 0, p: v && !v.paused ? 1 : 0 }); }
+function kitTvLoad(file) {
+  const v = kitTvEnsure(); if (v._url) URL.revokeObjectURL(v._url); v._url = URL.createObjectURL(file); v.src = v._url; KIT_TV.name = file.name; v.load();
+  if (!KIT_TV.vtex) { KIT_TV.vtex = new THREE.VideoTexture(v); KIT_TV.vtex.minFilter = THREE.LinearFilter; KIT_TV.vtex.magFilter = THREE.LinearFilter; KIT_TV.vtex.encoding = THREE.LinearEncoding; }
+  if (KIT_TV.screen) { KIT_TV.screen.material.map = KIT_TV.vtex; KIT_TV.screen.material.needsUpdate = true; }
+  v.addEventListener('loadeddata', () => { kitTvSend('load'); const r = KIT_TV.remote; if (r && r.n === KIT_TV.name) { v.currentTime = r.t || 0; if (r.p) v.play().catch(() => {}); } }, { once: true });
+  toast('📺  Loaded: ' + file.name, 2800);
+}
+liveEvents.tv = (p) => {
+  if (!p) return; const v = KIT_TV.vid; const who = p.w === 'M' ? 'M' : 'J';
+  if (p.a === 'load') { KIT_TV.remote = { n: p.n, d: p.d, t: 0, p: 0 }; toast('📺  ' + who + ' loaded “' + p.n + '” — pick the same file on the TV remote to watch together', 5200); return; }
+  KIT_TV.remote = { n: p.n, d: p.d, t: p.t, p: p.p };
+  if (!v || !KIT_TV.sync || !v.src || !(KIT_TV.name === p.n || Math.abs((v.duration || 0) - (p.d || 0)) < 1)) return;
+  if (Math.abs(v.currentTime - p.t) > 1.3 || p.a === 'seek') v.currentTime = p.t;
+  if (p.a === 'play' || (p.a === 'tick' && p.p)) { if (v.paused) v.play().catch(() => {}); } else if (p.a === 'pause' || (p.a === 'tick' && !p.p)) { if (!v.paused) v.pause(); }
+};
+function kitTvUI() {
+  const v = kitTvEnsure(), card = document.createElement('div'); card.className = 'shopCard';
+  const head = document.createElement('div'); head.className = 'shopHead'; head.textContent = '📺  Our TV'; card.append(head);
+  const info = document.createElement('div'); info.className = 'shopWho'; const upd = () => { info.textContent = v.src ? '▶ ' + KIT_TV.name + (KIT_TV.sync ? '  ·  synced with your partner' : '  ·  not synced') : 'Pick a video from this device. Your partner picks the same file on their phone and you watch together.'; }; upd(); card.append(info);
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'video/*,audio/*'; inp.style.display = 'none'; inp.onchange = () => { if (inp.files[0]) { kitTvLoad(inp.files[0]); upd(); } }; card.append(inp);
+  card.append(btn('📂  Pick a video from my device', () => inp.click(), 'pbtn'));
+  const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:8px;justify-content:center'; row.append(
+    btn('⏪ 10s', () => { v.currentTime = Math.max(0, v.currentTime - 10); kitTvSend('seek'); }, 'pbtn'),
+    btn('⏯', () => { if (!v.src) return; if (v.paused) { v.play().catch(() => {}); kitTvSend('play'); } else { v.pause(); kitTvSend('pause'); } }, 'pbtn'),
+    btn('10s ⏩', () => { v.currentTime = Math.min(v.duration || 1e9, v.currentTime + 10); kitTvSend('seek'); }, 'pbtn')); card.append(row);
+  const vol = document.createElement('input'); vol.type = 'range'; vol.min = 0; vol.max = 1; vol.step = 0.05; vol.value = v.volume; vol.oninput = () => { v.volume = +vol.value; }; vol.style.width = '100%'; card.append(vol);
+  card.append(btn(KIT_TV.sync ? '🔗  Sync is ON (tap to turn off)' : '🔗  Sync is OFF (tap to turn on)', () => { KIT_TV.sync = !KIT_TV.sync; closeOverlay(); toast(KIT_TV.sync ? '🔗  Sync on' : '🔗  Sync off', 1800); }, 'pbtn ghost'));
+  card.append(btn('Close', closeOverlay, 'pbtn ghost')); return card;
+}
+function kitSetDark(k) { KIT.darkK = k; }
+function kitBedroom(G, L, name) {
+  const M = (c) => new THREE.MeshLambertMaterial({ color: c }), kb = new KitBatch(), solid = (u1, v1, u2, v2, h, mat, y0) => { const m = addBox(G, u1, v1, u2, v2, h, mat, null, y0); colliders.push(worldRect(G, u1, v1, u2, v2)); return m; };
+  const zone = worldRect(G, 0.2, -5.7, L - 0.2, 5.7), bu = L / 2 + 2.2;
+  const rug = new THREE.Mesh(new THREE.CircleGeometry(2.6, 40), M(0xd98aa0)); rug.rotation.x = -Math.PI / 2; rug.position.set(bu, 0.016, -2.0); G.add(rug);
+  const rug2 = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 2.2), M(0xf6e3cf)); rug2.rotation.x = -Math.PI / 2; rug2.position.set(bu, 0.017, 2.4); G.add(rug2);
+  kitProp(kb, 'fu2-bed', bu, 0, -3.85, 3.5, 0); colliders.push(worldRect(G, bu - 1.45, -5.7, bu + 1.45, -2.05));
+  [-1, 1].forEach((sg) => { kitProp(kb, 'fu2-bedside', bu + sg * 1.95, 0, -5.2, 0.9, 0); colliders.push(worldRect(G, bu + sg * 1.95 - 0.45, -5.7, bu + sg * 1.95 + 0.45, -4.75)); });
+  const lamps = [];[-1, 1].forEach((sg) => { const l = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 10), new THREE.MeshBasicMaterial({ color: 0xffd9a0 })); l.position.set(bu + sg * 1.95, 1.12, -5.2); G.add(l); lamps.push(l); const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 0.3, 10, 1, true), new THREE.MeshLambertMaterial({ color: 0xf6e3cf, side: THREE.DoubleSide })); sh.position.set(bu + sg * 1.95, 1.2, -5.2); G.add(sh); });
+  const ceil = new THREE.Mesh(new THREE.SphereGeometry(0.34, 14, 10), new THREE.MeshBasicMaterial({ color: 0xfff0c0 })); ceil.position.set(bu, WALL_H - 0.7, 0); G.add(ceil); const cord = addBox(G, bu - 0.02, -0.02, bu + 0.02, 0.02, 0.7, M(0x333333), null, WALL_H - 0.7);
+  // the TV on a console against the other long wall
+  solid(bu - 1.3, 5.0, bu + 1.3, 5.7, 0.5, M(0x6b4a33));
+  addBox(G, bu - 0.95, 5.4, bu + 0.95, 5.5, 0.96, M(0x111111), null, 0.78); addBox(G, bu - 0.05, 5.4, bu + 0.05, 5.5, 0.28, M(0x222222), null, 0.5);
+  const scr = new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ color: 0xffffff })); scr.scale.set(1.7, 0.96, 1); scr.position.set(bu, 1.26, 5.34); scr.rotation.y = Math.PI; G.add(scr);
+  KIT_TV.screen = scr; const [ic, ig] = mkCanvas(512, 288); KIT_TV.idleCv = ic; KIT_TV.idleTex = new THREE.CanvasTexture(ic); scr.material.map = KIT_TV.idleTex; kitTvFit();
+  // a cosy sofa to watch from (two seats), and the light switch
+  const sofaU = bu, sofaV = 1.7; solid(sofaU - 1.1, sofaV - 0.45, sofaU + 1.1, sofaV + 0.45, 0.5, M(0xd98aa0)); addBox(G, sofaU - 1.1, sofaV - 0.55, sofaU + 1.1, sofaV - 0.35, 0.55, M(0xc2748a), null, 0.5);
+  const seatA = { u: sofaU - 0.55, v: sofaV, h: Math.PI }, seatB = { u: sofaU + 0.55, v: sofaV, h: Math.PI };
+  const sw = new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ color: 0xfff6e8 })); sw.scale.set(0.16, 0.26, 1); sw.position.set(1.6, 1.4, -5.74); G.add(sw);
+  const sg2 = new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ map: signTex('🛏️ Bedroom', 'sleep · lights · movies', 800, 260, '#3a2430') })); sg2.scale.set(3.6, 1.17, 1); sg2.position.set(L - 0.06, 3.4, 4); sg2.rotation.y = -Math.PI / 2; G.add(sg2);
+  [[2.2, 5.0], [L - 1.2, 5.0]].forEach(([u, v]) => kitProp(kb, 'fu2-rpot', u, 0, v, 0.7, 0));
+  kb.flush(G, true);
+  const R = { mode: 0, sleeping: false }; const W = (u, v) => G.localToWorld(new THREE.Vector3(u, 0, v));
+  const wSw = W(1.6, -5.2), wBed = W(bu, -3.85), wSofa = W(sofaU, sofaV), wTv = W(bu, 4.2), wL1 = W(bu - 1.95, -5.0), wL2 = W(bu + 1.95, -5.0), hd = W(bu, -5.7).sub(W(bu, -2.0)).setY(0).normalize(), wSeatA = W(seatA.u, seatA.v), wSeatB = W(seatB.u, seatB.v);
+  const setMode = (m) => { R.mode = m; KIT.darkK = [1, 0.5, 0.2][m]; ceil.material.color.set(m === 0 ? 0xfff0c0 : 0x3a3030); lamps.forEach((l) => l.material.color.set(m <= 1 ? 0xffd9a0 : 0x3a3030)); };
+  const modeLabel = ['💡  Lights: on', '🕯️  Lights: cosy', '🌙  Lights: off'];
+  const tvOn = () => { const v = KIT_TV.vid; return v && v.src; };
+  frameHooks.push((dt, now) => {
+    const inside = player.fl === 2 && !player.out && kitInRect(zone, player.x, player.z);
+    if (!inside && R.mode && !R.sleeping) { KIT.darkK = 1; } else if (inside) KIT.darkK = [1, 0.5, 0.2][R.mode];
+    if (!inside && !R.sleeping && R.mode === 0) KIT.darkK = 1;
+    // idle TV picture
+    if (!tvOn() && inside && now - KIT_TV.lastTick > 400) { KIT_TV.lastTick = now; const g = KIT_TV.idleCv.getContext('2d'), t = now / 1000; const gr = g.createLinearGradient(0, 0, 512, 288); gr.addColorStop(0, '#2a1030'); gr.addColorStop(1, '#6a2a50'); g.fillStyle = gr; g.fillRect(0, 0, 512, 288); g.fillStyle = '#ffe9c9'; g.font = '44px serif'; g.textAlign = 'center'; g.fillText('📺  Our TV', 256, 120); g.font = '22px sans-serif'; g.fillText('open the remote to pick a video', 256, 168); for (let i = 0; i < 8; i++) { g.globalAlpha = 0.5 + 0.5 * Math.sin(t + i); g.font = '26px serif'; g.fillText('♥', 40 + i * 62, 230 + Math.sin(t * 1.3 + i) * 10); } g.globalAlpha = 1; KIT_TV.idleTex.needsUpdate = true; }
+    // the TV is quieter the further you are, silent outside the castle; tell the partner where we are every few seconds
+    const v = KIT_TV.vid; if (v && v.src) { const d = Math.hypot(player.x - wTv.x, player.z - wTv.z); v.muted = false; v.volume = player.out ? 0 : Math.max(0.04, Math.min(1, 1.15 - d / 22)) * (KIT_TV.vol == null ? 1 : KIT_TV.vol); if (!v.paused && now - KIT_TV.tick > 4000) { KIT_TV.tick = now; kitTvSend('tick'); } }
+    if (KIT_TV.screen && v && v.src && KIT_TV.screen.material.map !== KIT_TV.vtex) { KIT_TV.screen.material.map = KIT_TV.vtex; KIT_TV.screen.material.needsUpdate = true; }
+  });
+  KIT_TV.tick = 0;
+  candidateHooks.push(() => {
+    if (ride || player.out || player.fl !== 2 || !kitInRect(zone, player.x, player.z)) return null;
+    if (Math.hypot(player.x - wSw.x, player.z - wSw.z) < 1.7 || Math.hypot(player.x - wL1.x, player.z - wL1.z) < 1.2 || Math.hypot(player.x - wL2.x, player.z - wL2.z) < 1.2) return { label: modeLabel[(R.mode + 1) % 3], run: () => { setMode((R.mode + 1) % 3); toast(modeLabel[R.mode], 1500); } };
+    if (Math.hypot(player.x - wBed.x, player.z - wBed.z) < 2.6) return { label: '😴  Sleep', run: () => kitSleep(R, wBed, hd, setMode) };
+    if (Math.hypot(player.x - wTv.x, player.z - wTv.z) < 6.5) return { label: '📺  TV remote', run: () => openOverlay(kitTvUI()) };
+    for (const s of [wSeatA, wSeatB]) if (Math.hypot(player.x - s.x, player.z - s.z) < 1.1) return { label: '🛋️  Sit on the sofa', run: () => kitSit({ x: s.x, z: s.z, h: Math.atan2(wTv.x - s.x, wTv.z - s.z) }) };
+    return null;
+  });
+}
+function kitSleep(R, wBed, hd, setMode) {
+  const prev = R.mode; let zz = 0;
+  startRide({ sitting: false, exitLabel: '⏰  Wake up', noJoyExit: false,
+    start() { R.sleeping = true; setMode(2); me3d.rotation.order = 'YXZ'; me3d.rotation.x = -Math.PI / 2; toast('😴  Sweet dreams…', 2600); player.fl = 2; },
+    step(dt) { const h = Math.atan2(-hd.x, -hd.z); player.heading = h; player.x = wBed.x - hd.x * 0.8; player.z = wBed.z - hd.z * 0.8; player.y = 2 * FH + 0.78; player.fl = 2; me3d.rotation.x = -Math.PI / 2; zz += dt; if (zz > 3.2) { zz = 0; showTextBubble(me3d, '💤'); } },
+    exit() { R.sleeping = false; me3d.rotation.x = 0; me3d.rotation.order = 'XYZ'; setMode(prev === 2 ? 0 : prev); const side = [-hd.z, hd.x]; player.x = wBed.x + side[0] * 2.0; player.z = wBed.z + side[1] * 2.0; player.y = 2 * FH; collide(player); toast('☀️  Good morning!', 1800); } });
+}
+
+/* ── the kitchen: stations, recipes and three little mini-games ── */
+const KIT_RECIPES = [
+  { id: 'pancakes', name: 'Pancakes', emoji: '🥞', need: ['🥚', '🥛', '🌾'], dish: 'fd-pancakes_stack', size: 0.55, steps: [['fridge', 'pick', 'Grab the ingredients'], ['board', 'tap', 'Mix the batter'], ['stove', 'timing', 'Flip at the right moment'], ['serve', 'serve', 'Serve it']] },
+  { id: 'pizza', name: 'Pizza', emoji: '🍕', need: ['🍅', '🧀', '🌾'], dish: 'fd-pizza', size: 0.8, steps: [['fridge', 'pick', 'Grab the ingredients'], ['board', 'tap', 'Knead the dough'], ['oven', 'timing', 'Bake until golden'], ['serve', 'serve', 'Serve it']] },
+  { id: 'cupcakes', name: 'Cupcakes', emoji: '🧁', need: ['🌾', '🥚', '🍬'], dish: 'fd-cupcake', size: 0.34, steps: [['fridge', 'pick', 'Grab the ingredients'], ['board', 'tap', 'Mix the batter'], ['oven', 'timing', 'Bake them'], ['board', 'tap', 'Add the sprinkles'], ['serve', 'serve', 'Serve it']] },
+  { id: 'burger', name: 'Burger', emoji: '🍔', need: ['🍞', '🥩', '🥬', '🍅'], dish: 'fd-burger', size: 0.5, steps: [['fridge', 'pick', 'Grab the ingredients'], ['board', 'tap', 'Chop the veggies'], ['stove', 'timing', 'Grill the patty'], ['serve', 'serve', 'Serve it']] },
+  { id: 'smoothie', name: 'Smoothie', emoji: '🥤', need: ['🍌', '🍓', '🥛'], dish: 'fd-soda', size: 0.45, steps: [['fridge', 'pick', 'Grab the ingredients'], ['blender', 'tap', 'Blend it!'], ['serve', 'serve', 'Serve it']] },
+];
+const KIT_ALLING = ['🥚', '🥛', '🌾', '🍅', '🧀', '🥬', '🥩', '🍞', '🍌', '🍓', '🍬', '🧈', '🧅', '🥕'];
+const KIT_STN = { fridge: ['🧊', 'Fridge'], board: ['🔪', 'Prep board'], stove: ['🍳', 'Stove'], oven: ['♨️', 'Oven'], blender: ['🥤', 'Blender'], serve: ['🍽️', 'Dining table'] };
+const _kq = new THREE.Quaternion();
+const COOK = { r: null, i: 0, stars: [], chip: null }, KIT_K = { G: null, stations: {}, slots: [], dishes: [], zone: null, book: null, markers: {} };
+function kitCookChip() { if (!COOK.chip) { const c = document.createElement('div'); c.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 108px);z-index:8;padding:8px 16px;border-radius:999px;background:var(--glass);border:1px solid var(--glass-b);backdrop-filter:blur(10px);color:#fff;font-size:14px;max-width:86vw;text-align:center;pointer-events:none;display:none'; document.body.appendChild(c); COOK.chip = c; } return COOK.chip; }
+function kitCookUpdate() { const c = kitCookChip(); if (!COOK.r) { c.style.display = 'none'; return; } const s = COOK.r.steps[COOK.i]; c.style.display = 'block'; c.textContent = COOK.r.emoji + ' ' + COOK.r.name + ' · step ' + (COOK.i + 1) + '/' + COOK.r.steps.length + ' · ' + KIT_STN[s[0]][0] + ' ' + s[2]; }
+function kitCard(title, sub) { const c = document.createElement('div'); c.className = 'shopCard'; const h = document.createElement('div'); h.className = 'shopHead'; h.textContent = title; c.append(h); if (sub) { const w = document.createElement('div'); w.className = 'shopWho'; w.textContent = sub; c.append(w); } return c; }
+function kitGamePick(r, done) {
+  const c = kitCard('🧊  Fridge', 'Pick what ' + r.name + ' needs: ' + r.need.length + ' things'); const pool = r.need.concat(KIT_ALLING.filter((e) => r.need.indexOf(e) < 0).sort(() => Math.random() - 0.5).slice(0, 6 - r.need.length + 2)).sort(() => Math.random() - 0.5);
+  const grid = document.createElement('div'); grid.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:8px'; let got = 0, mistakes = 0; const chosen = new Set();
+  pool.forEach((e) => { const b = btn(e, () => { if (chosen.has(e)) return; chosen.add(e); if (r.need.indexOf(e) >= 0) { got++; b.style.background = '#8fd694'; if (got === r.need.length) { closeOverlay(); done(Math.max(1, 3 - mistakes)); } } else { mistakes++; b.style.background = '#f08a8a'; } }, 'pbtn'); b.style.fontSize = '26px'; b.style.padding = '10px 0'; grid.append(b); });
+  c.append(grid); c.append(btn('Never mind', closeOverlay, 'pbtn ghost')); openOverlay(c);
+}
+function kitGameTap(label, done) {
+  const c = kitCard('🔪  ' + label, 'Tap as fast as you can!'), bar = document.createElement('div'); bar.style.cssText = 'height:16px;border-radius:9px;background:rgba(255,255,255,.18);overflow:hidden'; const fill = document.createElement('div'); fill.style.cssText = 'height:100%;width:0;background:linear-gradient(90deg,#ffd1a0,#ff8aa0)'; bar.append(fill); c.append(bar);
+  let p = 0, t0 = performance.now(), fin = false; const b = btn('TAP!', () => { if (fin) return; p += 7.2; fill.style.width = Math.min(100, p) + '%'; if (p >= 100) { fin = true; const t = (performance.now() - t0) / 1000; closeOverlay(); done(t < 4.2 ? 3 : t < 6.5 ? 2 : 1); } }, 'pbtn'); b.style.fontSize = '30px'; b.style.padding = '20px 0'; c.append(b);
+  const tmr = setInterval(() => { if (!c.isConnected || fin) { clearInterval(tmr); return; } p = Math.max(0, p - 0.9); fill.style.width = Math.min(100, p) + '%'; }, 100); c.append(btn('Never mind', closeOverlay, 'pbtn ghost')); openOverlay(c);
+}
+function kitGameTiming(label, done) {
+  const c = kitCard('🍳  ' + label, 'Press NOW when the marker is in the green zone'), bar = document.createElement('div'); bar.style.cssText = 'position:relative;height:26px;border-radius:13px;background:rgba(255,255,255,.18);overflow:hidden'; const zc = 25 + Math.random() * 50, zw = 20, zone = document.createElement('div'); zone.style.cssText = 'position:absolute;top:0;bottom:0;left:' + (zc - zw / 2) + '%;width:' + zw + '%;background:#6fd08a;opacity:.85'; const mk = document.createElement('div'); mk.style.cssText = 'position:absolute;top:-2px;bottom:-2px;width:6px;background:#fff;border-radius:3px;left:0'; bar.append(zone, mk); c.append(bar);
+  let x = 0, dir = 1, fin = false, last = performance.now(); const sp = 62; const loop = (n) => { if (!c.isConnected || fin) return; const dt = (n - last) / 1000; last = n; x += dir * sp * dt; if (x > 100) { x = 100; dir = -1; } if (x < 0) { x = 0; dir = 1; } mk.style.left = x + '%'; requestAnimationFrame(loop); }; requestAnimationFrame(loop);
+  const b = btn('NOW!', () => { if (fin) return; fin = true; const d = Math.abs(x - zc); closeOverlay(); done(d < zw * 0.22 ? 3 : d < zw * 0.5 ? 2 : 1); }, 'pbtn'); b.style.fontSize = '28px'; b.style.padding = '18px 0'; c.append(b); c.append(btn('Never mind', closeOverlay, 'pbtn ghost')); openOverlay(c);
+}
+function kitPlaceDish(r) {
+  const K = KIT_K; if (!K.G || !kitHas(r.dish)) return; if (K.dishes.length >= K.slots.length) { const o = K.dishes.shift(); K.G.remove(o); }
+  const slot = K.slots[K.dishes.length % K.slots.length], m = kitMeshFor(r.dish, r.size); m.position.set(slot[0], 0.82, slot[1]); K.G.add(m); K.dishes.push(m);
+}
+function kitCookDone() {
+  const r = COOK.r, avg = COOK.stars.reduce((a, b) => a + b, 0) / COOK.stars.length, st = Math.max(1, Math.round(avg)); COOK.r = null; kitCookUpdate(); kitPlaceDish(r);
+  toast(r.emoji + '  ' + r.name + ' is ready!  ' + '⭐'.repeat(st), 4200); showTextBubble(me3d, r.emoji); floatHearts({ x: player.x, y: 2.2, z: player.z }, 4, 0.5); sendEvent('cook', { r: r.id, s: st });
+  try { const k = JSON.parse(localStorage.getItem('castle.cook') || '{"made":0,"stars":0}'); k.made++; k.stars += st; localStorage.setItem('castle.cook', JSON.stringify(k)); toast(r.emoji + '  ' + r.name + ' ' + '⭐'.repeat(st) + '  ·  dishes cooked so far: ' + k.made, 4200); } catch (e) {}
+}
+liveEvents.cook = (p) => { const r = KIT_RECIPES.find((x) => x.id === (p && p.r)); if (!r) return; toast((p.w === 'M' ? 'M' : 'J') + ' cooked ' + r.emoji + ' ' + r.name + '  ' + '⭐'.repeat(p.s || 1), 4200); kitPlaceDish(r); };
+function kitCookStep() {
+  const s = COOK.r.steps[COOK.i], fin = (stars) => { COOK.stars.push(stars); COOK.i++; if (COOK.i >= COOK.r.steps.length) kitCookDone(); else { kitCookUpdate(); toast('⭐'.repeat(stars) + '  Nice! Next: ' + COOK.r.steps[COOK.i][2], 2400); } };
+  if (s[1] === 'pick') kitGamePick(COOK.r, fin); else if (s[1] === 'tap') kitGameTap(s[2], fin); else if (s[1] === 'timing') kitGameTiming(s[2], fin); else fin(3);
+}
+async function kitMealOfTheDay(card) {
+  const out = document.createElement('div'); out.className = 'shopWho'; out.textContent = 'Asking the internet for a recipe…'; card.append(out);
+  try {
+    const r = await fetch('https://www.themealdb.com/api/json/v1/1/random.php'), j = await r.json(), m = j.meals && j.meals[0]; if (!m) throw new Error('none');
+    const ing = []; for (let i = 1; i <= 20; i++) if (m['strIngredient' + i]) ing.push((m['strMeasure' + i] || '').trim() + ' ' + m['strIngredient' + i]);
+    out.textContent = '🍲 ' + m.strMeal + ' · ' + m.strArea + ' · ' + m.strCategory + '\n\n' + ing.slice(0, 10).join(', ') + '\n\n' + (m.strInstructions || '').slice(0, 420) + '…'; out.style.whiteSpace = 'pre-wrap'; out.style.textAlign = 'left'; out.style.maxHeight = '40vh'; out.style.overflow = 'auto';
+    if (m.strMealThumb) { const im = document.createElement('img'); im.src = m.strMealThumb + '/preview'; im.style.cssText = 'width:100%;border-radius:14px'; card.insertBefore(im, out); }
+  } catch (e) { out.textContent = 'No internet recipe right now. Pick one of our own!'; }
+}
+function kitRecipeBook() {
+  const c = kitCard('📖  Recipe book', 'What shall we cook?');
+  KIT_RECIPES.forEach((r) => c.append(btn(r.emoji + '  ' + r.name + '   ·   ' + r.need.join(' '), () => { closeOverlay(); COOK.r = r; COOK.i = 0; COOK.stars = []; kitCookUpdate(); toast(r.emoji + '  ' + r.name + ': ' + r.steps[0][2], 3200); }, 'pbtn')));
+  c.append(btn('🌍  Recipe of the day (from the internet)', () => kitMealOfTheDay(c), 'pbtn ghost')); c.append(btn('Close', closeOverlay, 'pbtn ghost')); openOverlay(c);
+}
+function kitKitchen(G, L, name) {
+  const M = (c) => new THREE.MeshLambertMaterial({ color: c }), kb = new KitBatch(), solid = (u1, v1, u2, v2, h, mat, y0) => { const m = addBox(G, u1, v1, u2, v2, h, mat, null, y0); colliders.push(worldRect(G, u1, v1, u2, v2)); return m; };
+  KIT_K.G = G; KIT_K.zone = worldRect(G, 0.2, -5.7, L - 0.2, 5.7); const ft = kitFloorTex('check', '#f7f0e4', '#d9c9ad'); ft.repeat.set((L - 0.6) / 4, 11.2 / 4); const fl = new THREE.Mesh(new THREE.PlaneGeometry(L - 0.6, 11.2), new THREE.MeshLambertMaterial({ map: ft })); fl.rotation.x = -Math.PI / 2; fl.position.set(L / 2, 0.018, 0); G.add(fl);
+  const cu1 = L - 1.4, cu2 = L - 0.4, seg = (v1, v2) => { solid(cu1, v1, cu2, v2, 0.9, M(0xf4efe6)); addBox(G, cu1 - 0.05, v1, cu2, v2, 0.07, M(0x8a6a4a), null, 0.9); };
+  seg(-4.7, -2.7); seg(-1.1, 5.0);
+  const basin = addBox(G, cu1 + 0.15, -4.0, cu2 - 0.1, -3.2, 0.02, M(0x6a7a88), null, 0.97); const tap = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.4, 8), M(0xcfd6dc)); tap.position.set(cu2 - 0.15, 1.15, -3.6); G.add(tap);
+  kitProp(kb, 'ck-fridge', L - 1.0, 0, -5.2, 2.2, 0); colliders.push(worldRect(G, L - 1.5, -5.7, L - 0.5, -4.7));
+  kitProp(kb, 'ck-stove', L - 1.0, 0, -1.9, 1.15, 0); kitProp(kb, 'ck2-pan', L - 1.0, 0.93, -1.9, 0.5, 0.4); colliders.push(worldRect(G, L - 1.5, -2.7, L - 0.4, -1.1));
+  [['ck-kettle', -0.6, 0.45], ['ck-toaster', 0.1, 0.35], ['ck2-rice-cooker', 0.8, 0.42], ['ck2-salt', 1.25, 0.22], ['ck2-pepper', 1.5, 0.25], ['ck2-mitts', 2.0, 0.3], ['ck2-electric-oven', 2.7, 0.9], ['ck2-muffin', 3.6, 0.4], ['ck-blender', 4.1, 0.55], ['ck2-juicer', 4.7, 0.32]].forEach(([n, v, s]) => kitProp(kb, n, L - 0.9, 0.97, v, s, -Math.PI / 2));
+  const iu = L / 2 - 0.4; solid(iu - 1.3, -0.9, iu + 1.3, 0.9, 0.9, M(0xb08a62)); addBox(G, iu - 1.4, -1.0, iu + 1.4, 1.0, 0.07, M(0xf4efe6), null, 0.9);
+  [['ck2-cutboard', iu - 0.4, 0, 0.9], ['ck2-bowl', iu + 0.8, -0.4, 0.5], ['ck2-rolling', iu + 0.5, 0.55, 0.55], ['ck2-knife', iu - 1.05, 0.4, 0.42], ['ck2-whisk', iu - 0.9, -0.5, 0.4]].forEach(([n, u, v, s]) => kitProp(kb, n, u, 0.97, v, s, 0));
+  const book = addBox(G, iu + 0.9, 0.18, iu + 1.2, 0.5, 0.04, M(0xc2402e), null, 0.97); addBox(G, iu + 0.92, 0.2, iu + 1.18, 0.48, 0.02, M(0xfff6e8), null, 1.01);
+  [3.2, 4.5, 5.8].forEach((u) => { kitProp(kb, 'fu2-cabinet', u, 0, -5.15, 1.1, 0); colliders.push(worldRect(G, u - 0.55, -5.7, u + 0.55, -4.6)); }); [['ck2-dutch', 3.2, 0.5], ['ck2-stockpot', 4.5, 0.55], ['ck2-casserole', 5.8, 0.5]].forEach(([n, u, s]) => kitProp(kb, n, u, 1.1, -5.15, s, 0));
+  [[2.2, 5.2], [L / 2 + 3.5, 5.2]].forEach(([u, v]) => { kitProp(kb, 'fu-shelf', u, 0, v, 2.3, Math.PI); colliders.push(worldRect(G, u - 0.7, 4.8, u + 0.7, 5.7)); });
+  kitProp(kb, 'fu-table', 3.4, 0, 3.4, 1.9, 0); colliders.push(worldRect(G, 2.5, 2.9, 4.3, 3.9)); const chairs = [[3.4 - 1.15, 3.4, Math.PI / 2], [3.4 + 1.15, 3.4, -Math.PI / 2], [3.4, 2.25, 0], [3.4, 4.55, Math.PI]]; chairs.forEach(([u, v, ry]) => kitProp(kb, 'fu-chair', u, 0, v, 1.0, ry));
+  KIT_K.slots = [[3.0, 3.1], [3.8, 3.1], [3.0, 3.7], [3.8, 3.7]]; [[3.0, 3.1], [3.8, 3.7]].forEach(([u, v]) => kitProp(kb, 'fu2-plate', u, 0.82, v, 0.5, 0));
+  [[L / 2 - 2.5, 0], [L / 2 + 2.0, 0]].forEach(([u, v]) => { const l = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 10), new THREE.MeshBasicMaterial({ color: 0xfff0c0 })); l.position.set(u, WALL_H - 0.9, v); G.add(l); addBox(G, u - 0.02, v - 0.02, u + 0.02, v + 0.02, 0.9, M(0x333333), null, WALL_H - 0.9); });
+  const sg = new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ map: signTex('🍳 Kitchen', 'cook · taste · share', 800, 260, '#7a3a2a') })); sg.scale.set(3.6, 1.17, 1); sg.position.set(L - 0.06, 3.7, 0); sg.rotation.y = -Math.PI / 2; G.add(sg);
+  kb.flush(G, true);
+  const W = (u, v) => G.localToWorld(new THREE.Vector3(u, 0, v)), st = KIT_K.stations;
+  st.fridge = { p: W(L - 2.4, -4.6), r: 2.0, u: L - 1.0, v: -5.2 }; st.board = { p: W(iu, 1.5), r: 2.4, u: iu, v: 0 }; st.stove = { p: W(L - 2.3, -1.9), r: 1.9, u: L - 1.0, v: -1.9 }; st.oven = { p: W(L - 2.3, 2.7), r: 1.7, u: L - 1.0, v: 2.7 }; st.blender = { p: W(L - 2.3, 4.2), r: 1.4, u: L - 1.0, v: 4.2 }; st.serve = { p: W(3.4, 3.4), r: 2.9, u: 3.4, v: 3.4 };
+  const [mc, mg] = mkCanvas(128, 128), mkTex = {}, marker = new THREE.Mesh(unitPlane, new THREE.MeshBasicMaterial({ transparent: true, depthTest: false, side: THREE.DoubleSide })); marker.scale.set(0.8, 0.8, 1); marker.renderOrder = 20; marker.visible = false; G.add(marker);
+  const emojiTex = (e) => { if (mkTex[e]) return mkTex[e]; const [c, g] = mkCanvas(128, 128); g.font = '96px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(e, 64, 70); return (mkTex[e] = canvasTex(c)); };
+  const seatsK = chairs.map(([u, v, ry]) => ({ w: W(u, v), h: G.rotation.y + ry }));
+  frameHooks.push((dt, now) => {
+    const inside = player.fl === 1 && !player.out && kitInRect(KIT_K.zone, player.x, player.z); if (!inside) { marker.visible = false; return; }
+    let key = 'book'; if (COOK.r) key = COOK.r.steps[COOK.i][0]; const pos = key === 'book' ? { u: iu, v: 0.0 } : st[key]; marker.material.map = emojiTex(key === 'book' ? '📖' : KIT_STN[key][0]); marker.material.needsUpdate = true; marker.visible = true; marker.position.set(pos.u, key === 'book' ? 1.9 : (key === 'fridge' ? 2.6 : 2.0) + Math.sin(now / 400) * 0.08, pos.v); marker.quaternion.copy(camera.quaternion); G.getWorldQuaternion(_kq).invert(); marker.quaternion.premultiply(_kq);
+  });
+  candidateHooks.push(() => {
+    if (ride || player.out || player.fl !== 1 || !kitInRect(KIT_K.zone, player.x, player.z)) return null;
+    const near = (s) => Math.hypot(player.x - s.p.x, player.z - s.p.z) < s.r;
+    if (COOK.r) { const s = COOK.r.steps[COOK.i], stn = st[s[0]]; if (near(stn)) return { label: KIT_STN[s[0]][0] + '  ' + s[2], run: kitCookStep }; if (near(st.board)) return { label: '📖  Recipe book', run: kitRecipeBook }; return null; }
+    if (near(st.board)) return { label: '📖  Choose a recipe', run: kitRecipeBook };
+    for (const s of seatsK) if (Math.hypot(player.x - s.w.x, player.z - s.w.z) < 1.05) return { label: '🪑  Sit down', run: () => kitSit({ x: s.w.x, z: s.w.z, h: s.h }) };
+    return null;
+  });
 }
 
 function kitLamps(T) {
@@ -3470,6 +3667,7 @@ async function boot() {
     buildFoyer(0); buildFoyer(1); buildFoyer(2); buildUpperFloors(); buildShell();
     setLoad('Building the town…', 84); await wait(20);
     try { await loadKit((f) => setLoad('Gathering the town…', 84 + Math.round(f * 12))); } catch (e) { console.warn('town kit', e); }
+    KIT_LATER.forEach((f) => { try { f(); } catch (e) { console.warn('room', e); } }); KIT_LATER.length = 0;
     buildTown(); buildVehicles(); buildCitizens(); loadCitizens(); if (window.__gallery) { window.__gallery.KIT = KIT; window.__gallery.SHOPS = SHOPS; }
     { const fr = new THREE.Frustum(), pm = new THREE.Matrix4(), sph = new THREE.Sphere(); frameHooks.push(() => { if (!KIT.chunks.length || !castle.town.visible) return; camera.updateMatrixWorld(); camera.matrixWorldInverse.copy(camera.matrixWorld).invert(); pm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); fr.setFromProjectionMatrix(pm); for (let i = 0; i < KIT.chunks.length; i++) { const c = KIT.chunks[i]; sph.center.set(c.cx, 12, c.cz); sph.radius = c.r + 14; c.im.visible = Math.hypot(player.x - c.cx, player.z - c.cz) < c.r + 280 && fr.intersectsSphere(sph); } }); }
     me3d = makeAvatar(me, ''); scene.add(me3d); setAccessory(me3d, LOOK.acc); setPet('me', LOOK.pet); if (RA.style === 'real') ensureReal(); loadObjects(); player.x = (me === 'M' ? 1.2 : -1.2); player.z = -27; player.heading = 0; camYaw = Math.PI;
