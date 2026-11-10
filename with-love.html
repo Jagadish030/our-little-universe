@@ -308,6 +308,15 @@ a.btn{display:inline-grid;place-items:center;text-decoration:none}
 .checkrow .btn{width:100%;line-height:1.25}
 /* caption: centred in the strip under the photo (the 3D lift pushes things below the middle further down, so it is cancelled here) */
 .hcap{bottom:0;height:70px;display:flex;align-items:center;justify-content:center;line-height:1.1;padding-bottom:2px;transform:translate3d(calc(var(--tx,0) * 18px),calc(var(--ty,0) * 14px - var(--ph,252px) * 0.027 - 0.4px),46px)}
+.vrec{display:flex;flex-direction:column;align-items:center;gap:.55rem;margin:.2rem auto .35rem;max-width:340px}
+.vbtn{min-height:44px;padding:.55rem 1.1rem;font-size:.95rem}
+.vlive{display:flex;align-items:center;gap:.6rem;font-variant-numeric:tabular-nums;color:var(--cream)}
+.vdot{width:11px;height:11px;border-radius:50%;background:#ff5d73;box-shadow:0 0 0 0 rgba(255,93,115,.6);animation:vpulse 1.2s ease-out infinite}
+@keyframes vpulse{70%{box-shadow:0 0 0 12px rgba(255,93,115,0)}100%{box-shadow:0 0 0 0 rgba(255,93,115,0)}}
+.vready{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;align-items:center}
+.vmark{position:absolute;inset:0;display:grid;place-items:center;font-size:20px;line-height:1;color:rgba(125,45,18,.8);text-shadow:0 0 6px rgba(255,235,190,.9);pointer-events:none}
+.lantern.voiced{box-shadow:0 0 46px rgba(255,172,90,.95),0 0 14px rgba(255,230,170,.75),inset 0 -10px 16px rgba(195,70,30,.38)}
+@media (prefers-reduced-motion:reduce){.vdot{animation:none}}
 </style>
 </head>
 <body>
@@ -408,6 +417,8 @@ const T = {
     'I promise to love you with everything I have. Definitely snacks included.',
   ],
   promEnd: 'That is all of them for today. The rest I will keep, every day.',
+  voiceAdd: 'Add a voice message', voiceStop: 'Stop', voiceAgain: 'Record again', voiceRemove: 'Remove', voicePlay: 'Listen', voicePause: 'Pause', voiceLoad: 'Loading…', voicePlayLabel: 'Play voice message',
+  voiceHint: 'Words, a voice message (up to 1 minute), or both, whatever feels right.', voiceDenied: 'I could not use the microphone. Please allow it in your browser settings and try again.', voiceNo: 'Voice messages are not available in this browser, but your words will still fly up.', voiceShort: 'That was too short to keep. Please try again.', voiceFail: 'I could not send the voice message. Please check your connection and try again.', voicePlayFail: 'I could not play the voice message just now.',
   checkH: 'Before we go on…', checkLead: 'What comes next is soft, but it can bring a lot of feelings up. Take your time. How are you doing?',
   checkOk: 'I am okay, let us keep going', checkSkip: 'It is a lot, take me to the lanterns', checkNote: 'There is no wrong answer. The lanterns will always be waiting for you.',
   letterTip: 'A letter for you. Tap to reveal each line.', letterAria: 'A letter for you', hi: 'Hi love,',
@@ -744,36 +755,118 @@ try { if (window.supabase && window.supabase.createClient) sb = window.supabase.
 const myNum = () => { try { return Number(localStorage.getItem('ourLittleUniverseIdentity')) === 2 ? 2 : 1; } catch (e) { return 1; } };
 let uidCache = null;
 async function myUid() { if (uidCache) return uidCache; if (!sb) return null; try { const r = await sb.auth.getSession(); uidCache = (r.data && r.data.session && r.data.session.user && r.data.session.user.id) || null; } catch (e) {} return uidCache; }
-const LCOLS = 'id,author_id,author_num,body,created_at,updated_at';
-async function lanternsLoad() { try { if (!sb || !(await myUid())) return null; const r = await sb.from('mom_lanterns').select(LCOLS).order('created_at', { ascending: true }).limit(80); return r.error ? null : r.data; } catch (e) { return null; } }
-async function lanternAdd(text) { try { if (!sb || !(await myUid())) return null; const r = await sb.from('mom_lanterns').insert({ body: text }).select(LCOLS).single(); return r.error ? null : r.data; } catch (e) { return null; } }
-async function lanternEdit(id, text) { try { if (!sb || !(await myUid())) return null; const r = await sb.from('mom_lanterns').update({ body: text }).eq('id', id).select(LCOLS); return (!r.error && r.data && r.data.length) ? r.data[0] : null; } catch (e) { return null; } }
-async function lanternDelete(id) { try { if (!sb || !(await myUid())) return false; const r = await sb.from('mom_lanterns').delete().eq('id', id).select('id'); return !r.error && !!r.data && r.data.length > 0; } catch (e) { return false; } }
+const LCOLS_BASE = 'id,author_id,author_num,body,created_at,updated_at', LCOLS_VOICE = LCOLS_BASE + ',voice_path,voice_seconds';
+let voiceCols = true; /* flips to false if the voice columns have not been added to the table yet, so older setups keep working */
+const lcols = () => (voiceCols ? LCOLS_VOICE : LCOLS_BASE);
+const noCol = (err) => !!err && /voice_(path|seconds)|column/i.test((err.message || '') + ' ' + (err.details || ''));
+const VOICE_BUCKET = 'mom-voices', VOICE_MAX = 60, VOICE_ONLY = '🎙️ Voice message';
+async function lanternsLoad() { try { if (!sb || !(await myUid())) return null; const q = () => sb.from('mom_lanterns').select(lcols()).order('created_at', { ascending: true }).limit(80); let r = await q(); if (r.error && voiceCols && noCol(r.error)) { voiceCols = false; r = await q(); } return r.error ? null : r.data; } catch (e) { return null; } }
+async function lanternAdd(text, voice) { try { if (!sb || !(await myUid())) return null; if (voice && !voiceCols) return null; const row = { body: text }; if (voice) { row.voice_path = voice.path; row.voice_seconds = voice.secs; } const r = await sb.from('mom_lanterns').insert(row).select(lcols()).single(); if (r.error && voice && noCol(r.error)) voiceCols = false; return r.error ? null : r.data; } catch (e) { return null; } }
+async function lanternEdit(id, text) { try { if (!sb || !(await myUid())) return null; const r = await sb.from('mom_lanterns').update({ body: text }).eq('id', id).select(lcols()); return (!r.error && r.data && r.data.length) ? r.data[0] : null; } catch (e) { return null; } }
+async function lanternDelete(id, voicePath) { try { if (!sb || !(await myUid())) return false; const r = await sb.from('mom_lanterns').delete().eq('id', id).select('id'); const ok = !r.error && !!r.data && r.data.length > 0; if (ok && voicePath) voiceRemove(voicePath); return ok; } catch (e) { return false; } }
+async function voiceUpload(blob, mime, secs) { try { const uid = await myUid(); if (!sb || !uid) return null; const type = (mime || 'audio/webm').split(';')[0], ext = /mp4|aac|m4a/.test(type) ? 'm4a' : /ogg/.test(type) ? 'ogg' : 'webm'; const path = uid + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext; const r = await sb.storage.from(VOICE_BUCKET).upload(path, blob, { contentType: type, upsert: false }); return r.error ? null : { path, secs }; } catch (e) { return null; } }
+async function voiceRemove(path) { try { if (sb && path) await sb.storage.from(VOICE_BUCKET).remove([path]); } catch (e) {} }
+async function voiceUrl(path) { try { if (!sb) return null; const r = await sb.storage.from(VOICE_BUCKET).createSignedUrl(path, 3600); return r.error || !r.data ? null : r.data.signedUrl; } catch (e) { return null; } }
+const fmtTime = (n) => Math.floor(n / 60) + ':' + String(Math.floor(n % 60)).padStart(2, '0');
+
+/* record a short voice message in the browser (nothing is sent until she releases the wish) */
+function voiceRecorder(onChange) {
+  const supported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+  const box = el('div', { class: 'vrec' }), status = el('p', { class: 'small vmsg', 'aria-live': 'polite', style: 'min-height:1.2em;margin:0' });
+  let state = 'idle', rec = null, stream = null, chunks = [], t0 = 0, tick = 0, blob = null, secs = 0, audio = null, url = null, timeEl = null;
+  const stopTracks = () => { if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; } };
+  const clearPrev = () => { if (audio) { audio.pause(); audio = null; } if (url) { URL.revokeObjectURL(url); url = null; } };
+  const stop = () => { if (rec && rec.state !== 'inactive') rec.stop(); };
+  const draw = () => {
+    box.textContent = '';
+    if (!supported) { box.append(el('p', { class: 'small', style: 'margin:0', text: tr('voiceNo') })); return; }
+    if (state === 'idle') box.append(el('button', { class: 'btn ghost vbtn', type: 'button', text: '🎙 ' + tr('voiceAdd'), onclick: start }));
+    else if (state === 'rec') {
+      timeEl = el('span', { text: '0:00 / ' + fmtTime(VOICE_MAX) });
+      box.append(el('div', { class: 'vlive' }, el('i', { class: 'vdot' }), timeEl), el('button', { class: 'btn vbtn', type: 'button', text: '■ ' + tr('voiceStop'), onclick: stop }));
+    } else {
+      const play = el('button', { class: 'btn ghost vbtn', type: 'button' });
+      const idle = () => { play.textContent = '▶ ' + tr('voicePlay') + ' · ' + fmtTime(secs); };
+      idle();
+      play.addEventListener('click', () => {
+        if (!audio) { url = URL.createObjectURL(blob); audio = new Audio(url); audio.addEventListener('ended', idle); audio.addEventListener('pause', () => { if (!audio || audio.ended) return; idle(); }); audio.addEventListener('play', () => { play.textContent = '⏸ ' + tr('voicePause'); }); }
+        if (audio.paused) { const pr = audio.play(); if (pr && pr.catch) pr.catch(() => {}); } else audio.pause();
+      });
+      box.append(el('div', { class: 'vready' }, play, el('button', { class: 'btn ghost vbtn', type: 'button', text: tr('voiceAgain'), onclick: () => { reset(); start(); } }), el('button', { class: 'btn ghost vbtn', type: 'button', text: tr('voiceRemove'), onclick: () => { reset(); onChange(); } })));
+    }
+    box.append(status);
+  };
+  const reset = () => { clearInterval(tick); clearPrev(); stopTracks(); if (rec && rec.state !== 'inactive') { rec.onstop = null; try { rec.stop(); } catch (e) {} } rec = null; blob = null; secs = 0; state = 'idle'; status.textContent = ''; draw(); };
+  async function start() {
+    status.textContent = '';
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (e) { status.textContent = tr('voiceDenied'); return; }
+    let mime = ''; ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm', 'audio/ogg;codecs=opus'].some((t) => { try { if (MediaRecorder.isTypeSupported(t)) { mime = t; return true; } } catch (e) {} return false; });
+    try { rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream); } catch (e) { stopTracks(); status.textContent = tr('voiceDenied'); return; }
+    chunks = [];
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = () => {
+      clearInterval(tick); stopTracks();
+      const b = new Blob(chunks, { type: (rec && rec.mimeType) || mime || 'audio/webm' });
+      if (!b.size) { state = 'idle'; draw(); status.textContent = tr('voiceShort'); onChange(); return; }
+      blob = b; secs = Math.max(1, Math.round((Date.now() - t0) / 1000)); state = 'ready'; draw(); onChange();
+    };
+    t0 = Date.now(); rec.start(); state = 'rec'; draw(); onChange();
+    tick = setInterval(() => { const sec = (Date.now() - t0) / 1000; if (timeEl) timeEl.textContent = fmtTime(sec) + ' / ' + fmtTime(VOICE_MAX); if (sec >= VOICE_MAX) stop(); }, 250);
+  }
+  draw();
+  return { node: box, has: () => state === 'ready' && !!blob, recording: () => state === 'rec', take: () => ({ blob, mime: blob.type, secs }), reset, destroy: () => { reset(); } };
+}
 const layer = $('#layer');
 function flyLantern(num) {
   if (reduce) return;
   const L = el('div', { class: 'lantern fly' + (num === 2 ? ' hers' : '') }); L.style.left = 26 + Math.random() * 48 + '%';
   layer.append(L); setTimeout(() => L.remove(), 9500);
 }
-function showCard(content) {
-  const close = () => card.remove();
+function showCard(content, onClose) {
+  const close = () => { card.remove(); if (onClose) onClose(); };
   const card = el('div', { class: 'notecard', role: 'dialog', 'aria-modal': 'true', onclick: (e) => { if (e.target === card) close(); } },
     el('div', { class: 'paper', style: 'text-align:center' }, content, el('div', { class: 'row', style: 'margin:1rem 0 0' }, el('button', { class: 'btn', type: 'button', text: tr('close'), onclick: close }))));
   document.body.append(card); $('.btn', card).focus();
   return card;
 }
 const whoLabel = (r) => (r.author_id === uidCache ? tr('whoYou') : (r.author_num === 2 ? tr('whoHer') : tr('whoHim')));
+function voicePlayer(path, secs, style) {
+  let audio = null, busy = false;
+  const btn = el('button', { class: 'btn ghost vplay', type: 'button', style }), status = el('p', { class: 'small', style: 'color:#b3263e;margin:.4rem 0 0;min-height:1.1em' });
+  const idle = () => { btn.textContent = '▶ ' + tr('voicePlayLabel') + (secs ? ' · ' + fmtTime(secs) : ''); };
+  idle();
+  btn.addEventListener('click', async () => {
+    status.textContent = '';
+    if (audio && !audio.paused) { audio.pause(); return; }
+    if (!audio) {
+      if (busy) return; busy = true; btn.textContent = tr('voiceLoad');
+      const u = await voiceUrl(path); busy = false;
+      if (!u) { idle(); status.textContent = tr('voicePlayFail'); return; }
+      audio = new Audio(u);
+      audio.addEventListener('timeupdate', () => { if (!audio.paused) btn.textContent = '⏸ ' + tr('voicePause') + ' · ' + fmtTime(audio.currentTime) + (secs ? ' / ' + fmtTime(secs) : ''); });
+      audio.addEventListener('play', () => { btn.textContent = '⏸ ' + tr('voicePause'); });
+      audio.addEventListener('pause', idle); audio.addEventListener('ended', idle);
+      audio.addEventListener('error', () => { idle(); status.textContent = tr('voicePlayFail'); });
+    }
+    const pr = audio.play(); if (pr && pr.catch) pr.catch(() => { idle(); status.textContent = tr('voicePlayFail'); });
+  });
+  return { node: el('div', { style: 'margin:.2rem 0 .7rem' }, btn, status), stop: () => { if (audio) audio.pause(); } };
+}
 function showLantern(row, onChange) {
-  const body = el('div', { style: 'text-align:left' }), card = showCard(body), mine = row.author_id === uidCache;
+  let vp = null;
+  const body = el('div', { style: 'text-align:left' }), card = showCard(body, () => { if (vp) vp.stop(); }), mine = row.author_id === uidCache;
+  const voiceOnly = (r) => !!r.voice_path && r.body === VOICE_ONLY;
   const dark = 'color:var(--ink);border-color:rgba(58,42,42,.3);background:rgba(58,42,42,.05)';
   const status = el('p', { class: 'small', style: 'color:#b3263e;margin:.5rem 0 0;min-height:1.2em' });
   let cur = row;
-  const view = (...nodes) => { body.textContent = ''; status.textContent = ''; body.append(...nodes, status); };
+  const view = (...nodes) => { body.textContent = ''; status.textContent = ''; body.append(...nodes.filter(Boolean), status); };
+  const vpNode = () => { if (vp) vp.stop(); vp = cur.voice_path ? voicePlayer(cur.voice_path, cur.voice_seconds, dark) : null; return vp ? vp.node : null; };
   const draw = () => {
     const edited = cur.updated_at && Math.abs(new Date(cur.updated_at) - new Date(cur.created_at)) > 2000;
     const nodes = [
       el('p', { class: 'who ' + (cur.author_num === 2 ? 'hers' : 'his'), text: tr('lanternFrom', { who: whoLabel(cur) }) }),
-      el('p', { style: 'white-space:pre-wrap;margin:0 0 .6rem', text: cur.body }),
+      voiceOnly(cur) ? null : el('p', { style: 'white-space:pre-wrap;margin:0 0 .6rem', text: cur.body }),
+      vpNode(),
       el('p', { class: 'small', style: 'color:#7a6a6a;margin:.2rem 0 0', text: tr('sentOn', { date: fmtDate(new Date(cur.created_at), { day: 'numeric', month: 'long', year: 'numeric' }) }) + (edited ? ' · ' + tr('edited') : '') }),
     ];
     if (mine) nodes.push(el('div', { class: 'row', style: 'justify-content:flex-start;margin-top:.8rem' },
@@ -782,11 +875,11 @@ function showLantern(row, onChange) {
     view(...nodes);
   };
   const drawEdit = () => {
-    const ta = el('textarea', { class: 'editfield', maxlength: '300', 'aria-label': tr('edit') }); ta.value = cur.body;
+    const ta = el('textarea', { class: 'editfield', maxlength: '300', 'aria-label': tr('edit') }); ta.value = voiceOnly(cur) ? '' : cur.body;
     const save = el('button', { class: 'btn', type: 'button', text: tr('saved') }), cancel = el('button', { class: 'btn ghost', type: 'button', style: dark, text: tr('cancel'), onclick: draw });
-    ta.addEventListener('input', () => { save.disabled = !ta.value.trim(); });
+    ta.addEventListener('input', () => { save.disabled = !(ta.value.trim() || cur.voice_path); });
     save.addEventListener('click', async () => {
-      const t = ta.value.trim(); if (!t) return;
+      const t = ta.value.trim() || (cur.voice_path ? VOICE_ONLY : ''); if (!t) return;
       save.disabled = true; const r = await lanternEdit(cur.id, t);
       if (!r) { save.disabled = false; status.textContent = tr('cloudFail'); return; }
       cur = r; draw(); onChange();
@@ -796,9 +889,9 @@ function showLantern(row, onChange) {
   const drawDel = () => {
     const yes = el('button', { class: 'btn', type: 'button', style: 'background:#c23b50;color:#fff', text: tr('yesDel') }), no = el('button', { class: 'btn ghost', type: 'button', style: dark, text: tr('keepIt'), onclick: draw });
     yes.addEventListener('click', async () => {
-      yes.disabled = true; const ok = await lanternDelete(cur.id);
+      yes.disabled = true; const ok = await lanternDelete(cur.id, cur.voice_path);
       if (!ok) { yes.disabled = false; status.textContent = tr('cloudFail'); return; }
-      card.remove(); onChange();
+      if (vp) vp.stop(); card.remove(); onChange();
     });
     view(el('p', { text: tr('confirmDel') }), el('div', { class: 'row', style: 'margin-top:.6rem' }, yes, no));
   };
@@ -1136,16 +1229,22 @@ add('lantern', (root, api) => {
   const chips = el('div', { class: 'chips' }, tr('starters').map((s) => el('button', { class: 'chip', type: 'button', text: s, onclick: () => { if (!ta.value.trim()) { ta.value = s + ' '; ta.dispatchEvent(new Event('input')); } ta.focus(); } })));
   const send = el('button', { class: 'btn', type: 'button', text: tr('release'), disabled: true });
   const status = el('p', { class: 'hint', style: 'min-height:3em;margin-top:.7rem' });
-  ta.addEventListener('input', () => { send.disabled = !ta.value.trim(); });
+  let busy = false;
+  const refresh = () => { send.disabled = busy || rec.recording() || !(ta.value.trim() || rec.has()); };
+  const rec = voiceRecorder(refresh);
+  ta.addEventListener('input', refresh);
   send.addEventListener('click', async () => {
-    const text = ta.value.trim(); if (!text) return;
-    send.disabled = true; status.textContent = tr('sending');
-    const r = await lanternAdd(text);
-    if (!r) { send.disabled = !ta.value.trim(); status.textContent = tr('cloudFail'); return; }
+    const text = ta.value.trim(); if (!text && !rec.has()) return;
+    busy = true; refresh(); status.textContent = tr('sending');
+    let voice = null;
+    if (rec.has()) { const v = rec.take(); voice = await voiceUpload(v.blob, v.mime, v.secs); if (!voice) { busy = false; refresh(); status.textContent = tr('voiceFail'); return; } }
+    const r = await lanternAdd(text || VOICE_ONLY, voice);
+    if (!r) { if (voice) voiceRemove(voice.path); busy = false; refresh(); status.textContent = voice ? tr('voiceFail') : tr('cloudFail'); return; }
     flyLantern(myNum()); chime(4); vib([20, 40, 20]);
-    ta.value = ''; send.disabled = true; status.textContent = tr('sent'); api.ready();
+    ta.value = ''; rec.reset(); busy = false; refresh(); status.textContent = tr('sent'); api.ready();
   });
-  root.append(ta, chips, el('div', { class: 'row', style: 'margin-top:.2rem' }, send), status);
+  root.append(ta, chips, rec.node, el('p', { class: 'small', style: 'margin:.2rem auto .5rem', text: tr('voiceHint') }), el('div', { class: 'row', style: 'margin-top:.2rem' }, send), status);
+  return () => { rec.destroy(); };
 });
 
 /* a gentle check-in: if the next scenes would be too much, she can go straight to the lanterns at the end */
@@ -1505,7 +1604,8 @@ add('final', (root, api) => {
     [[me, tr('legYours')], [other, other === 2 ? tr('legHer') : tr('legHim')]].forEach((it) => legend.append(el('span', {}, el('i', { class: it[0] === 2 ? 'hers' : '' }), it[1])));
     const shown = rows.slice(-14);
     shown.forEach((n, i) => {
-      const L = el('button', { class: 'lantern drift' + (n.author_num === 2 ? ' hers' : ''), type: 'button', 'aria-label': tr('readWish') });
+      const L = el('button', { class: 'lantern drift' + (n.author_num === 2 ? ' hers' : '') + (n.voice_path ? ' voiced' : ''), type: 'button', 'aria-label': tr('readWish') + (n.voice_path ? ' · ' + tr('voicePlayLabel') : '') });
+      if (n.voice_path) L.append(el('span', { class: 'vmark', 'aria-hidden': 'true', text: '♪' }));
       L.style.left = (6 + (i * 89) / Math.max(1, shown.length - 1)) % 92 + '%'; L.style.setProperty('--d', (24 + (i % 4) * 4) + 's'); L.style.setProperty('--dl', (-i * 3.1) + 's');
       L.addEventListener('click', () => showLantern(n, refresh)); layer.append(L);
     });
